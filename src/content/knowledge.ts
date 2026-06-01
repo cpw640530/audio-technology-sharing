@@ -24,7 +24,7 @@ export type TopicDiagram = {
 };
 
 export type TopicLab = {
-  type: "sampling-quantization";
+  type: "sampling-quantization" | "listening-metrics" | "microphone";
   title: LocalizedText;
   description: LocalizedText;
   buttonLabel: LocalizedText;
@@ -320,6 +320,59 @@ export const categories: Category[] = [
             { zh: "频响曲线描述不同频率的能量变化，但不能单独决定音质。", en: "Frequency response describes energy variation by frequency, but it does not determine quality alone." },
             { zh: "THD、SNR、延迟、串扰等指标分别反映失真、噪声、同步和通道隔离问题。", en: "THD, SNR, latency, and crosstalk describe distortion, noise, synchronization, and channel separation issues." }
           ],
+          termExplanations: [
+            {
+              name: { zh: "响度", en: "Loudness" },
+              explanation: {
+                zh: "响度是人耳主观感受到的声音大小，不等同于瞬时声压。SPL 常用于物理声压测量，LUFS 更适合描述节目整体响度，播客、视频和流媒体通常会按 LUFS 做响度归一。",
+                en: "Loudness is perceived sound level, not the same as instantaneous pressure. SPL measures physical sound pressure, while LUFS is better for program loudness and is commonly used for podcasts, video, and streaming normalization."
+              }
+            },
+            {
+              name: { zh: "频响曲线", en: "Frequency response" },
+              explanation: {
+                zh: "频响曲线描述设备或处理链对不同频率的增强或衰减。高频偏多可能听起来明亮甚至刺耳，低中频堆积可能显得浑浊，低频不足则容易单薄。",
+                en: "Frequency response shows how a device or processing chain boosts or cuts different frequencies. More treble can sound bright or harsh, low-mid buildup can sound muddy, and weak bass can feel thin."
+              }
+            },
+            {
+              name: { zh: "动态范围", en: "Dynamic range" },
+              explanation: {
+                zh: "动态范围描述最小可听细节和最大声音之间的跨度。压缩器会缩小动态范围，让声音更稳定、更靠前，但过度压缩会让音乐失去起伏和冲击力。",
+                en: "Dynamic range is the span between quiet details and loud peaks. Compression reduces that range, making sound steadier and more forward, but too much compression removes contrast and impact."
+              }
+            },
+            {
+              name: { zh: "SNR", en: "SNR" },
+              explanation: {
+                zh: "SNR 是信噪比，表示有效信号与底噪之间的差距。SNR 越低，底噪、嘶声或电流声越容易被听见，语音清晰度和安静段质量会下降。",
+                en: "SNR is signal-to-noise ratio, the gap between useful signal and noise floor. Lower SNR makes hiss or electrical noise easier to hear and reduces speech clarity and quiet-section quality."
+              }
+            },
+            {
+              name: { zh: "THD / THD+N", en: "THD / THD+N" },
+              explanation: {
+                zh: "THD 描述非线性失真产生的谐波成分，THD+N 还把噪声一起算入。少量谐波可能带来温暖感，过多会变成破音、毛刺或刺耳感。",
+                en: "THD describes harmonic components caused by nonlinear distortion, while THD+N also includes noise. A little harmonic content may feel warm; too much becomes clipping, grit, or harshness."
+              }
+            },
+            {
+              name: { zh: "声像与空间感", en: "Stereo image and space" },
+              explanation: {
+                zh: "声像来自左右声道的电平差、时间差和频率差，空间感还受混响和早期反射影响。串扰、相位问题或过强混响都会让定位变糊。",
+                en: "Stereo image comes from level, timing, and frequency differences between channels; space also depends on reverberation and early reflections. Crosstalk, phase issues, or too much reverb can blur localization."
+              }
+            }
+          ],
+          lab: {
+            type: "listening-metrics",
+            title: { zh: "听感与指标实验室", en: "Listening Metrics Lab" },
+            description: {
+              zh: "进入独立界面切换明亮、浑浊、底噪、失真、动态压缩和声像偏移，查看对应指标并播放短音效对照。",
+              en: "Open an independent lab to switch between brightness, muddiness, noise floor, distortion, compression, and stereo shift while viewing metrics and hearing short examples."
+            },
+            buttonLabel: { zh: "打开听感与指标实验室", en: "Open listening metrics lab" }
+          },
           misconception: {
             zh: "一个漂亮的指标不能代表完整听感；同样的曲线在不同房间、耳机佩戴方式和内容类型下可能听起来完全不同。",
             en: "One impressive metric cannot represent the whole listening experience; the same curve can sound different across rooms, headphone fits, and content types."
@@ -345,31 +398,120 @@ export const categories: Category[] = [
       {
         title: { zh: "麦克风", en: "Microphones" },
         summary: {
-          zh: "比较动圈、电容、MEMS、模拟和数字麦克风的适用场景。",
-          en: "Compare dynamic, condenser, MEMS, analog, and digital microphones."
+          zh: "从换能原理、类型、参数和使用场景理解麦克风如何把声音变成电信号。",
+          en: "Understand how microphones convert sound into electrical signals through transducer principles, types, specifications, and use cases."
         },
         bullets: [
-          { zh: "灵敏度、信噪比、指向性", en: "Sensitivity, SNR, directivity" },
-          { zh: "模拟麦克风与数字麦克风", en: "Analog and digital microphones" },
-          { zh: "麦克风阵列基础", en: "Microphone array basics" }
+          { zh: "换能原理与常见麦克风类型", en: "Transducer principle and microphone types" },
+          { zh: "灵敏度、频响、SNR、最大 SPL", en: "Sensitivity, frequency response, SNR, maximum SPL" },
+          { zh: "指向性、距离、增益和阵列拾音", en: "Polar pattern, distance, gain, and array pickup" }
         ],
         detail: {
           explanation: {
-            zh: "麦克风是把空气压力变化转换成电信号的传感器。不同类型麦克风在灵敏度、噪声、体积、成本、供电和抗干扰能力上差异很大，产品选择要结合拾音距离、声学环境和后端处理能力。",
-            en: "A microphone is a sensor that converts air pressure changes into an electrical signal. Microphone types differ in sensitivity, noise, size, cost, power needs, and interference resistance, so selection depends on pickup distance, acoustics, and downstream processing."
+            zh: "麦克风是把空气中的声压变化转换成电信号的换能器。声波推动振膜振动，振膜运动再通过线圈、电容变化、驻极体材料或 MEMS 结构变成电压或数字脉冲流，随后经过前置放大、滤波和 ADC 进入数字音频系统。",
+            en: "A microphone is a transducer that converts air-pressure variation into an electrical signal. Sound moves a diaphragm; that motion is converted by a coil, capacitance change, electret material, or MEMS structure into voltage or a digital pulse stream, then passes through preamp, filtering, and ADC stages."
           },
           keyConcepts: [
-            { zh: "灵敏度表示同样声压下输出信号大小，信噪比反映有效语音和底噪的差距。", en: "Sensitivity describes output level for a given sound pressure, while SNR shows the gap between useful sound and noise." },
-            { zh: "指向性决定麦克风更容易收哪些方向的声音，影响远场拾音和抗噪能力。", en: "Polar pattern controls which directions are captured more strongly, affecting far-field pickup and noise rejection." },
-            { zh: "MEMS 数字麦克风常用于手机、耳机和 IoT 设备，便于小体积阵列设计。", en: "Digital MEMS microphones are common in phones, earbuds, and IoT devices, making compact array design easier." }
+            { zh: "动圈麦耐用、抗大声压，适合舞台和近讲；电容麦灵敏、细节多，常用于录音棚和播客。", en: "Dynamic microphones are durable and tolerate high SPL, useful on stage and close speech; condenser microphones are sensitive and detailed, common in studios and podcasts." },
+            { zh: "驻极体和 MEMS 麦克风体积小、成本低，广泛用于手机、耳机、会议设备、IoT 和车载语音。", en: "Electret and MEMS microphones are compact and low-cost, widely used in phones, earbuds, conferencing devices, IoT, and vehicle voice systems." },
+            { zh: "灵敏度、等效自噪声、SNR、最大 SPL、频响和指向性共同决定可录到的声音质量。", en: "Sensitivity, equivalent self-noise, SNR, maximum SPL, frequency response, and polar pattern together shape capture quality." },
+            { zh: "距离、房间反射、安装位置和增益设置经常比麦克风价格更直接影响录音结果。", en: "Distance, room reflections, placement, and gain staging often affect the recording more directly than microphone price." }
           ],
+          termExplanations: [
+            {
+              name: { zh: "换能过程", en: "Transduction" },
+              explanation: {
+                zh: "声波先推动振膜运动，振膜运动再被转换成电信号。动圈麦利用线圈在磁场中运动产生电压；电容麦利用振膜和背板之间的电容变化；MEMS 麦则把微型机械结构和电子电路集成在芯片中。",
+                en: "Sound first moves a diaphragm, and that movement becomes an electrical signal. Dynamic mics generate voltage from a moving coil in a magnetic field; condenser mics use capacitance changes; MEMS mics integrate micro-mechanical structures and electronics on a chip."
+              }
+            },
+            {
+              name: { zh: "动圈麦克风", en: "Dynamic microphone" },
+              explanation: {
+                zh: "动圈麦结构像小型反向扬声器，耐用、抗摔、能承受很高声压，不需要幻象电源。它通常灵敏度较低，需要较多前级增益，适合舞台、人声近讲、鼓和吉他箱体。",
+                en: "A dynamic mic works like a small speaker in reverse. It is rugged, handles high SPL, and needs no phantom power. It is usually less sensitive and needs more preamp gain, making it useful for stage vocals, close speech, drums, and guitar cabinets."
+              }
+            },
+            {
+              name: { zh: "电容麦克风", en: "Condenser microphone" },
+              explanation: {
+                zh: "电容麦利用振膜和背板组成电容，需要极化电压和内部放大电路，常通过 48V 幻象电源供电。它灵敏度高、瞬态和高频细节好，但更容易收进房间噪声和反射。",
+                en: "A condenser mic uses a diaphragm and backplate as a capacitor, requiring polarization and active electronics, often powered by 48V phantom power. It is sensitive and detailed, but also captures more room noise and reflections."
+              }
+            },
+            {
+              name: { zh: "驻极体 / MEMS", en: "Electret / MEMS" },
+              explanation: {
+                zh: "驻极体麦把电荷固化在材料中，降低供电需求；MEMS 麦把机械振膜、前端电路和封装做成芯片级器件。它们适合小体积、多麦阵列和量产设备，数字 MEMS 常直接输出 PDM 或 I2S 数据。",
+                en: "Electret mics store charge in material, reducing bias requirements; MEMS mics package diaphragm, front-end electronics, and housing as chip-scale parts. They suit compact devices, arrays, and mass production, with digital MEMS often outputting PDM or I2S."
+              }
+            },
+            {
+              name: { zh: "灵敏度", en: "Sensitivity" },
+              explanation: {
+                zh: "灵敏度表示在标准声压下麦克风输出多大的电平，常用 mV/Pa 或 dBV/Pa 表示。灵敏度高不等于音质更好，它只说明同样声音下输出更大，后端增益需求更低。",
+                en: "Sensitivity describes output level at a standard sound pressure, often in mV/Pa or dBV/Pa. Higher sensitivity does not mean better quality; it means more output for the same sound and less required downstream gain."
+              }
+            },
+            {
+              name: { zh: "频率响应", en: "Frequency response" },
+              explanation: {
+                zh: "频率响应描述麦克风对不同频率的拾取差异。人声麦常会有低频近讲增强或高频存在感提升；测量麦则追求更平直，用来反映真实声场。",
+                en: "Frequency response shows how a mic captures different frequencies. Vocal mics may add proximity bass or presence boost; measurement mics aim to be flatter to represent the real sound field."
+              }
+            },
+            {
+              name: { zh: "指向性", en: "Polar pattern" },
+              explanation: {
+                zh: "指向性描述麦克风从不同方向收声的强弱。全指向各方向接近一致，心形主要收前方并抑制后方，8 字形收前后并抑制侧面。它直接影响抗噪、离轴音色和多人拾音。",
+                en: "Polar pattern describes pickup strength by direction. Omni captures nearly all directions, cardioid favors the front and rejects the rear, and figure-8 captures front/back while rejecting the sides. It affects noise rejection, off-axis tone, and multi-person capture."
+              }
+            },
+            {
+              name: { zh: "自噪声 / SNR", en: "Self-noise / SNR" },
+              explanation: {
+                zh: "自噪声是麦克风自身电子和热噪声造成的底噪，SNR 表示目标声和噪声之间的差距。安静录音、人声远场和会议拾音尤其依赖低自噪声和高 SNR。",
+                en: "Self-noise is the mic's own electronic and thermal noise floor, while SNR is the gap between target sound and noise. Quiet recording, far-field voice, and conferencing depend strongly on low self-noise and high SNR."
+              }
+            },
+            {
+              name: { zh: "最大 SPL", en: "Maximum SPL" },
+              explanation: {
+                zh: "最大 SPL 表示麦克风在失真达到规定阈值前能承受多大的声压。鼓、铜管、吉他箱体和近距离喊叫需要更高最大 SPL，否则前端可能过载产生破音。",
+                en: "Maximum SPL indicates how loud a source can be before distortion reaches a specified threshold. Drums, brass, guitar cabinets, and close shouting need higher maximum SPL to avoid front-end overload."
+              }
+            },
+            {
+              name: { zh: "幻象电源 48V", en: "48V phantom power" },
+              explanation: {
+                zh: "48V 幻象电源通过平衡线给电容麦内部电路供电。它不是音质增强开关，动圈麦通常不需要；错误接线或不兼容设备可能带来噪声或风险。",
+                en: "48V phantom power feeds condenser mic electronics through balanced cables. It is not a quality boost switch, and dynamic mics usually do not need it; wrong wiring or incompatible gear can cause noise or risk."
+              }
+            },
+            {
+              name: { zh: "麦克风阵列", en: "Microphone array" },
+              explanation: {
+                zh: "多个麦克风可以利用到达时间差、相位差和电平差判断方向，并通过波束成形增强目标声源、抑制噪声和回声。手机、会议机、智能音箱和车载语音常用阵列。",
+                en: "Multiple microphones can use time, phase, and level differences to estimate direction, then beamform toward the target while suppressing noise and echo. Phones, conference devices, smart speakers, and cars commonly use arrays."
+              }
+            }
+          ],
+          lab: {
+            type: "microphone",
+            title: { zh: "麦克风指向性与拾音实验室", en: "Microphone Pickup Lab" },
+            description: {
+              zh: "进入独立界面切换全指向、心形和 8 字形，拖动声源角度、距离和增益，观察拾音强度、噪声和削波风险。",
+              en: "Open an independent lab to switch omni, cardioid, and figure-8 patterns, then adjust source angle, distance, and gain to see pickup strength, noise, and clipping risk."
+            },
+            buttonLabel: { zh: "打开麦克风实验室", en: "Open microphone lab" }
+          },
           misconception: {
-            zh: "更贵的麦克风不能自动解决糟糕声学环境；房间混响、安装位置和结构噪声经常比麦克风型号更关键。",
-            en: "A more expensive microphone does not automatically fix bad acoustics; room reverberation, placement, and mechanical noise are often more important than the model."
+            zh: "更贵的麦克风不能自动解决糟糕声学环境；房间混响、安装位置、拾音距离、结构噪声和前级增益经常比麦克风型号更关键。",
+            en: "A more expensive microphone does not automatically fix bad acoustics; room reverberation, placement, pickup distance, mechanical noise, and preamp gain are often more important than the model."
           },
           contentDirection: {
-            zh: "适合做麦克风类型对比、指向性极坐标图和阵列拾音示意图，连接硬件规格与真实录音效果。",
-            en: "This fits a microphone type comparison, polar pattern diagrams, and array pickup illustrations linking hardware specifications to real recordings."
+            zh: "适合继续扩展为麦克风类型对比表、指向性极坐标图、近讲效应示例、阵列拾音动画和真实录音问题排查清单。",
+            en: "This can expand into microphone type comparisons, polar diagrams, proximity-effect examples, array pickup animations, and recording troubleshooting checklists."
           }
         }
       },

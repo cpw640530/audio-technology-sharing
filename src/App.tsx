@@ -3,6 +3,8 @@ import { CategoryTabs } from "./components/CategoryTabs";
 import { DigitalAudioLab } from "./components/DigitalAudioLab";
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
+import { ListeningMetricsLab } from "./components/ListeningMetricsLab";
+import { MicrophoneLab } from "./components/MicrophoneLab";
 import { Roadmap } from "./components/Roadmap";
 import { SearchBar } from "./components/SearchBar";
 import { SoundWaveLab } from "./components/SoundWaveLab";
@@ -77,7 +79,7 @@ function topicMatchesSearch(topic: DisplayTopic, query: string): boolean {
 export default function App() {
   const [language, setLanguage] = useState<Language>("zh");
   const [activeCategory, setActiveCategory] = useState("all");
-  const [activeView, setActiveView] = useState<"knowledge" | "soundLab" | "digitalLab">("knowledge");
+  const [activeView, setActiveView] = useState<"knowledge" | "soundLab" | "digitalLab" | "listeningLab" | "microphoneLab">("knowledge");
   const [query, setQuery] = useState("");
   const [selectedTopic, setSelectedTopic] = useState<DisplayTopic | null>(null);
 
@@ -161,6 +163,42 @@ export default function App() {
     );
   }
 
+  if (activeView === "listeningLab") {
+    return (
+      <div className="app-shell">
+        <Header
+          language={language}
+          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+        />
+        <ListeningMetricsLab language={language} onBack={() => setActiveView("knowledge")} />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+          <a href="docs/audio_technology_knowledge_outline.md">
+            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
+          </a>
+        </footer>
+      </div>
+    );
+  }
+
+  if (activeView === "microphoneLab") {
+    return (
+      <div className="app-shell">
+        <Header
+          language={language}
+          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+        />
+        <MicrophoneLab language={language} onBack={() => setActiveView("knowledge")} />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+          <a href="docs/audio_technology_knowledge_outline.md">
+            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
+          </a>
+        </footer>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <Header
@@ -194,6 +232,14 @@ export default function App() {
               onOpenDigitalLab={() => {
                 setSelectedTopic(null);
                 setActiveView("digitalLab");
+              }}
+              onOpenListeningMetricsLab={() => {
+                setSelectedTopic(null);
+                setActiveView("listeningLab");
+              }}
+              onOpenMicrophoneLab={() => {
+                setSelectedTopic(null);
+                setActiveView("microphoneLab");
               }}
               topic={selectedTopic}
             />

@@ -72,28 +72,53 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
   const formula = `y(t) = ${amplitude.toFixed(2)} · sin(2π · ${frequency}t + ${phase.toFixed(2)}π)`;
   const currentWaveLabel = waveformLabels[waveform][language];
 
-  function stopAudio() {
-    if (!audioRef.current) {
-      setIsPlaying(false);
+  function stopAudio(updateState = true) {
+    const activeAudio = audioRef.current;
+
+    if (!activeAudio) {
+      if (updateState) {
+        setIsPlaying(false);
+      }
       return;
     }
 
+    audioRef.current = null;
+    const stopTime = activeAudio.context.currentTime;
+
     try {
-      audioRef.current.oscillator.stop();
+      activeAudio.gain.gain.cancelScheduledValues(stopTime);
+    } catch {
+      // Some test doubles and older browsers may not expose every AudioParam method.
+    }
+
+    activeAudio.gain.gain.setValueAtTime(0, stopTime);
+
+    try {
+      activeAudio.oscillator.stop(stopTime);
     } catch {
       // The oscillator can already be stopped when the user switches views.
     }
 
-    void audioRef.current.context.close();
-    audioRef.current = null;
-    setIsPlaying(false);
+    try {
+      activeAudio.oscillator.disconnect();
+      activeAudio.gain.disconnect();
+    } catch {
+      // Disconnect is best-effort cleanup; closing the context still releases the graph.
+    }
+
+    void activeAudio.context.close();
+
+    if (updateState) {
+      setIsPlaying(false);
+    }
   }
 
-  function playAudio() {
-    stopAudio();
+  function playAudio(nextWaveform = waveform) {
+    stopAudio(false);
     const AudioContextConstructor = window.AudioContext ?? window.webkitAudioContext;
 
     if (!AudioContextConstructor) {
+      setIsPlaying(false);
       return;
     }
 
@@ -101,7 +126,7 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
     const oscillator = context.createOscillator();
     const gain = context.createGain();
 
-    oscillator.type = waveform;
+    oscillator.type = nextWaveform;
     oscillator.frequency.setValueAtTime(frequency, context.currentTime);
     gain.gain.setValueAtTime(amplitude * 0.14, context.currentTime);
     oscillator.connect(gain);
@@ -110,6 +135,16 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
 
     audioRef.current = { context, oscillator, gain };
     setIsPlaying(true);
+  }
+
+  function handleWaveformChange(nextWaveform: WaveformType) {
+    const wasPlaying = audioRef.current !== null;
+
+    setWaveform(nextWaveform);
+
+    if (wasPlaying) {
+      playAudio(nextWaveform);
+    }
   }
 
   useEffect(() => {
@@ -128,7 +163,7 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
     );
   }, [amplitude, frequency, waveform]);
 
-  useEffect(() => stopAudio, []);
+  useEffect(() => () => stopAudio(false), []);
 
   return (
     <main className="sound-lab-page">
@@ -218,7 +253,7 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
                 className={waveform === type ? "waveform-tab active" : "waveform-tab"}
                 key={type}
                 type="button"
-                onClick={() => setWaveform(type)}
+                onClick={() => handleWaveformChange(type)}
               >
                 {waveformLabels[type][language]}
               </button>
@@ -226,11 +261,11 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
           </div>
 
           <div className="sound-lab-actions">
-            <button className="sine-button" type="button" onClick={playAudio}>
+            <button className="sine-button" type="button" onClick={() => playAudio()}>
               <Play size={16} aria-hidden="true" />
               {language === "zh" ? "播放" : "Play"}
             </button>
-            <button className="sine-button" type="button" onClick={stopAudio}>
+            <button className="sine-button" type="button" onClick={() => stopAudio()}>
               <Pause size={16} aria-hidden="true" />
               {language === "zh" ? "停止" : "Stop"}
             </button>

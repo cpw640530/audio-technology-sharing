@@ -11,6 +11,8 @@ type TopicDetailsProps = {
   topic: DisplayTopic;
   onClose: () => void;
   onOpenDigitalLab: () => void;
+  onOpenListeningMetricsLab: () => void;
+  onOpenMicrophoneLab: () => void;
   onOpenSoundLab: () => void;
 };
 
@@ -86,6 +88,8 @@ export function TopicDetails({
   topic,
   onClose,
   onOpenDigitalLab,
+  onOpenListeningMetricsLab,
+  onOpenMicrophoneLab,
   onOpenSoundLab
 }: TopicDetailsProps) {
   function closeDetails() {
@@ -124,36 +128,6 @@ export function TopicDetails({
         </div>
         <div className="details-scroll">
           <p className="details-summary">{topic.summary[language]}</p>
-          {topic.detail.diagram ? (
-            <div className="details-block details-diagram-block">
-              <h3>{interfaceCopy.detailsDiagramTitle[language]}</h3>
-              {topic.detail.diagram.type === "sound-wave" ? (
-                <SoundWaveDiagram
-                  caption={topic.detail.diagram.caption}
-                  label={topic.detail.diagram.label}
-                  language={language}
-                  onOpenSoundLab={onOpenSoundLab}
-                />
-              ) : null}
-            </div>
-          ) : null}
-          {topic.detail.lab ? (
-            <div className="details-block details-lab-block">
-              <div className="sound-lab-entry">
-                <div>
-                  <strong>{topic.detail.lab.title[language]}</strong>
-                  <p>{topic.detail.lab.description[language]}</p>
-                </div>
-                <button
-                  className="diagram-open-button"
-                  type="button"
-                  onClick={topic.detail.lab.type === "sampling-quantization" ? onOpenDigitalLab : undefined}
-                >
-                  {topic.detail.lab.buttonLabel[language]}
-                </button>
-              </div>
-            </div>
-          ) : null}
           <div className="details-block details-block-emphasis">
             <h3>{interfaceCopy.detailsExplanationTitle[language]}</h3>
             <p>{topic.detail.explanation[language]}</p>
@@ -187,6 +161,48 @@ export function TopicDetails({
               ))}
             </ul>
           </div>
+          {topic.detail.diagram ? (
+            <div className="details-block details-diagram-block">
+              <h3>{interfaceCopy.detailsDiagramTitle[language]}</h3>
+              {topic.detail.diagram.type === "sound-wave" ? (
+                <SoundWaveDiagram
+                  caption={topic.detail.diagram.caption}
+                  label={topic.detail.diagram.label}
+                  language={language}
+                  onOpenSoundLab={onOpenSoundLab}
+                />
+              ) : null}
+            </div>
+          ) : null}
+          {topic.detail.lab ? (
+            <div className="details-block details-lab-block">
+              <div className="sound-lab-entry">
+                <div>
+                  <strong>{topic.detail.lab.title[language]}</strong>
+                  <p>{topic.detail.lab.description[language]}</p>
+                </div>
+                <button
+                  className="diagram-open-button"
+                  type="button"
+                  onClick={() => {
+                    if (topic.detail.lab?.type === "sampling-quantization") {
+                      onOpenDigitalLab();
+                      return;
+                    }
+
+                    if (topic.detail.lab?.type === "microphone") {
+                      onOpenMicrophoneLab();
+                      return;
+                    }
+
+                    onOpenListeningMetricsLab();
+                  }}
+                >
+                  {topic.detail.lab.buttonLabel[language]}
+                </button>
+              </div>
+            </div>
+          ) : null}
           <div className="details-block">
             <h3>{interfaceCopy.detailsMisconceptionTitle[language]}</h3>
             <p>{topic.detail.misconception[language]}</p>

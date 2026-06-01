@@ -325,40 +325,38 @@ export function DigitalAudioLab({ language, onBack }: DigitalAudioLabProps) {
         </div>
       </section>
 
-      {displayMode === "pcm" ? (
-        <section className="pcm-encoding-section" aria-label={language === "zh" ? "PCM 编码说明" : "PCM encoding explanation"}>
-          <div className="section-heading">
-            <div>
-              <span className="section-kicker">PCM</span>
-              <h2>{language === "zh" ? "如何变成 PCM" : "How samples become PCM"}</h2>
-            </div>
+      <section className="pcm-encoding-section" aria-label={language === "zh" ? "PCM 编码说明" : "PCM encoding explanation"}>
+        <div className="section-heading">
+          <div>
+            <span className="section-kicker">PCM</span>
+            <h2>{language === "zh" ? "如何变成 PCM" : "How samples become PCM"}</h2>
           </div>
-          <p className="pcm-flow">
+        </div>
+        <p className="pcm-flow">
+          {language === "zh"
+            ? "模拟值 → 量化值 → 整数样本值 → 二进制 PCM"
+            : "Analog value → Quantized value → Integer sample → Binary PCM"}
+        </p>
+        <div className="pcm-word-grid">
+          {pcmPreview.map((point, index) => (
+            <article key={`${point.x}-${point.pcmBinary}`} className="pcm-word-card">
+              <strong>{language === "zh" ? `采样 #${index + 1}` : `Sample #${index + 1}`}</strong>
+              <span>{language === "zh" ? "量化值" : "Quantized"}: {point.quantizedValue.toFixed(3)}</span>
+              <span>{language === "zh" ? "整数样本值" : "Integer sample"}: {point.pcmInteger}</span>
+              <code>{point.pcmBinary}</code>
+            </article>
+          ))}
+        </div>
+        <div className="pcm-formula-card">
+          <strong>{language === "zh" ? "PCM 码率 = 采样率 × 位深 × 声道数" : "PCM bitrate = sample rate × bit depth × channels"}</strong>
+          <span>{language === "zh" ? "48 kHz × 16-bit × 2 声道 = 1536 kbps" : "48 kHz × 16-bit × 2 channels = 1536 kbps"}</span>
+          <p>
             {language === "zh"
-              ? "模拟值 → 量化值 → 整数样本值 → 二进制 PCM"
-              : "Analog value → Quantized value → Integer sample → Binary PCM"}
+              ? "PCM 按固定节奏保存样本：采样率决定每秒多少个样本，位深决定每个样本多少 bit，声道数决定单声道、双声道或多声道样本如何排列。"
+              : "PCM stores samples at a fixed cadence: sample rate sets samples per second, bit depth sets bits per sample, and channel count defines how mono, stereo, or multichannel samples are arranged."}
           </p>
-          <div className="pcm-word-grid">
-            {pcmPreview.map((point, index) => (
-              <article key={`${point.x}-${point.pcmBinary}`} className="pcm-word-card">
-                <strong>{language === "zh" ? `采样 #${index + 1}` : `Sample #${index + 1}`}</strong>
-                <span>{language === "zh" ? "量化值" : "Quantized"}: {point.quantizedValue.toFixed(3)}</span>
-                <span>{language === "zh" ? "整数样本值" : "Integer sample"}: {point.pcmInteger}</span>
-                <code>{point.pcmBinary}</code>
-              </article>
-            ))}
-          </div>
-          <div className="pcm-formula-card">
-            <strong>{language === "zh" ? "PCM 码率 = 采样率 × 位深 × 声道数" : "PCM bitrate = sample rate × bit depth × channels"}</strong>
-            <span>{language === "zh" ? "48 kHz × 16-bit × 2 声道 = 1536 kbps" : "48 kHz × 16-bit × 2 channels = 1536 kbps"}</span>
-            <p>
-              {language === "zh"
-                ? "PCM 按固定节奏保存样本：采样率决定每秒多少个样本，位深决定每个样本多少 bit，声道数决定单声道、双声道或多声道样本如何排列。"
-                : "PCM stores samples at a fixed cadence: sample rate sets samples per second, bit depth sets bits per sample, and channel count defines how mono, stereo, or multichannel samples are arranged."}
-            </p>
-          </div>
-        </section>
-      ) : null}
+        </div>
+      </section>
 
       <section className="wav-container-section" aria-label={language === "zh" ? "PCM 和 WAV 关系" : "PCM and WAV relationship"}>
         <div className="section-heading">

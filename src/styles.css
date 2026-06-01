@@ -1106,6 +1106,24 @@ body.details-open {
   width: 100%;
 }
 
+.listening-lab-page {
+  display: grid;
+  gap: 24px;
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 34px clamp(18px, 4vw, 56px) 42px;
+  width: 100%;
+}
+
+.microphone-lab-page {
+  display: grid;
+  gap: 24px;
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 34px clamp(18px, 4vw, 56px) 42px;
+  width: 100%;
+}
+
 .digital-lab-workbench {
   align-items: stretch;
   background: #17211f;
@@ -1118,7 +1136,146 @@ body.details-open {
   padding: clamp(16px, 3vw, 26px);
 }
 
+.listening-lab-workbench {
+  align-items: stretch;
+  background: #17211f;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  padding: clamp(16px, 3vw, 26px);
+}
+
+.microphone-lab-workbench {
+  align-items: stretch;
+  background: #17211f;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  padding: clamp(16px, 3vw, 26px);
+}
+
+.mic-principle-section {
+  display: grid;
+  gap: 16px;
+}
+
+.mic-principle-tabs {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mic-principle-tab {
+  background: #263a36;
+  border: 1px solid rgba(126, 231, 216, 0.22);
+  border-radius: 8px;
+  color: #dbe8e4;
+  cursor: pointer;
+  font-weight: 800;
+  min-height: 44px;
+  padding: 0 10px;
+}
+
+.mic-principle-tab.active {
+  background: #0f2f2b;
+  border-color: rgba(126, 231, 216, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(126, 231, 216, 0.18);
+  color: #ffffff;
+}
+
+.mic-principle-workbench {
+  align-items: stretch;
+  background: #17211f;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  padding: clamp(16px, 3vw, 26px);
+}
+
+.mic-principle-visual {
+  min-width: 0;
+}
+
+.mic-principle-visual svg {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+.mic-principle-copy {
+  align-content: start;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #dbe8e4;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.mic-principle-copy h2 {
+  color: #ffffff;
+  font-size: 1.35rem;
+  margin: 6px 0 8px;
+}
+
+.mic-principle-copy p {
+  color: #dbe8e4;
+  margin: 0;
+}
+
+.mic-principle-core {
+  background: rgba(126, 231, 216, 0.09);
+  border: 1px solid rgba(126, 231, 216, 0.18);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.mic-principle-core strong {
+  color: #ffffff;
+}
+
+.mic-principle-core span {
+  color: #b8cbc6;
+  font-size: 0.92rem;
+}
+
+.mic-principle-notes {
+  display: grid;
+  gap: 10px;
+}
+
+.mic-principle-notes article {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  padding: 12px;
+}
+
 .digital-lab-visual {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.listening-visual {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.microphone-visual {
   display: grid;
   gap: 14px;
   min-width: 0;
@@ -1138,6 +1295,18 @@ body.details-open {
 }
 
 .digital-lab-visual svg {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+.listening-visual svg {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+.microphone-visual svg {
   display: block;
   height: auto;
   max-width: 100%;
@@ -1185,6 +1354,343 @@ body.details-open {
   display: grid;
   gap: 16px;
   padding: 16px;
+}
+
+.listening-panel {
+  align-content: start;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.microphone-panel {
+  align-content: start;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.listening-effect-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mic-example-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.listening-metric-path {
+  fill: none;
+  stroke: url("#listeningMetricLine");
+  stroke-linecap: round;
+  stroke-width: 5;
+}
+
+.listening-panel .lab-live-note {
+  display: grid;
+  gap: 6px;
+}
+
+.listening-panel .lab-live-note strong {
+  color: #ffffff;
+}
+
+.listening-panel .lab-live-note span {
+  color: #dbe8e4;
+}
+
+.microphone-panel .lab-live-note {
+  display: grid;
+  gap: 6px;
+}
+
+.microphone-panel .lab-live-note strong {
+  color: #ffffff;
+}
+
+.microphone-panel .lab-live-note span {
+  color: #dbe8e4;
+}
+
+.mic-polar-grid,
+.mic-polar-axis {
+  fill: none;
+  stroke: rgba(220, 236, 232, 0.28);
+  stroke-width: 1.6;
+}
+
+.mic-polar-axis {
+  stroke-dasharray: 8 8;
+}
+
+.mic-polar-path {
+  fill: url("#micPolarFill");
+  stroke: #7ee7d8;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.mic-capsule {
+  fill: #ffffff;
+  stroke: #7ee7d8;
+  stroke-width: 4;
+}
+
+.mic-source-line {
+  stroke: #f0b46a;
+  stroke-width: 3;
+}
+
+.mic-source-dot {
+  fill: #f0b46a;
+  stroke: rgba(255, 255, 255, 0.88);
+  stroke-width: 3;
+}
+
+.mic-meter rect {
+  fill: rgba(255, 255, 255, 0.1);
+}
+
+.mic-meter-fill {
+  fill: #7ee7d8;
+}
+
+.mic-air-wave,
+.mic-signal-line,
+.mic-analog-line,
+.mic-pdm-line,
+.mic-coil {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mic-air-wave {
+  stroke: url("#micSignalGradient");
+  stroke-width: 5;
+}
+
+.mic-signal-line {
+  stroke: #f0b46a;
+  stroke-width: 3;
+}
+
+.mic-analog-line {
+  stroke: #7ee7d8;
+  stroke-width: 5;
+}
+
+.mic-pdm-line {
+  stroke: #7ee7d8;
+  stroke-width: 4;
+}
+
+.mic-capsule-shell,
+.mic-stage-box {
+  fill: rgba(255, 255, 255, 0.08);
+  stroke: rgba(255, 255, 255, 0.2);
+  stroke-width: 2;
+}
+
+.mic-diaphragm-line,
+.mic-backplate-line {
+  stroke: #7ee7d8;
+  stroke-width: 5;
+}
+
+.mic-backplate-line {
+  stroke: #f0b46a;
+  stroke-dasharray: 8 8;
+}
+
+.mic-coil {
+  stroke: #7ee7d8;
+  stroke-width: 4;
+}
+
+.mic-magnet {
+  fill: rgba(240, 180, 106, 0.24);
+  stroke: #f0b46a;
+  stroke-width: 2;
+}
+
+.mic-stage-text {
+  fill: #ffffff;
+  font-size: 18px;
+  font-weight: 780;
+}
+
+.mic-array-capsule {
+  fill: #ffffff;
+  stroke: #7ee7d8;
+  stroke-width: 4;
+}
+
+.mic-beam-shape {
+  fill: rgba(126, 231, 216, 0.16);
+  stroke: #7ee7d8;
+  stroke-width: 3;
+}
+
+.mic-stage-flow rect {
+  fill: rgba(255, 255, 255, 0.09);
+  stroke: rgba(255, 255, 255, 0.18);
+}
+
+.mic-stage-flow text {
+  fill: #ffffff;
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.mic-stage-flow path {
+  stroke: #f0b46a;
+  stroke-width: 2;
+}
+
+.mic-knowledge-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mic-knowledge-grid article {
+  background: #ffffff;
+  border: 1px solid rgba(23, 33, 31, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.mic-knowledge-grid h2 {
+  color: #17211f;
+  font-size: 1.05rem;
+  margin: 0 0 8px;
+}
+
+.mic-knowledge-grid p {
+  color: #4f5d59;
+  margin: 0;
+}
+
+.listening-metric-cards {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.metric-card-button {
+  background: #ffffff;
+  border: 1px solid rgba(23, 33, 31, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+  padding: 16px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.metric-card-button:hover {
+  border-color: rgba(31, 157, 138, 0.42);
+  box-shadow: 0 14px 34px rgba(23, 33, 31, 0.12);
+  transform: translateY(-2px);
+}
+
+.listening-metric-cards h2 {
+  color: #17211f;
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.listening-metric-cards p {
+  color: #4f5d59;
+  margin: 0;
+}
+
+.metric-modal-layer {
+  align-items: center;
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 80;
+}
+
+.metric-modal-backdrop {
+  background: rgba(12, 18, 17, 0.62);
+  border: 0;
+  cursor: pointer;
+  inset: 0;
+  position: absolute;
+}
+
+.metric-modal {
+  background: #fbfbf8;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 28px 80px rgba(23, 33, 31, 0.32);
+  display: grid;
+  gap: 18px;
+  max-height: min(760px, calc(100vh - 40px));
+  max-width: 820px;
+  overflow: auto;
+  padding: clamp(18px, 3vw, 28px);
+  position: relative;
+  width: min(100%, 820px);
+}
+
+.metric-modal-header {
+  display: grid;
+  gap: 8px;
+}
+
+.metric-modal-header h2 {
+  color: #17211f;
+  margin: 0;
+}
+
+.metric-modal-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metric-modal-grid article,
+.metric-modal-warning {
+  background: #ffffff;
+  border: 1px solid rgba(23, 33, 31, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.metric-modal h3 {
+  color: #17211f;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.metric-modal p {
+  color: #4f5d59;
+  margin: 0;
+}
+
+.metric-modal-warning {
+  background: color-mix(in srgb, #f0b46a 13%, #ffffff);
 }
 
 .digital-lab-metrics {
@@ -1477,7 +1983,10 @@ body.details-open {
   .sound-lab-entry,
   .sound-lab-hero,
   .sound-lab-workbench,
-  .digital-lab-workbench {
+  .digital-lab-workbench,
+  .listening-lab-workbench,
+  .mic-principle-workbench,
+  .microphone-lab-workbench {
     grid-template-columns: 1fr;
   }
 
@@ -1485,11 +1994,13 @@ body.details-open {
     grid-template-columns: 1fr;
   }
 
-  .lab-concepts {
+  .lab-concepts,
+  .mic-knowledge-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .codec-table {
+  .codec-table,
+  .listening-metric-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1532,14 +2043,22 @@ body.details-open {
   }
 
   .sound-lab-page,
-  .digital-lab-page {
+  .digital-lab-page,
+  .listening-lab-page,
+  .microphone-lab-page {
     padding-inline: 16px;
   }
 
   .waveform-tabs,
+  .listening-effect-grid,
+  .mic-principle-tabs,
+  .mic-example-grid,
   .lab-concepts,
+  .mic-knowledge-grid,
   .codec-table,
-  .pcm-word-grid {
+  .pcm-word-grid,
+  .listening-metric-cards,
+  .metric-modal-grid {
     grid-template-columns: 1fr;
   }
 

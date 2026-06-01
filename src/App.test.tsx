@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import App from "./App";
 
 describe("Audio knowledge app", () => {
@@ -114,6 +114,37 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByText("低频")).toBeInTheDocument();
   });
 
+  it("places lab entries after the key concepts block in topic details", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /什么是声音/ }));
+    let details = screen.getByRole("dialog", { name: "主题详情" });
+    expect(
+      within(details).getByRole("heading", { name: "关键概念" }).compareDocumentPosition(
+        within(details).getByRole("button", { name: "打开声音波形实验室" })
+      ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
+    await user.click(within(details).getByRole("button", { name: "关闭详情" }));
+    await user.click(screen.getByRole("button", { name: /数字音频基础/ }));
+    details = screen.getByRole("dialog", { name: "主题详情" });
+    expect(
+      within(details).getByRole("heading", { name: "关键概念" }).compareDocumentPosition(
+        within(details).getByRole("button", { name: "打开采样、量化与编码实验室" })
+      ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
+    await user.click(within(details).getByRole("button", { name: "关闭详情" }));
+    await user.click(screen.getByRole("button", { name: /听感与指标/ }));
+    details = screen.getByRole("dialog", { name: "主题详情" });
+    expect(
+      within(details).getByRole("heading", { name: "关键概念" }).compareDocumentPosition(
+        within(details).getByRole("button", { name: "打开听感与指标实验室" })
+      ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
   it("lets readers adjust parameters in the independent sound wave lab", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -143,6 +174,101 @@ describe("Audio knowledge app", () => {
     await user.click(screen.getByRole("button", { name: "三角波" }));
 
     expect(screen.getByText("当前波形：三角波")).toBeInTheDocument();
+  });
+
+  it("replaces the active sound when switching waveforms during playback", async () => {
+    const createdOscillators: Array<{
+      connect: ReturnType<typeof vi.fn>;
+      disconnect: ReturnType<typeof vi.fn>;
+      start: ReturnType<typeof vi.fn>;
+      stop: ReturnType<typeof vi.fn>;
+      frequency: { setValueAtTime: ReturnType<typeof vi.fn> };
+      type: OscillatorType;
+    }> = [];
+    const createdGains: Array<{
+      connect: ReturnType<typeof vi.fn>;
+      disconnect: ReturnType<typeof vi.fn>;
+      gain: {
+        cancelScheduledValues: ReturnType<typeof vi.fn>;
+        setValueAtTime: ReturnType<typeof vi.fn>;
+      };
+    }> = [];
+    const createdContexts: Array<{
+      currentTime: number;
+      destination: object;
+      createOscillator: ReturnType<typeof vi.fn>;
+      createGain: ReturnType<typeof vi.fn>;
+      close: ReturnType<typeof vi.fn>;
+    }> = [];
+
+    Object.defineProperty(window, "AudioContext", {
+      configurable: true,
+      value: vi.fn(() => {
+        const context = {
+          currentTime: 0,
+          destination: {},
+          createOscillator: vi.fn(() => {
+            const oscillator = {
+              connect: vi.fn(),
+              disconnect: vi.fn(),
+              start: vi.fn(),
+              stop: vi.fn(),
+              frequency: { setValueAtTime: vi.fn() },
+              type: "sine" as OscillatorType
+            };
+            createdOscillators.push(oscillator);
+            return oscillator;
+          }),
+          createGain: vi.fn(() => {
+            const gain = {
+              connect: vi.fn(),
+              disconnect: vi.fn(),
+              gain: {
+                cancelScheduledValues: vi.fn(),
+                setValueAtTime: vi.fn()
+              }
+            };
+            createdGains.push(gain);
+            return gain;
+          }),
+          close: vi.fn()
+        };
+        createdContexts.push(context);
+        return context;
+      })
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /什么是声音/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "打开声音波形实验室"
+      })
+    );
+
+    await user.click(screen.getByRole("button", { name: "播放" }));
+    expect(createdOscillators).toHaveLength(1);
+    expect(createdOscillators[0].type).toBe("sine");
+
+    await user.click(screen.getByRole("button", { name: "方波" }));
+
+    expect(createdOscillators).toHaveLength(2);
+    expect(createdOscillators[0].stop).toHaveBeenCalledWith(0);
+    expect(createdOscillators[0].disconnect).toHaveBeenCalled();
+    expect(createdGains[0].gain.setValueAtTime).toHaveBeenLastCalledWith(0, 0);
+    expect(createdGains[0].disconnect).toHaveBeenCalled();
+    expect(createdContexts[0].close).toHaveBeenCalled();
+    expect(createdOscillators[1].type).toBe("square");
+
+    await user.click(screen.getByRole("button", { name: "三角波" }));
+
+    expect(createdOscillators).toHaveLength(3);
+    expect(createdOscillators[1].stop).toHaveBeenCalledWith(0);
+    expect(createdContexts[1].close).toHaveBeenCalled();
+    expect(createdOscillators[2].type).toBe("triangle");
+    expect(screen.getByText("播放中")).toBeInTheDocument();
   });
 
   it("opens the independent sound wave lab from the sound details panel", async () => {
@@ -244,6 +370,10 @@ describe("Audio knowledge app", () => {
       })
     );
 
+    expect(screen.getByRole("heading", { name: "如何变成 PCM" })).toBeInTheDocument();
+    expect(screen.getByText("模拟值 → 量化值 → 整数样本值 → 二进制 PCM")).toBeInTheDocument();
+    expect(screen.getByText("PCM 码率 = 采样率 × 位深 × 声道数")).toBeInTheDocument();
+    expect(screen.getByText(/采样 #1/)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "PCM 如何变成 WAV" })).toBeInTheDocument();
     expect(screen.getAllByText(/给 PCM 加上 RIFF\/WAVE 文件头/).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "编码格式原理速览" })).toBeInTheDocument();
@@ -256,5 +386,559 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("Opus")).toBeInTheDocument();
     expect(screen.getByText("ADPCM")).toBeInTheDocument();
     expect(screen.getByText(/保存当前采样与预测值之间的差分/)).toBeInTheDocument();
+  });
+
+  it("expands microphone knowledge with detailed hardware concepts and a lab entry", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /麦克风/ }));
+
+    const details = screen.getByRole("dialog", { name: "主题详情" });
+    expect(within(details).getByText(/声波推动振膜振动/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "动圈麦克风" })).toBeInTheDocument();
+    expect(within(details).getByText(/不需要幻象电源/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "电容麦克风" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "驻极体 \/ MEMS" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "最大 SPL" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "麦克风阵列" })).toBeInTheDocument();
+    expect(within(details).getByRole("button", { name: "打开麦克风实验室" })).toBeInTheDocument();
+  });
+
+  it("lets readers explore microphone polar pattern, distance, gain, and pickup examples", async () => {
+    const createdOscillators: Array<{
+      connect: ReturnType<typeof vi.fn>;
+      start: ReturnType<typeof vi.fn>;
+      stop: ReturnType<typeof vi.fn>;
+      frequency: { setValueAtTime: ReturnType<typeof vi.fn> };
+      type: OscillatorType;
+    }> = [];
+    const bufferData = new Float32Array(4410);
+    const audioContext = {
+      currentTime: 0,
+      destination: {},
+      sampleRate: 44100,
+      createOscillator: vi.fn(() => {
+        const oscillator = {
+          connect: vi.fn(),
+          start: vi.fn(),
+          stop: vi.fn(),
+          frequency: { setValueAtTime: vi.fn() },
+          type: "sine" as OscillatorType
+        };
+        createdOscillators.push(oscillator);
+        return oscillator;
+      }),
+      createGain: vi.fn(() => ({
+        connect: vi.fn(),
+        gain: {
+          setValueAtTime: vi.fn(),
+          linearRampToValueAtTime: vi.fn()
+        }
+      })),
+      createBiquadFilter: vi.fn(() => ({
+        connect: vi.fn(),
+        frequency: { setValueAtTime: vi.fn() },
+        Q: { setValueAtTime: vi.fn() },
+        type: "bandpass" as BiquadFilterType
+      })),
+      createWaveShaper: vi.fn(() => ({
+        connect: vi.fn(),
+        curve: null as Float32Array | null,
+        oversample: "none" as OverSampleType
+      })),
+      createBuffer: vi.fn(() => ({
+        getChannelData: vi.fn(() => bufferData)
+      })),
+      createBufferSource: vi.fn(() => ({
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        buffer: null as AudioBuffer | null,
+        loop: false
+      })),
+      close: vi.fn()
+    };
+    Object.defineProperty(window, "AudioContext", {
+      configurable: true,
+      value: vi.fn(() => audioContext)
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /麦克风/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "打开麦克风实验室"
+      })
+    );
+
+    expect(screen.getByRole("heading", { name: "麦克风指向性与拾音实验室" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "麦克风指向性极坐标图" })).toBeInTheDocument();
+    expect(screen.getByText("指向性：心形")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "8 字形" }));
+    fireEvent.change(screen.getByRole("slider", { name: "声源角度" }), {
+      target: { value: "90" }
+    });
+    fireEvent.change(screen.getByRole("slider", { name: "拾音距离" }), {
+      target: { value: "2.5" }
+    });
+    fireEvent.change(screen.getByRole("slider", { name: "前级增益" }), {
+      target: { value: "82" }
+    });
+
+    expect(screen.getByText("指向性：8 字形")).toBeInTheDocument();
+    expect(screen.getByText("角度 90°")).toBeInTheDocument();
+    expect(screen.getByText("距离 2.5 m")).toBeInTheDocument();
+    expect(screen.getByText("前级增益 82%")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "削波失真" }));
+    await user.click(screen.getByRole("button", { name: "播放拾音示例" }));
+
+    expect(audioContext.createWaveShaper).toHaveBeenCalled();
+    expect(createdOscillators[createdOscillators.length - 1]?.start).toHaveBeenCalledWith(0);
+    expect(screen.getByText("播放中")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "环境底噪" }));
+    await user.click(screen.getByRole("button", { name: "播放拾音示例" }));
+
+    expect(audioContext.createBufferSource).toHaveBeenCalled();
+    expect(bufferData.some((sample) => sample !== 0)).toBe(true);
+  });
+
+  it("visualizes analog, digital, vocal, and array microphone working principles", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /麦克风/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "打开麦克风实验室"
+      })
+    );
+
+    expect(screen.getByRole("heading", { name: "麦克风工作原理" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "模拟驻极体咪头工作原理图" })).toBeInTheDocument();
+    expect(screen.getByText(/驻极体材料预先带电/)).toBeInTheDocument();
+    expect(screen.getAllByText("输出：模拟电压").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: "数字 MEMS 麦" }));
+    expect(screen.getByRole("img", { name: "数字 MEMS 麦工作原理图" })).toBeInTheDocument();
+    expect(screen.getByText(/Σ-Δ 调制输出 PDM/)).toBeInTheDocument();
+    expect(screen.getAllByText("输出：PDM / I2S").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: "动圈话筒" }));
+    expect(screen.getByRole("img", { name: "动圈话筒工作原理图" })).toBeInTheDocument();
+    expect(screen.getByText(/线圈在磁场中随声音运动/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "多麦阵列" }));
+    const arrayDiagram = screen.getByRole("img", { name: "多麦阵列工作原理图" });
+    expect(arrayDiagram).toBeInTheDocument();
+    expect(arrayDiagram.querySelectorAll(".mic-array-capsule")).toHaveLength(4);
+    expect(arrayDiagram.querySelectorAll("path.mic-signal-line[d*='404']")).toHaveLength(4);
+    expect(screen.getByText(/延时对齐并加权求和/)).toBeInTheDocument();
+    expect(screen.getAllByText("输出：增强后的目标声").length).toBeGreaterThan(0);
+  });
+
+  it("expands listening perception with metrics and an audio effects lab", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /听感与指标/ }));
+
+    const details = screen.getByRole("dialog", { name: "主题详情" });
+    expect(within(details).getByRole("heading", { name: "响度" })).toBeInTheDocument();
+    expect(within(details).getAllByText(/LUFS 更适合描述节目整体响度/).length).toBeGreaterThan(0);
+    expect(within(details).getByRole("heading", { name: "频响曲线" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "THD / THD+N" })).toBeInTheDocument();
+    expect(within(details).getByRole("button", { name: "打开听感与指标实验室" })).toBeInTheDocument();
+  });
+
+  it("lets readers compare listening effects with generated audio examples", async () => {
+    const oscillator = {
+      connect: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn(),
+      frequency: { setValueAtTime: vi.fn() },
+      type: "sine"
+    };
+    const gain = {
+      connect: vi.fn(),
+      gain: {
+        setValueAtTime: vi.fn(),
+        linearRampToValueAtTime: vi.fn()
+      }
+    };
+    const biquadFilter = {
+      connect: vi.fn(),
+      frequency: { setValueAtTime: vi.fn() },
+      gain: { setValueAtTime: vi.fn() },
+      Q: { setValueAtTime: vi.fn() },
+      type: "peaking"
+    };
+    const stereoPanner = {
+      connect: vi.fn(),
+      pan: { setValueAtTime: vi.fn() }
+    };
+    const audioContext = {
+      currentTime: 0,
+      destination: {},
+      createOscillator: vi.fn(() => oscillator),
+      createGain: vi.fn(() => gain),
+      createBiquadFilter: vi.fn(() => biquadFilter),
+      createStereoPanner: vi.fn(() => stereoPanner),
+      close: vi.fn()
+    };
+    const AudioContextMock = vi.fn(() => audioContext);
+    Object.defineProperty(window, "AudioContext", {
+      configurable: true,
+      value: AudioContextMock
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /听感与指标/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "打开听感与指标实验室"
+      })
+    );
+
+    expect(screen.getByRole("heading", { name: "听感与指标实验室" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "听感与指标效果图" })).toBeInTheDocument();
+    expect(screen.getByText("指标：频响曲线")).toBeInTheDocument();
+    expect(screen.getByText(/明亮：提升高频能量/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+
+    expect(AudioContextMock).toHaveBeenCalled();
+    expect(screen.getByText("播放中")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "噪声底噪" }));
+    expect(screen.getByText("指标：SNR")).toBeInTheDocument();
+    expect(screen.getByText(/底噪：在信号下方加入持续噪声/)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
+      target: { value: "75" }
+    });
+
+    expect(screen.getByText("效果强度：75%")).toBeInTheDocument();
+  });
+
+  it("opens metric detail modals from the listening metrics cards", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /听感与指标/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "打开听感与指标实验室"
+      })
+    );
+
+    await user.click(screen.getByRole("button", { name: /LUFS/ }));
+
+    const modal = screen.getByRole("dialog", { name: "LUFS 详细介绍" });
+    expect(within(modal).getByRole("heading", { name: "LUFS 详细介绍" })).toBeInTheDocument();
+    expect(within(modal).getByText(/面向人耳感知的节目响度指标/)).toBeInTheDocument();
+    expect(within(modal).getByText(/不是瞬时峰值/)).toBeInTheDocument();
+
+    await user.click(within(modal).getByRole("button", { name: "关闭指标详情" }));
+
+    expect(screen.queryByRole("dialog", { name: "LUFS 详细介绍" })).not.toBeInTheDocument();
+  });
+
+  it("configures distinct audio processing for every listening effect", async () => {
+    const createdOscillators: Array<{
+      connect: ReturnType<typeof vi.fn>;
+      start: ReturnType<typeof vi.fn>;
+      stop: ReturnType<typeof vi.fn>;
+      frequency: { setValueAtTime: ReturnType<typeof vi.fn> };
+      type: OscillatorType;
+    }> = [];
+    const createdFilters: Array<{
+      connect: ReturnType<typeof vi.fn>;
+      frequency: { setValueAtTime: ReturnType<typeof vi.fn> };
+      gain: { setValueAtTime: ReturnType<typeof vi.fn> };
+      Q: { setValueAtTime: ReturnType<typeof vi.fn> };
+      type: BiquadFilterType;
+    }> = [];
+    const createdPanners: Array<{
+      connect: ReturnType<typeof vi.fn>;
+      pan: { setValueAtTime: ReturnType<typeof vi.fn> };
+    }> = [];
+    const createdWaveShapers: Array<{
+      connect: ReturnType<typeof vi.fn>;
+      curve: Float32Array | null;
+      oversample: OverSampleType;
+    }> = [];
+    const createdCompressors: Array<{
+      connect: ReturnType<typeof vi.fn>;
+      threshold: { setValueAtTime: ReturnType<typeof vi.fn> };
+      knee: { setValueAtTime: ReturnType<typeof vi.fn> };
+      ratio: { setValueAtTime: ReturnType<typeof vi.fn> };
+      attack: { setValueAtTime: ReturnType<typeof vi.fn> };
+      release: { setValueAtTime: ReturnType<typeof vi.fn> };
+    }> = [];
+    const bufferData = new Float32Array(4410);
+    const bufferSource = {
+      connect: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn(),
+      buffer: null as AudioBuffer | null,
+      loop: false
+    };
+    const audioContext = {
+      currentTime: 0,
+      destination: {},
+      createOscillator: vi.fn(() => {
+        const oscillator = {
+          connect: vi.fn(),
+          start: vi.fn(),
+          stop: vi.fn(),
+          frequency: { setValueAtTime: vi.fn() },
+          type: "sine" as OscillatorType
+        };
+        createdOscillators.push(oscillator);
+        return oscillator;
+      }),
+      createGain: vi.fn(() => ({
+        connect: vi.fn(),
+        gain: {
+          setValueAtTime: vi.fn(),
+          linearRampToValueAtTime: vi.fn()
+        }
+      })),
+      createBiquadFilter: vi.fn(() => {
+        const filter = {
+          connect: vi.fn(),
+          frequency: { setValueAtTime: vi.fn() },
+          gain: { setValueAtTime: vi.fn() },
+          Q: { setValueAtTime: vi.fn() },
+          type: "peaking" as BiquadFilterType
+        };
+        createdFilters.push(filter);
+        return filter;
+      }),
+      createStereoPanner: vi.fn(() => {
+        const panner = {
+          connect: vi.fn(),
+          pan: { setValueAtTime: vi.fn() }
+        };
+        createdPanners.push(panner);
+        return panner;
+      }),
+      createWaveShaper: vi.fn(() => {
+        const waveShaper = {
+          connect: vi.fn(),
+          curve: null as Float32Array | null,
+          oversample: "none" as OverSampleType
+        };
+        createdWaveShapers.push(waveShaper);
+        return waveShaper;
+      }),
+      createDynamicsCompressor: vi.fn(() => {
+        const compressor = {
+          connect: vi.fn(),
+          threshold: { setValueAtTime: vi.fn() },
+          knee: { setValueAtTime: vi.fn() },
+          ratio: { setValueAtTime: vi.fn() },
+          attack: { setValueAtTime: vi.fn() },
+          release: { setValueAtTime: vi.fn() }
+        };
+        createdCompressors.push(compressor);
+        return compressor;
+      }),
+      createBuffer: vi.fn(() => ({
+        getChannelData: vi.fn(() => bufferData)
+      })),
+      createBufferSource: vi.fn(() => bufferSource),
+      close: vi.fn()
+    };
+    Object.defineProperty(window, "AudioContext", {
+      configurable: true,
+      value: vi.fn(() => audioContext)
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /听感与指标/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "打开听感与指标实验室"
+      })
+    );
+
+    await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    expect(createdFilters[createdFilters.length - 1]?.type).toBe("highshelf");
+    expect(createdFilters[createdFilters.length - 1]?.frequency.setValueAtTime).toHaveBeenLastCalledWith(3600, 0);
+
+    await user.click(screen.getByRole("button", { name: "浑浊低中频" }));
+    await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    expect(createdFilters[createdFilters.length - 1]?.type).toBe("lowshelf");
+    expect(createdFilters[createdFilters.length - 1]?.frequency.setValueAtTime).toHaveBeenLastCalledWith(260, 0);
+
+    await user.click(screen.getByRole("button", { name: "噪声底噪" }));
+    await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    expect(audioContext.createBufferSource).toHaveBeenCalled();
+    expect(audioContext.createBuffer).toHaveBeenCalledWith(1, 4410, 44100);
+    expect(bufferData.some((sample) => sample !== 0)).toBe(true);
+
+    await user.click(screen.getByRole("button", { name: "谐波失真" }));
+    await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    expect(audioContext.createWaveShaper).toHaveBeenCalled();
+    expect(createdWaveShapers[createdWaveShapers.length - 1]?.curve).toBeInstanceOf(Float32Array);
+    expect(createdWaveShapers[createdWaveShapers.length - 1]?.oversample).toBe("4x");
+
+    await user.click(screen.getByRole("button", { name: "动态压缩" }));
+    await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    expect(audioContext.createDynamicsCompressor).toHaveBeenCalled();
+    expect(createdCompressors[createdCompressors.length - 1]?.ratio.setValueAtTime).toHaveBeenLastCalledWith(expect.any(Number), 0);
+
+    await user.click(screen.getByRole("button", { name: "声像偏移" }));
+    await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    expect(createdPanners[createdPanners.length - 1]?.pan.setValueAtTime).toHaveBeenLastCalledWith(expect.any(Number), 0);
+  });
+
+  it("changes distortion and compression processing when effect intensity changes", async () => {
+    const createdWaveShapers: Array<{
+      connect: ReturnType<typeof vi.fn>;
+      curve: Float32Array | null;
+      oversample: OverSampleType;
+    }> = [];
+    const createdCompressors: Array<{
+      connect: ReturnType<typeof vi.fn>;
+      threshold: { setValueAtTime: ReturnType<typeof vi.fn> };
+      knee: { setValueAtTime: ReturnType<typeof vi.fn> };
+      ratio: { setValueAtTime: ReturnType<typeof vi.fn> };
+      attack: { setValueAtTime: ReturnType<typeof vi.fn> };
+      release: { setValueAtTime: ReturnType<typeof vi.fn> };
+    }> = [];
+    const audioContext = {
+      currentTime: 0,
+      destination: {},
+      sampleRate: 44100,
+      createOscillator: vi.fn(() => ({
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        frequency: { setValueAtTime: vi.fn() },
+        type: "sine" as OscillatorType
+      })),
+      createGain: vi.fn(() => ({
+        connect: vi.fn(),
+        gain: {
+          setValueAtTime: vi.fn(),
+          linearRampToValueAtTime: vi.fn()
+        }
+      })),
+      createBiquadFilter: vi.fn(() => ({
+        connect: vi.fn(),
+        frequency: { setValueAtTime: vi.fn() },
+        gain: { setValueAtTime: vi.fn() },
+        Q: { setValueAtTime: vi.fn() },
+        type: "peaking" as BiquadFilterType
+      })),
+      createStereoPanner: vi.fn(() => ({
+        connect: vi.fn(),
+        pan: { setValueAtTime: vi.fn() }
+      })),
+      createWaveShaper: vi.fn(() => {
+        const waveShaper = {
+          connect: vi.fn(),
+          curve: null as Float32Array | null,
+          oversample: "none" as OverSampleType
+        };
+        createdWaveShapers.push(waveShaper);
+        return waveShaper;
+      }),
+      createDynamicsCompressor: vi.fn(() => {
+        const compressor = {
+          connect: vi.fn(),
+          threshold: { setValueAtTime: vi.fn() },
+          knee: { setValueAtTime: vi.fn() },
+          ratio: { setValueAtTime: vi.fn() },
+          attack: { setValueAtTime: vi.fn() },
+          release: { setValueAtTime: vi.fn() }
+        };
+        createdCompressors.push(compressor);
+        return compressor;
+      }),
+      createBuffer: vi.fn(() => ({
+        getChannelData: vi.fn(() => new Float32Array(4410))
+      })),
+      createBufferSource: vi.fn(() => ({
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        buffer: null as AudioBuffer | null,
+        loop: false
+      })),
+      close: vi.fn()
+    };
+    Object.defineProperty(window, "AudioContext", {
+      configurable: true,
+      value: vi.fn(() => audioContext)
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /听感与指标/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "打开听感与指标实验室"
+      })
+    );
+    await user.click(screen.getByRole("button", { name: "谐波失真" }));
+
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
+      target: { value: "5" }
+    });
+    await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    const lowDistortionCurve = createdWaveShapers[createdWaveShapers.length - 1]?.curve;
+
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
+      target: { value: "100" }
+    });
+    await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    const highDistortionCurve = createdWaveShapers[createdWaveShapers.length - 1]?.curve;
+
+    expect(lowDistortionCurve?.[384]).toBeGreaterThan(0.45);
+    expect(highDistortionCurve?.[384]).toBeGreaterThan(lowDistortionCurve?.[384] ?? 0);
+
+    await user.click(screen.getByRole("button", { name: "动态压缩" }));
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
+      target: { value: "5" }
+    });
+    await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    const lowCompressor = createdCompressors[createdCompressors.length - 1];
+
+    expect(lowCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-10.65, 0);
+    expect(lowCompressor?.ratio.setValueAtTime).toHaveBeenLastCalledWith(1.85, 0);
+
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
+      target: { value: "100" }
+    });
+
+    expect(lowCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-42, 0);
+    expect(lowCompressor?.ratio.setValueAtTime).toHaveBeenLastCalledWith(18, 0);
+
+    await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    const highCompressor = createdCompressors[createdCompressors.length - 1];
+
+    expect(highCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-42, 0);
+    expect(highCompressor?.ratio.setValueAtTime).toHaveBeenLastCalledWith(18, 0);
+
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
+      target: { value: "30" }
+    });
+
+    expect(highCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-18.9, 0);
+    expect(highCompressor?.ratio.setValueAtTime).toHaveBeenLastCalledWith(6.1, 0);
   });
 });
