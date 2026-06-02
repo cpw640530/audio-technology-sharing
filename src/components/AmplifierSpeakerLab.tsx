@@ -1,3 +1,5 @@
+import { ArrowLeft } from "lucide-react";
+
 import type { Language } from "../content/knowledge";
 
 type AmplifierSpeakerLabProps = {
@@ -12,14 +14,17 @@ const chainLabels = {
 
 export function AmplifierSpeakerLab({ language, onBack }: AmplifierSpeakerLabProps) {
   return (
-    <main className="lab-page amp-lab">
-      <section className="lab-hero">
-        <button className="lab-back-button" type="button" onClick={onBack}>
+    <main className="codec-lab-page amp-lab">
+      <section className="sound-lab-hero" aria-labelledby="amplifier-speaker-lab-title">
+        <button className="sound-lab-back" type="button" onClick={onBack}>
+          <ArrowLeft size={18} aria-hidden="true" />
           {language === "zh" ? "返回知识库" : "Back to knowledge base"}
         </button>
         <div>
           <span className="section-kicker">{language === "zh" ? "硬件实验" : "Hardware lab"}</span>
-          <h1>{language === "zh" ? "功放与扬声器实验室" : "Amplifier and Speaker Lab"}</h1>
+          <h1 id="amplifier-speaker-lab-title">
+            {language === "zh" ? "功放与扬声器实验室" : "Amplifier and Speaker Lab"}
+          </h1>
           <p>
             {language === "zh"
               ? "观察小信号如何变成功率输出、振膜运动和空气声波，并试听常见功放与扬声器问题。"

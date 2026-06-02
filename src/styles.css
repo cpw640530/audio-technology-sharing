@@ -1202,6 +1202,39 @@ body.details-open {
   padding: clamp(16px, 3vw, 26px);
 }
 
+.amp-lab-chain {
+  align-items: stretch;
+  background: #17211f;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: clamp(14px, 2vw, 20px);
+}
+
+.amp-chain-node {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #ffffff;
+  display: flex;
+  font-weight: 760;
+  gap: 10px;
+  justify-content: space-between;
+  min-height: 64px;
+  padding: 12px 14px;
+}
+
+.amp-chain-node strong {
+  color: #7ee7d8;
+  flex: 0 0 auto;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
 .codec-mode-concepts {
   background: rgba(255, 255, 255, 0.045);
   border: 1px solid rgba(255, 255, 255, 0.09);
@@ -2426,6 +2459,10 @@ body.details-open {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .amp-lab-chain {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .pcm-word-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2480,6 +2517,7 @@ body.details-open {
   .mic-knowledge-grid,
   .codec-concept-grid,
   .codec-table,
+  .amp-lab-chain,
   .pcm-word-grid,
   .listening-metric-cards,
   .metric-modal-grid {
