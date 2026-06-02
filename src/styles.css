@@ -1610,6 +1610,66 @@ body.details-open {
   margin: 0;
 }
 
+.amp-principle-panel {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+}
+
+.amp-principle-header {
+  display: grid;
+  gap: 4px;
+}
+
+.amp-principle-header span {
+  color: #7ee7d8;
+  font-size: 0.82rem;
+  font-weight: 820;
+}
+
+.amp-principle-header h2 {
+  color: #ffffff;
+  font-size: 1.15rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.amp-principle-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.amp-principle-card {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.amp-principle-card.principle {
+  background: rgba(126, 231, 216, 0.09);
+  border-color: rgba(126, 231, 216, 0.22);
+  grid-column: 1 / -1;
+}
+
+.amp-principle-card strong {
+  color: #ffffff;
+  font-size: 0.92rem;
+}
+
+.amp-principle-card p {
+  color: #b8cbc6;
+  line-height: 1.62;
+  margin: 0;
+}
+
 .amp-effect-list {
   display: grid;
   gap: 10px;
@@ -1725,7 +1785,9 @@ body.details-open {
   color: #dbe8e4;
   display: grid;
   gap: 12px;
+  max-height: calc(100vh - 48px);
   max-width: 560px;
+  overflow-y: auto;
   padding: clamp(18px, 3vw, 26px);
   width: min(100%, 560px);
 }
@@ -2006,7 +2068,11 @@ body.details-open {
 }
 
 .amp-matching-arrow {
+  fill: none;
   marker-end: url("#ampMatchArrow");
+  stroke: #f0b46a;
+  stroke-linecap: round;
+  stroke-width: 3;
 }
 
 .interface-node,
@@ -2062,8 +2128,23 @@ body.details-open {
   stroke-width: 5;
 }
 
+.amp-flow-centerline {
+  stroke: rgba(220, 236, 232, 0.24);
+  stroke-dasharray: 8 8;
+  stroke-width: 2;
+}
+
+.amp-flow-arrow {
+  fill: none;
+  marker-end: url("#ampFlowArrow");
+  stroke: #f0b46a;
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+
 .amp-block,
-.amp-match-node {
+.amp-match-node,
+.amp-match-card {
   fill: rgba(126, 231, 216, 0.13);
   stroke: rgba(126, 231, 216, 0.45);
   stroke-width: 2;
@@ -2093,8 +2174,45 @@ body.details-open {
   stroke-width: 3;
 }
 
+.amp-cone.small {
+  fill: rgba(220, 236, 232, 0.16);
+  stroke-width: 2;
+}
+
 .amp-air-wave {
   stroke-width: 4;
+}
+
+.amp-speaker-arrow {
+  fill: none;
+  marker-end: url("#speakerFlowArrow");
+  stroke: #f0b46a;
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+
+.amp-enclosure-arrow {
+  fill: none;
+  marker-end: url("#enclosureFlowArrow");
+  stroke: #f0b46a;
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+
+.amp-motion-line {
+  marker-end: url("#speakerFlowArrow");
+  stroke: #f0b46a;
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+
+.amp-motion-line.reverse {
+  marker-start: url("#speakerFlowArrow");
+  marker-end: none;
+}
+
+.amp-flow-note {
+  text-anchor: start;
 }
 
 .amp-speaker-box {
@@ -2113,6 +2231,18 @@ body.details-open {
   fill: rgba(240, 180, 106, 0.16);
   stroke: #f0b46a;
   stroke-width: 3;
+}
+
+.amp-port {
+  fill: none;
+  stroke: #f0b46a;
+  stroke-linecap: round;
+  stroke-width: 8;
+}
+
+.amp-match-divider {
+  stroke: rgba(220, 236, 232, 0.28);
+  stroke-width: 1.5;
 }
 
 .listening-effect-grid {
@@ -2811,6 +2941,7 @@ body.details-open {
 
   .waveform-tabs,
   .listening-effect-grid,
+  .amp-principle-grid,
   .mic-principle-tabs,
   .mic-example-grid,
   .lab-concepts,

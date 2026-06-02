@@ -455,37 +455,85 @@ describe("Audio knowledge app", () => {
     );
 
     expect(screen.getByRole("button", { name: "功放类型" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("img", { name: "Class D 功放图解" })).toBeInTheDocument();
-    expect(screen.getByText("PWM 开关输出")).toBeInTheDocument();
-    expect(screen.getByText("输出滤波 / 扬声器负载")).toBeInTheDocument();
+    const classDChart = screen.getByRole("img", { name: "Class D 功放图解" });
+    expect(classDChart).toBeInTheDocument();
+    expect(within(classDChart).getByText("从左到右：输入小信号 → 功放工作方式 → 功率输出 → 扬声器负载")).toBeInTheDocument();
+    expect(within(classDChart).getByText("同一条中线表示同一个时间基准，方便比较波形如何变化")).toBeInTheDocument();
+    expect(within(classDChart).getByText("输入小信号")).toBeInTheDocument();
+    expect(within(classDChart).getByText("功放工作方式")).toBeInTheDocument();
+    expect(within(classDChart).getByText("功率输出")).toBeInTheDocument();
+    expect(within(classDChart).getByText("扬声器负载")).toBeInTheDocument();
+    expect(within(classDChart).getByText("PWM 开关输出")).toBeInTheDocument();
+    expect(within(classDChart).getByText("滤波后推动扬声器")).toBeInTheDocument();
+    let ampPrinciple = screen.getByRole("region", { name: "Class D 基本原理" });
+    expect(within(ampPrinciple).getByRole("heading", { name: "Class D 基本原理" })).toBeInTheDocument();
+    expect(within(ampPrinciple).getByText(/音频信号先变成 PWM 或类似的高速开关脉冲/)).toBeInTheDocument();
+    expect(within(ampPrinciple).getByText("优势：效率高、发热低，适合电池供电和小体积设备。")).toBeInTheDocument();
+    expect(within(ampPrinciple).getByText("注意：需要输出滤波，并关注 EMI、电源和 PCB 布局。")).toBeInTheDocument();
+    expect(within(ampPrinciple).getByText("常见：蓝牙音箱、手机、电视、便携设备和高效率大功率功放。")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Class A" }));
-    expect(screen.getByRole("img", { name: "Class A 功放图解" })).toBeInTheDocument();
-    expect(screen.getByText("线性连续输出")).toBeInTheDocument();
+    const classAChart = screen.getByRole("img", { name: "Class A 功放图解" });
+    expect(classAChart).toBeInTheDocument();
+    expect(within(classAChart).getByText("线性连续输出")).toBeInTheDocument();
     expect(screen.getByText("Class A：器件几乎一直导通，线性好但效率低")).toBeInTheDocument();
+    ampPrinciple = screen.getByRole("region", { name: "Class A 基本原理" });
+    expect(within(ampPrinciple).getByText(/输出器件始终处在导通区/)).toBeInTheDocument();
+    expect(within(ampPrinciple).getByText("优势：线性好，交越失真少，声音细节容易保持。")).toBeInTheDocument();
+    expect(within(ampPrinciple).getByText("注意：静态电流大，效率低，发热明显。")).toBeInTheDocument();
+    expect(within(ampPrinciple).getByText("常见：小功率高保真、耳放、前级或偏重音质的线性电路。")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Class AB" }));
-    expect(screen.getByRole("img", { name: "Class AB 功放图解" })).toBeInTheDocument();
-    expect(screen.getByText("正负半周交替输出")).toBeInTheDocument();
+    const classAbChart = screen.getByRole("img", { name: "Class AB 功放图解" });
+    expect(classAbChart).toBeInTheDocument();
+    expect(within(classAbChart).getByText("正负半周交替输出")).toBeInTheDocument();
     expect(screen.getByText("Class AB：正负半周分担输出，效率和失真折中")).toBeInTheDocument();
+    ampPrinciple = screen.getByRole("region", { name: "Class AB 基本原理" });
+    expect(within(ampPrinciple).getByText(/正半周和负半周主要由上下两组输出器件分担/)).toBeInTheDocument();
+    expect(within(ampPrinciple).getByText("优势：比 Class A 效率高，又比纯 B 类更容易控制交越失真。")).toBeInTheDocument();
+    expect(within(ampPrinciple).getByText("注意：偏置设置不好会有交越失真，仍有一定发热。")).toBeInTheDocument();
+    expect(within(ampPrinciple).getByText("常见：传统音箱功放、车载功放和较多线性功放。")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "扬声器单元" }));
-    expect(screen.getByRole("img", { name: "动圈扬声器结构图" })).toBeInTheDocument();
-    expect(screen.getByText("音圈")).toBeInTheDocument();
-    expect(screen.getByText("磁路")).toBeInTheDocument();
-    expect(screen.getByText("振膜运动")).toBeInTheDocument();
+    const speakerChart = screen.getByRole("img", { name: "动圈扬声器结构图" });
+    expect(speakerChart).toBeInTheDocument();
+    expect(within(speakerChart).getByText("从左到右：电流输入 → 音圈受力 → 振膜运动 → 空气声波")).toBeInTheDocument();
+    expect(within(speakerChart).getByText("这张图看的是电能如何变成机械运动和声波")).toBeInTheDocument();
+    expect(within(speakerChart).getByText("电流输入")).toBeInTheDocument();
+    expect(within(speakerChart).getByText("音圈受力")).toBeInTheDocument();
+    expect(within(speakerChart).getByText("振膜运动")).toBeInTheDocument();
+    expect(within(speakerChart).getByText("空气声波")).toBeInTheDocument();
+    expect(Number(within(speakerChart).getByText("电流在磁场中产生推/拉力").getAttribute("y"))).toBeGreaterThan(320);
+    expect(Number(within(speakerChart).getByText("振膜前后运动，压缩/稀疏空气").getAttribute("y"))).toBeGreaterThan(344);
 
     await user.click(screen.getByRole("button", { name: "箱体与分频" }));
-    expect(screen.getByRole("img", { name: "箱体与分频图解" })).toBeInTheDocument();
-    expect(screen.getByText("低音单元")).toBeInTheDocument();
-    expect(screen.getByText("高音单元")).toBeInTheDocument();
-    expect(screen.getByText("分频点")).toBeInTheDocument();
+    const enclosureChart = screen.getByRole("img", { name: "箱体与分频图解" });
+    expect(enclosureChart).toBeInTheDocument();
+    expect(within(enclosureChart).getByText("从左到右：全频信号 → 分频器 → 低音/高音单元 → 箱体声学")).toBeInTheDocument();
+    expect(within(enclosureChart).getByText("分频器决定谁负责低频、谁负责高频")).toBeInTheDocument();
+    expect(within(enclosureChart).getByText("全频信号")).toBeInTheDocument();
+    expect(within(enclosureChart).getByText("分频器")).toBeInTheDocument();
+    expect(within(enclosureChart).getByText("低频通路")).toBeInTheDocument();
+    expect(within(enclosureChart).getByText("高频通路")).toBeInTheDocument();
+    expect(within(enclosureChart).getByText("箱体低频响应")).toBeInTheDocument();
+    expect(Number(within(enclosureChart).getByText("箱体低频响应").getAttribute("x"))).toBeLessThan(646);
+    expect(Number(within(enclosureChart).getByText("密闭 / 倒相会影响低频").getAttribute("y"))).toBeGreaterThan(346);
+    expect(Number(within(enclosureChart).getByText("腔体容积会改变共振").getAttribute("y"))).toBeGreaterThan(
+      Number(within(enclosureChart).getByText("密闭 / 倒相会影响低频").getAttribute("y")) + 16
+    );
 
     await user.click(screen.getByRole("button", { name: "匹配关系" }));
-    expect(screen.getByRole("img", { name: "功放扬声器匹配图" })).toBeInTheDocument();
-    expect(screen.getByText("功率")).toBeInTheDocument();
-    expect(screen.getByText("阻抗")).toBeInTheDocument();
-    expect(screen.getByText("灵敏度")).toBeInTheDocument();
+    const matchingChart = screen.getByRole("img", { name: "功放扬声器匹配图" });
+    expect(matchingChart).toBeInTheDocument();
+    expect(within(matchingChart).getByText("不是信号流，而是三个参数共同决定结果")).toBeInTheDocument();
+    expect(within(matchingChart).getByText("功率")).toBeInTheDocument();
+    expect(within(matchingChart).getByText("阻抗")).toBeInTheDocument();
+    expect(within(matchingChart).getByText("灵敏度")).toBeInTheDocument();
+    expect(within(matchingChart).getByText("实际声压")).toBeInTheDocument();
+    expect(within(matchingChart).getByText("失真 / 保护风险")).toBeInTheDocument();
+    expect(Number(within(matchingChart).getByText("失真 / 保护风险").getAttribute("y"))).toBeLessThan(244);
+    expect(Number(within(matchingChart).getByText("功率过小会削波，阻抗过低会过流").getAttribute("y"))).toBeLessThan(286);
+    expect(Number(within(matchingChart).getByText("目标：够响、不破音、不过热").getAttribute("y"))).toBeGreaterThan(348);
   });
 
   it("plays amplifier speaker effects and stops the previous effect when switching", async () => {
