@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
 import type { Language } from "../content/knowledge";
 
 type DiagramMode = "amplifier" | "speaker" | "enclosure" | "matching";
 type AmpClass = "class-a" | "class-ab" | "class-d";
+type EffectMode = "clipping" | "harmonics" | "bass-loss" | "cabinet-resonance" | "limiter";
+
+type PlaybackHandle = {
+  stop: () => void;
+};
 
 type AmplifierSpeakerLabProps = {
   language: Language;
@@ -49,6 +54,214 @@ const ampClasses: Array<{ id: AmpClass; label: string; copy: Record<Language, st
     }
   }
 ];
+
+const effects: Array<{
+  id: EffectMode;
+  label: Record<Language, string>;
+  description: Record<Language, string>;
+  detail: Record<Language, { cause: string; sound: string; fix: string }>;
+}> = [
+  {
+    id: "clipping",
+    label: { zh: "削波失真", en: "Clipping" },
+    description: { zh: "波峰被压平，声音变硬、刺耳。", en: "Peaks flatten, making sound hard and harsh." },
+    detail: {
+      zh: {
+        cause: "波形超过功放或数字链路允许范围，输出无法继续跟随输入。",
+        sound: "听感常见为刺耳、粗糙、瞬态发毛，严重时像破音。",
+        fix: "降低增益、提高供电余量、换更合适的功放/扬声器匹配或启用软限幅。"
+      },
+      en: {
+        cause: "The waveform exceeds the amplifier or digital path headroom, so output can no longer follow input.",
+        sound: "It sounds harsh, rough, and broken on peaks.",
+        fix: "Reduce gain, improve headroom, match amplifier and speaker, or use soft limiting."
+      }
+    }
+  },
+  {
+    id: "harmonics",
+    label: { zh: "谐波失真", en: "Harmonic distortion" },
+    description: { zh: "非线性产生额外倍频成分。", en: "Nonlinearity adds extra multiples of the tone." },
+    detail: {
+      zh: {
+        cause: "功放输出级、扬声器悬边、磁路或振膜在大信号下不再完全线性。",
+        sound: "少量低阶谐波可能只觉得变厚，过多会变浑、变脏或刺耳。",
+        fix: "降低工作强度、优化单元和箱体、使用失真更低的功放或保护曲线。"
+      },
+      en: {
+        cause: "The amplifier stage or speaker mechanics become nonlinear at higher levels.",
+        sound: "Small low-order harmonics can sound thicker; too much sounds dirty or harsh.",
+        fix: "Reduce level, improve driver/enclosure design, or use a lower-distortion amplifier/protection curve."
+      }
+    }
+  },
+  {
+    id: "bass-loss",
+    label: { zh: "低频不足", en: "Bass loss" },
+    description: { zh: "低频被削弱，声音变薄。", en: "Bass is reduced and the sound becomes thin." },
+    detail: {
+      zh: {
+        cause: "小扬声器振膜面积、行程和箱体容积有限，低频无法产生足够声压。",
+        sound: "鼓和贝斯缺少重量，人声可能偏薄。",
+        fix: "增大单元/箱体、改善密封和倒相设计，或用 DSP 在安全范围内补偿。"
+      },
+      en: {
+        cause: "Small drivers have limited area, excursion, and enclosure volume, so bass SPL is limited.",
+        sound: "Kick and bass lose weight; voices may sound thin.",
+        fix: "Use a larger driver/enclosure, improve sealing or porting, or apply DSP within safe limits."
+      }
+    }
+  },
+  {
+    id: "cabinet-resonance",
+    label: { zh: "箱体共振", en: "Enclosure resonance" },
+    description: { zh: "某一段频率被突出，出现嗡、闷或箱声。", en: "A narrow band is emphasized, causing boom or boxiness." },
+    detail: {
+      zh: {
+        cause: "箱体、腔体、出音孔或结构件在某个频率附近发生共振。",
+        sound: "声音有明显嗡声、闷声或某个音总是特别突出。",
+        fix: "优化箱体容积、加强结构、加入吸音材料、调整 EQ 或分频。"
+      },
+      en: {
+        cause: "The enclosure, cavity, vent, or mechanical parts resonate around a frequency.",
+        sound: "The sound becomes boomy, boxy, or dominated by one note.",
+        fix: "Adjust volume, stiffening, damping, EQ, or crossover design."
+      }
+    }
+  },
+  {
+    id: "limiter",
+    label: { zh: "动态保护 / 限幅", en: "Dynamic protection / limiting" },
+    description: { zh: "峰值被压低，避免破音、过热或过行程。", en: "Peaks are reduced to avoid clipping, heat, or over-excursion." },
+    detail: {
+      zh: {
+        cause: "小音箱或便携设备为了保护扬声器和功放，会在大音量时压低峰值。",
+        sound: "声音变稳但动态变小，鼓点和瞬态可能不够冲。",
+        fix: "优化保护参数、提升硬件余量，或降低目标响度。"
+      },
+      en: {
+        cause: "Small speakers or portable devices reduce peaks to protect the driver and amplifier.",
+        sound: "The sound is safer but less dynamic; transients lose impact.",
+        fix: "Tune protection, increase hardware headroom, or reduce target loudness."
+      }
+    }
+  }
+];
+
+function createClippingCurve(strength: number) {
+  const samples = 1024;
+  const curve = new Float32Array(samples);
+  const drive = 1 + strength * 24;
+
+  for (let index = 0; index < samples; index += 1) {
+    const x = (index / (samples - 1)) * 2 - 1;
+    curve[index] = Math.tanh(x * drive);
+  }
+
+  return curve;
+}
+
+function getAudioContext() {
+  const AudioContextConstructor =
+    window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
+  return AudioContextConstructor ? new AudioContextConstructor() : null;
+}
+
+function startEffectPlayback(effectMode: EffectMode, strengthPercent: number): PlaybackHandle | null {
+  const context = getAudioContext();
+
+  if (!context) {
+    return null;
+  }
+
+  const strength = strengthPercent / 100;
+  const source = context.createOscillator();
+  const inputGain = context.createGain();
+  const outputGain = context.createGain();
+
+  source.type = "sawtooth";
+  source.frequency.setValueAtTime(180, context.currentTime);
+  inputGain.gain.setValueAtTime(0.08 + strength * 0.14, context.currentTime);
+  outputGain.gain.setValueAtTime(0.18, context.currentTime);
+
+  if (effectMode === "clipping") {
+    const shaper = context.createWaveShaper();
+    shaper.curve = createClippingCurve(strength);
+    shaper.oversample = "4x";
+    source.connect(inputGain);
+    inputGain.connect(shaper);
+    shaper.connect(outputGain);
+  } else if (effectMode === "bass-loss") {
+    const highpass = context.createBiquadFilter();
+    highpass.type = "highpass";
+    highpass.frequency.setValueAtTime(120 + strength * 520, context.currentTime);
+    highpass.Q.setValueAtTime(0.8, context.currentTime);
+    source.connect(inputGain);
+    inputGain.connect(highpass);
+    highpass.connect(outputGain);
+  } else if (effectMode === "cabinet-resonance") {
+    const peak = context.createBiquadFilter();
+    peak.type = "peaking";
+    peak.frequency.setValueAtTime(180 + strength * 420, context.currentTime);
+    peak.Q.setValueAtTime(8 + strength * 14, context.currentTime);
+    peak.gain.setValueAtTime(4 + strength * 16, context.currentTime);
+    source.connect(inputGain);
+    inputGain.connect(peak);
+    peak.connect(outputGain);
+  } else if (effectMode === "limiter") {
+    const compressor = context.createDynamicsCompressor();
+    compressor.threshold.setValueAtTime(-18 - strength * 28, context.currentTime);
+    compressor.knee.setValueAtTime(6, context.currentTime);
+    compressor.ratio.setValueAtTime(4 + strength * 14, context.currentTime);
+    compressor.attack.setValueAtTime(0.004, context.currentTime);
+    compressor.release.setValueAtTime(0.18, context.currentTime);
+    source.connect(inputGain);
+    inputGain.connect(compressor);
+    compressor.connect(outputGain);
+  } else {
+    const second = context.createOscillator();
+    const third = context.createOscillator();
+    const secondGain = context.createGain();
+    const thirdGain = context.createGain();
+
+    second.type = "sine";
+    third.type = "sine";
+    second.frequency.setValueAtTime(360, context.currentTime);
+    third.frequency.setValueAtTime(540, context.currentTime);
+    secondGain.gain.setValueAtTime(0.02 + strength * 0.08, context.currentTime);
+    thirdGain.gain.setValueAtTime(0.01 + strength * 0.06, context.currentTime);
+    source.connect(inputGain);
+    inputGain.connect(outputGain);
+    second.connect(secondGain);
+    third.connect(thirdGain);
+    secondGain.connect(outputGain);
+    thirdGain.connect(outputGain);
+    outputGain.connect(context.destination);
+    source.start(0);
+    second.start(0);
+    third.start(0);
+
+    return {
+      stop: () => {
+        source.stop();
+        second.stop();
+        third.stop();
+        void context.close();
+      }
+    };
+  }
+
+  outputGain.connect(context.destination);
+  source.start(0);
+
+  return {
+    stop: () => {
+      source.stop();
+      void context.close();
+    }
+  };
+}
 
 function renderAmplifierDiagram(language: Language, ampClass: AmpClass) {
   const currentCopy = ampClasses.find((item) => item.id === ampClass)?.copy[language] ?? ampClasses[2].copy[language];
@@ -254,6 +467,50 @@ function renderDiagram({
 export function AmplifierSpeakerLab({ language, onBack }: AmplifierSpeakerLabProps) {
   const [diagramMode, setDiagramMode] = useState<DiagramMode>("amplifier");
   const [ampClass, setAmpClass] = useState<AmpClass>("class-d");
+  const [effectMode, setEffectMode] = useState<EffectMode>("clipping");
+  const [effectStrength, setEffectStrength] = useState(65);
+  const [activeInfo, setActiveInfo] = useState<EffectMode | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioUnsupported, setAudioUnsupported] = useState(false);
+  const playbackRef = useRef<PlaybackHandle | null>(null);
+
+  const activeInfoEffect = activeInfo ? effects.find((effect) => effect.id === activeInfo) : null;
+
+  function stopPlayback() {
+    playbackRef.current?.stop();
+    playbackRef.current = null;
+    setIsPlaying(false);
+  }
+
+  function selectEffect(nextEffect: EffectMode) {
+    stopPlayback();
+    setEffectMode(nextEffect);
+  }
+
+  function togglePlayback() {
+    if (isPlaying) {
+      stopPlayback();
+      return;
+    }
+
+    const playback = startEffectPlayback(effectMode, effectStrength);
+
+    if (!playback) {
+      setAudioUnsupported(true);
+      return;
+    }
+
+    playbackRef.current = playback;
+    setAudioUnsupported(false);
+    setIsPlaying(true);
+  }
+
+  useEffect(() => {
+    return () => {
+      playbackRef.current?.stop();
+      playbackRef.current = null;
+    };
+  }, []);
 
   return (
     <main className="codec-lab-page amp-lab">
@@ -328,7 +585,73 @@ export function AmplifierSpeakerLab({ language, onBack }: AmplifierSpeakerLabPro
 
           {renderDiagram({ language, diagramMode, ampClass })}
         </div>
+
+        <aside
+          className="amp-lab-effects"
+          aria-label={language === "zh" ? "功放扬声器音效演示" : "Amplifier speaker effect demos"}
+        >
+          <h2>{language === "zh" ? "可听音效演示" : "Listening demos"}</h2>
+          <div className="amp-effect-list">
+            {effects.map((effect) => (
+              <article className={effectMode === effect.id ? "amp-effect-card active" : "amp-effect-card"} key={effect.id}>
+                <button aria-pressed={effectMode === effect.id} type="button" onClick={() => selectEffect(effect.id)}>
+                  {effect.label[language]}
+                </button>
+                <p>{effect.description[language]}</p>
+                <button className="amp-info-button" type="button" onClick={() => setActiveInfo(effect.id)}>
+                  {language === "zh" ? `查看${effect.label.zh}说明` : `View ${effect.label.en} details`}
+                </button>
+              </article>
+            ))}
+          </div>
+
+          <label className="lab-slider">
+            <span>{language === "zh" ? "效果强度" : "Effect strength"}</span>
+            <input
+              aria-label={language === "zh" ? "效果强度" : "Effect strength"}
+              max="100"
+              min="0"
+              type="range"
+              value={effectStrength}
+              onChange={(event) => setEffectStrength(Number(event.target.value))}
+            />
+            <strong>{effectStrength}%</strong>
+          </label>
+
+          <button className="lab-play-button" type="button" onClick={togglePlayback}>
+            {isPlaying ? (language === "zh" ? "停止音效" : "Stop effect") : language === "zh" ? "播放音效" : "Play effect"}
+          </button>
+          <p className="amp-play-state">
+            {isPlaying ? (language === "zh" ? "播放中" : "Playing") : language === "zh" ? "已停止" : "Stopped"}
+          </p>
+          {audioUnsupported ? (
+            <p className="lab-warning">
+              {language === "zh"
+                ? "当前浏览器不支持 Web Audio，仍可查看图解。"
+                : "This browser does not support Web Audio; diagrams are still available."}
+            </p>
+          ) : null}
+        </aside>
       </section>
+
+      {activeInfoEffect ? (
+        <div className="effect-modal-layer">
+          <section
+            aria-label={`${activeInfoEffect.label[language]}${language === "zh" ? "说明" : " details"}`}
+            aria-modal="true"
+            className="effect-modal"
+            role="dialog"
+          >
+            <h2>{activeInfoEffect.label[language]}</h2>
+            <p>{activeInfoEffect.detail[language].cause}</p>
+            <p>{activeInfoEffect.detail[language].sound}</p>
+            <p>{activeInfoEffect.detail[language].fix}</p>
+            <button type="button" onClick={() => setActiveInfo(null)}>
+              {language === "zh" ? "关闭说明" : "Close details"}
+            </button>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

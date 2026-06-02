@@ -488,6 +488,99 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("灵敏度")).toBeInTheDocument();
   });
 
+  it("plays amplifier speaker effects and stops the previous effect when switching", async () => {
+    const createdOscillators: Array<{
+      connect: ReturnType<typeof vi.fn>;
+      start: ReturnType<typeof vi.fn>;
+      stop: ReturnType<typeof vi.fn>;
+      frequency: { setValueAtTime: ReturnType<typeof vi.fn> };
+      type: OscillatorType;
+    }> = [];
+    const audioContext = {
+      currentTime: 0,
+      destination: {},
+      createOscillator: vi.fn(() => {
+        const oscillator = {
+          connect: vi.fn(),
+          start: vi.fn(),
+          stop: vi.fn(),
+          frequency: { setValueAtTime: vi.fn() },
+          type: "sine" as OscillatorType
+        };
+        createdOscillators.push(oscillator);
+        return oscillator;
+      }),
+      createGain: vi.fn(() => ({
+        connect: vi.fn(),
+        gain: {
+          setValueAtTime: vi.fn(),
+          linearRampToValueAtTime: vi.fn()
+        }
+      })),
+      createWaveShaper: vi.fn(() => ({
+        connect: vi.fn(),
+        curve: null as Float32Array | null,
+        oversample: "none" as OverSampleType
+      })),
+      createBiquadFilter: vi.fn(() => ({
+        connect: vi.fn(),
+        frequency: { setValueAtTime: vi.fn() },
+        gain: { setValueAtTime: vi.fn() },
+        Q: { setValueAtTime: vi.fn() },
+        type: "lowpass" as BiquadFilterType
+      })),
+      createDynamicsCompressor: vi.fn(() => ({
+        connect: vi.fn(),
+        threshold: { setValueAtTime: vi.fn() },
+        knee: { setValueAtTime: vi.fn() },
+        ratio: { setValueAtTime: vi.fn() },
+        attack: { setValueAtTime: vi.fn() },
+        release: { setValueAtTime: vi.fn() }
+      })),
+      close: vi.fn()
+    };
+    Object.defineProperty(window, "AudioContext", {
+      configurable: true,
+      value: vi.fn(() => audioContext)
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /功放与扬声器/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "打开功放与扬声器实验室"
+      })
+    );
+
+    expect(screen.getByRole("button", { name: "削波失真" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(screen.getByRole("button", { name: "查看削波失真说明" }));
+    expect(screen.getByRole("dialog", { name: "削波失真说明" })).toBeInTheDocument();
+    expect(screen.getByText(/波形超过功放或数字链路允许范围/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "关闭说明" }));
+
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
+      target: { value: "82" }
+    });
+    await user.click(screen.getByRole("button", { name: "播放音效" }));
+    expect(audioContext.createWaveShaper).toHaveBeenCalled();
+    expect(createdOscillators[0]?.start).toHaveBeenCalledWith(0);
+    expect(screen.getByText("播放中")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "谐波失真" }));
+    expect(createdOscillators[0]?.stop).toHaveBeenCalled();
+    expect(screen.getByText("已停止")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "箱体共振" }));
+    await user.click(screen.getByRole("button", { name: "播放音效" }));
+    expect(audioContext.createBiquadFilter).toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "动态保护 / 限幅" }));
+    await user.click(screen.getByRole("button", { name: "播放音效" }));
+    expect(audioContext.createDynamicsCompressor).toHaveBeenCalled();
+  });
+
   it("places digital audio interfaces as a separate hardware topic", async () => {
     const user = userEvent.setup();
     render(<App />);
