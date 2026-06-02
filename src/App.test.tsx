@@ -434,12 +434,13 @@ describe("Audio knowledge app", () => {
 
     expect(screen.getByRole("heading", { name: "功放与扬声器实验室" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "功放与扬声器信号链" })).toBeInTheDocument();
-    expect(screen.getByText("DAC / Codec 输出")).toBeInTheDocument();
-    expect(screen.getByText("功放")).toBeInTheDocument();
-    expect(screen.getByText("分频 / 保护")).toBeInTheDocument();
-    expect(screen.getByText("扬声器单元")).toBeInTheDocument();
-    expect(screen.getByText("空气声波")).toBeInTheDocument();
+    const signalChain = screen.getByRole("region", { name: "功放与扬声器信号链" });
+    expect(signalChain).toBeInTheDocument();
+    expect(within(signalChain).getByText("DAC / Codec 输出")).toBeInTheDocument();
+    expect(within(signalChain).getByText("功放")).toBeInTheDocument();
+    expect(within(signalChain).getByText("分频 / 保护")).toBeInTheDocument();
+    expect(within(signalChain).getByText("扬声器单元")).toBeInTheDocument();
+    expect(within(signalChain).getByText("空气声波")).toBeInTheDocument();
   });
 
   it("switches amplifier speaker lab diagram modes and amplifier classes", async () => {
