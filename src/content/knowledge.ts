@@ -33,7 +33,8 @@ export type TopicLab = {
     | "amplifier-speaker"
     | "system-audio"
     | "audio-codec"
-    | "realtime-audio";
+    | "realtime-audio"
+    | "core-signal-processing";
   title: LocalizedText;
   description: LocalizedText;
   buttonLabel: LocalizedText;
@@ -1084,21 +1085,76 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "基础信号处理把音频从时间域、频率域和能量变化三个角度分析。FFT/STFT 用来观察频谱，滤波器和 EQ 用来改变频率能量，动态处理器用来控制响度和瞬态。",
-            en: "Core signal processing analyzes audio through time, frequency, and energy changes. FFT/STFT reveal spectra, filters and EQ reshape frequency energy, and dynamics processors control loudness and transients."
+            zh: "基础信号处理是传统 DSP 的基础入口：它把音频从时间域、频率域和能量变化三个角度分析，再用滤波、EQ、动态处理和变换域方法改变或提取声音特征。FFT/STFT 主要用于观察频谱和做分帧频域处理；滤波器和 EQ 改变不同频段的能量；压缩器和限幅器控制响度、瞬态和峰值。",
+            en: "Core signal processing is the entry point for traditional DSP: it analyzes audio through time, frequency, and energy changes, then uses filtering, EQ, dynamics processing, and transform-domain methods to modify sound or extract features. FFT/STFT mainly reveal spectra and enable framed frequency-domain processing; filters and EQ reshape frequency energy; compressors and limiters control loudness, transients, and peaks."
           },
-          keyConcepts: [
-            { zh: "窗口长度影响时间分辨率和频率分辨率，是 STFT 的核心取舍。", en: "Window length trades time resolution against frequency resolution, which is central to STFT." },
-            { zh: "滤波器的截止频率、斜率、Q 值决定频率响应形状。", en: "Filter cutoff frequency, slope, and Q determine the response shape." },
-            { zh: "压缩器、限幅器通过阈值、比率、启动和释放时间改变动态范围。", en: "Compressors and limiters alter dynamic range through threshold, ratio, attack, and release." }
+          termExplanations: [
+            {
+              name: { zh: "时间域", en: "Time domain" },
+              explanation: {
+                zh: "时间域直接看采样值随时间变化的波形，适合观察波形、周期、瞬态、包络、峰值、RMS 和是否削波。",
+                en: "The time domain shows sample values changing over time. It is useful for inspecting waveform shape, cycles, transients, envelope, peak level, RMS, and clipping."
+              }
+            },
+            {
+              name: { zh: "频率域", en: "Frequency domain" },
+              explanation: {
+                zh: "频率域把声音拆成不同频率的能量分布。FFT 会受到窗口长度、采样率和点数影响，频率分辨率越高，通常时间定位越粗。",
+                en: "The frequency domain decomposes sound into energy at different frequencies. FFT results depend on window length, sample rate, and point count; higher frequency resolution usually gives coarser time localization."
+              }
+            },
+            {
+              name: { zh: "STFT 分帧", en: "STFT framing" },
+              explanation: {
+                zh: "STFT 会把连续 PCM 切成短帧，每帧加窗后做 FFT。window size 和 hop size 决定时间分辨率、频率分辨率、延迟和计算量。",
+                en: "STFT cuts continuous PCM into short frames, applies a window, then runs FFT per frame. Window size and hop size determine time resolution, frequency resolution, latency, and compute cost."
+              }
+            },
+            {
+              name: { zh: "滤波器", en: "Filters" },
+              explanation: {
+                zh: "滤波器按频率选择保留或衰减声音，可做低通、高通、带通和陷波。FIR 和 IIR 的计算方式、相位、延迟和稳定性特征不同。",
+                en: "Filters keep or attenuate sound by frequency, such as low-pass, high-pass, band-pass, and notch. FIR and IIR differ in computation, phase behavior, delay, and stability."
+              }
+            },
+            {
+              name: { zh: "参数 EQ", en: "Parametric EQ" },
+              explanation: {
+                zh: "参数 EQ 本质上是一组可调滤波器。常见参数是 gain、frequency、Q，用来提升或削减某个中心频率附近的能量。",
+                en: "Parametric EQ is essentially a set of adjustable filters. Common parameters are gain, frequency, and Q, used to boost or cut energy around a center frequency."
+              }
+            },
+            {
+              name: { zh: "动态处理", en: "Dynamics processing" },
+              explanation: {
+                zh: "动态处理根据电平变化改变增益。压缩器和限幅器常用 threshold、ratio、attack、release、knee 控制响度、瞬态和峰值。",
+                en: "Dynamics processing changes gain according to signal level. Compressors and limiters use threshold, ratio, attack, release, and knee to control loudness, transients, and peaks."
+              }
+            }
           ],
+          keyConcepts: [
+            { zh: "基础 DSP 链路常见为：输入 PCM -> 分帧/加窗 -> FFT/STFT 分析 -> 频域处理或特征计算 -> IFFT/重叠相加 -> 输出 PCM。", en: "A common basic DSP chain is: input PCM -> framing/windowing -> FFT/STFT analysis -> frequency-domain processing or feature extraction -> IFFT/overlap-add -> output PCM." },
+            { zh: "窗口长度影响时间分辨率和频率分辨率，是 STFT 的核心取舍；hop size 还会影响延迟、平滑程度和计算量。", en: "Window length trades time resolution against frequency resolution, which is central to STFT; hop size also affects latency, smoothing, and compute cost." },
+            { zh: "滤波器的截止频率、斜率、Q 值决定频率响应形状；线性相位、最小相位和 IIR/FIR 选择会影响延迟和瞬态。", en: "Filter cutoff frequency, slope, and Q determine the response shape; linear-phase, minimum-phase, and IIR/FIR choices affect delay and transients." },
+            { zh: "EQ 是面向听感的滤波器组合，适合修正频段能量；动态处理器则根据电平包络改变增益，适合控制响度和峰值。", en: "EQ is a listener-facing filter set for reshaping band energy; dynamics processors change gain based on level envelope to control loudness and peaks." },
+            { zh: "传统 DSP 常以帧为单位工作，因此算法效果、实时延迟和 CPU 占用必须一起考虑。", en: "Traditional DSP often works frame by frame, so algorithm effect, real-time latency, and CPU load must be considered together." }
+          ],
+          lab: {
+            type: "core-signal-processing",
+            title: { zh: "基础信号处理实验室", en: "Core Signal Processing Lab" },
+            description: {
+              zh: "进入独立界面切换 STFT、滤波器/EQ 和动态处理视图，调节窗口、hop size、截止频率、Q、EQ 增益、阈值和 ratio，观察图形和关键指标如何变化。",
+              en: "Open an independent lab to switch between STFT, filter/EQ, and dynamics views, then adjust window, hop size, cutoff, Q, EQ gain, threshold, and ratio to see diagrams and metrics change."
+            },
+            buttonLabel: { zh: "打开基础信号处理实验室", en: "Open core signal processing lab" }
+          },
           misconception: {
-            zh: "FFT 只是分析工具，不会自动让声音变好；真正改变声音还需要滤波、增益、重建或其他处理策略。",
-            en: "FFT is an analysis tool and does not improve sound by itself; changing sound requires filtering, gain changes, reconstruction, or another processing strategy."
+            zh: "FFT 只是分析工具，不会自动让声音变好；真正改变声音还需要滤波、增益、重建或其他处理策略。压缩器不是 MP3/AAC 这类编码压缩，动态压缩改变的是电平范围；滤波器也不只是改变响度，还可能引入相位变化、延迟、振铃或削波后的失真。",
+            en: "FFT is an analysis tool and does not improve sound by itself; changing sound requires filtering, gain changes, reconstruction, or another processing strategy. A compressor is not MP3/AAC-style codec compression; dynamics compression changes level range. Filters also do more than change loudness: they can introduce phase shift, delay, ringing, or distortion after clipping."
           },
           contentDirection: {
-            zh: "适合做频谱瀑布图、滤波器响应交互控件和压缩器参数前后对比。",
-            en: "This fits spectrogram visuals, interactive filter response controls, and before-after compressor parameter examples."
+            zh: "适合继续做三个交互方向：频谱瀑布图解释 FFT/STFT，滤波器响应图调节 cutoff/Q/gain，压缩器前后对比展示 threshold、ratio、attack、release 对响度和瞬态的影响。",
+            en: "Good next interactive directions are: a spectrogram view for FFT/STFT, a filter-response control for cutoff/Q/gain, and a compressor before-after comparison showing how threshold, ratio, attack, and release affect loudness and transients."
           }
         }
       },

@@ -1021,6 +1021,414 @@ body.details-open {
   color: #ffffff;
 }
 
+.core-signal-tabs,
+.core-filter-tabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.core-filter-tabs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.core-signal-tabs button,
+.core-filter-tabs button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #dbe8e4;
+  cursor: pointer;
+  font-weight: 760;
+  min-height: 40px;
+  padding: 8px 10px;
+}
+
+.core-signal-tabs button.active,
+.core-filter-tabs button.active {
+  background: rgba(126, 231, 216, 0.18);
+  border-color: rgba(126, 231, 216, 0.42);
+  color: #ffffff;
+}
+
+.core-signal-visual {
+  min-height: 100%;
+}
+
+.core-flow-steps {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.core-flow-step {
+  align-items: start;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(126, 231, 216, 0.16);
+  border-radius: 8px;
+  color: #dbe8e4;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-width: 0;
+  padding: 12px;
+}
+
+.core-flow-step > span {
+  align-items: center;
+  background: rgba(126, 231, 216, 0.18);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 820;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+
+.core-flow-step strong {
+  color: #ffffff;
+  display: block;
+  font-size: 0.94rem;
+  line-height: 1.25;
+}
+
+.core-flow-step p {
+  color: #aebfba;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 4px 0 0;
+}
+
+.core-signal-controls {
+  align-content: start;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+}
+
+.sound-lab-control {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.sound-lab-control span {
+  color: #dbe8e4;
+  font-size: 0.9rem;
+  font-weight: 760;
+}
+
+.sound-lab-control input[type="range"] {
+  accent-color: #7ee7d8;
+  width: 100%;
+}
+
+.core-signal-metrics {
+  display: grid;
+  gap: 8px;
+}
+
+.core-signal-metrics strong {
+  background: rgba(126, 231, 216, 0.09);
+  border: 1px solid rgba(126, 231, 216, 0.18);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  padding: 10px 12px;
+}
+
+.core-signal-change-note {
+  background: rgba(240, 180, 106, 0.1);
+  border: 1px solid rgba(240, 180, 106, 0.2);
+  border-radius: 8px;
+  color: #ffe9c8;
+  line-height: 1.65;
+  margin: 0;
+  padding: 11px 12px;
+}
+
+.core-signal-chart {
+  min-height: 420px;
+}
+
+.core-signal-title {
+  fill: #ffffff;
+  font-size: 19px;
+  font-weight: 820;
+}
+
+.core-signal-window {
+  fill: rgba(126, 231, 216, 0.09);
+  stroke: rgba(126, 231, 216, 0.28);
+  stroke-width: 2;
+}
+
+.core-overlap-window {
+  fill: rgba(240, 180, 106, 0.08);
+  stroke: rgba(240, 180, 106, 0.28);
+  stroke-dasharray: 7 7;
+  stroke-width: 2;
+}
+
+.core-signal-hop {
+  fill: none;
+  stroke: #f0b46a;
+  stroke-linecap: round;
+  stroke-width: 6;
+}
+
+.core-signal-hop.muted {
+  opacity: 0.55;
+}
+
+.core-flow-node rect {
+  fill: rgba(255, 255, 255, 0.07);
+  stroke: rgba(126, 231, 216, 0.26);
+  stroke-width: 1.5;
+}
+
+.core-flow-node circle {
+  fill: rgba(126, 231, 216, 0.18);
+  stroke: rgba(126, 231, 216, 0.34);
+}
+
+.core-flow-node-index,
+.core-flow-node-title,
+.core-flow-node-detail,
+.core-diagram-caption,
+.core-filter-type-label {
+  dominant-baseline: middle;
+  text-anchor: middle;
+}
+
+.core-flow-node-index {
+  fill: #ffffff;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.core-flow-node-title {
+  fill: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.core-flow-node-detail {
+  fill: #aebfba;
+  font-size: 9.8px;
+  font-weight: 650;
+}
+
+.core-flow-arrow {
+  fill: none;
+  stroke: rgba(240, 180, 106, 0.68);
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+
+.core-mini-wave {
+  fill: none;
+  stroke: #dcece8;
+  stroke-linecap: round;
+  stroke-width: 4;
+}
+
+.core-sample-dot {
+  fill: #f0b46a;
+  stroke: rgba(255, 255, 255, 0.68);
+  stroke-width: 1.5;
+}
+
+.core-hann-window {
+  fill: none;
+  stroke: rgba(240, 180, 106, 0.86);
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+
+.core-diagram-caption {
+  fill: #ffffff;
+  font-size: 15px;
+  font-weight: 820;
+}
+
+.core-diagram-caption.small {
+  fill: #aebfba;
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.core-axis-label {
+  fill: #dcece8;
+  font-size: 10px;
+  font-weight: 760;
+}
+
+.core-axis-tick {
+  fill: #aebfba;
+  font-size: 9px;
+  font-weight: 760;
+}
+
+.core-spectrogram-panel {
+  fill: rgba(8, 16, 30, 0.68);
+  stroke: rgba(126, 231, 216, 0.18);
+  stroke-width: 1.2;
+}
+
+.core-spectrogram-cell {
+  stroke: rgba(8, 16, 30, 0.36);
+  stroke-width: 0.7;
+}
+
+.core-energy-legend .interface-tdm-note {
+  font-size: 10px;
+}
+
+.core-key-concepts {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(126, 231, 216, 0.14);
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.core-key-concept-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.core-key-concept-grid article {
+  background: rgba(8, 16, 30, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.core-key-concept-grid h3 {
+  color: #ffffff;
+  font-size: 0.98rem;
+  line-height: 1.35;
+  margin: 0 0 8px;
+}
+
+.core-key-concept-grid p {
+  color: #c6d5d1;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.core-key-concept-grid p + p {
+  margin-top: 8px;
+}
+
+.core-original-wave {
+  fill: none;
+  opacity: 0.68;
+  stroke: #dcece8;
+  stroke-linecap: round;
+  stroke-width: 3.5;
+}
+
+.core-filtered-wave {
+  fill: none;
+  stroke: #f0b46a;
+  stroke-linecap: round;
+  stroke-width: 4.5;
+}
+
+.core-spectrum-bar {
+  fill: #7ee7d8;
+  opacity: 0.9;
+}
+
+.core-spectrum-bar.muted {
+  fill: #dcece8;
+  opacity: 0.5;
+}
+
+.core-fft-box,
+.core-filter-type-box {
+  fill: rgba(240, 180, 106, 0.1);
+  stroke: rgba(240, 180, 106, 0.32);
+  stroke-width: 2;
+}
+
+.core-fft-symbol {
+  fill: none;
+  stroke: #f0b46a;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 5;
+}
+
+.core-filter-type-label {
+  fill: #ffffff;
+  font-size: 18px;
+  font-weight: 840;
+}
+
+.core-filter-fill {
+  fill: rgba(126, 231, 216, 0.09);
+}
+
+.core-q-band {
+  fill: rgba(240, 180, 106, 0.16);
+  stroke: rgba(240, 180, 106, 0.34);
+  stroke-dasharray: 5 5;
+  stroke-width: 1.5;
+}
+
+.core-eq-gain-line {
+  stroke: #ffcf8a;
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+
+.core-cutoff-marker {
+  stroke: #f0b46a;
+  stroke-dasharray: 7 7;
+  stroke-width: 3;
+}
+
+.core-dynamics-guide {
+  fill: none;
+  opacity: 0.28;
+  stroke: #dcece8;
+  stroke-dasharray: 8 8;
+  stroke-width: 2;
+}
+
+.core-dynamics-input {
+  fill: none;
+  opacity: 0.52;
+  stroke: #dcece8;
+  stroke-linecap: round;
+  stroke-width: 4;
+}
+
+.core-dynamics-output {
+  fill: none;
+  stroke: #f0b46a;
+  stroke-linecap: round;
+  stroke-width: 5;
+}
+
 .sound-lab-actions {
   align-items: center;
   display: flex;
@@ -1142,6 +1550,15 @@ body.details-open {
   width: 100%;
 }
 
+.core-signal-page {
+  display: grid;
+  gap: 24px;
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 34px clamp(18px, 4vw, 56px) 42px;
+  width: 100%;
+}
+
 .digital-lab-workbench {
   align-items: stretch;
   background: #17211f;
@@ -1236,6 +1653,23 @@ body.details-open {
   gap: 18px;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
   padding: clamp(16px, 3vw, 26px);
+}
+
+.core-signal-workbench {
+  background: #17211f;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
+  display: grid;
+  gap: 18px;
+  padding: clamp(16px, 3vw, 26px);
+}
+
+.core-signal-layout {
+  align-items: stretch;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
 }
 
 .system-audio-workbench {
@@ -3602,6 +4036,7 @@ body.details-open {
   .sound-lab-entry,
   .sound-lab-hero,
   .sound-lab-workbench,
+  .core-signal-layout,
   .audio-codec-workbench,
   .realtime-audio-workbench,
   .digital-lab-workbench,
@@ -3634,7 +4069,9 @@ body.details-open {
 
   .realtime-audio-metrics,
   .realtime-buffer-card-grid,
-  .realtime-rule-grid {
+  .realtime-rule-grid,
+  .core-flow-steps,
+  .core-key-concept-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -3699,6 +4136,7 @@ body.details-open {
   }
 
   .sound-lab-page,
+  .core-signal-page,
   .digital-lab-page,
   .listening-lab-page,
   .microphone-lab-page,
@@ -3708,6 +4146,8 @@ body.details-open {
   }
 
   .waveform-tabs,
+  .core-signal-tabs,
+  .core-filter-tabs,
   .listening-effect-grid,
   .amp-principle-grid,
   .mic-principle-tabs,
@@ -3719,6 +4159,8 @@ body.details-open {
   .realtime-buffer-card-grid,
   .realtime-control-grid,
   .realtime-rule-grid,
+  .core-flow-steps,
+  .core-key-concept-grid,
   .codec-table,
   .audio-codec-scenario-tabs,
   .audio-codec-table,

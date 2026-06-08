@@ -13,6 +13,7 @@ type TopicDetailsProps = {
   onOpenAmplifierSpeakerLab: () => void;
   onOpenAudioCodecLab: () => void;
   onOpenCodecLab: () => void;
+  onOpenCoreSignalProcessingLab: () => void;
   onOpenDigitalLab: () => void;
   onOpenDigitalInterfaceLab: () => void;
   onOpenListeningMetricsLab: () => void;
@@ -96,6 +97,7 @@ export function TopicDetails({
   onOpenAmplifierSpeakerLab,
   onOpenAudioCodecLab,
   onOpenCodecLab,
+  onOpenCoreSignalProcessingLab,
   onOpenDigitalLab,
   onOpenDigitalInterfaceLab,
   onOpenListeningMetricsLab,
@@ -234,6 +236,11 @@ export function TopicDetails({
 
                     if (topic.detail.lab?.type === "realtime-audio") {
                       onOpenRealtimeAudioLab();
+                      return;
+                    }
+
+                    if (topic.detail.lab?.type === "core-signal-processing") {
+                      onOpenCoreSignalProcessingLab();
                       return;
                     }
 

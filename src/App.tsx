@@ -3,6 +3,7 @@ import { AmplifierSpeakerLab } from "./components/AmplifierSpeakerLab";
 import { AudioCodecLab } from "./components/AudioCodecLab";
 import { CategoryTabs } from "./components/CategoryTabs";
 import { CodecHardwareLab } from "./components/CodecHardwareLab";
+import { CoreSignalProcessingLab } from "./components/CoreSignalProcessingLab";
 import { DigitalAudioLab } from "./components/DigitalAudioLab";
 import { DigitalInterfaceLab } from "./components/DigitalInterfaceLab";
 import { Header } from "./components/Header";
@@ -97,6 +98,7 @@ export default function App() {
     | "systemAudioLab"
     | "audioCodecLab"
     | "realtimeAudioLab"
+    | "coreSignalProcessingLab"
   >("knowledge");
   const [query, setQuery] = useState("");
   const [selectedTopic, setSelectedTopic] = useState<DisplayTopic | null>(null);
@@ -325,6 +327,24 @@ export default function App() {
     );
   }
 
+  if (activeView === "coreSignalProcessingLab") {
+    return (
+      <div className="app-shell">
+        <Header
+          language={language}
+          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+        />
+        <CoreSignalProcessingLab language={language} onBack={() => setActiveView("knowledge")} />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+          <a href="docs/audio_technology_knowledge_outline.md">
+            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
+          </a>
+        </footer>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <Header
@@ -386,6 +406,10 @@ export default function App() {
               onOpenCodecLab={() => {
                 setSelectedTopic(null);
                 setActiveView("codecLab");
+              }}
+              onOpenCoreSignalProcessingLab={() => {
+                setSelectedTopic(null);
+                setActiveView("coreSignalProcessingLab");
               }}
               onOpenSystemAudioLab={() => {
                 setSelectedTopic(null);

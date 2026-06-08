@@ -41,6 +41,167 @@ describe("Audio knowledge app", () => {
     expect(within(topicGrid).queryByText("语音识别 ASR")).not.toBeInTheDocument();
   });
 
+  it("expands core signal processing knowledge with traditional DSP fundamentals", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
+    await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await user.click(screen.getByRole("button", { name: /基础信号处理/ }));
+
+    const details = screen.getByRole("dialog", { name: "主题详情" });
+    expect(within(details).getByText(/传统 DSP 的基础入口/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "时间域" })).toBeInTheDocument();
+    expect(within(details).getByText(/波形、周期、瞬态、包络/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "频率域" })).toBeInTheDocument();
+    expect(within(details).getAllByText(/频率分辨率/).length).toBeGreaterThan(0);
+    expect(within(details).getByRole("heading", { name: "STFT 分帧" })).toBeInTheDocument();
+    expect(within(details).getByText(/window size 和 hop size/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "滤波器" })).toBeInTheDocument();
+    expect(within(details).getByText(/FIR 和 IIR/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "参数 EQ" })).toBeInTheDocument();
+    expect(within(details).getByText(/gain、frequency、Q/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "动态处理" })).toBeInTheDocument();
+    expect(within(details).getAllByText(/threshold、ratio、attack、release/).length).toBeGreaterThan(0);
+    expect(within(details).getByText(/输入 PCM -> 分帧\/加窗 -> FFT\/STFT 分析/)).toBeInTheDocument();
+    expect(within(details).getByText(/压缩器不是 MP3\/AAC 这类编码压缩/)).toBeInTheDocument();
+    expect(within(details).getByRole("button", { name: "打开基础信号处理实验室" })).toBeInTheDocument();
+  });
+
+  it("opens the core signal processing lab with FFT filters and dynamics views", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
+    await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await user.click(screen.getByRole("button", { name: /基础信号处理/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "打开基础信号处理实验室"
+      })
+    );
+
+    expect(screen.getByRole("heading", { name: "基础信号处理实验室" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
+    const lab = screen.getByRole("region", { name: "基础信号处理实验台" });
+    const stftFlow = within(lab).getByRole("list", { name: "STFT 流程节点" });
+    const stftChart = within(lab).getByRole("img", { name: "STFT 流程对应图" });
+    expect(within(stftFlow).getByText("输入 PCM")).toBeInTheDocument();
+    expect(within(stftFlow).getByText("分帧/加窗")).toBeInTheDocument();
+    expect(within(stftFlow).getByText("FFT")).toBeInTheDocument();
+    expect(within(stftFlow).getByText("频谱/特征")).toBeInTheDocument();
+    expect(within(stftChart).getAllByText("输入 PCM").length).toBeGreaterThan(0);
+    expect(within(stftChart).getAllByText("分帧/加窗").length).toBeGreaterThan(0);
+    expect(within(stftChart).getAllByText("FFT").length).toBeGreaterThan(0);
+    expect(within(stftChart).getAllByText("频谱/特征").length).toBeGreaterThan(0);
+    expect(within(stftChart).getByText("Hann 窗")).toBeInTheDocument();
+    expect(within(stftChart).getByText("重叠帧")).toBeInTheDocument();
+    expect(within(stftChart).getByText("频率格 / bin")).toBeInTheDocument();
+    expect(within(stftChart).getByText("STFT 频谱图")).toBeInTheDocument();
+    expect(within(stftChart).getByText("横轴：时间帧")).toBeInTheDocument();
+    expect(within(stftChart).getByText("纵轴：频率")).toBeInTheDocument();
+    expect(within(stftChart).getByText("横轴：频率格")).toBeInTheDocument();
+    expect(within(stftChart).getByText("纵轴：能量")).toBeInTheDocument();
+    expect(within(stftChart).getByText("亮 = 能量高")).toBeInTheDocument();
+    expect(within(stftChart).getByText("暗 = 能量低")).toBeInTheDocument();
+    expect(within(stftChart).getByTestId("stft-energy-plot")).toBeInTheDocument();
+    expect(within(stftChart).getByText("高频")).toBeInTheDocument();
+    expect(within(stftChart).getByText("低频")).toBeInTheDocument();
+    const energyColors = new Set(
+      within(stftChart)
+        .getAllByTestId("stft-energy-cell")
+        .map((cell) => cell.getAttribute("fill"))
+    );
+    expect(energyColors.size).toBeGreaterThan(8);
+    const stftKeyConcepts = screen.getByRole("region", { name: "窗口长度、hop size 和能量图怎么理解" });
+    expect(within(stftKeyConcepts).getByRole("heading", { name: "窗口长度为什么影响频谱" })).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/频率分辨率公式/)).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByRole("heading", { name: "hop size 表示什么" })).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/相邻两帧起点之间相隔多少个采样点/)).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByRole("heading", { name: "能量高低表示什么" })).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/颜色越亮/)).toBeInTheDocument();
+    expect(screen.getByText("频率分辨率：31.25 Hz/bin")).toBeInTheDocument();
+    expect(screen.getByText("每帧时长：32.0 ms")).toBeInTheDocument();
+    const initialWindowWidth = Number(screen.getByTestId("stft-window-block").getAttribute("width"));
+    const initialHopOffset = Number(screen.getByTestId("stft-overlap-frame").getAttribute("x"));
+
+    fireEvent.change(screen.getByRole("slider", { name: "窗口长度" }), {
+      target: { value: "1024" }
+    });
+    fireEvent.change(screen.getByRole("slider", { name: "Hop size" }), {
+      target: { value: "128" }
+    });
+    expect(screen.getByText("频率分辨率：15.63 Hz/bin")).toBeInTheDocument();
+    expect(screen.getByText("重叠率：87.5%")).toBeInTheDocument();
+    expect(Number(screen.getByTestId("stft-window-block").getAttribute("width"))).toBeGreaterThan(initialWindowWidth);
+    expect(Number(screen.getByTestId("stft-overlap-frame").getAttribute("x"))).toBeLessThan(initialHopOffset);
+    expect(screen.getByText("这一步变化：分帧/加窗窗口变宽，FFT 频率格更细。")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "滤波器 / EQ" }));
+    const filterFlow = screen.getByRole("list", { name: "滤波器流程节点" });
+    const filterChart = screen.getByRole("img", { name: "滤波器流程对应图" });
+    expect(within(filterFlow).getByText("输入频谱")).toBeInTheDocument();
+    expect(within(filterFlow).getByText("选择滤波器")).toBeInTheDocument();
+    expect(within(filterFlow).getByText("频率响应")).toBeInTheDocument();
+    expect(within(filterFlow).getByText("输出频谱")).toBeInTheDocument();
+    expect(within(filterChart).getAllByText("输入频谱").length).toBeGreaterThan(0);
+    expect(within(filterChart).getAllByText("选择滤波器").length).toBeGreaterThan(0);
+    expect(within(filterChart).getAllByText("频率响应").length).toBeGreaterThan(0);
+    expect(within(filterChart).getAllByText("输出频谱").length).toBeGreaterThan(0);
+    expect(within(filterChart).getByText("原始波形")).toBeInTheDocument();
+    expect(within(filterChart).getByText("滤波后波形")).toBeInTheDocument();
+    const initialFilteredWave = screen.getByTestId("filtered-wave-path").getAttribute("d");
+    expect(screen.getByText("低通：削弱截止频率以上的高频")).toBeInTheDocument();
+    expect(screen.getByText("截止频率：2400 Hz")).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: "Q" })).toHaveAttribute("min", "0");
+    expect(screen.getByRole("slider", { name: "Q" })).toHaveAttribute("max", "20");
+    const initialQWidth = Number(screen.getByTestId("filter-q-band").getAttribute("width"));
+    fireEvent.change(screen.getByRole("slider", { name: "Q" }), {
+      target: { value: "20" }
+    });
+    expect(screen.getByText("Q：20.0")).toBeInTheDocument();
+    expect(Number(screen.getByTestId("filter-q-band").getAttribute("width"))).toBeLessThan(initialQWidth);
+    const initialCutoffX = Number(screen.getByTestId("filter-cutoff-marker").getAttribute("x1"));
+    fireEvent.change(screen.getByRole("slider", { name: "截止频率" }), {
+      target: { value: "4800" }
+    });
+    expect(Number(screen.getByTestId("filter-cutoff-marker").getAttribute("x1"))).toBeGreaterThan(initialCutoffX);
+    expect(screen.getByTestId("filtered-wave-path").getAttribute("d")).not.toEqual(initialFilteredWave);
+    const initialEqGainY = Number(screen.getByTestId("filter-eq-gain-line").getAttribute("y1"));
+    const initialOutputBarHeight = Number(screen.getAllByTestId("filter-output-bar")[0].getAttribute("height"));
+    fireEvent.change(screen.getByRole("slider", { name: "EQ 增益" }), {
+      target: { value: "9" }
+    });
+    expect(screen.getByText("EQ 增益：+9 dB")).toBeInTheDocument();
+    expect(Number(screen.getByTestId("filter-eq-gain-line").getAttribute("y1"))).toBeLessThan(initialEqGainY);
+    expect(Number(screen.getAllByTestId("filter-output-bar")[0].getAttribute("height"))).toBeGreaterThan(initialOutputBarHeight);
+    expect(screen.getByText("这一步变化：截止频率标记右移，输出频谱的高频保留更多。")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "动态处理" }));
+    const dynamicsFlow = screen.getByRole("list", { name: "动态处理流程节点" });
+    const dynamicsChart = screen.getByRole("img", { name: "动态处理流程对应图" });
+    expect(within(dynamicsFlow).getByText("输入电平")).toBeInTheDocument();
+    expect(within(dynamicsFlow).getByText("电平检测")).toBeInTheDocument();
+    expect(within(dynamicsFlow).getByText("增益计算")).toBeInTheDocument();
+    expect(within(dynamicsFlow).getByText("输出电平")).toBeInTheDocument();
+    expect(within(dynamicsChart).getAllByText("输入电平").length).toBeGreaterThan(0);
+    expect(within(dynamicsChart).getAllByText("电平检测").length).toBeGreaterThan(0);
+    expect(within(dynamicsChart).getAllByText("增益计算").length).toBeGreaterThan(0);
+    expect(within(dynamicsChart).getAllByText("输出电平").length).toBeGreaterThan(0);
+    expect(screen.getByText("超过阈值后按 ratio 收缩，峰值被压低")).toBeInTheDocument();
+    expect(screen.getByText("Threshold：-18 dBFS")).toBeInTheDocument();
+    const initialThresholdY = Number(screen.getByTestId("dynamics-threshold-line").getAttribute("y1"));
+    fireEvent.change(screen.getByRole("slider", { name: "Threshold" }), {
+      target: { value: "-30" }
+    });
+    expect(Number(screen.getByTestId("dynamics-threshold-line").getAttribute("y1"))).toBeGreaterThan(initialThresholdY);
+    fireEvent.change(screen.getByRole("slider", { name: "Ratio" }), {
+      target: { value: "6" }
+    });
+    expect(screen.getByText("Ratio：6:1")).toBeInTheDocument();
+    expect(screen.getByText("这一步变化：阈值线下移，更早进入压缩，输出包络更平。")).toBeInTheDocument();
+  });
+
   it("renders the animated signal visualization on the homepage", () => {
     render(<App />);
 
