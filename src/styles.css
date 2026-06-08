@@ -2547,6 +2547,37 @@ body.details-open {
   stroke-width: 2.4;
 }
 
+.realtime-soc-aec-arrow {
+  fill: none;
+  stroke: #f0b46a;
+  stroke-linecap: round;
+  stroke-width: 2.6;
+}
+
+.realtime-soc-aec-chart marker path {
+  fill: #f0b46a;
+}
+
+.realtime-soc-lane-label {
+  fill: #7ee7d8;
+  font-size: 15px;
+  font-weight: 820;
+}
+
+.realtime-soc-note {
+  fill: #f0b46a;
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.realtime-soc-node-title {
+  dominant-baseline: middle;
+  fill: #ffffff;
+  font-size: 16px;
+  font-weight: 820;
+  text-anchor: middle;
+}
+
 .realtime-warning {
   background: rgba(255, 144, 124, 0.1);
   border-color: rgba(255, 144, 124, 0.24);

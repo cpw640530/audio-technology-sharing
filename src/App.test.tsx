@@ -481,6 +481,12 @@ describe("Audio knowledge app", () => {
     const lab = screen.getByRole("region", { name: "实时音频处理实验台" });
     expect(within(lab).getByRole("img", { name: "基础音频处理流程图" })).toBeInTheDocument();
     expect(within(lab).getByRole("img", { name: "ALSA 采集 PCM 到编码流程图" })).toBeInTheDocument();
+    expect(within(lab).getByRole("img", { name: "MP3 解码到 PCM 播放流程图" })).toBeInTheDocument();
+    expect(within(lab).getByRole("img", { name: "典型 SoC AEC 和 3A 处理框图" })).toBeInTheDocument();
+    const captureFlow = within(lab).getByRole("img", { name: "ALSA 采集 PCM 到编码流程图" });
+    expect(within(captureFlow).getByText("麦克风")).toBeInTheDocument();
+    expect(within(captureFlow).getByText("模拟前端 / Codec ADC")).toBeInTheDocument();
+    expect(within(captureFlow).getByText("I2S / PDM / USB Audio")).toBeInTheDocument();
     expect(screen.getByText("默认格式：16 kHz / mono / 16-bit PCM")).toBeInTheDocument();
     expect(screen.getByText("32 ms 处理帧：512 samples / 1024 bytes")).toBeInTheDocument();
     expect(screen.getByText("采集 period：32.00 ms")).toBeInTheDocument();
@@ -492,6 +498,34 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("copy_to_user / mmap")).toBeInTheDocument();
     expect(screen.getByText("32ms filter frame")).toBeInTheDocument();
     expect(screen.getByText("MP3 frame")).toBeInTheDocument();
+    const playbackFlow = within(lab).getByRole("img", { name: "MP3 解码到 PCM 播放流程图" });
+    expect(within(playbackFlow).getByText("网络包 / 文件码流")).toBeInTheDocument();
+    expect(within(playbackFlow).getByText("接收 buffer / jitter buffer")).toBeInTheDocument();
+    expect(within(playbackFlow).getByText("解码器输入 buffer")).toBeInTheDocument();
+    expect(within(playbackFlow).getByText("PCM playback buffer")).toBeInTheDocument();
+    expect(within(playbackFlow).getByText("ALSA playback ring buffer")).toBeInTheDocument();
+    expect(within(playbackFlow).getByText("I2S / TDM / USB Audio")).toBeInTheDocument();
+    expect(within(playbackFlow).getByText("Codec DAC / 模拟处理")).toBeInTheDocument();
+    expect(within(playbackFlow).getByText("功放")).toBeInTheDocument();
+    expect(within(playbackFlow).getByText("扬声器")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "jitter buffer" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "解码器输入 buffer" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "PCM playback buffer" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "ALSA playback ring buffer" })).toBeInTheDocument();
+    const socAecDiagram = within(lab).getByRole("img", { name: "典型 SoC AEC 和 3A 处理框图" });
+    expect(within(socAecDiagram).getByText("远端音频")).toBeInTheDocument();
+    expect(within(socAecDiagram).getByText("ADEC")).toBeInTheDocument();
+    expect(within(socAecDiagram).getByText("AO / Mixer")).toBeInTheDocument();
+    expect(within(socAecDiagram).getByText("AEC reference buffer")).toBeInTheDocument();
+    expect(within(socAecDiagram).getByText("AI / DMA")).toBeInTheDocument();
+    expect(within(socAecDiagram).getByText("AEC")).toBeInTheDocument();
+    expect(within(socAecDiagram).getByText("NS / ANR")).toBeInTheDocument();
+    expect(within(socAecDiagram).getByText("AGC")).toBeInTheDocument();
+    expect(within(socAecDiagram).getByText("AENC")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "AEC reference buffer" })).toBeInTheDocument();
+    expect(screen.getByText(/播放参考通常取自 AO\/Mixer 输出/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "典型 SoC 命名差异" })).toBeInTheDocument();
+    expect(screen.getByText(/瑞芯微、君正、SigmaStar/)).toBeInTheDocument();
 
     expect(within(lab).queryByRole("slider")).not.toBeInTheDocument();
     expect(screen.getByText("DSP 耗时：1.40 ms")).toBeInTheDocument();
@@ -533,6 +567,11 @@ describe("Audio knowledge app", () => {
       "viewBox",
       expect.stringMatching(/^0 0 1180 /)
     );
+    expect(within(visual).getByRole("img", { name: "MP3 解码到 PCM 播放流程图" })).toHaveAttribute(
+      "viewBox",
+      expect.stringMatching(/^0 0 1180 /)
+    );
+    expect(within(visual).getByRole("img", { name: "典型 SoC AEC 和 3A 处理框图" })).toHaveAttribute("viewBox", "0 0 1180 620");
   });
 
   it("opens the system audio architecture lab from the software topic", async () => {

@@ -70,8 +70,13 @@ const basicFlowSteps = [
 
 const alsaFlowSteps = [
   {
-    title: { zh: "麦克风 / ADC", en: "Microphone / ADC" },
-    detail: { zh: "16 kHz / mono / 16-bit PCM", en: "16 kHz / mono / 16-bit PCM" },
+    title: { zh: "麦克风", en: "Microphone" },
+    detail: { zh: "空气压力变化先变成很小的模拟电信号", en: "air pressure first becomes a tiny analog electrical signal" },
+    type: "hardware"
+  },
+  {
+    title: { zh: "模拟前端 / Codec ADC", en: "Analog front end / Codec ADC" },
+    detail: { zh: "放大、偏置、抗混叠后采样成 16 kHz / mono / 16-bit PCM", en: "amplifies, biases, anti-aliases, then samples to 16 kHz / mono / 16-bit PCM" },
     type: "hardware"
   },
   {
@@ -126,6 +131,74 @@ const alsaFlowSteps = [
   }
 ] satisfies FlowStep[];
 
+const playbackFlowSteps = [
+  {
+    title: { zh: "网络包 / 文件码流", en: "Network packet / file bitstream" },
+    detail: { zh: "RTSP/RTP 包、文件块或其他压缩码流入口", en: "RTSP/RTP packets, file chunks, or compressed bitstream input" },
+    type: "codec"
+  },
+  {
+    title: { zh: "接收 buffer / jitter buffer", en: "Receive buffer / jitter buffer" },
+    detail: { zh: "抵抗网络包到达时间抖动，按播放时间排队", en: "absorbs packet-arrival jitter and queues by playout time" },
+    type: "buffer"
+  },
+  {
+    title: { zh: "解包 / 重排", en: "Depacketize / reorder" },
+    detail: { zh: "去掉 RTP/容器头，按序恢复连续编码帧", en: "removes RTP/container headers and restores ordered codec frames" },
+    type: "process"
+  },
+  {
+    title: { zh: "解码器输入 buffer", en: "Decoder input buffer" },
+    detail: { zh: "攒够一帧 MP3/AAC/Opus 后才能送解码器", en: "accumulates one MP3/AAC/Opus frame before decoding" },
+    type: "buffer"
+  },
+  {
+    title: { zh: "MP3 解码", en: "MP3 decode" },
+    detail: { zh: "压缩帧解码回多点 PCM 采样", en: "turns compressed frames back into PCM samples" },
+    type: "codec"
+  },
+  {
+    title: { zh: "PCM playback buffer", en: "PCM playback buffer" },
+    detail: { zh: "保存待播放 PCM，太少会 underrun", en: "stores PCM waiting for playback; too little causes underrun" },
+    type: "buffer"
+  },
+  {
+    title: { zh: "重采样 / 混音 / 音量", en: "Resample / mix / volume" },
+    detail: { zh: "匹配设备采样率，叠加多路声音并处理音量", en: "matches device rate, mixes streams, and applies volume" },
+    type: "process"
+  },
+  {
+    title: { zh: "ALSA playback ring buffer", en: "ALSA playback ring buffer" },
+    detail: { zh: "应用写入 PCM，DMA 按硬件节奏读走", en: "app writes PCM while DMA reads it at hardware cadence" },
+    type: "buffer"
+  },
+  {
+    title: { zh: "DMA", en: "DMA" },
+    detail: { zh: "把播放 PCM 搬到音频接口或声卡", en: "moves playback PCM to the audio interface or sound card" },
+    type: "driver"
+  },
+  {
+    title: { zh: "I2S / TDM / USB Audio", en: "I2S / TDM / USB Audio" },
+    detail: { zh: "按 BCLK/LRCLK 或 USB 帧节奏把 PCM 送到硬件", en: "sends PCM to hardware using BCLK/LRCLK or USB frame cadence" },
+    type: "hardware"
+  },
+  {
+    title: { zh: "Codec DAC / 模拟处理", en: "Codec DAC / analog processing" },
+    detail: { zh: "数字 PCM 还原为模拟电压，可带滤波和增益控制", en: "converts digital PCM to analog voltage, with filtering and gain control" },
+    type: "hardware"
+  },
+  {
+    title: { zh: "功放", en: "Amplifier" },
+    detail: { zh: "把模拟小信号放大到能推动耳机或扬声器", en: "amplifies the analog signal enough to drive headphones or speakers" },
+    type: "hardware"
+  },
+  {
+    title: { zh: "扬声器", en: "Speaker" },
+    detail: { zh: "电信号推动振膜，重新变成空气振动", en: "electrical signal moves the diaphragm and becomes air vibration again" },
+    type: "hardware"
+  }
+] satisfies FlowStep[];
+
 const bufferCards = [
   {
     title: { zh: "ALSA PCM ring buffer", en: "ALSA PCM ring buffer" },
@@ -168,6 +241,41 @@ const bufferCards = [
       zh: "PCM 编码后变成 MP3、AAC、Opus 等码流帧，后面才能进入文件、RTSP/RTP 或其他网络队列。",
       en: "After encoding, PCM becomes MP3, AAC, Opus, or other bitstream frames for files, RTSP/RTP, or network queues."
     }
+  },
+  {
+    title: { zh: "jitter buffer", en: "jitter buffer" },
+    body: {
+      zh: "播放网络实时音频时，包到达时间会忽快忽慢。jitter buffer 用少量额外延迟换连续播放，太小会断续，太大会增加通话延迟。",
+      en: "For network audio, packet arrival timing varies. A jitter buffer trades a little delay for continuous playback; too small stutters, too large adds call latency."
+    }
+  },
+  {
+    title: { zh: "解码器输入 buffer", en: "Decoder input buffer" },
+    body: {
+      zh: "解码器通常不能只拿半帧数据工作，需要先攒够一个完整压缩帧，再输出对应的一段 PCM。",
+      en: "Decoders usually cannot process half a frame. They need a complete compressed frame before outputting a block of PCM."
+    }
+  },
+  {
+    title: { zh: "PCM playback buffer", en: "PCM playback buffer" },
+    body: {
+      zh: "这是用户态待播放 PCM 队列。它把解码节奏和设备播放节奏隔开，队列被读空就容易出现 underrun 和爆音。",
+      en: "This user-space queue holds PCM waiting for playback. It separates decode cadence from device cadence; if it runs dry, underrun and pops can occur."
+    }
+  },
+  {
+    title: { zh: "ALSA playback ring buffer", en: "ALSA playback ring buffer" },
+    body: {
+      zh: "播放方向和采集方向相反：应用把 PCM 写进内核环形 buffer，DMA 按声卡时钟读走并送到 DAC。",
+      en: "Playback is the reverse of capture: the app writes PCM into the kernel ring buffer, and DMA reads it at the sound-card clock toward the DAC."
+    }
+  },
+  {
+    title: { zh: "AEC reference buffer", en: "AEC reference buffer" },
+    body: {
+      zh: "播放参考通常取自 AO/Mixer 输出或即将送入播放设备的 PCM。AEC 用它和麦克风信号做时间对齐，再估计并减掉扬声器回声。",
+      en: "The playback reference is usually taken from AO/Mixer output or PCM about to reach the playback device. AEC aligns it with the microphone signal, then estimates and removes speaker echo."
+    }
   }
 ] satisfies Array<{ title: Record<Language, string>; body: Record<Language, string> }>;
 
@@ -198,6 +306,13 @@ const ruleCards = [
     body: {
       zh: "period 越小响应越快，但唤醒更频繁、CPU 余量更少。语音链路常在 10 ms、20 ms、32 ms 等处理帧之间取舍。",
       en: "Smaller periods respond faster, but wake more often and leave less CPU headroom. Voice pipelines commonly trade off among 10 ms, 20 ms, and 32 ms frames."
+    }
+  },
+  {
+    title: { zh: "典型 SoC 命名差异", en: "Typical SoC naming differences" },
+    body: {
+      zh: "瑞芯微、君正、SigmaStar 等 SoC 的 SDK 名称不同，但常见边界类似：AI 表示音频输入，AO 表示音频输出，AENC/ADEC 表示音频编码和解码，VQE/3A 表示 AEC、NS/ANR、AGC 等语音增强。",
+      en: "Rockchip, Ingenic, SigmaStar, and similar SoCs use different SDK names, but the common boundaries are similar: AI for audio input, AO for audio output, AENC/ADEC for audio encode/decode, and VQE/3A for AEC, NS/ANR, AGC, and other voice enhancement blocks."
     }
   }
 ] satisfies Array<{ title: Record<Language, string>; body: Record<Language, string> }>;
@@ -282,6 +397,83 @@ function FlowChart({
   );
 }
 
+function SocAecDiagram({ language }: { language: Language }) {
+  const nodes = [
+    { id: "remote", title: { zh: "远端音频", en: "Remote audio" }, x: 60, y: 110, type: "codec" },
+    { id: "adec", title: { zh: "ADEC", en: "ADEC" }, x: 260, y: 110, type: "codec" },
+    { id: "mixer", title: { zh: "AO / Mixer", en: "AO / Mixer" }, x: 460, y: 110, type: "process" },
+    { id: "dac", title: { zh: "Codec DAC / I2S", en: "Codec DAC / I2S" }, x: 660, y: 110, type: "hardware" },
+    { id: "speaker", title: { zh: "功放 / 扬声器", en: "Amp / speaker" }, x: 880, y: 110, type: "hardware" },
+    { id: "ref", title: { zh: "AEC reference buffer", en: "AEC reference buffer" }, x: 460, y: 270, type: "buffer" },
+    { id: "mic", title: { zh: "麦克风", en: "Microphone" }, x: 60, y: 430, type: "hardware" },
+    { id: "ai", title: { zh: "AI / DMA", en: "AI / DMA" }, x: 260, y: 430, type: "driver" },
+    { id: "aec", title: { zh: "AEC", en: "AEC" }, x: 460, y: 430, type: "process" },
+    { id: "ns", title: { zh: "NS / ANR", en: "NS / ANR" }, x: 660, y: 430, type: "process" },
+    { id: "agc", title: { zh: "AGC", en: "AGC" }, x: 840, y: 430, type: "process" },
+    { id: "aenc", title: { zh: "AENC", en: "AENC" }, x: 1000, y: 430, type: "codec" }
+  ] satisfies Array<{
+    id: string;
+    title: Record<Language, string>;
+    x: number;
+    y: number;
+    type: NonNullable<FlowStep["type"]>;
+  }>;
+
+  const arrows = [
+    { d: "M 220 140 L 250 140" },
+    { d: "M 420 140 L 450 140" },
+    { d: "M 620 140 L 650 140" },
+    { d: "M 820 140 L 870 140" },
+    { d: "M 540 170 L 540 260" },
+    { d: "M 540 350 L 540 420" },
+    { d: "M 220 460 L 250 460" },
+    { d: "M 420 460 L 450 460" },
+    { d: "M 620 460 L 650 460" },
+    { d: "M 820 460 L 830 460" },
+    { d: "M 980 460 L 990 460" }
+  ];
+
+  return (
+    <svg
+      aria-label={language === "zh" ? "典型 SoC AEC 和 3A 处理框图" : "Typical SoC AEC and 3A processing block diagram"}
+      className="realtime-flow-chart realtime-soc-aec-chart"
+      role="img"
+      viewBox="0 0 1180 620"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <marker id="socAecArrow" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4">
+          <path d="M 0 0 L 8 4 L 0 8 Z" />
+        </marker>
+      </defs>
+      <rect className="lab-diagram-bg" height="620" rx="14" width="1180" />
+      <text className="lab-label" x="42" y="48">
+        {language === "zh" ? "典型 SoC AEC / 3A：播放参考回采到采集侧消除" : "Typical SoC AEC / 3A: playback reference returns to capture-side cancellation"}
+      </text>
+      <text className="realtime-soc-lane-label" x="60" y="88">
+        {language === "zh" ? "播放参考链路" : "Playback reference path"}
+      </text>
+      <text className="realtime-soc-lane-label" x="60" y="408">
+        {language === "zh" ? "麦克风采集链路" : "Microphone capture path"}
+      </text>
+      <text className="realtime-soc-note" x="650" y="300">
+        {language === "zh" ? "AEC 需要播放参考和麦克风输入时间对齐" : "AEC needs time-aligned playback reference and mic input"}
+      </text>
+      {arrows.map((arrow) => (
+        <path className="realtime-soc-aec-arrow" d={arrow.d} key={arrow.d} markerEnd="url(#socAecArrow)" />
+      ))}
+      {nodes.map((node) => (
+        <g key={node.id}>
+          <rect className={`realtime-flow-node ${node.type}`} height="60" rx="9" width={node.id === "aenc" ? 120 : 160} x={node.x} y={node.y} />
+          <text className="realtime-soc-node-title" x={node.x + (node.id === "aenc" ? 60 : 80)} y={node.y + 31}>
+            {node.title[language]}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 export function RealtimeAudioLab({ language, onBack }: RealtimeAudioLabProps) {
   const statusLabel = language === "zh" ? "状态：稳定" : "Status: stable";
 
@@ -311,11 +503,11 @@ export function RealtimeAudioLab({ language, onBack }: RealtimeAudioLabProps) {
       >
         <section className="realtime-audio-visual" aria-label={language === "zh" ? "实时音频调度图" : "Real-time audio scheduling diagram"}>
           <div className="digital-lab-status">
-            <strong>{language === "zh" ? "从 PCM 采集到编码" : "From PCM capture to encoding"}</strong>
+            <strong>{language === "zh" ? "从 PCM 采集到解码播放" : "From PCM capture to decoded playback"}</strong>
             <span>
               {language === "zh"
-                ? "先看通用链路，再看 ALSA 具体例子"
-                : "Start with the generic path, then inspect the ALSA example"}
+                ? "先看通用链路，再看采集编码和解码播放两个具体例子"
+                : "Start with the generic path, then inspect capture-encode and decode-playback examples"}
             </span>
           </div>
 
@@ -348,6 +540,14 @@ export function RealtimeAudioLab({ language, onBack }: RealtimeAudioLabProps) {
               steps={alsaFlowSteps}
               title={{ zh: "具体例子：ALSA 采集 PCM -> filter -> MP3 编码", en: "Example: ALSA PCM capture -> filter -> MP3 encode" }}
             />
+            <FlowChart
+              ariaLabel={{ zh: "MP3 解码到 PCM 播放流程图", en: "MP3 decode to PCM playback flow chart" }}
+              id="mp3PlaybackFlow"
+              language={language}
+              steps={playbackFlowSteps}
+              title={{ zh: "具体例子：MP3 / RTSP 接收 -> 解码 -> PCM 播放", en: "Example: MP3 / RTSP receive -> decode -> PCM playback" }}
+            />
+            <SocAecDiagram language={language} />
           </div>
         </section>
 
