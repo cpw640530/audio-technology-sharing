@@ -107,6 +107,12 @@ describe("Audio knowledge app", () => {
     expect(within(stftChart).getByTestId("stft-energy-plot")).toBeInTheDocument();
     expect(within(stftChart).getByText("高频")).toBeInTheDocument();
     expect(within(stftChart).getByText("低频")).toBeInTheDocument();
+    expect(within(stftChart).getAllByTestId("stft-pcm-sample")).toHaveLength(15);
+    expect(within(stftChart).getByText("离散采样点")).toBeInTheDocument();
+    expect(within(stftChart).getByText("图中示意：14 个频率格")).toBeInTheDocument();
+    expect(within(stftChart).getByText("hop 不改变单帧频谱")).toBeInTheDocument();
+    expect(within(stftChart).getByText("hop 256 点 = 16.0 ms/帧；只改变横向时间帧")).toBeInTheDocument();
+    expect(within(stftChart).getByText("图中示意：27 个时间帧；11 个频率格")).toBeInTheDocument();
     const energyColors = new Set(
       within(stftChart)
         .getAllByTestId("stft-energy-cell")
@@ -114,28 +120,55 @@ describe("Audio knowledge app", () => {
     );
     expect(energyColors.size).toBeGreaterThan(8);
     const stftKeyConcepts = screen.getByRole("region", { name: "窗口长度、hop size 和能量图怎么理解" });
+    expect(within(stftKeyConcepts).getByRole("heading", { name: "FFT 和 STFT 是什么" })).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/FFT 是 Fast Fourier Transform，中文叫快速傅里叶变换/)).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/STFT 是 Short-Time Fourier Transform，中文叫短时傅里叶变换/)).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByRole("heading", { name: "窗口长度为什么影响频谱" })).toBeInTheDocument();
-    expect(within(stftKeyConcepts).getByText(/频率分辨率公式/)).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/这不是“更能表现高频”/)).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/频率格更细指 Δf = 采样率 Fs \/ FFT 点数 N 更小/)).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByRole("heading", { name: "hop size 表示什么" })).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByText(/相邻两帧起点之间相隔多少个采样点/)).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/单帧 FFT 的频率格和频率范围不变/)).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByRole("heading", { name: "能量高低表示什么" })).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByText(/颜色越亮/)).toBeInTheDocument();
     expect(screen.getByText("频率分辨率：31.25 Hz/bin")).toBeInTheDocument();
     expect(screen.getByText("每帧时长：32.0 ms")).toBeInTheDocument();
     const initialWindowWidth = Number(screen.getByTestId("stft-window-block").getAttribute("width"));
     const initialHopOffset = Number(screen.getByTestId("stft-overlap-frame").getAttribute("x"));
+    const initialEnergyPlotHeight = Number(screen.getByTestId("stft-energy-plot").getAttribute("height"));
+    const initialEnergyPlotWidth = Number(screen.getByTestId("stft-energy-plot").getAttribute("width"));
+    const initialEnergyCellHeight = Number(screen.getAllByTestId("stft-energy-cell")[0].getAttribute("height"));
+    const initialEnergyCellCount = screen.getAllByTestId("stft-energy-cell").length;
+    const initialSpectrumBarCount = document.querySelectorAll(".core-spectrum-bar:not(.muted)").length;
 
-    fireEvent.change(screen.getByRole("slider", { name: "窗口长度" }), {
-      target: { value: "1024" }
-    });
     fireEvent.change(screen.getByRole("slider", { name: "Hop size" }), {
       target: { value: "128" }
+    });
+    expect(screen.getByText("hop 128 点 = 8.0 ms/帧；只改变横向时间帧")).toBeInTheDocument();
+    expect(screen.getByText("图中示意：36 个时间帧；11 个频率格")).toBeInTheDocument();
+    expect(screen.getAllByTestId("stft-energy-cell").length).toBeGreaterThan(initialEnergyCellCount);
+    expect(document.querySelectorAll(".core-spectrum-bar:not(.muted)").length).toBe(initialSpectrumBarCount);
+    expect(Number(screen.getByTestId("stft-energy-plot").getAttribute("height"))).toBe(initialEnergyPlotHeight);
+    expect(Number(screen.getByTestId("stft-energy-plot").getAttribute("width"))).toBe(initialEnergyPlotWidth);
+    expect(Number(screen.getByTestId("stft-overlap-frame").getAttribute("x"))).toBeLessThan(initialHopOffset);
+
+    const hopOnlyEnergyCellHeight = Number(screen.getAllByTestId("stft-energy-cell")[0].getAttribute("height"));
+    const hopOnlyEnergyCellCount = screen.getAllByTestId("stft-energy-cell").length;
+    fireEvent.change(screen.getByRole("slider", { name: "窗口长度" }), {
+      target: { value: "1024" }
     });
     expect(screen.getByText("频率分辨率：15.63 Hz/bin")).toBeInTheDocument();
     expect(screen.getByText("重叠率：87.5%")).toBeInTheDocument();
     expect(Number(screen.getByTestId("stft-window-block").getAttribute("width"))).toBeGreaterThan(initialWindowWidth);
-    expect(Number(screen.getByTestId("stft-overlap-frame").getAttribute("x"))).toBeLessThan(initialHopOffset);
-    expect(screen.getByText("这一步变化：分帧/加窗窗口变宽，FFT 频率格更细。")).toBeInTheDocument();
+    expect(screen.getByText("图中示意：22 个频率格")).toBeInTheDocument();
+    expect(screen.getByText("图中示意：36 个时间帧；16 个频率格")).toBeInTheDocument();
+    expect(Number(screen.getByTestId("stft-energy-plot").getAttribute("height"))).toBe(initialEnergyPlotHeight);
+    expect(Number(screen.getByTestId("stft-energy-plot").getAttribute("width"))).toBe(initialEnergyPlotWidth);
+    expect(Number(screen.getAllByTestId("stft-energy-cell")[0].getAttribute("height"))).toBeLessThan(hopOnlyEnergyCellHeight);
+    expect(screen.getAllByTestId("stft-energy-cell").length).toBeGreaterThan(hopOnlyEnergyCellCount);
+    expect(document.querySelectorAll(".core-spectrum-bar:not(.muted)").length).toBeGreaterThan(initialSpectrumBarCount);
+    expect(Number(screen.getAllByTestId("stft-energy-cell")[0].getAttribute("height"))).toBeLessThan(initialEnergyCellHeight);
+    expect(screen.getByText("这一步变化：窗口长度改变频率格间隔；hop size 改变横向时间帧密度，不改变单帧 FFT 频谱。")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "滤波器 / EQ" }));
     const filterFlow = screen.getByRole("list", { name: "滤波器流程节点" });

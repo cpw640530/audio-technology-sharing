@@ -104,17 +104,44 @@ function createFrameEnvelopePath(windowSize: number, originX = 84, originY = 158
   return points.join(" ");
 }
 
-function createSpectrumBars(windowSize: number) {
-  const resolutionBoost = Math.log2(windowSize / 512);
+function createPcmSamples(originX = 44, originY = 226, width = 152, amplitude = 40) {
+  return Array.from({ length: 15 }, (_, index) => {
+    const ratio = index / 14;
+    const x = originX + ratio * width;
+    const value =
+      Math.sin(ratio * Math.PI * 2.15) * 0.72 +
+      Math.sin(ratio * Math.PI * 6.1 + 0.7) * 0.22;
+    const y = originY - value * amplitude;
 
-  return Array.from({ length: 18 }, (_, index) => {
-    const x = 432 + index * 15;
-    const harmonic = Math.max(0, 86 - Math.abs(index - 4) * 16);
-    const noise = Math.max(8, 42 - index * 1.5);
-    const detail = Math.max(0, resolutionBoost * (index % 3) * 5);
-    const height = Math.max(10, Math.min(104, harmonic + noise * 0.35 + detail));
-    return { x, height };
+    return { x, y };
   });
+}
+
+function createSpectrumBars(windowSize: number) {
+  const windowFactor = Math.min(1, Math.max(0, (windowSize - 256) / 768));
+  const count = Math.round(10 + windowFactor * 12);
+
+  return Array.from({ length: count }, (_, index) => {
+    const ratio = count === 1 ? 0 : index / (count - 1);
+    const peakWidth = 0.018 + (1 - windowFactor) * 0.035;
+    const lowBand = Math.exp(-((ratio - 0.24) ** 2) / peakWidth) * 94;
+    const midBand = Math.exp(-((ratio - 0.55) ** 2) / (peakWidth * 1.25)) * 54;
+    const highBand = Math.exp(-((ratio - 0.78) ** 2) / (peakWidth * 0.9)) * 32;
+    const floor = 10 + Math.sin(index * 1.7) * 4;
+    const height = Math.max(9, Math.min(104, lowBand + midBand + highBand + floor));
+
+    return { height };
+  });
+}
+
+function getStftGridShape(windowSize: number, hopSize: number) {
+  const windowFactor = Math.min(1, Math.max(0, (windowSize - 256) / 768));
+  const hopDensity = Math.min(1, Math.max(0, (512 - hopSize) / 384));
+
+  return {
+    columns: Math.round(10 + hopDensity * 26),
+    rows: Math.round(8 + windowFactor * 8)
+  };
 }
 
 function mixColor(start: [number, number, number], end: [number, number, number], ratio: number) {
@@ -142,26 +169,24 @@ function energyColor(value: number) {
 }
 
 function createSpectrogramCells(windowSize: number, hopSize: number) {
-  const columns = 18;
-  const rows = 10;
+  const { columns, rows } = getStftGridShape(windowSize, hopSize);
   const windowFactor = Math.min(1, Math.max(0, (windowSize - 512) / 512));
-  const hopFactor = Math.min(1, Math.max(0, (hopSize - 128) / 384));
+  const spectralSpread = 0.02 + (1 - windowFactor) * 0.02;
 
   return Array.from({ length: columns * rows }, (_, index) => {
     const column = index % columns;
     const row = Math.floor(index / columns);
     const time = column / (columns - 1);
     const freq = 1 - row / (rows - 1);
-    const fundamental = Math.exp(-((freq - (0.22 + Math.sin(time * Math.PI * 1.5) * 0.04)) ** 2) / 0.012);
-    const harmonic = Math.exp(-((freq - (0.48 + Math.cos(time * Math.PI * 1.8) * 0.08)) ** 2) / 0.018);
-    const transient = Math.exp(-((time - 0.66) ** 2) / 0.006) * Math.exp(-((freq - 0.72) ** 2) / 0.06);
+    const fundamental = Math.exp(-((freq - (0.22 + Math.sin(time * Math.PI * 1.5) * 0.04)) ** 2) / spectralSpread);
+    const harmonic = Math.exp(-((freq - (0.48 + Math.cos(time * Math.PI * 1.8) * 0.08)) ** 2) / (spectralSpread * 1.18));
+    const transient = Math.exp(-((time - 0.66) ** 2) / 0.006) * Math.exp(-((freq - 0.72) ** 2) / (spectralSpread * 2.4));
     const noiseFloor = 0.1 + Math.sin((column + row) * 1.9) * 0.035;
     const timeTexture = 0.78 + Math.sin(time * Math.PI * 4.2) * 0.16;
     const resolutionBoost = windowFactor * (row % 2 === 0 ? 0.08 : -0.02);
-    const smear = hopFactor * Math.exp(-((time - 0.35) ** 2) / 0.025) * 0.14;
     const energy = Math.max(
       0.05,
-      Math.min(1, (fundamental * 0.82 + harmonic * 0.5 + transient * 0.7 + noiseFloor + smear + resolutionBoost) * timeTexture)
+      Math.min(1, (fundamental * 0.82 + harmonic * 0.5 + transient * 0.7 + noiseFloor + resolutionBoost) * timeTexture)
     );
 
     return {
@@ -387,6 +412,7 @@ function StftChart({
   language: Language;
   windowSize: number;
 }) {
+  const pcmSamples = createPcmSamples();
   const framePath = createFrameEnvelopePath(windowSize, 226, 228, 150, 32);
   const bars = createSpectrumBars(windowSize);
   const hopOffset = Math.max(18, Math.min(74, (hopSize / 512) * 74));
@@ -394,13 +420,13 @@ function StftChart({
   const spectrogramCells = createSpectrogramCells(windowSize, hopSize);
   const heatmapX = 116;
   const heatmapY = 404;
-  const heatmapColumns = 18;
-  const heatmapRows = 10;
-  const heatmapCellWidth = 24;
-  const heatmapCellHeight = 12;
+  const { columns: heatmapColumns, rows: heatmapRows } = getStftGridShape(windowSize, hopSize);
   const heatmapGap = 3;
-  const heatmapWidth = heatmapColumns * heatmapCellWidth + (heatmapColumns - 1) * heatmapGap;
-  const heatmapHeight = heatmapRows * heatmapCellHeight + (heatmapRows - 1) * heatmapGap;
+  const heatmapWidth = 460;
+  const heatmapCellWidth = (heatmapWidth - (heatmapColumns - 1) * heatmapGap) / heatmapColumns;
+  const heatmapHeight = 165;
+  const heatmapCellHeight = (heatmapHeight - (heatmapRows - 1) * heatmapGap) / heatmapRows;
+  const hopFrameMs = (hopSize / sampleRate) * 1000;
   const steps = flowSteps.stft;
 
   return (
@@ -434,11 +460,17 @@ function StftChart({
         );
       })}
       <line className="lab-axis" x1="44" x2="196" y1="226" y2="226" />
-      <path className="core-mini-wave" d="M 46 226 C 62 190 78 190 94 226 S 126 262 142 226 174 192 196 220" />
-      <circle className="core-sample-dot" cx="62" cy="200" r="4" />
-      <circle className="core-sample-dot" cx="94" cy="226" r="4" />
-      <circle className="core-sample-dot" cx="126" cy="252" r="4" />
-      <circle className="core-sample-dot" cx="158" cy="226" r="4" />
+      <path
+        className="core-mini-wave"
+        d={`M ${pcmSamples.map((sample) => `${sample.x.toFixed(1)} ${sample.y.toFixed(1)}`).join(" L ")}`}
+      />
+      {pcmSamples.map((sample, index) => (
+        <g key={`pcm-${index}`}>
+          <line className="core-pcm-stem" x1={sample.x} x2={sample.x} y1="226" y2={sample.y} />
+          <circle className="core-sample-dot" cx={sample.x} cy={sample.y} data-testid="stft-pcm-sample" r="3.6" />
+        </g>
+      ))}
+      <text className="core-diagram-caption small" x="118" y="286">{language === "zh" ? "离散采样点" : "Discrete samples"}</text>
       <text className="core-diagram-caption" x="90" y="318">{steps[0].label[language]}</text>
       <rect
         className="core-signal-window"
@@ -463,6 +495,9 @@ function StftChart({
       <path className="core-hann-window" d="M 226 276 C 246 176 306 176 376 276" />
       <path className="core-signal-hop" d={`M 226 304 H ${226 + hopOffset}`} />
       <text className="interface-tdm-note" x="226" y="320">hop</text>
+      <text className="core-diagram-caption small" x="278" y="294">
+        {language === "zh" ? `窗口 ${windowSize} 点` : `${windowSize}-point window`}
+      </text>
       <text className="core-diagram-caption" x="278" y="350">{steps[1].label[language]}</text>
       <text className="core-diagram-caption small" x="350" y="314">{language === "zh" ? "Hann 窗" : "Hann window"}</text>
       <text className="core-diagram-caption small" x="310" y="334">{language === "zh" ? "重叠帧" : "Overlap frame"}</text>
@@ -480,15 +515,24 @@ function StftChart({
           height={bar.height * 0.55}
           key={`bar-${index}`}
           rx="4"
-          width="5"
-          x={582 + index * 7}
+          width={Math.max(3, 116 / bars.length - 2)}
+          x={582 + index * (124 / bars.length)}
           y={286 - bar.height * 0.55}
         />
       ))}
+      <text className="core-diagram-caption small" x="642" y="324">
+        {language === "zh" ? `图中示意：${bars.length} 个频率格` : `Diagram: ${bars.length} bins shown`}
+      </text>
+      <text className="core-diagram-caption small" x="642" y="154">
+        {language === "zh" ? "hop 不改变单帧频谱" : "Hop does not change one-frame spectrum"}
+      </text>
       <text className="core-diagram-caption" x="644" y="338">{steps[3].label[language]}</text>
 
       <text className="core-diagram-caption" x={heatmapX + heatmapWidth / 2} y="376">
         {language === "zh" ? "STFT 频谱图" : "STFT spectrogram"}
+      </text>
+      <text className="core-hop-note" x={heatmapX + heatmapWidth / 2} y="394">
+        {language === "zh" ? `hop ${hopSize} 点 = ${hopFrameMs.toFixed(1)} ms/帧；只改变横向时间帧` : `hop ${hopSize} = ${hopFrameMs.toFixed(1)} ms/frame; changes time-frame density only`}
       </text>
       <rect
         className="core-spectrogram-panel"
@@ -514,6 +558,26 @@ function StftChart({
       </text>
       <text className="core-axis-tick" x={heatmapX - 52} y={heatmapY + 8}>{language === "zh" ? "高频" : "High"}</text>
       <text className="core-axis-tick" x={heatmapX - 52} y={heatmapY + heatmapHeight}>{language === "zh" ? "低频" : "Low"}</text>
+      {Array.from({ length: heatmapColumns }, (_, index) => (
+        <line
+          className="core-spectrogram-guide vertical"
+          key={`time-guide-${index}`}
+          x1={heatmapX + index * (heatmapCellWidth + heatmapGap) + heatmapCellWidth / 2}
+          x2={heatmapX + index * (heatmapCellWidth + heatmapGap) + heatmapCellWidth / 2}
+          y1={heatmapY}
+          y2={heatmapY + heatmapHeight}
+        />
+      ))}
+      {Array.from({ length: heatmapRows }, (_, index) => (
+        <line
+          className="core-spectrogram-guide horizontal"
+          key={`freq-guide-${index}`}
+          x1={heatmapX}
+          x2={heatmapX + heatmapWidth}
+          y1={heatmapY + index * (heatmapCellHeight + heatmapGap) + heatmapCellHeight / 2}
+          y2={heatmapY + index * (heatmapCellHeight + heatmapGap) + heatmapCellHeight / 2}
+        />
+      ))}
       <g className="core-spectrogram-grid">
         {spectrogramCells.map((cell) => (
           <rect
@@ -529,6 +593,9 @@ function StftChart({
           />
         ))}
       </g>
+      <text className="core-diagram-caption small" x={heatmapX + heatmapWidth / 2} y={heatmapY + heatmapHeight + 48}>
+        {language === "zh" ? `图中示意：${heatmapColumns} 个时间帧；${heatmapRows} 个频率格` : `Diagram: ${heatmapColumns} time frames; ${heatmapRows} frequency bins`}
+      </text>
       <g className="core-energy-legend">
         <text className="core-axis-label" x="620" y="440">{language === "zh" ? "颜色：能量" : "Color: energy"}</text>
         <rect fill={energyColor(1)} height="16" rx="3" width="26" x="622" y="456" />
@@ -553,15 +620,28 @@ function StftKeyConcepts({ language }: { language: Language }) {
       </div>
       <div className="core-key-concept-grid">
         <article>
+          <h3>{language === "zh" ? "FFT 和 STFT 是什么" : "What FFT and STFT are"}</h3>
+          <p>
+            {language === "zh"
+              ? "FFT 是 Fast Fourier Transform，中文叫快速傅里叶变换。它是快速计算 DFT 的算法：输入一段时间域 PCM 样本，输出这段声音里各个频率成分的大致强弱。"
+              : "FFT quickly computes a spectrum: it takes a block of time-domain PCM samples and estimates how strong each frequency component is in that block."}
+          </p>
+          <p>
+            {language === "zh"
+              ? "STFT 是 Short-Time Fourier Transform，中文叫短时傅里叶变换。它不是快速傅里叶变换，而是把长音频切成短帧，每帧通常用 FFT 算频谱，再按时间排成能量图。"
+              : "STFT repeats FFT over time: it cuts long audio into short windowed frames, runs FFT per frame, then arranges the spectra over time to form a spectrogram."}
+          </p>
+        </article>
+        <article>
           <h3>{language === "zh" ? "窗口长度为什么影响频谱" : "Why window size changes the spectrum"}</h3>
           <p>
             {language === "zh"
-              ? "STFT 会先截取一小段 PCM 样本，再对这一段做 FFT。窗口越长，参与分析的样本越多，频率格越细；但它覆盖的时间也更长，瞬态变化会被平均到这一帧里。"
+              ? "STFT 会先截取一小段 PCM 样本，再对这一段做 FFT。窗口越长，参与分析的样本越多，频率格越细；这不是“更能表现高频”，而是相邻频率格的间隔更小，更容易区分接近的频率。"
               : "STFT cuts a short PCM segment and runs FFT on that segment. A longer window uses more samples, so frequency bins are finer, but it covers more time and smears transients across the frame."}
           </p>
           <p>
             {language === "zh"
-              ? "频率分辨率公式：Δf = 采样率 Fs / FFT 点数 N。16 kHz 下，512 点约 31.25 Hz/bin，1024 点约 15.63 Hz/bin。"
+              ? "频率格更细指 Δf = 采样率 Fs / FFT 点数 N 更小。16 kHz 下，512 点约 31.25 Hz/bin，1024 点约 15.63 Hz/bin。能看到的最高频率主要由采样率决定，16 kHz 采样最高约到 8 kHz。"
               : "Frequency resolution: Delta f = sample rate Fs / FFT size N. At 16 kHz, 512 points are about 31.25 Hz/bin, while 1024 points are about 15.63 Hz/bin."}
           </p>
         </article>
@@ -569,12 +649,12 @@ function StftKeyConcepts({ language }: { language: Language }) {
           <h3>{language === "zh" ? "hop size 表示什么" : "What hop size means"}</h3>
           <p>
             {language === "zh"
-              ? "hop size 是相邻两帧起点之间相隔多少个采样点。hop 越小，相邻帧重叠越多，时间变化看起来更平滑；但需要计算更多帧，计算量也更高。"
+              ? "hop size 是相邻两帧起点之间相隔多少个采样点。hop 越小，相同时间内帧数越多，能量图横向更密，时间变化看起来更平滑；但单帧 FFT 的频率格和频率范围不变。"
               : "Hop size is the sample distance between the start of adjacent frames. Smaller hop means more overlap and smoother time changes, but it also produces more frames and higher compute cost."}
           </p>
           <p>
             {language === "zh"
-              ? "重叠率可以理解为：1 - hop size / 窗口长度。比如 512 点窗口、256 点 hop，就是 50% 重叠。"
+              ? "重叠率可以理解为：1 - hop size / 窗口长度。比如 512 点窗口、256 点 hop，就是 50% 重叠。hop 改变会影响特征序列的帧率，而不是让某个频率本身变强。"
               : "Overlap can be read as 1 - hop size / window size. For example, a 512-point window with a 256-point hop has 50% overlap."}
           </p>
         </article>
@@ -816,7 +896,7 @@ export function CoreSignalProcessingLab({ language, onBack }: CoreSignalProcessi
   }[filterType];
   const activeChangeNote = {
     stft: {
-      zh: "这一步变化：分帧/加窗窗口变宽，FFT 频率格更细。",
+      zh: "这一步变化：窗口长度改变频率格间隔；hop size 改变横向时间帧密度，不改变单帧 FFT 频谱。",
       en: "Current change: the frame/window block changes width, and FFT frequency bins become finer."
     },
     filter: {

@@ -1250,6 +1250,12 @@ body.details-open {
   stroke-width: 1.5;
 }
 
+.core-pcm-stem {
+  stroke: rgba(240, 180, 106, 0.34);
+  stroke-linecap: round;
+  stroke-width: 1.6;
+}
+
 .core-hann-window {
   fill: none;
   stroke: rgba(240, 180, 106, 0.86);
@@ -1281,6 +1287,13 @@ body.details-open {
   font-weight: 760;
 }
 
+.core-hop-note {
+  fill: #ffdfaa;
+  font-size: 10px;
+  font-weight: 780;
+  text-anchor: middle;
+}
+
 .core-spectrogram-panel {
   fill: rgba(8, 16, 30, 0.68);
   stroke: rgba(126, 231, 216, 0.18);
@@ -1290,6 +1303,19 @@ body.details-open {
 .core-spectrogram-cell {
   stroke: rgba(8, 16, 30, 0.36);
   stroke-width: 0.7;
+}
+
+.core-spectrogram-guide {
+  stroke: rgba(255, 255, 255, 0.13);
+  stroke-width: 0.8;
+}
+
+.core-spectrogram-guide.horizontal {
+  stroke: rgba(126, 231, 216, 0.12);
+}
+
+.core-spectrogram-guide.vertical {
+  stroke: rgba(240, 180, 106, 0.12);
 }
 
 .core-energy-legend .interface-tdm-note {
@@ -1308,7 +1334,7 @@ body.details-open {
 .core-key-concept-grid {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .core-key-concept-grid article {
