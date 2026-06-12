@@ -85,9 +85,26 @@ const flowSteps: Record<SignalMode, FlowStep[]> = {
 };
 
 const sampleRate = 16000;
+const filterWaveComponents = [
+  { amplitude: 0.72, cycles: 2.2, frequency: 300, phase: 0 },
+  { amplitude: 0.34, cycles: 7.5, frequency: 1600, phase: 0.45 },
+  { amplitude: 0.22, cycles: 22, frequency: 5200, phase: 1.1 }
+] as const;
+const filterOutputBands = [
+  { baseHeight: 42, frequency: 250 },
+  { baseHeight: 66, frequency: 700 },
+  { baseHeight: 82, frequency: 1600 },
+  { baseHeight: 70, frequency: null },
+  { baseHeight: 58, frequency: 3600 },
+  { baseHeight: 36, frequency: 6500 }
+] as const;
 
 function formatDb(value: number) {
   return `${value > 0 ? "+" : ""}${value} dB`;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function createFrameEnvelopePath(windowSize: number, originX = 84, originY = 158, maxWidth = 230, amplitude = 44) {
@@ -198,9 +215,70 @@ function createSpectrogramCells(windowSize: number, hopSize: number) {
   });
 }
 
+function logFrequencyPosition(frequency: number, min = 80, max = 8000) {
+  return (Math.log10(frequency) - Math.log10(min)) / (Math.log10(max) - Math.log10(min));
+}
+
+function getEffectiveQ(q: number) {
+  return Math.max(0.25, q);
+}
+
+function getBandwidthOctaves(q: number) {
+  return clamp(2.6 / getEffectiveQ(q), 0.16, 3.2);
+}
+
+function getBellInfluence(frequency: number, centerFrequency: number, q: number) {
+  const distanceOctaves = Math.log2(frequency / centerFrequency);
+  const bandwidthOctaves = getBandwidthOctaves(q);
+
+  return Math.exp(-0.5 * (distanceOctaves / bandwidthOctaves) ** 2);
+}
+
+function getFilterMagnitude(filterType: FilterType, frequency: number, cutoff: number, q: number) {
+  const slope = 1.45 + clamp(q / 20, 0, 1) * 2.6;
+
+  if (filterType === "lowpass") {
+    return 1 / Math.sqrt(1 + (frequency / cutoff) ** (2 * slope));
+  }
+
+  if (filterType === "highpass") {
+    return 1 / Math.sqrt(1 + (cutoff / frequency) ** (2 * slope));
+  }
+
+  const bell = getBellInfluence(frequency, cutoff, q);
+
+  if (filterType === "bandpass") {
+    return clamp(0.06 + bell * 0.94, 0.06, 1);
+  }
+
+  return clamp(1 - bell * 0.88, 0.08, 1);
+}
+
+function getEqMagnitude(frequency: number, centerFrequency: number, q: number, eqGain: number) {
+  if (eqGain === 0) {
+    return 1;
+  }
+
+  const linearGain = 10 ** (eqGain / 20);
+  const bell = getBellInfluence(frequency, centerFrequency, Math.max(0.8, q));
+
+  return 1 + (linearGain - 1) * bell;
+}
+
+function getCombinedFilterGain(
+  filterType: FilterType,
+  frequency: number,
+  cutoff: number,
+  q: number,
+  eqGain: number
+) {
+  return getFilterMagnitude(filterType, frequency, cutoff, q) * getEqMagnitude(frequency, cutoff, q, eqGain);
+}
+
 function createFilterWavePath(
   filterType: FilterType,
   cutoff: number,
+  q: number,
   eqGain: number,
   x: number,
   y: number,
@@ -208,31 +286,27 @@ function createFilterWavePath(
   amplitude: number,
   filtered: boolean
 ) {
-  const cutoffRatio = Math.min(1, Math.max(0, (cutoff - 200) / 7800));
-  const gainScale = Math.max(0.45, Math.min(1.55, 1 + eqGain / 18));
+  const gains = filterWaveComponents.map((component) =>
+    filtered ? getCombinedFilterGain(filterType, component.frequency, cutoff, q, eqGain) : 1
+  );
+  const peakEstimate = filterWaveComponents.reduce(
+    (sum, component, index) => sum + component.amplitude * gains[index],
+    0
+  );
+  const displayScale = Math.min(1, 1.18 / peakEstimate);
   const points = Array.from({ length: 96 }, (_, index) => {
     const ratio = index / 95;
-    const low = Math.sin(ratio * Math.PI * 2.2);
-    const mid = Math.sin(ratio * Math.PI * 7.5) * 0.34;
-    const high = Math.sin(ratio * Math.PI * 22) * 0.22;
-    let value = low + mid + high;
+    const value = filterWaveComponents.reduce((sum, component, componentIndex) => {
+      const partial =
+        Math.sin(ratio * Math.PI * component.cycles + component.phase) *
+        component.amplitude *
+        gains[componentIndex];
 
-    if (filtered) {
-      if (filterType === "lowpass") {
-        value = low * 1.03 + mid * (0.28 + cutoffRatio * 0.62) + high * cutoffRatio * 0.5;
-      } else if (filterType === "highpass") {
-        value = low * cutoffRatio * 0.34 + mid * 0.74 + high * 1.22;
-      } else if (filterType === "bandpass") {
-        value = low * 0.24 + mid * (0.85 + cutoffRatio * 0.22) + high * 0.22;
-      } else {
-        value = low + mid * (0.14 + cutoffRatio * 0.32) + high * 0.88;
-      }
-
-      value *= gainScale;
-    }
+      return sum + partial;
+    }, 0) * displayScale;
 
     const pointX = x + ratio * width;
-    const pointY = y - value * amplitude;
+    const pointY = y - clamp(value, -1.35, 1.35) * amplitude;
     return `${index === 0 ? "M" : "L"} ${pointX.toFixed(1)} ${pointY.toFixed(1)}`;
   });
 
@@ -249,29 +323,19 @@ function createFilterResponsePath(
   width = 620,
   height = 176
 ) {
-  const cutoffPosition = x + (Math.log10(cutoff) - Math.log10(80)) / (Math.log10(8000) - Math.log10(80)) * width;
-  const scaleX = width / 620;
-  const scaleY = height / 176;
-  const normalizedQ = Math.min(1, Math.max(0, q / 20));
-  const qBump = (10 + normalizedQ * 98) * scaleY;
-  const qNarrow = 1 - normalizedQ * 0.78;
-  const gainOffset = -eqGain * 4 * scaleY;
-  const highY = y - 136 * scaleY;
-  const midY = y - 72 * scaleY;
+  const points = Array.from({ length: 72 }, (_, index) => {
+    const ratio = index / 71;
+    const frequency = 80 * (8000 / 80) ** ratio;
+    const gain = getCombinedFilterGain(filterType, frequency, cutoff, q, eqGain);
+    const gainDb = 20 * Math.log10(Math.max(0.06, gain));
+    const normalizedGain = clamp((gainDb + 24) / 36, 0, 1);
+    const pointX = x + ratio * width;
+    const pointY = y - normalizedGain * height;
 
-  if (filterType === "highpass") {
-    return `M ${x} ${y} C ${cutoffPosition - 180 * scaleX} ${y} ${cutoffPosition - 118 * scaleX * qNarrow} ${y - 24 * scaleY} ${cutoffPosition - 44 * scaleX * qNarrow} ${y - 82 * scaleY + gainOffset * 0.25} C ${cutoffPosition + 12 * scaleX * qNarrow} ${highY + gainOffset - qBump * 0.32} ${cutoffPosition + 72 * scaleX * qNarrow} ${highY + 8 * scaleY + gainOffset * 0.3} ${x + width} ${highY + 16 * scaleY + gainOffset * 0.2}`;
-  }
+    return `${index === 0 ? "M" : "L"} ${pointX.toFixed(1)} ${pointY.toFixed(1)}`;
+  });
 
-  if (filterType === "bandpass") {
-    return `M ${x} ${y} C ${cutoffPosition - 190 * scaleX} ${y} ${cutoffPosition - 108 * scaleX * qNarrow} ${y - 30 * scaleY} ${cutoffPosition - 46 * scaleX * qNarrow} ${midY - 20 * scaleY} C ${cutoffPosition - 10 * scaleX * qNarrow} ${highY + 16 * scaleY - qBump * 0.68 + gainOffset} ${cutoffPosition + 10 * scaleX * qNarrow} ${highY + 16 * scaleY - qBump * 0.68 + gainOffset} ${cutoffPosition + 46 * scaleX * qNarrow} ${midY - 20 * scaleY} C ${cutoffPosition + 108 * scaleX * qNarrow} ${y - 30 * scaleY} ${cutoffPosition + 190 * scaleX} ${y} ${x + width} ${y}`;
-  }
-
-  if (filterType === "notch") {
-    return `M ${x} ${highY} C ${cutoffPosition - 154 * scaleX} ${highY} ${cutoffPosition - 72 * scaleX * qNarrow} ${highY + 10 * scaleY} ${cutoffPosition - 38 * scaleX * qNarrow} ${midY} C ${cutoffPosition - 12 * scaleX * qNarrow} ${Math.min(y - 4 * scaleY, y - 24 * scaleY + qBump * 0.54 - gainOffset)} ${cutoffPosition + 12 * scaleX * qNarrow} ${Math.min(y - 4 * scaleY, y - 24 * scaleY + qBump * 0.54 - gainOffset)} ${cutoffPosition + 38 * scaleX * qNarrow} ${midY} C ${cutoffPosition + 72 * scaleX * qNarrow} ${highY + 10 * scaleY} ${cutoffPosition + 154 * scaleX} ${highY} ${x + width} ${highY}`;
-  }
-
-  return `M ${x} ${highY - 4 * scaleY} C ${cutoffPosition - 160 * scaleX} ${highY - 12 * scaleY + gainOffset * 0.2} ${cutoffPosition - 84 * scaleX * qNarrow} ${highY - 20 * scaleY + gainOffset - qBump * 0.32} ${cutoffPosition - 24 * scaleX * qNarrow} ${y - 98 * scaleY + gainOffset * 0.25} C ${cutoffPosition + 44 * scaleX * qNarrow} ${y - 22 * scaleY} ${cutoffPosition + 126 * scaleX} ${y} ${x + width} ${y}`;
+  return points.join(" ");
 }
 
 function createDynamicsCurvePath(threshold: number, ratio: number, x = 92, y = 258, width = 598, height = 196) {
@@ -628,8 +692,23 @@ function StftKeyConcepts({ language }: { language: Language }) {
           </p>
           <p>
             {language === "zh"
+              ? "可以把声音理解成很多个正弦波叠加：低频决定慢起伏，中高频决定细节和边缘。复杂波形可以看成很多个正弦波叠加，FFT 就是在估计这些正弦波各自有多强。"
+              : "A sound can be treated as many sine waves added together: low frequencies create slow movement, while mid and high frequencies create detail. FFT estimates how strong those sine-like components are."}
+          </p>
+          <p>
+            {language === "zh"
+              ? "FFT 的输入是一帧 PCM 采样点，输出不是新的声音，而是一组频率格的幅度或能量。横轴从低频到高频，纵轴表示对应频率成分的强弱。"
+              : "The input to FFT is one frame of PCM samples. The output is not new audio; it is magnitudes or energy values across frequency bins."}
+          </p>
+          <p>
+            {language === "zh"
               ? "STFT 是 Short-Time Fourier Transform，中文叫短时傅里叶变换。它不是快速傅里叶变换，而是把长音频切成短帧，每帧通常用 FFT 算频谱，再按时间排成能量图。"
               : "STFT repeats FFT over time: it cuts long audio into short windowed frames, runs FFT per frame, then arranges the spectra over time to form a spectrogram."}
+          </p>
+          <p>
+            {language === "zh"
+              ? "完整流程可以理解为：PCM 音频 -> 分帧 -> 加窗 -> 每帧 FFT -> 时间-频率能量图。FFT 只能描述这一小段里有哪些频率；STFT 把很多小段排起来，才看到频率随时间怎么变化。"
+              : "The full flow is: PCM audio -> framing -> windowing -> FFT per frame -> time-frequency energy map. FFT describes one short block; STFT lines up many blocks to show how frequency changes over time."}
           </p>
         </article>
         <article>
@@ -644,6 +723,11 @@ function StftKeyConcepts({ language }: { language: Language }) {
               ? "频率格更细指 Δf = 采样率 Fs / FFT 点数 N 更小。16 kHz 下，512 点约 31.25 Hz/bin，1024 点约 15.63 Hz/bin。能看到的最高频率主要由采样率决定，16 kHz 采样最高约到 8 kHz。"
               : "Frequency resolution: Delta f = sample rate Fs / FFT size N. At 16 kHz, 512 points are about 31.25 Hz/bin, while 1024 points are about 15.63 Hz/bin."}
           </p>
+          <p>
+            {language === "zh"
+              ? "第 k 个 bin 近似对应 k × Fs / N Hz。比如 Fs=16 kHz、N=512 时，第 10 个 bin 大约是 312.5 Hz。窗口越长，频率分辨率越细，但时间定位越粗，瞬态会被摊到更长的一帧里。"
+              : "Bin k roughly maps to k x Fs / N Hz. With Fs=16 kHz and N=512, bin 10 is about 312.5 Hz. A longer window gives finer frequency resolution but coarser time localization."}
+          </p>
         </article>
         <article>
           <h3>{language === "zh" ? "hop size 表示什么" : "What hop size means"}</h3>
@@ -656,6 +740,11 @@ function StftKeyConcepts({ language }: { language: Language }) {
             {language === "zh"
               ? "重叠率可以理解为：1 - hop size / 窗口长度。比如 512 点窗口、256 点 hop，就是 50% 重叠。hop 改变会影响特征序列的帧率，而不是让某个频率本身变强。"
               : "Overlap can be read as 1 - hop size / window size. For example, a 512-point window with a 256-point hop has 50% overlap."}
+          </p>
+          <p>
+            {language === "zh"
+              ? "采样率决定最高可分析频率，理论上最高到 Fs/2。16 kHz 采样最高约 8 kHz；如果要分析 12 kHz 高频，采样率至少要高于 24 kHz。"
+              : "Sample rate sets the highest analyzable frequency, ideally up to Fs/2. A 16 kHz sample rate reaches about 8 kHz; analyzing 12 kHz needs more than 24 kHz sampling."}
           </p>
         </article>
         <article>
@@ -690,16 +779,24 @@ function FilterChart({
   q: number;
 }) {
   const responsePath = createFilterResponsePath(filterType, cutoff, q, eqGain, 414, 282, 164, 110);
-  const originalWavePath = createFilterWavePath(filterType, cutoff, eqGain, 48, 374, 300, 26, false);
-  const filteredWavePath = createFilterWavePath(filterType, cutoff, eqGain, 410, 374, 300, 26, true);
-  const cutoffX = 90 + (Math.log10(cutoff) - Math.log10(80)) / (Math.log10(8000) - Math.log10(80)) * 560;
+  const originalWavePath = createFilterWavePath(filterType, cutoff, q, eqGain, 48, 374, 300, 26, false);
+  const filteredWavePath = createFilterWavePath(filterType, cutoff, q, eqGain, 410, 374, 300, 26, true);
+  const cutoffX = 90 + logFrequencyPosition(cutoff) * 560;
   const visibleCutoffX = Math.max(414, Math.min(578, 414 + (cutoffX - 90) * (164 / 560)));
-  const qBandWidth = Math.max(10, 118 - q * 5);
+  const qBandWidth = Math.max(10, 118 - getEffectiveQ(q) * 5);
   const eqGainLineY = Math.max(172, Math.min(282, 238 - eqGain * 4.5));
-  const eqGainMultiplier = Math.max(0.3, Math.min(1.9, 1 + eqGain / 18));
-  const outputBars = [26, 48, 70, filterType === "lowpass" ? 22 : 76].map((height) =>
-    Math.max(8, Math.min(104, height * eqGainMultiplier))
-  );
+  const outputBars = filterOutputBands.map((band) => {
+    const frequency = band.frequency ?? cutoff;
+
+    return {
+      frequency,
+      height: clamp(
+        band.baseHeight * getCombinedFilterGain(filterType, frequency, cutoff, q, eqGain),
+        7,
+        106
+      )
+    };
+  });
   const steps = flowSteps.filter;
 
   return (
@@ -768,16 +865,17 @@ function FilterChart({
       />
       <text className="core-diagram-caption" x="420" y="332">{steps[2].label[language]}</text>
       <line className="lab-axis" x1="624" x2="716" y1="282" y2="282" />
-      {outputBars.map((height, index) => (
+      {outputBars.map((band, index) => (
         <rect
           className="core-spectrum-bar"
+          data-frequency={band.frequency}
           data-testid="filter-output-bar"
-          height={height}
+          height={band.height}
           key={`output-${index}`}
           rx="4"
-          width="13"
-          x={636 + index * 20}
-          y={282 - height}
+          width="11"
+          x={626 + index * 15}
+          y={282 - band.height}
         />
       ))}
       <text className="core-diagram-caption" x="626" y="332">{steps[3].label[language]}</text>
@@ -900,8 +998,8 @@ export function CoreSignalProcessingLab({ language, onBack }: CoreSignalProcessi
       en: "Current change: the frame/window block changes width, and FFT frequency bins become finer."
     },
     filter: {
-      zh: "这一步变化：截止频率标记右移，输出频谱的高频保留更多。",
-      en: "Current change: the cutoff marker moves right, and more high-frequency output is kept."
+      zh: "这一步变化：截止频率、Q 和 EQ 增益共同改变频率响应，输出频谱会随各频段保留比例变化。",
+      en: "Current change: cutoff, Q, and EQ gain shape the response together, so the output spectrum follows the retained energy in each band."
     },
     dynamics: {
       zh: "这一步变化：阈值线下移，更早进入压缩，输出包络更平。",

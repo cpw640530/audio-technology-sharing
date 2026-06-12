@@ -122,13 +122,20 @@ describe("Audio knowledge app", () => {
     const stftKeyConcepts = screen.getByRole("region", { name: "窗口长度、hop size 和能量图怎么理解" });
     expect(within(stftKeyConcepts).getByRole("heading", { name: "FFT 和 STFT 是什么" })).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByText(/FFT 是 Fast Fourier Transform，中文叫快速傅里叶变换/)).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/复杂波形可以看成很多个正弦波叠加/)).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/FFT 的输入是一帧 PCM 采样点，输出不是新的声音/)).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByText(/STFT 是 Short-Time Fourier Transform，中文叫短时傅里叶变换/)).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/完整流程可以理解为：PCM 音频 -> 分帧 -> 加窗 -> 每帧 FFT -> 时间-频率能量图/)).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/FFT 只能描述这一小段里有哪些频率/)).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByRole("heading", { name: "窗口长度为什么影响频谱" })).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByText(/这不是“更能表现高频”/)).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByText(/频率格更细指 Δf = 采样率 Fs \/ FFT 点数 N 更小/)).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/第 k 个 bin 近似对应 k × Fs \/ N Hz/)).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/窗口越长，频率分辨率越细，但时间定位越粗/)).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByRole("heading", { name: "hop size 表示什么" })).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByText(/相邻两帧起点之间相隔多少个采样点/)).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByText(/单帧 FFT 的频率格和频率范围不变/)).toBeInTheDocument();
+    expect(within(stftKeyConcepts).getByText(/采样率决定最高可分析频率/)).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByRole("heading", { name: "能量高低表示什么" })).toBeInTheDocument();
     expect(within(stftKeyConcepts).getByText(/颜色越亮/)).toBeInTheDocument();
     expect(screen.getByText("频率分辨率：31.25 Hz/bin")).toBeInTheDocument();
@@ -188,27 +195,47 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("截止频率：2400 Hz")).toBeInTheDocument();
     expect(screen.getByRole("slider", { name: "Q" })).toHaveAttribute("min", "0");
     expect(screen.getByRole("slider", { name: "Q" })).toHaveAttribute("max", "20");
+    const getOutputBarHeights = () =>
+      screen.getAllByTestId("filter-output-bar").map((bar) => Number(bar.getAttribute("height")));
     const initialQWidth = Number(screen.getByTestId("filter-q-band").getAttribute("width"));
     fireEvent.change(screen.getByRole("slider", { name: "Q" }), {
       target: { value: "20" }
     });
     expect(screen.getByText("Q：20.0")).toBeInTheDocument();
     expect(Number(screen.getByTestId("filter-q-band").getAttribute("width"))).toBeLessThan(initialQWidth);
+    const lowpassOutputBarsBeforeCutoff = getOutputBarHeights();
     const initialCutoffX = Number(screen.getByTestId("filter-cutoff-marker").getAttribute("x1"));
     fireEvent.change(screen.getByRole("slider", { name: "截止频率" }), {
       target: { value: "4800" }
     });
     expect(Number(screen.getByTestId("filter-cutoff-marker").getAttribute("x1"))).toBeGreaterThan(initialCutoffX);
+    expect(getOutputBarHeights()).not.toEqual(lowpassOutputBarsBeforeCutoff);
     expect(screen.getByTestId("filtered-wave-path").getAttribute("d")).not.toEqual(initialFilteredWave);
+    await user.click(screen.getByRole("button", { name: "高通" }));
+    const highpassOutputBars = getOutputBarHeights();
+    expect(highpassOutputBars[0]).toBeLessThan(highpassOutputBars[highpassOutputBars.length - 1]);
+
+    await user.click(screen.getByRole("button", { name: "带通" }));
+    fireEvent.change(screen.getByRole("slider", { name: "Q" }), {
+      target: { value: "1" }
+    });
+    const wideBandpassOutputBars = getOutputBarHeights();
+    const wideBandpassWave = screen.getByTestId("filtered-wave-path").getAttribute("d");
+    fireEvent.change(screen.getByRole("slider", { name: "Q" }), {
+      target: { value: "20" }
+    });
+    expect(getOutputBarHeights()).not.toEqual(wideBandpassOutputBars);
+    expect(screen.getByTestId("filtered-wave-path").getAttribute("d")).not.toEqual(wideBandpassWave);
+
     const initialEqGainY = Number(screen.getByTestId("filter-eq-gain-line").getAttribute("y1"));
-    const initialOutputBarHeight = Number(screen.getAllByTestId("filter-output-bar")[0].getAttribute("height"));
+    const initialOutputBarMaxHeight = Math.max(...getOutputBarHeights());
     fireEvent.change(screen.getByRole("slider", { name: "EQ 增益" }), {
       target: { value: "9" }
     });
     expect(screen.getByText("EQ 增益：+9 dB")).toBeInTheDocument();
     expect(Number(screen.getByTestId("filter-eq-gain-line").getAttribute("y1"))).toBeLessThan(initialEqGainY);
-    expect(Number(screen.getAllByTestId("filter-output-bar")[0].getAttribute("height"))).toBeGreaterThan(initialOutputBarHeight);
-    expect(screen.getByText("这一步变化：截止频率标记右移，输出频谱的高频保留更多。")).toBeInTheDocument();
+    expect(Math.max(...getOutputBarHeights())).toBeGreaterThan(initialOutputBarMaxHeight);
+    expect(screen.getByText("这一步变化：截止频率、Q 和 EQ 增益共同改变频率响应，输出频谱会随各频段保留比例变化。")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "动态处理" }));
     const dynamicsFlow = screen.getByRole("list", { name: "动态处理流程节点" });
