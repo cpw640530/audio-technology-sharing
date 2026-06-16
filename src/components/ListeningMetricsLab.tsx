@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowLeft, Pause, Play } from "lucide-react";
 import type { Language } from "../content/knowledge";
 
@@ -242,6 +242,163 @@ function createMetricPath(effect: ListeningEffect, intensity: number) {
   }).join(" ");
 }
 
+function createListeningWavePath({
+  amplitude = 34,
+  centerY = 130,
+  cycles = 5,
+  phase = 0,
+  points = 90,
+  width = 660,
+  x = 50
+}: {
+  amplitude?: number;
+  centerY?: number;
+  cycles?: number;
+  phase?: number;
+  points?: number;
+  width?: number;
+  x?: number;
+}) {
+  return Array.from({ length: points }, (_, index) => {
+    const ratio = index / (points - 1);
+    const pointX = x + ratio * width;
+    const value =
+      Math.sin(ratio * Math.PI * cycles + phase) * 0.78 +
+      Math.sin(ratio * Math.PI * cycles * 2.4 + phase * 0.7) * 0.22;
+    const pointY = centerY - value * amplitude;
+
+    return `${index === 0 ? "M" : "L"} ${pointX.toFixed(2)} ${pointY.toFixed(2)}`;
+  }).join(" ");
+}
+
+function createNoiseBandPath(intensity: number) {
+  const amount = intensity / 100;
+  const width = 660;
+  const x = 50;
+  const baseline = 214 - amount * 42;
+  const thickness = 8 + amount * 38;
+  const topPoints = Array.from({ length: 72 }, (_, index) => {
+    const ratio = index / 71;
+    const pointX = x + ratio * width;
+    const texture = Math.sin(ratio * Math.PI * 37) * 3.4 + Math.sin(ratio * Math.PI * 91) * 1.8;
+    const pointY = baseline - thickness / 2 + texture * amount;
+
+    return `${index === 0 ? "M" : "L"} ${pointX.toFixed(2)} ${pointY.toFixed(2)}`;
+  });
+  const bottomPoints = Array.from({ length: 72 }, (_, index) => {
+    const ratio = 1 - index / 71;
+    const pointX = x + ratio * width;
+    const texture = Math.cos(ratio * Math.PI * 43) * 3.2 + Math.sin(ratio * Math.PI * 83) * 1.6;
+    const pointY = baseline + thickness / 2 + texture * amount;
+
+    return `L ${pointX.toFixed(2)} ${pointY.toFixed(2)}`;
+  });
+
+  return `${topPoints.join(" ")} ${bottomPoints.join(" ")} Z`;
+}
+
+function createNoisySignalPath(intensity: number) {
+  const amount = intensity / 100;
+  const width = 660;
+  const x = 50;
+  const centerY = 130;
+
+  return Array.from({ length: 96 }, (_, index) => {
+    const ratio = index / 95;
+    const pointX = x + ratio * width;
+    const clean =
+      Math.sin(ratio * Math.PI * 4.8) * 0.78 +
+      Math.sin(ratio * Math.PI * 11.5 + 0.6) * 0.22;
+    const noise =
+      Math.sin(ratio * Math.PI * 63) * 0.34 +
+      Math.sin(ratio * Math.PI * 97 + 0.8) * 0.22 +
+      Math.sin(ratio * Math.PI * 151 + 1.3) * 0.14;
+    const pointY = centerY - clean * 28 - noise * amount * 22;
+
+    return `${index === 0 ? "M" : "L"} ${pointX.toFixed(2)} ${pointY.toFixed(2)}`;
+  }).join(" ");
+}
+
+function createToneComparisonPath(effect: "brightness" | "muddy", intensity: number, processed: boolean) {
+  const amount = intensity / 100;
+  const width = 248;
+  const x = processed ? 410 : 76;
+  const centerY = 238;
+  const amplitude = 14;
+
+  return Array.from({ length: 96 }, (_, index) => {
+    const ratio = index / 95;
+    const pointX = x + ratio * width;
+    const low = Math.sin(ratio * Math.PI * 4.2) * 0.54;
+    const mid = Math.sin(ratio * Math.PI * 9.2 + 0.25) * 0.28;
+    const high = Math.sin(ratio * Math.PI * 34 + 0.7) * 0.18;
+    let value = low + mid + high * 0.65;
+
+    if (processed && effect === "brightness") {
+      value = low * 0.86 + mid * 0.94 + high * (0.9 + amount * 1.8);
+    }
+
+    if (processed && effect === "muddy") {
+      value = low * (1 + amount * 0.7) + mid * (0.95 + amount * 0.35) + high * Math.max(0.18, 0.58 - amount * 0.32);
+    }
+
+    const pointY = centerY - value * amplitude;
+
+    return `${index === 0 ? "M" : "L"} ${pointX.toFixed(2)} ${pointY.toFixed(2)}`;
+  }).join(" ");
+}
+
+function createDistortionPath(intensity: number) {
+  const amount = intensity / 100;
+  const width = 660;
+  const centerY = 130;
+  const amplitude = 30 + amount * 34;
+  const clipLimit = 0.42 + (1 - amount) * 0.42;
+
+  return Array.from({ length: 96 }, (_, index) => {
+    const ratio = index / 95;
+    const x = 50 + ratio * width;
+    const raw =
+      Math.sin(ratio * Math.PI * 8) * 0.82 +
+      Math.sin(ratio * Math.PI * 16) * amount * 0.34;
+    const clipped = Math.max(-clipLimit, Math.min(clipLimit, raw));
+    const y = centerY - clipped * amplitude;
+
+    return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
+  }).join(" ");
+}
+
+function createCompressionEnvelopePath(intensity: number, compressed: boolean) {
+  const amount = intensity / 100;
+  const peaks = [0.92, 0.28, 1, 0.34, 0.78, 0.2, 0.86, 0.26, 0.66];
+  const centerY = compressed ? 184 : 94;
+  const maxAmplitude = compressed ? 38 : 62;
+  const threshold = 0.34 + (1 - amount) * 0.42;
+  const ratio = 1 + amount * 11;
+
+  return peaks.map((peak, index) => {
+    const x = 76 + index * 76;
+    const level = compressed && peak > threshold ? threshold + (peak - threshold) / ratio : peak;
+    const y = centerY - level * maxAmplitude;
+
+    return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
+  }).join(" ");
+}
+
+function createStereoChannelPath(intensity: number, channel: "left" | "right") {
+  const amount = intensity / 100;
+  const pan = amount * 0.85;
+  const channelGain = channel === "left" ? 1 - pan * 0.58 : 1 + pan * 0.34;
+  const centerY = channel === "left" ? 100 : 184;
+
+  return createListeningWavePath({
+    amplitude: 28 * channelGain,
+    centerY,
+    cycles: 6.2,
+    phase: 0
+  });
+}
+
 function createDistortionCurve(amount: number) {
   const samples = 512;
   const curve = new Float32Array(samples);
@@ -270,13 +427,140 @@ function createNoiseBuffer(context: AudioContext, amount: number) {
   return buffer;
 }
 
+function ListeningEffectChart({
+  effect,
+  intensity
+}: {
+  effect: ListeningEffect;
+  intensity: number;
+}) {
+  if (effect === "noise") {
+    return (
+      <>
+        <path
+          className="listening-noise-band"
+          data-testid="listening-noise-band"
+          d={createNoiseBandPath(intensity)}
+        />
+        <path
+          className="listening-metric-path"
+          data-testid="listening-noise-signal"
+          d={createListeningWavePath({ amplitude: 28, centerY: 130, cycles: 4.8 })}
+        />
+        <path
+          className="listening-noisy-signal"
+          data-testid="listening-noisy-signal"
+          d={createNoisySignalPath(intensity)}
+        />
+        <text className="lab-chip" x="92" y="92">Clean signal</text>
+        <text className="lab-chip" x="428" y="92">Signal + noise</text>
+        <text className="lab-chip" x="560" y="246">Noise floor</text>
+      </>
+    );
+  }
+
+  if (effect === "compression") {
+    return (
+      <>
+        <path
+          className="listening-envelope-input"
+          data-testid="listening-input-envelope"
+          d={createCompressionEnvelopePath(intensity, false)}
+        />
+        <path
+          className="listening-envelope-output"
+          data-testid="listening-compressed-envelope"
+          d={createCompressionEnvelopePath(intensity, true)}
+        />
+        <text className="lab-chip" x="76" y="62">Input dynamics</text>
+        <text className="lab-chip" x="76" y="226">Compressed output</text>
+      </>
+    );
+  }
+
+  if (effect === "stereo") {
+    return (
+      <>
+        <path
+          className="listening-stereo-left"
+          data-testid="listening-stereo-left"
+          d={createStereoChannelPath(intensity, "left")}
+        />
+        <path
+          className="listening-stereo-right"
+          data-testid="listening-stereo-right"
+          d={createStereoChannelPath(intensity, "right")}
+        />
+        <text className="lab-chip" x="70" y="74">L</text>
+        <text className="lab-chip" x="70" y="158">R</text>
+        <text className="lab-chip" x="528" y="256">Pan: center → right</text>
+      </>
+    );
+  }
+
+  if (effect === "distortion") {
+    return (
+      <>
+        <path
+          className="listening-clean-wave"
+          data-testid="listening-clean-wave"
+          d={createListeningWavePath({ amplitude: 34, centerY: 130, cycles: 4 })}
+        />
+        <path
+          className="listening-processed-wave"
+          data-testid="listening-metric-response"
+          d={createDistortionPath(intensity)}
+        />
+        <text className="lab-chip" x="76" y="86">Clean input</text>
+        <text className="lab-chip" x="520" y="86">Clipped output</text>
+      </>
+    );
+  }
+
+  if (effect === "brightness" || effect === "muddy") {
+    return (
+      <>
+        <path
+          className="listening-metric-path"
+          data-testid="listening-metric-response"
+          d={createMetricPath(effect, intensity)}
+        />
+        <line className="lab-axis faint" x1="76" x2="324" y1="238" y2="238" />
+        <line className="lab-axis faint" x1="410" x2="658" y1="238" y2="238" />
+        <path
+          className="listening-clean-wave"
+          data-testid="listening-clean-wave"
+          d={createToneComparisonPath(effect, intensity, false)}
+        />
+        <path
+          className="listening-processed-wave"
+          data-testid="listening-processed-wave"
+          d={createToneComparisonPath(effect, intensity, true)}
+        />
+        <text className="lab-chip" x="78" y="274">Clean wave</text>
+        <text className="lab-chip" x="410" y="274">
+          {effect === "brightness" ? "Treble boosted" : "Low-mid buildup"}
+        </text>
+      </>
+    );
+  }
+
+  return (
+    <path
+      className="listening-metric-path"
+      data-testid="listening-metric-response"
+      d={createMetricPath(effect, intensity)}
+    />
+  );
+}
+
 function getCompressionSettings(amount: number) {
   return {
-    attack: 0.002 + (1 - amount) * 0.014,
-    knee: 18 - amount * 12,
-    ratio: 1 + amount * 17,
-    release: 0.28 - amount * 0.18,
-    threshold: -9 - amount * 33
+    attack: 0.004 + (1 - amount) * 0.018,
+    knee: 16 - amount * 10,
+    ratio: 1 + amount * 14,
+    release: 0.22 - amount * 0.12,
+    threshold: -10 - amount * 28
   };
 }
 
@@ -318,7 +602,15 @@ export function ListeningMetricsLab({ language, onBack }: ListeningMetricsLabPro
   const [selectedMetric, setSelectedMetric] = useState<MetricDetail | null>(null);
   const audioRef = useRef<ActiveAudioGraph | null>(null);
   const activeCopy = effectCopy[activeEffect];
-  const metricPath = useMemo(() => createMetricPath(activeEffect, intensity), [activeEffect, intensity]);
+  const chartAxisLabel =
+    activeEffect === "brightness" || activeEffect === "muddy"
+      ? language === "zh"
+        ? "低频 → 高频"
+        : "Low → high"
+      : language === "zh"
+        ? "时间 / 声道示意"
+        : "Time / channel view";
+  const chartAxisLabelY = activeEffect === "brightness" || activeEffect === "muddy" ? 292 : 256;
 
   function stopAudio() {
     if (audioRef.current) {
@@ -356,7 +648,7 @@ export function ListeningMetricsLab({ language, onBack }: ListeningMetricsLabPro
     const now = context.currentTime;
     const amount = intensity / 100;
 
-    oscillator.type = activeEffect === "distortion" || activeEffect === "compression" ? "sine" : "sawtooth";
+    oscillator.type = activeEffect === "distortion" ? "sine" : activeEffect === "compression" ? "triangle" : "sawtooth";
     oscillator.frequency.setValueAtTime(activeEffect === "muddy" ? 180 : activeEffect === "compression" ? 220 : 330, now);
     filter.type = activeEffect === "brightness" ? "highshelf" : activeEffect === "muddy" ? "lowshelf" : "peaking";
     filter.frequency.setValueAtTime(activeEffect === "brightness" ? 3600 : activeEffect === "muddy" ? 260 : 900, now);
@@ -364,17 +656,20 @@ export function ListeningMetricsLab({ language, onBack }: ListeningMetricsLabPro
     filter.Q.setValueAtTime(0.9 + amount, now);
     gain.gain.setValueAtTime(0.0001, now);
     if (activeEffect === "compression") {
-      gain.gain.linearRampToValueAtTime(0.22, now + 0.05);
-      gain.gain.linearRampToValueAtTime(0.035, now + 0.28);
-      gain.gain.linearRampToValueAtTime(0.24, now + 0.52);
-      gain.gain.linearRampToValueAtTime(0.045, now + 0.78);
-      gain.gain.linearRampToValueAtTime(0.18, now + 0.96);
-      gain.gain.linearRampToValueAtTime(0.0001, now + 1.16);
+      gain.gain.linearRampToValueAtTime(0.28, now + 0.08);
+      gain.gain.linearRampToValueAtTime(0.035, now + 0.24);
+      gain.gain.linearRampToValueAtTime(0.32, now + 0.4);
+      gain.gain.linearRampToValueAtTime(0.04, now + 0.58);
+      gain.gain.linearRampToValueAtTime(0.26, now + 0.72);
+      gain.gain.linearRampToValueAtTime(0.055, now + 0.9);
+      gain.gain.linearRampToValueAtTime(0.22, now + 1.04);
+      gain.gain.linearRampToValueAtTime(0.04, now + 1.22);
+      gain.gain.linearRampToValueAtTime(0.0001, now + 1.5);
     } else {
       gain.gain.linearRampToValueAtTime(0.08, now + 0.04);
       gain.gain.linearRampToValueAtTime(0.0001, now + 1.1);
     }
-    outputGain.gain.setValueAtTime(0.9, now);
+    outputGain.gain.setValueAtTime(activeEffect === "compression" ? 1.35 + amount * 0.45 : 0.9, now);
 
     oscillator.connect(filter);
     let lastNode: AudioNode = filter;
@@ -411,7 +706,7 @@ export function ListeningMetricsLab({ language, onBack }: ListeningMetricsLabPro
     }
 
     oscillator.start(now);
-    oscillator.stop(now + 1.14);
+    oscillator.stop(now + (activeEffect === "compression" ? 1.54 : 1.14));
 
     if (activeEffect === "noise") {
       const noiseSource = context.createBufferSource();
@@ -438,7 +733,7 @@ export function ListeningMetricsLab({ language, onBack }: ListeningMetricsLabPro
       shaper
     };
     setIsPlaying(true);
-    window.setTimeout(() => setIsPlaying(false), 1200);
+    window.setTimeout(() => setIsPlaying(false), activeEffect === "compression" ? 1600 : 1200);
   }
 
   return (
@@ -481,9 +776,9 @@ export function ListeningMetricsLab({ language, onBack }: ListeningMetricsLabPro
             <line className="lab-axis" x1="50" x2="710" y1="130" y2="130" />
             <line className="lab-axis faint" x1="50" x2="710" y1="58" y2="58" />
             <line className="lab-axis faint" x1="50" x2="710" y1="210" y2="210" />
-            <path className="listening-metric-path" d={metricPath} />
+            <ListeningEffectChart effect={activeEffect} intensity={intensity} />
             <text className="lab-label" x="54" y="42">{activeCopy.metric}</text>
-            <text className="lab-chip" x="520" y="256">{language === "zh" ? "低频 → 高频" : "Low → high"}</text>
+            <text className="lab-chip" x="520" y={chartAxisLabelY}>{chartAxisLabel}</text>
           </svg>
         </div>
 

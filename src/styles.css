@@ -1053,6 +1053,99 @@ body.details-open {
   min-height: 100%;
 }
 
+.core-stage-overview {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(126, 231, 216, 0.16);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.core-stage-flow {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.core-stage-node {
+  background: rgba(13, 24, 27, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  color: #dbe8e4;
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 12px;
+  position: relative;
+}
+
+.core-stage-node:not(:last-child)::after {
+  border-right: 2px solid rgba(240, 180, 106, 0.58);
+  border-top: 2px solid rgba(240, 180, 106, 0.58);
+  content: "";
+  height: 8px;
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 8px;
+}
+
+.core-stage-node.active {
+  background: rgba(126, 231, 216, 0.14);
+  border-color: rgba(126, 231, 216, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(126, 231, 216, 0.12);
+}
+
+.core-stage-node span {
+  align-items: center;
+  background: rgba(126, 231, 216, 0.16);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 820;
+  height: 22px;
+  justify-content: center;
+  width: 22px;
+}
+
+.core-stage-node strong {
+  color: #ffffff;
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.core-stage-node p {
+  color: #aebfba;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.core-stage-explain article {
+  background: rgba(240, 180, 106, 0.08);
+  border: 1px solid rgba(240, 180, 106, 0.18);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.core-stage-explain h2 {
+  color: #ffffff;
+  font-size: 1.02rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.core-stage-explain p {
+  color: #dbe8e4;
+  line-height: 1.65;
+  margin: 0;
+}
+
 .core-flow-steps {
   display: grid;
   gap: 10px;
@@ -1438,6 +1531,36 @@ body.details-open {
   stroke: #dcece8;
   stroke-dasharray: 8 8;
   stroke-width: 2;
+}
+
+.core-gain-reference {
+  stroke: rgba(126, 231, 216, 0.42);
+  stroke-dasharray: 4 5;
+  stroke-linecap: round;
+  stroke-width: 1.5;
+}
+
+.core-gain-reduction-marker {
+  stroke: #ffcf8a;
+  stroke-linecap: round;
+  stroke-width: 4;
+}
+
+.core-gain-point {
+  fill: #ffcf8a;
+  stroke: rgba(13, 24, 27, 0.86);
+  stroke-width: 2;
+}
+
+.core-gain-formula rect {
+  fill: rgba(13, 24, 27, 0.72);
+  stroke: rgba(240, 180, 106, 0.24);
+}
+
+.core-gain-formula text {
+  fill: #ffe9c8;
+  font-size: 11px;
+  font-weight: 680;
 }
 
 .core-dynamics-input {
@@ -3460,6 +3583,60 @@ body.details-open {
   stroke-width: 5;
 }
 
+.listening-noise-band {
+  fill: rgba(240, 180, 106, 0.24);
+  stroke: rgba(240, 180, 106, 0.72);
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+
+.listening-envelope-input,
+.listening-envelope-output,
+.listening-clean-wave,
+.listening-noisy-signal,
+.listening-processed-wave,
+.listening-stereo-left,
+.listening-stereo-right {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.listening-envelope-input {
+  stroke: rgba(126, 231, 216, 0.95);
+  stroke-width: 4.5;
+}
+
+.listening-envelope-output {
+  stroke: rgba(240, 180, 106, 0.95);
+  stroke-width: 4.5;
+}
+
+.listening-clean-wave {
+  stroke: rgba(220, 236, 232, 0.72);
+  stroke-width: 3.5;
+}
+
+.listening-noisy-signal {
+  stroke: rgba(240, 180, 106, 0.88);
+  stroke-width: 3.5;
+}
+
+.listening-processed-wave {
+  stroke: rgba(240, 180, 106, 0.95);
+  stroke-width: 4;
+}
+
+.listening-stereo-left {
+  stroke: rgba(126, 231, 216, 0.95);
+  stroke-width: 4.5;
+}
+
+.listening-stereo-right {
+  stroke: rgba(240, 180, 106, 0.95);
+  stroke-width: 4.5;
+}
+
 .listening-panel .lab-live-note {
   display: grid;
   gap: 6px;
@@ -4097,8 +4274,13 @@ body.details-open {
   .realtime-buffer-card-grid,
   .realtime-rule-grid,
   .core-flow-steps,
+  .core-stage-flow,
   .core-key-concept-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .core-stage-node:not(:last-child)::after {
+    display: none;
   }
 
   .codec-table,
@@ -4186,6 +4368,7 @@ body.details-open {
   .realtime-control-grid,
   .realtime-rule-grid,
   .core-flow-steps,
+  .core-stage-flow,
   .core-key-concept-grid,
   .codec-table,
   .audio-codec-scenario-tabs,

@@ -13,6 +13,16 @@ type FlowStep = {
   label: Record<Language, string>;
   detail: Record<Language, string>;
 };
+type ProcessingStage = {
+  label: Record<Language, string>;
+  detail: Record<Language, string>;
+  role?: SignalMode;
+};
+type ProcessingRole = {
+  title: Record<Language, string>;
+  stage: Record<Language, string>;
+  summary: Record<Language, string>;
+};
 
 const modeLabels: Record<SignalMode, Record<Language, string>> = {
   stft: { zh: "FFT / STFT", en: "FFT / STFT" },
@@ -66,8 +76,8 @@ const flowSteps: Record<SignalMode, FlowStep[]> = {
   ],
   dynamics: [
     {
-      label: { zh: "输入电平", en: "Input level" },
-      detail: { zh: "每帧或包络的响度变化", en: "Frame or envelope loudness" }
+      label: { zh: "输入数字电平", en: "Digital input level" },
+      detail: { zh: "PCM 样本包络换算成 dBFS", en: "PCM envelope mapped to dBFS" }
     },
     {
       label: { zh: "电平检测", en: "Level detector" },
@@ -82,6 +92,72 @@ const flowSteps: Record<SignalMode, FlowStep[]> = {
       detail: { zh: "峰值和动态范围变小", en: "Peaks and dynamic range shrink" }
     }
   ]
+};
+
+const processingStages: ProcessingStage[] = [
+  {
+    label: { zh: "输入源", en: "Source" },
+    detail: { zh: "麦克风采集或文件/网络解码", en: "Mic capture or file/network decode" }
+  },
+  {
+    label: { zh: "PCM 音频", en: "PCM audio" },
+    detail: { zh: "已采样、量化的时域数据", en: "Sampled time-domain data" }
+  },
+  {
+    label: { zh: "FFT / STFT", en: "FFT / STFT" },
+    detail: { zh: "分析频谱、做特征或频域处理", en: "Spectrum analysis, features, or frequency-domain processing" },
+    role: "stft"
+  },
+  {
+    label: { zh: "EQ / 滤波", en: "EQ / filter" },
+    detail: { zh: "改变不同频段能量", en: "Reshape energy by frequency band" },
+    role: "filter"
+  },
+  {
+    label: { zh: "动态处理", en: "Dynamics" },
+    detail: { zh: "根据电平包络改变增益", en: "Change gain from the level envelope" },
+    role: "dynamics"
+  },
+  {
+    label: { zh: "输出去向", en: "Output" },
+    detail: { zh: "编码、混音、DAC 或播放", en: "Encode, mix, DAC, or playback" }
+  }
+];
+
+const processingRoles: Record<SignalMode, ProcessingRole> = {
+  stft: {
+    title: { zh: "FFT / STFT：主要是分析和变换域入口", en: "FFT / STFT: analysis and transform-domain entry" },
+    stage: {
+      zh: "常放在 PCM 之后：实时语音里用于 VAD、降噪、回声消除特征；音乐/工具里用于频谱显示、频域滤波或特征提取。",
+      en: "Usually after PCM exists: in real-time voice it feeds VAD, denoise, and AEC features; in tools it powers spectrum displays, frequency-domain filtering, or feature extraction."
+    },
+    summary: {
+      zh: "FFT 把一帧 PCM 从时间域转成频率能量；STFT 是连续分帧后反复做 FFT，得到随时间变化的能量图。它本身通常不直接改善声音，后面接滤波、估计、增强或特征算法才会改变结果。",
+      en: "FFT converts one PCM frame from time to frequency energy; STFT repeats FFT over frames to show energy over time. By itself it mostly analyzes; filtering, estimation, enhancement, or feature algorithms change the result."
+    }
+  },
+  filter: {
+    title: { zh: "EQ / 滤波：主要是频段能量塑形", en: "EQ / filtering: frequency-band shaping" },
+    stage: {
+      zh: "通常放在 PCM 处理链中间：可以在录音后修正人声和设备频响，也可以在播放前做音色、响度或扬声器校正。",
+      en: "Usually in the middle of a PCM chain: after capture for voice/device correction, or before playback for tone, loudness, or speaker correction."
+    },
+    summary: {
+      zh: "滤波器按频率保留或削弱信号；参数 EQ 用中心频率、增益和 Q 控制某一段频率。它改变的是频段能量，也可能带来相位、延迟或振铃等副作用。",
+      en: "Filters keep or attenuate signal by frequency; parametric EQ uses center frequency, gain, and Q to control a band. It reshapes frequency energy and can also introduce phase shift, delay, or ringing."
+    }
+  },
+  dynamics: {
+    title: { zh: "动态处理：主要是电平和峰值控制", en: "Dynamics: level and peak control" },
+    stage: {
+      zh: "通常放在降噪/EQ 之后、编码或 DAC 之前；语音链路里常见 AGC/压缩，播放链路里常见 DRC、limiter 和扬声器保护。",
+      en: "Usually after denoise/EQ and before encoding or DAC; voice chains often use AGC/compression, while playback chains use DRC, limiting, and speaker protection."
+    },
+    summary: {
+      zh: "动态处理先检测电平包络，再按 threshold、ratio、attack、release 改变增益。它不是 MP3/AAC 这类编码压缩，而是把忽大忽小、瞬态峰值或过载风险控制住。",
+      en: "Dynamics first detects the level envelope, then changes gain using threshold, ratio, attack, and release. It is not MP3/AAC codec compression; it controls level swings, transient peaks, or overload risk."
+    }
+  }
 };
 
 const sampleRate = 16000;
@@ -101,6 +177,20 @@ const filterOutputBands = [
 
 function formatDb(value: number) {
   return `${value > 0 ? "+" : ""}${value} dB`;
+}
+
+function formatDbValue(value: number) {
+  const rounded = Math.round(value * 10) / 10;
+  const text = Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(1);
+
+  return `${rounded > 0 ? "+" : ""}${text} dB`;
+}
+
+function formatDbfs(value: number) {
+  const rounded = Math.round(value * 10) / 10;
+  const text = Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(1);
+
+  return `${text} dBFS`;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -346,26 +436,47 @@ function createDynamicsCurvePath(threshold: number, ratio: number, x = 92, y = 2
   return `M ${x} ${y} L ${thresholdX.toFixed(1)} ${thresholdY.toFixed(1)} L ${x + width} ${Math.max(y - height, endY).toFixed(1)}`;
 }
 
-function createInputEnvelopePath(x = 92, y = 330, width = 598, amplitude = 70) {
+function calculateCompressedOutputDb(inputDb: number, threshold: number, ratio: number) {
+  return inputDb <= threshold ? inputDb : threshold + (inputDb - threshold) / ratio;
+}
+
+function createEnvelopeLevel(ratio: number) {
+  return Math.max(
+    0.02,
+    Math.abs(Math.sin(ratio * Math.PI * 4.5)) * (0.45 + 0.55 * Math.sin(ratio * Math.PI))
+  );
+}
+
+function levelToDb(level: number) {
+  return 20 * Math.log10(Math.max(0.02, level));
+}
+
+function dbToDisplayY(db: number, bottomY: number, height: number) {
+  const normalized = (clamp(db, -48, 0) + 48) / 48;
+
+  return bottomY - normalized * height;
+}
+
+function createInputEnvelopePath(x = 92, bottomY = 330, width = 598, height = 70) {
   const points = Array.from({ length: 80 }, (_, index) => {
     const ratio = index / 79;
     const pointX = x + ratio * width;
-    const wave = Math.abs(Math.sin(ratio * Math.PI * 4.5)) * (0.45 + 0.55 * Math.sin(ratio * Math.PI));
-    const pointY = y - wave * amplitude;
+    const pointY = dbToDisplayY(levelToDb(createEnvelopeLevel(ratio)), bottomY, height);
+
     return `${index === 0 ? "M" : "L"} ${pointX.toFixed(1)} ${pointY.toFixed(1)}`;
   });
 
   return points.join(" ");
 }
 
-function createOutputEnvelopePath(threshold: number, ratio: number, x = 92, y = 330, width = 598, amplitude = 70) {
-  const thresholdLinear = Math.max(0.15, (threshold + 48) / 48);
+function createOutputEnvelopePath(threshold: number, ratio: number, x = 92, bottomY = 330, width = 598, height = 70) {
   const points = Array.from({ length: 80 }, (_, index) => {
     const ratioPosition = index / 79;
     const pointX = x + ratioPosition * width;
-    const input = Math.abs(Math.sin(ratioPosition * Math.PI * 4.5)) * (0.45 + 0.55 * Math.sin(ratioPosition * Math.PI));
-    const compressed = input <= thresholdLinear ? input : thresholdLinear + (input - thresholdLinear) / ratio;
-    const pointY = y - compressed * amplitude;
+    const inputDb = levelToDb(createEnvelopeLevel(ratioPosition));
+    const outputDb = inputDb <= threshold ? inputDb : threshold + (inputDb - threshold) / ratio;
+    const pointY = dbToDisplayY(outputDb, bottomY, height);
+
     return `${index === 0 ? "M" : "L"} ${pointX.toFixed(1)} ${pointY.toFixed(1)}`;
   });
 
@@ -395,6 +506,41 @@ function FlowSteps({ language, mode }: { language: Language; mode: SignalMode })
         </li>
       ))}
     </ol>
+  );
+}
+
+function ProcessingStageOverview({ language, mode }: { language: Language; mode: SignalMode }) {
+  const activeRole = processingRoles[mode];
+
+  return (
+    <section className="core-stage-overview" aria-labelledby="core-stage-overview-title">
+      <div className="codec-mode-concepts-header">
+        <span>{language === "zh" ? "处理阶段" : "Processing stage"}</span>
+        <strong id="core-stage-overview-title">
+          {language === "zh" ? "FFT/STFT、EQ 和动态处理通常在音频链路哪里做" : "Where FFT/STFT, EQ, and dynamics usually sit"}
+        </strong>
+      </div>
+      <div className="core-stage-flow" role="list" aria-label={language === "zh" ? "音频处理阶段流程图" : "Audio processing stage flow"}>
+        {processingStages.map((stage, index) => (
+          <div
+            className={stage.role === mode ? "core-stage-node active" : "core-stage-node"}
+            key={stage.label.en}
+            role="listitem"
+          >
+            <span>{index + 1}</span>
+            <strong>{stage.label[language]}</strong>
+            <p>{stage.detail[language]}</p>
+          </div>
+        ))}
+      </div>
+      <div className="core-stage-explain">
+        <article>
+          <h2>{activeRole.title[language]}</h2>
+          <p>{activeRole.stage[language]}</p>
+          <p>{activeRole.summary[language]}</p>
+        </article>
+      </div>
+    </section>
   );
 }
 
@@ -900,9 +1046,24 @@ function DynamicsChart({
   threshold: number;
 }) {
   const curvePath = createDynamicsCurvePath(threshold, ratio, 430, 286, 136, 108);
-  const inputEnvelope = createInputEnvelopePath(54, 286, 140, 52);
-  const outputEnvelope = createOutputEnvelopePath(threshold, ratio, 620, 286, 92, 52);
-  const thresholdY = 258 - ((threshold + 48) / 48) * 196;
+  const envelopeBottomY = 286;
+  const envelopeHeight = 92;
+  const inputEnvelope = createInputEnvelopePath(54, envelopeBottomY, 140, envelopeHeight);
+  const detectorEnvelope = createInputEnvelopePath(250, envelopeBottomY, 132, envelopeHeight);
+  const outputEnvelope = createOutputEnvelopePath(threshold, ratio, 620, envelopeBottomY, 92, envelopeHeight);
+  const thresholdLineY = dbToDisplayY(threshold, envelopeBottomY, envelopeHeight);
+  const exampleInputDb = -6;
+  const exampleOverThresholdDb = Math.max(0, exampleInputDb - threshold);
+  const exampleKeptOverDb = exampleOverThresholdDb / ratio;
+  const exampleOutputDb = calculateCompressedOutputDb(exampleInputDb, threshold, ratio);
+  const exampleGainDb = exampleOutputDb - exampleInputDb;
+  const curveX = 430;
+  const curveY = 286;
+  const curveWidth = 136;
+  const curveHeight = 108;
+  const gainMarkerX = curveX + ((exampleInputDb + 48) / 48) * curveWidth;
+  const inputReferenceY = dbToDisplayY(exampleInputDb, curveY, curveHeight);
+  const compressedOutputY = dbToDisplayY(exampleOutputDb, curveY, curveHeight);
   const steps = flowSteps.dynamics;
 
   return (
@@ -931,26 +1092,84 @@ function DynamicsChart({
       })}
       <path className="core-dynamics-input" d={inputEnvelope} />
       <text className="core-diagram-caption" x="58" y="332">{steps[0].label[language]}</text>
+      <text className="interface-tdm-note" x="58" y="354">{language === "zh" ? "数字样本幅度 -> dBFS" : "PCM amplitude -> dBFS"}</text>
       <line
         className="lab-axis faint"
         data-testid="dynamics-threshold-line"
         x1="238"
         x2="382"
-        y1={Math.max(180, Math.min(292, thresholdY + 26))}
-        y2={Math.max(180, Math.min(292, thresholdY + 26))}
+        y1={thresholdLineY}
+        y2={thresholdLineY}
       />
-      <text className="interface-tdm-note" x="246" y="170">Threshold</text>
-      <path className="core-dynamics-input" d="M 250 282 C 274 226 300 226 324 282 S 360 326 382 264" />
+      <text className="interface-tdm-note" x="246" y={Math.max(186, thresholdLineY - 8)}>Threshold {threshold} dBFS</text>
+      <path className="core-dynamics-input" d={detectorEnvelope} />
       <text className="core-diagram-caption" x="238" y="332">{steps[1].label[language]}</text>
       <line className="lab-axis" x1="430" x2="566" y1="286" y2="286" />
       <line className="lab-axis" x1="430" x2="430" y1="176" y2="286" />
       <path className="core-dynamics-guide" d="M 430 286 L 566 178" />
       <path className="lab-wave-path" d={curvePath} />
+      <line
+        className="core-gain-reference"
+        x1="430"
+        x2={gainMarkerX}
+        y1={inputReferenceY}
+        y2={inputReferenceY}
+      />
+      <line
+        className="core-gain-reference"
+        x1="430"
+        x2={gainMarkerX}
+        y1={compressedOutputY}
+        y2={compressedOutputY}
+      />
+      <line
+        className="core-gain-reduction-marker"
+        data-testid="dynamics-gain-reduction"
+        x1={gainMarkerX}
+        x2={gainMarkerX}
+        y1={inputReferenceY}
+        y2={compressedOutputY}
+      />
+      <circle className="core-gain-point" cx={gainMarkerX} cy={compressedOutputY} r="4" />
+      <text className="core-axis-label" x="490" y="308">{language === "zh" ? "横轴：输入电平 dBFS" : "X: input level dBFS"}</text>
+      <text
+        className="core-axis-label"
+        transform="rotate(-90 414 242)"
+        x="414"
+        y="242"
+      >
+        {language === "zh" ? "纵轴：输出电平 dBFS" : "Y: output level dBFS"}
+      </text>
+      <text className="interface-tdm-note" x={gainMarkerX + 8} y={inputReferenceY - 5}>
+        {language === "zh" ? "未压缩输出=输入" : "Unity output"}
+      </text>
+      <text className="interface-tdm-note" x={gainMarkerX + 8} y={compressedOutputY + 13}>
+        {language === "zh" ? `增益衰减 ${formatDbValue(exampleGainDb)}` : `Gain reduction ${formatDbValue(exampleGainDb)}`}
+      </text>
       <text className="core-diagram-caption" x="430" y="332">{steps[2].label[language]}</text>
+      <g className="core-gain-formula">
+        <rect height="76" rx="8" width="318" x="402" y="342" />
+        <text x="420" y="365">{language === "zh" ? "超过阈值：输出 = T + (输入 - T) / Ratio" : "Above threshold: output = T + (input - T) / Ratio"}</text>
+        <text data-testid="dynamics-over-threshold" x="420" y="384">
+          {language === "zh"
+            ? `超出量：${formatDbfs(exampleInputDb)} - ${formatDbfs(threshold)} = ${formatDbValue(exampleOverThresholdDb)}`
+            : `Above: ${formatDbfs(exampleInputDb)} - ${formatDbfs(threshold)} = ${formatDbValue(exampleOverThresholdDb)}`}
+        </text>
+        <text data-testid="dynamics-ratio-kept" x="420" y="401">
+          {language === "zh"
+            ? `Ratio：${formatDbValue(exampleOverThresholdDb)} / ${ratio} = ${formatDbValue(exampleKeptOverDb)}`
+            : `Ratio: ${formatDbValue(exampleOverThresholdDb)} / ${ratio} = ${formatDbValue(exampleKeptOverDb)}`}
+        </text>
+        <text data-testid="dynamics-gain-db" x="420" y="418">
+          {language === "zh"
+            ? `输出：${formatDbfs(exampleOutputDb)}；增益变化 ${formatDbValue(exampleGainDb)}`
+            : `Output: ${formatDbfs(exampleOutputDb)}; gain change ${formatDbValue(exampleGainDb)}`}
+        </text>
+      </g>
       <path className="core-dynamics-output" d={outputEnvelope} />
       <text className="core-diagram-caption" x="618" y="332">{steps[3].label[language]}</text>
-      <text className="interface-tdm-note" x="52" y="408">{language === "zh" ? "Threshold 决定从哪里开始压缩；ratio 越大，超过阈值后的输出斜率越平。" : "Threshold decides where compression starts; higher ratio flattens output above threshold."}</text>
-      <text className="interface-tdm-note" x="52" y="432">{language === "zh" ? "这里的压缩是动态范围压缩，不是 MP3/AAC 这类编码压缩。" : "This is dynamic range compression, not MP3/AAC-style codec compression."}</text>
+      <text className="interface-tdm-note" x="52" y="430">{language === "zh" ? "Threshold 改变超出量；ratio 改变超出阈值部分保留多少，二者共同决定增益衰减。" : "Threshold changes how far above the line the signal is; ratio decides how much of that excess remains."}</text>
+      <text className="interface-tdm-note" x="52" y="448">{language === "zh" ? "这里的压缩是动态范围压缩，不是 MP3/AAC 这类编码压缩。" : "This is dynamic range compression, not MP3/AAC-style codec compression."}</text>
     </svg>
   );
 }
@@ -1043,6 +1262,8 @@ export function CoreSignalProcessingLab({ language, onBack }: CoreSignalProcessi
             </button>
           ))}
         </div>
+
+        <ProcessingStageOverview language={language} mode={mode} />
 
         <FlowSteps language={language} mode={mode} />
 

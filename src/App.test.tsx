@@ -84,6 +84,16 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("heading", { name: "基础信号处理实验室" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
     const lab = screen.getByRole("region", { name: "基础信号处理实验台" });
+    const stageFlow = within(lab).getByRole("list", { name: "音频处理阶段流程图" });
+    expect(within(stageFlow).getByText("输入源")).toBeInTheDocument();
+    expect(within(stageFlow).getByText("PCM 音频")).toBeInTheDocument();
+    expect(within(stageFlow).getByText("FFT / STFT")).toBeInTheDocument();
+    expect(within(stageFlow).getByText("EQ / 滤波")).toBeInTheDocument();
+    expect(within(stageFlow).getByText("动态处理")).toBeInTheDocument();
+    expect(within(stageFlow).getByText("输出去向")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "FFT / STFT：主要是分析和变换域入口" })).toBeInTheDocument();
+    expect(screen.getByText(/常放在 PCM 之后/)).toBeInTheDocument();
+    expect(screen.getByText(/FFT 把一帧 PCM 从时间域转成频率能量/)).toBeInTheDocument();
     const stftFlow = within(lab).getByRole("list", { name: "STFT 流程节点" });
     const stftChart = within(lab).getByRole("img", { name: "STFT 流程对应图" });
     expect(within(stftFlow).getByText("输入 PCM")).toBeInTheDocument();
@@ -178,6 +188,9 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("这一步变化：窗口长度改变频率格间隔；hop size 改变横向时间帧密度，不改变单帧 FFT 频谱。")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "滤波器 / EQ" }));
+    expect(screen.getByRole("heading", { name: "EQ / 滤波：主要是频段能量塑形" })).toBeInTheDocument();
+    expect(screen.getByText(/通常放在 PCM 处理链中间/)).toBeInTheDocument();
+    expect(screen.getByText(/参数 EQ 用中心频率、增益和 Q 控制某一段频率/)).toBeInTheDocument();
     const filterFlow = screen.getByRole("list", { name: "滤波器流程节点" });
     const filterChart = screen.getByRole("img", { name: "滤波器流程对应图" });
     expect(within(filterFlow).getByText("输入频谱")).toBeInTheDocument();
@@ -238,28 +251,47 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("这一步变化：截止频率、Q 和 EQ 增益共同改变频率响应，输出频谱会随各频段保留比例变化。")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "动态处理" }));
+    expect(screen.getByRole("heading", { name: "动态处理：主要是电平和峰值控制" })).toBeInTheDocument();
+    expect(screen.getByText(/通常放在降噪\/EQ 之后、编码或 DAC 之前/)).toBeInTheDocument();
+    expect(screen.getByText(/它不是 MP3\/AAC 这类编码压缩/)).toBeInTheDocument();
     const dynamicsFlow = screen.getByRole("list", { name: "动态处理流程节点" });
     const dynamicsChart = screen.getByRole("img", { name: "动态处理流程对应图" });
-    expect(within(dynamicsFlow).getByText("输入电平")).toBeInTheDocument();
+    expect(within(dynamicsFlow).getByText("输入数字电平")).toBeInTheDocument();
     expect(within(dynamicsFlow).getByText("电平检测")).toBeInTheDocument();
     expect(within(dynamicsFlow).getByText("增益计算")).toBeInTheDocument();
     expect(within(dynamicsFlow).getByText("输出电平")).toBeInTheDocument();
-    expect(within(dynamicsChart).getAllByText("输入电平").length).toBeGreaterThan(0);
+    expect(within(dynamicsChart).getAllByText("输入数字电平").length).toBeGreaterThan(0);
     expect(within(dynamicsChart).getAllByText("电平检测").length).toBeGreaterThan(0);
     expect(within(dynamicsChart).getAllByText("增益计算").length).toBeGreaterThan(0);
     expect(within(dynamicsChart).getAllByText("输出电平").length).toBeGreaterThan(0);
+    expect(within(dynamicsChart).getByText("数字样本幅度 -> dBFS")).toBeInTheDocument();
+    expect(within(dynamicsChart).getByText("超过阈值：输出 = T + (输入 - T) / Ratio")).toBeInTheDocument();
+    expect(within(dynamicsChart).getByText("超出量：-6 dBFS - -18 dBFS = +12 dB")).toBeInTheDocument();
+    expect(within(dynamicsChart).getByText("Ratio：+12 dB / 3 = +4 dB")).toBeInTheDocument();
+    expect(within(dynamicsChart).getByText("输出：-14 dBFS；增益变化 -8 dB")).toBeInTheDocument();
+    expect(within(dynamicsChart).getByTestId("dynamics-gain-reduction")).toBeInTheDocument();
+    expect(within(dynamicsChart).getByText("横轴：输入电平 dBFS")).toBeInTheDocument();
+    expect(within(dynamicsChart).getByText("纵轴：输出电平 dBFS")).toBeInTheDocument();
+    expect(within(dynamicsChart).getByText("未压缩输出=输入")).toBeInTheDocument();
+    expect(within(dynamicsChart).getByText("增益衰减 -8 dB")).toBeInTheDocument();
     expect(screen.getByText("超过阈值后按 ratio 收缩，峰值被压低")).toBeInTheDocument();
     expect(screen.getByText("Threshold：-18 dBFS")).toBeInTheDocument();
     const initialThresholdY = Number(screen.getByTestId("dynamics-threshold-line").getAttribute("y1"));
+    const initialOverThreshold = screen.getByTestId("dynamics-over-threshold").textContent;
+    const initialRatioKept = screen.getByTestId("dynamics-ratio-kept").textContent;
+    const initialGainDb = screen.getByTestId("dynamics-gain-db").textContent;
     fireEvent.change(screen.getByRole("slider", { name: "Threshold" }), {
       target: { value: "-30" }
     });
     expect(Number(screen.getByTestId("dynamics-threshold-line").getAttribute("y1"))).toBeGreaterThan(initialThresholdY);
+    expect(screen.getByTestId("dynamics-over-threshold").textContent).not.toEqual(initialOverThreshold);
     fireEvent.change(screen.getByRole("slider", { name: "Ratio" }), {
       target: { value: "6" }
     });
     expect(screen.getByText("Ratio：6:1")).toBeInTheDocument();
-    expect(screen.getByText("这一步变化：阈值线下移，更早进入压缩，输出包络更平。")).toBeInTheDocument();
+    expect(screen.getByTestId("dynamics-ratio-kept").textContent).not.toEqual(initialRatioKept);
+    expect(screen.getByTestId("dynamics-gain-db").textContent).not.toEqual(initialGainDb);
+    expect(screen.getByText("Threshold 改变超出量；ratio 改变超出阈值部分保留多少，二者共同决定增益衰减。")).toBeInTheDocument();
   });
 
   it("renders the animated signal visualization on the homepage", () => {
@@ -1532,6 +1564,17 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("img", { name: "听感与指标效果图" })).toBeInTheDocument();
     expect(screen.getByText("指标：频响曲线")).toBeInTheDocument();
     expect(screen.getByText(/明亮：提升高频能量/)).toBeInTheDocument();
+    expect(screen.getByTestId("listening-metric-response")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-clean-wave")).toHaveClass("listening-clean-wave");
+    expect(screen.getByTestId("listening-processed-wave")).toHaveClass("listening-processed-wave");
+    const brightProcessedWave = screen.getByTestId("listening-processed-wave").getAttribute("d");
+
+    await user.click(screen.getByRole("button", { name: "浑浊低中频" }));
+    expect(screen.getByTestId("listening-metric-response")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-clean-wave")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-processed-wave").getAttribute("d")).not.toEqual(brightProcessedWave);
+
+    await user.click(screen.getByRole("button", { name: "明亮高频" }));
 
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
 
@@ -1541,12 +1584,47 @@ describe("Audio knowledge app", () => {
     await user.click(screen.getByRole("button", { name: "噪声底噪" }));
     expect(screen.getByText("指标：SNR")).toBeInTheDocument();
     expect(screen.getByText(/底噪：在信号下方加入持续噪声/)).toBeInTheDocument();
+    expect(screen.getByTestId("listening-noise-band")).toHaveClass("listening-noise-band");
+    expect(screen.getByTestId("listening-noise-signal")).toHaveClass("listening-metric-path");
+    expect(screen.getByTestId("listening-noisy-signal")).toHaveClass("listening-noisy-signal");
+    const noiseBandBefore = screen.getByTestId("listening-noise-band").getAttribute("d");
+    const noiseSignalBefore = screen.getByTestId("listening-noise-signal").getAttribute("d");
+    const noisySignalBefore = screen.getByTestId("listening-noisy-signal").getAttribute("d");
 
     fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
       target: { value: "75" }
     });
 
     expect(screen.getByText("效果强度：75%")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-noise-band").getAttribute("d")).not.toEqual(noiseBandBefore);
+    expect(screen.getByTestId("listening-noise-signal").getAttribute("d")).toEqual(noiseSignalBefore);
+    expect(screen.getByTestId("listening-noisy-signal").getAttribute("d")).not.toEqual(noisySignalBefore);
+
+    await user.click(screen.getByRole("button", { name: "动态压缩" }));
+    const compressedEnvelopeBefore = screen.getByTestId("listening-compressed-envelope").getAttribute("d");
+    expect(screen.getByTestId("listening-input-envelope")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-compressed-envelope")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-input-envelope")).toHaveClass("listening-envelope-input");
+    expect(screen.getByTestId("listening-compressed-envelope")).toHaveClass("listening-envelope-output");
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
+      target: { value: "95" }
+    });
+    expect(screen.getByTestId("listening-compressed-envelope").getAttribute("d")).not.toEqual(compressedEnvelopeBefore);
+    expect(screen.getByTestId("listening-input-envelope").getAttribute("d")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "声像偏移" }));
+    expect(screen.getByTestId("listening-stereo-left")).toHaveClass("listening-stereo-left");
+    expect(screen.getByTestId("listening-stereo-right")).toHaveClass("listening-stereo-right");
+    const leftChannelBefore = screen.getByTestId("listening-stereo-left").getAttribute("d");
+    const rightChannelBefore = screen.getByTestId("listening-stereo-right").getAttribute("d");
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
+      target: { value: "20" }
+    });
+    expect(screen.getByTestId("listening-stereo-left").getAttribute("d")).not.toEqual(leftChannelBefore);
+    expect(screen.getByTestId("listening-stereo-right").getAttribute("d")).not.toEqual(rightChannelBefore);
+    expect(screen.getByTestId("listening-stereo-left").getAttribute("d")).not.toEqual(
+      screen.getByTestId("listening-stereo-right").getAttribute("d")
+    );
   });
 
   it("opens metric detail modals from the listening metrics cards", async () => {
@@ -1604,6 +1682,13 @@ describe("Audio knowledge app", () => {
       attack: { setValueAtTime: ReturnType<typeof vi.fn> };
       release: { setValueAtTime: ReturnType<typeof vi.fn> };
     }> = [];
+    const createdGains: Array<{
+      connect: ReturnType<typeof vi.fn>;
+      gain: {
+        setValueAtTime: ReturnType<typeof vi.fn>;
+        linearRampToValueAtTime: ReturnType<typeof vi.fn>;
+      };
+    }> = [];
     const bufferData = new Float32Array(4410);
     const bufferSource = {
       connect: vi.fn(),
@@ -1626,13 +1711,17 @@ describe("Audio knowledge app", () => {
         createdOscillators.push(oscillator);
         return oscillator;
       }),
-      createGain: vi.fn(() => ({
-        connect: vi.fn(),
-        gain: {
-          setValueAtTime: vi.fn(),
-          linearRampToValueAtTime: vi.fn()
-        }
-      })),
+      createGain: vi.fn(() => {
+        const gain = {
+          connect: vi.fn(),
+          gain: {
+            setValueAtTime: vi.fn(),
+            linearRampToValueAtTime: vi.fn()
+          }
+        };
+        createdGains.push(gain);
+        return gain;
+      }),
       createBiquadFilter: vi.fn(() => {
         const filter = {
           connect: vi.fn(),
@@ -1719,6 +1808,15 @@ describe("Audio knowledge app", () => {
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
     expect(audioContext.createDynamicsCompressor).toHaveBeenCalled();
     expect(createdCompressors[createdCompressors.length - 1]?.ratio.setValueAtTime).toHaveBeenLastCalledWith(expect.any(Number), 0);
+    const compressionInputGain = createdGains[createdGains.length - 2];
+    const compressionOutputGain = createdGains[createdGains.length - 1];
+    expect(compressionInputGain?.gain.linearRampToValueAtTime).toHaveBeenCalledWith(expect.any(Number), 0.08);
+    expect(compressionInputGain?.gain.linearRampToValueAtTime).toHaveBeenCalledWith(expect.any(Number), 0.4);
+    expect(compressionInputGain?.gain.linearRampToValueAtTime).toHaveBeenCalledWith(expect.any(Number), 0.72);
+    expect(compressionInputGain?.gain.linearRampToValueAtTime).toHaveBeenCalledWith(expect.any(Number), 1.04);
+    expect(compressionInputGain?.gain.linearRampToValueAtTime).toHaveBeenCalledWith(expect.any(Number), 1.22);
+    expect(compressionInputGain?.gain.linearRampToValueAtTime).toHaveBeenCalledWith(0.0001, 1.5);
+    expect(compressionOutputGain?.gain.setValueAtTime).toHaveBeenCalledWith(expect.any(Number), 0);
 
     await user.click(screen.getByRole("button", { name: "声像偏移" }));
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
@@ -1839,27 +1937,27 @@ describe("Audio knowledge app", () => {
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
     const lowCompressor = createdCompressors[createdCompressors.length - 1];
 
-    expect(lowCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-10.65, 0);
-    expect(lowCompressor?.ratio.setValueAtTime).toHaveBeenLastCalledWith(1.85, 0);
+    expect(lowCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-11.4, 0);
+    expect(lowCompressor?.ratio.setValueAtTime).toHaveBeenLastCalledWith(1.7000000000000002, 0);
 
     fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
       target: { value: "100" }
     });
 
-    expect(lowCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-42, 0);
-    expect(lowCompressor?.ratio.setValueAtTime).toHaveBeenLastCalledWith(18, 0);
+    expect(lowCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-38, 0);
+    expect(lowCompressor?.ratio.setValueAtTime).toHaveBeenLastCalledWith(15, 0);
 
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
     const highCompressor = createdCompressors[createdCompressors.length - 1];
 
-    expect(highCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-42, 0);
-    expect(highCompressor?.ratio.setValueAtTime).toHaveBeenLastCalledWith(18, 0);
+    expect(highCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-38, 0);
+    expect(highCompressor?.ratio.setValueAtTime).toHaveBeenLastCalledWith(15, 0);
 
     fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
       target: { value: "30" }
     });
 
-    expect(highCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-18.9, 0);
-    expect(highCompressor?.ratio.setValueAtTime).toHaveBeenLastCalledWith(6.1, 0);
+    expect(highCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-18.4, 0);
+    expect(highCompressor?.ratio.setValueAtTime).toHaveBeenLastCalledWith(5.2, 0);
   });
 });
