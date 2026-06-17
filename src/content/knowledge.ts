@@ -25,6 +25,7 @@ export type TopicDiagram = {
 
 export type TopicLab = {
   type:
+    | "sound-wave"
     | "sampling-quantization"
     | "listening-metrics"
     | "microphone"
@@ -207,6 +208,15 @@ export const categories: Category[] = [
               zh: "同样的振幅下，高频波形周期更密；同样的频率下，振幅越大代表压力变化越强。波长对应一个完整周期在空间中的距离。",
               en: "At the same amplitude, higher frequency creates tighter cycles. At the same frequency, larger amplitude means stronger pressure variation. Wavelength is the spatial distance of one full cycle."
             }
+          },
+          lab: {
+            type: "sound-wave",
+            title: { zh: "声音波形实验室", en: "Sound Wave Lab" },
+            description: {
+              zh: "进入独立界面后，可以调节频率、振幅和相位，观察波形和听感如何变化。",
+              en: "Open the lab to adjust frequency, amplitude, and phase while watching the waveform and sound change."
+            },
+            buttonLabel: { zh: "打开声音波形实验室", en: "Open sound wave lab" }
           },
           misconception: {
             zh: "声音不是只存在于空气中的东西，它需要介质传播，但介质可以是气体、液体或固体；真空中没有普通声波传播。",

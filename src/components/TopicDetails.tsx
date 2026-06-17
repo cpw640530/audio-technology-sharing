@@ -27,29 +27,14 @@ type TopicDetailsProps = {
 function SoundWaveDiagram({
   language,
   label,
-  caption,
-  onOpenSoundLab
+  caption
 }: {
   language: Language;
   label: Record<Language, string>;
   caption: Record<Language, string>;
-  onOpenSoundLab: () => void;
 }) {
   return (
     <figure className="sound-wave-diagram">
-      <div className="sound-lab-entry">
-        <div>
-          <strong>{language === "zh" ? "交互式正弦波图解" : "Interactive sine wave diagram"}</strong>
-          <p>
-            {language === "zh"
-              ? "进入独立界面后，可以调节频率、振幅和相位，观察波形和听感如何变化。"
-              : "Open the lab to adjust frequency, amplitude, and phase while watching the waveform and sound change."}
-          </p>
-        </div>
-        <button className="diagram-open-button" type="button" onClick={onOpenSoundLab}>
-          {language === "zh" ? "打开声音波形实验室" : "Open sound wave lab"}
-        </button>
-      </div>
       <svg
         aria-label={label[language]}
         role="img"
@@ -112,6 +97,65 @@ export function TopicDetails({
     onClose();
   }
 
+  function openTopicLab() {
+    if (topic.detail.lab?.type === "sound-wave") {
+      onOpenSoundLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "sampling-quantization") {
+      onOpenDigitalLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "microphone") {
+      onOpenMicrophoneLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "codec-hardware") {
+      onOpenCodecLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "digital-interface") {
+      onOpenDigitalInterfaceLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "amplifier-speaker") {
+      onOpenAmplifierSpeakerLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "system-audio") {
+      onOpenSystemAudioLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "audio-codec") {
+      onOpenAudioCodecLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "realtime-audio") {
+      onOpenRealtimeAudioLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "core-signal-processing") {
+      onOpenCoreSignalProcessingLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "speech-enhancement") {
+      onOpenSpeechEnhancementLab();
+      return;
+    }
+
+    onOpenListeningMetricsLab();
+  }
+
   return (
     <div className="topic-details-layer">
       <button
@@ -148,6 +192,19 @@ export function TopicDetails({
             <h3>{interfaceCopy.detailsExplanationTitle[language]}</h3>
             <p>{topic.detail.explanation[language]}</p>
           </div>
+          {topic.detail.lab ? (
+            <div className="details-block details-lab-block">
+              <div className="sound-lab-entry">
+                <div>
+                  <strong>{topic.detail.lab.title[language]}</strong>
+                  <p>{topic.detail.lab.description[language]}</p>
+                </div>
+                <button className="diagram-open-button" type="button" onClick={openTopicLab}>
+                  {topic.detail.lab.buttonLabel[language]}
+                </button>
+              </div>
+            </div>
+          ) : null}
           <div className="details-block">
             <h3>{language === "zh" ? "关键知识点" : "Key points"}</h3>
             <ul>
@@ -185,78 +242,8 @@ export function TopicDetails({
                   caption={topic.detail.diagram.caption}
                   label={topic.detail.diagram.label}
                   language={language}
-                  onOpenSoundLab={onOpenSoundLab}
                 />
               ) : null}
-            </div>
-          ) : null}
-          {topic.detail.lab ? (
-            <div className="details-block details-lab-block">
-              <div className="sound-lab-entry">
-                <div>
-                  <strong>{topic.detail.lab.title[language]}</strong>
-                  <p>{topic.detail.lab.description[language]}</p>
-                </div>
-                <button
-                  className="diagram-open-button"
-                  type="button"
-                  onClick={() => {
-                    if (topic.detail.lab?.type === "sampling-quantization") {
-                      onOpenDigitalLab();
-                      return;
-                    }
-
-                    if (topic.detail.lab?.type === "microphone") {
-                      onOpenMicrophoneLab();
-                      return;
-                    }
-
-                    if (topic.detail.lab?.type === "codec-hardware") {
-                      onOpenCodecLab();
-                      return;
-                    }
-
-                    if (topic.detail.lab?.type === "digital-interface") {
-                      onOpenDigitalInterfaceLab();
-                      return;
-                    }
-
-                    if (topic.detail.lab?.type === "amplifier-speaker") {
-                      onOpenAmplifierSpeakerLab();
-                      return;
-                    }
-
-                    if (topic.detail.lab?.type === "system-audio") {
-                      onOpenSystemAudioLab();
-                      return;
-                    }
-
-                    if (topic.detail.lab?.type === "audio-codec") {
-                      onOpenAudioCodecLab();
-                      return;
-                    }
-
-                    if (topic.detail.lab?.type === "realtime-audio") {
-                      onOpenRealtimeAudioLab();
-                      return;
-                    }
-
-                    if (topic.detail.lab?.type === "core-signal-processing") {
-                      onOpenCoreSignalProcessingLab();
-                      return;
-                    }
-
-                    if (topic.detail.lab?.type === "speech-enhancement") {
-                      onOpenSpeechEnhancementLab();
-                      return;
-                    }
-
-                    onOpenListeningMetricsLab();
-                  }}
-                >
-                  {topic.detail.lab.buttonLabel[language]}
-                </button>
-              </div>
             </div>
           ) : null}
           <div className="details-block">

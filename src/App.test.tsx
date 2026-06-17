@@ -464,35 +464,35 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByText("低频")).toBeInTheDocument();
   });
 
-  it("places lab entries after the key concepts block in topic details", async () => {
+  it("places lab entries directly after detailed explanations in topic details", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
     let details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(
-      within(details).getByRole("heading", { name: "关键概念" }).compareDocumentPosition(
-        within(details).getByRole("button", { name: "打开声音波形实验室" })
-      ) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    let explanationHeading = within(details).getByRole("heading", { name: "详细解释" });
+    let keyPointsHeading = within(details).getByRole("heading", { name: "关键知识点" });
+    let labButton = within(details).getByRole("button", { name: "打开声音波形实验室" });
+    expect(explanationHeading.compareDocumentPosition(labButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(labButton.compareDocumentPosition(keyPointsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     await user.click(within(details).getByRole("button", { name: "关闭详情" }));
     await user.click(screen.getByRole("button", { name: /数字音频基础/ }));
     details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(
-      within(details).getByRole("heading", { name: "关键概念" }).compareDocumentPosition(
-        within(details).getByRole("button", { name: "打开采样、量化与编码实验室" })
-      ) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    explanationHeading = within(details).getByRole("heading", { name: "详细解释" });
+    keyPointsHeading = within(details).getByRole("heading", { name: "关键知识点" });
+    labButton = within(details).getByRole("button", { name: "打开采样、量化与编码实验室" });
+    expect(explanationHeading.compareDocumentPosition(labButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(labButton.compareDocumentPosition(keyPointsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     await user.click(within(details).getByRole("button", { name: "关闭详情" }));
     await user.click(screen.getByRole("button", { name: /听感与指标/ }));
     details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(
-      within(details).getByRole("heading", { name: "关键概念" }).compareDocumentPosition(
-        within(details).getByRole("button", { name: "打开听感与指标实验室" })
-      ) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    explanationHeading = within(details).getByRole("heading", { name: "详细解释" });
+    keyPointsHeading = within(details).getByRole("heading", { name: "关键知识点" });
+    labButton = within(details).getByRole("button", { name: "打开听感与指标实验室" });
+    expect(explanationHeading.compareDocumentPosition(labButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(labButton.compareDocumentPosition(keyPointsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("lets readers adjust parameters in the independent sound wave lab", async () => {
