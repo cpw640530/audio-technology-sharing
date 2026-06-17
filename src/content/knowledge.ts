@@ -34,7 +34,8 @@ export type TopicLab = {
     | "system-audio"
     | "audio-codec"
     | "realtime-audio"
-    | "core-signal-processing";
+    | "core-signal-processing"
+    | "speech-enhancement";
   title: LocalizedText;
   description: LocalizedText;
   buttonLabel: LocalizedText;
@@ -1166,26 +1167,75 @@ export const categories: Category[] = [
         },
         bullets: [
           { zh: "Noise Suppression", en: "Noise suppression" },
-          { zh: "AEC、AGC、VAD", en: "AEC, AGC, VAD" },
+          { zh: "AEC、AGC", en: "AEC, AGC" },
           { zh: "Beamforming 与 Dereverberation", en: "Beamforming and dereverberation" }
         ],
         detail: {
           explanation: {
-            zh: "语音增强的目标是在复杂环境中让人声更清楚、更稳定。它通常组合降噪、回声消除、自动增益、语音活动检测、波束成形和去混响，用于通话、会议、语音助手和录音场景。",
-            en: "Speech enhancement aims to make speech clearer and more stable in complex environments. It often combines noise suppression, echo cancellation, automatic gain control, voice activity detection, beamforming, and dereverberation for calls, meetings, assistants, and recording."
+            zh: "语音增强的目标是在真实设备和复杂环境中，让近端人声更清楚、更稳定，同时尽量降低回声、噪声、混响和响度波动。工程上它通常不是一个单独算法，而是一条低延迟 PCM 处理链：从麦克风 AI 采集开始，多麦场景先做波束成形，再结合播放回采参考做 AEC，后面接 NS/ANR、去混响、AGC 和 EQ，最后送往 AENC 编码、ASR 唤醒识别或本地录音。瑞芯微、SigmaStar、君正等 SoC SDK 名称不同，但常见模块边界类似：AI/AO 负责音频输入输出，AENC/ADEC 负责编解码，VQE/3A/Audio Process 负责 AEC、NS、AGC 等语音增强。",
+            en: "Speech enhancement makes near-end speech clearer and steadier on real devices while reducing echo, noise, reverberation, and level swings. In engineering it is usually not one algorithm but a low-latency PCM processing chain: AI capture from microphones, beamforming first in multi-mic systems, AEC using playback reference, then NS/ANR, dereverberation, AGC, and EQ before AENC encoding, ASR wake/recognition, or local recording. Rockchip, SigmaStar, Ingenic, and similar SoC SDKs use different names, but the boundaries are similar: AI/AO for audio input/output, AENC/ADEC for codecs, and VQE/3A/Audio Process for AEC, NS, AGC, and voice enhancement."
           },
-          keyConcepts: [
-            { zh: "AEC 处理扬声器声音被麦克风再次收进来的回声问题。", en: "AEC handles echo caused by loudspeaker audio being picked up again by the microphone." },
-            { zh: "VAD 判断当前帧是否包含语音，是降噪和唤醒链路的重要基础。", en: "VAD detects whether a frame contains speech and supports noise suppression and wake-word pipelines." },
-            { zh: "波束成形利用多麦克风的时间差和相位差增强目标方向。", en: "Beamforming uses time and phase differences across microphones to enhance a target direction." }
+          termExplanations: [
+            {
+              name: { zh: "AEC 回声消除", en: "AEC echo cancellation" },
+              explanation: {
+                zh: "AEC 需要两路信号：麦克风输入和播放回采参考。算法先做时间对齐，再用自适应滤波器估计扬声器声音经过功放、腔体、空气和房间后的回声路径，生成预测回声后从麦克风信号中相减。难点在于双讲、延迟漂移和非线性失真。",
+                en: "AEC needs two signals: microphone input and playback reference. It time-aligns them, uses an adaptive filter to estimate the echo path through the amplifier, enclosure, air, and room, then subtracts the predicted echo from the mic signal. Double-talk, delay drift, and nonlinear distortion are the hard parts."
+              }
+            },
+            {
+              name: { zh: "NS / ANR 降噪", en: "NS / ANR noise suppression" },
+              explanation: {
+                zh: "NS 或 ANR 通常按短帧分析频谱或滤波器组，估计每个频段里噪声和语音的占比，再降低噪声占比高的频段增益。它常用于风扇、空调、车噪和底噪，但强度太大会损伤辅音和高频细节，产生金属音、抽吸声或吞字。",
+                en: "NS or ANR usually analyzes short-frame spectra or filter banks, estimates how much speech and noise exist in each band, then lowers gain in noise-dominant bands. It helps with fans, HVAC, car noise, and hiss, but aggressive settings can damage consonants and high-frequency detail, causing metallic sound, pumping, or clipped words."
+              }
+            },
+            {
+              name: { zh: "AGC 自动增益", en: "AGC automatic gain control" },
+              explanation: {
+                zh: "AGC 先估计短时 RMS、峰值或语音包络，再用 attack/release 控制增益变化速度，把过小的语音拉高、过大的语音压住。它通常要配合 limiter，避免增益过高导致数字削波；好的 AGC 不应该让波形整体上下平移，而是改变包络和峰值。",
+                en: "AGC estimates short-term RMS, peaks, or speech envelope, then uses attack/release timing to control gain, raising quiet speech and holding back loud speech. It is often paired with a limiter to avoid digital clipping; a good AGC changes envelope and peaks rather than shifting the waveform up or down."
+              }
+            },
+            {
+              name: { zh: "多麦波束成形", en: "Multi-mic beamforming" },
+              explanation: {
+                zh: "多麦阵列利用不同麦克风的到达时间差和相位差，增强目标方向的人声，压低旁边或后方的干扰声。它要求多路麦克风同步采集和稳定的阵列结构。",
+                en: "A microphone array uses arrival-time and phase differences to enhance speech from a target direction while reducing side or rear interference. It needs synchronized mic capture and stable array geometry."
+              }
+            },
+            {
+              name: { zh: "去混响 Dereverb", en: "Dereverberation" },
+              explanation: {
+                zh: "去混响试图减弱房间后期反射造成的持续拖尾，让语音更近、更清楚。工程上可能结合多麦空间信息、线性预测或频域衰减，判断哪些能量是拖尾再降低它。它通常和波束成形、AEC、NS 配合使用，但过强会把自然共鸣和尾音也削掉。",
+                en: "Dereverberation reduces late room-reflection tails so speech sounds closer and clearer. Engineering methods may combine array cues, linear prediction, or frequency-domain attenuation to identify and reduce sustained tails. It is often combined with beamforming, AEC, and NS, but strong processing can remove natural resonance and word endings."
+              }
+            }
           ],
+          keyConcepts: [
+            { zh: "典型采集链路是：Mic / PDM / I2S -> AI 驱动环形 buffer -> PCM 帧 -> VQE/3A -> AENC/ASR/录音。算法多数按 10 ms、16 ms 或 20 ms 帧处理，帧长会影响延迟和效果。", en: "A typical capture path is: Mic / PDM / I2S -> AI driver ring buffer -> PCM frames -> VQE/3A -> AENC/ASR/recording. Most algorithms process 10 ms, 16 ms, or 20 ms frames, and frame size affects latency and quality." },
+            { zh: "AEC 需要播放侧 AO/Mixer 的 reference buffer。没有正确的回采参考、时间戳或延迟估计，AEC 很难稳定消除回声。", en: "AEC needs a playback reference buffer from AO/Mixer. Without correct reference, timestamps, or delay estimation, echo cancellation is difficult to stabilize." },
+            { zh: "常见顺序不是绝对固定，但本实验室按一条典型链路组织：高通/去直流 -> 波束成形/DOA（多麦）-> AEC -> NS/ANR -> 去混响 -> AGC/Limiter -> 编码或识别。", en: "The order is not universal, but this lab uses one typical chain: high-pass/DC removal -> beamforming/DOA for multi-mic capture -> AEC -> NS/ANR -> dereverberation -> AGC/limiter -> encoding or recognition." },
+            { zh: "单麦没有空间到达时间差，不能做真正的多麦波束成形；2 Mic 或 4 Mic 阵列才有空间抑制和目标方向增强的基础。", en: "A single microphone has no spatial arrival-time differences, so true beamforming requires a 2-mic or 4-mic array." },
+            { zh: "SDK 名称会变化：瑞芯微常见 AI/AO/AENC/ADEC/VQE，SigmaStar 常见 AI/AO/AENC/ADEC/Audio Process，君正常见 IMP Audio + AGC/NS/AEC 接口；理解边界比记名字更重要。", en: "SDK names vary: Rockchip commonly uses AI/AO/AENC/ADEC/VQE, SigmaStar often uses AI/AO/AENC/ADEC/Audio Process, and Ingenic uses IMP Audio plus AGC/NS/AEC APIs. Understanding boundaries matters more than memorizing names." },
+            { zh: "语音增强不是越强越好。降噪、AEC、AGC、波束成形都需要在清晰度、自然度、双讲、延迟、CPU 占用和功耗之间取舍。", en: "Speech enhancement is not better just because it is stronger. NS, AEC, AGC, and beamforming trade off clarity, naturalness, double-talk, latency, CPU use, and power." }
+          ],
+          lab: {
+            type: "speech-enhancement",
+            title: { zh: "语音增强实验室", en: "Speech Enhancement Lab" },
+            description: {
+              zh: "进入独立界面查看 AI/AO/AENC/VQE/3A 风格的采集与回采链路，按流程顺序切换波束成形、AEC、NS/ANR、去混响和 AGC，观察波形与指标如何变化。",
+              en: "Open an independent lab to inspect AI/AO/AENC/VQE/3A-style capture and reference paths, switch beamforming, AEC, NS/ANR, dereverberation, and AGC in flow order, and compare waveform and metrics."
+            },
+            buttonLabel: { zh: "打开语音增强实验室", en: "Open speech enhancement lab" }
+          },
           misconception: {
-            zh: "语音增强不能无损移除所有噪声；强处理可能带来金属音、吞字、泵音和空间感变化。",
-            en: "Speech enhancement cannot remove all noise losslessly; aggressive processing can create metallic artifacts, clipped words, pumping, and spatial changes."
+            zh: "语音增强不能无损移除所有噪声，也不能靠单个参数解决所有问题。回声大可能是 reference 路径或延迟不准，噪声残留可能是噪声估计和语音保护的取舍，声音忽大忽小可能是 AGC 和 limiter 设置不合理。",
+            en: "Speech enhancement cannot remove all noise losslessly, and one parameter will not fix everything. Echo may come from wrong reference or delay, residual noise may be a tradeoff in noise estimation and speech protection, and unstable loudness may come from AGC/limiter settings."
           },
           contentDirection: {
-            zh: "适合做通话音频处理流程图，并用噪声、回声、混响三个案例展示算法前后差异。",
-            en: "This can become a call-processing flow diagram with before-after examples for noise, echo, and reverberation."
+            zh: "后续可以继续做独立语音增强实验室：切换单麦/双麦/四麦，调节噪声、回声、混响和说话距离，展示 AEC、NS、AGC、波束成形前后的波形、频谱和听感差异。",
+            en: "A later standalone lab could switch among one-, two-, and four-mic setups, adjust noise, echo, reverberation, and speaker distance, and compare waveforms, spectra, and listening results before and after AEC, NS, AGC, and beamforming."
           }
         }
       },

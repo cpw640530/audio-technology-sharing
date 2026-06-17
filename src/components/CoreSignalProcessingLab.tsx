@@ -128,8 +128,8 @@ const processingRoles: Record<SignalMode, ProcessingRole> = {
   stft: {
     title: { zh: "FFT / STFT：主要是分析和变换域入口", en: "FFT / STFT: analysis and transform-domain entry" },
     stage: {
-      zh: "常放在 PCM 之后：实时语音里用于 VAD、降噪、回声消除特征；音乐/工具里用于频谱显示、频域滤波或特征提取。",
-      en: "Usually after PCM exists: in real-time voice it feeds VAD, denoise, and AEC features; in tools it powers spectrum displays, frequency-domain filtering, or feature extraction."
+      zh: "常放在 PCM 之后：实时语音里用于语音增强、降噪、回声消除特征；音乐/工具里用于频谱显示、频域滤波或特征提取。",
+      en: "Usually after PCM exists: in real-time voice it feeds enhancement, denoise, and AEC features; in tools it powers spectrum displays, frequency-domain filtering, or feature extraction."
     },
     summary: {
       zh: "FFT 把一帧 PCM 从时间域转成频率能量；STFT 是连续分帧后反复做 FFT，得到随时间变化的能量图。它本身通常不直接改善声音，后面接滤波、估计、增强或特征算法才会改变结果。",

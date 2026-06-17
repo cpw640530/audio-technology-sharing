@@ -68,6 +68,103 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("button", { name: "打开基础信号处理实验室" })).toBeInTheDocument();
   });
 
+  it("expands speech enhancement with SoC SDK style processing flow", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
+    await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await user.click(screen.getByRole("button", { name: /语音增强/ }));
+
+    const details = screen.getByRole("dialog", { name: "主题详情" });
+    expect(within(details).getByText(/低延迟 PCM 处理链/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "AEC 回声消除" })).toBeInTheDocument();
+    expect(within(details).getAllByText(/播放回采参考/).length).toBeGreaterThan(0);
+    expect(within(details).getByRole("heading", { name: "NS / ANR 降噪" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "AGC 自动增益" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "多麦波束成形" })).toBeInTheDocument();
+    expect(within(details).getByText(/Mic \/ PDM \/ I2S -> AI 驱动环形 buffer/)).toBeInTheDocument();
+    expect(within(details).getByText(/AEC 需要播放侧 AO\/Mixer 的 reference buffer/)).toBeInTheDocument();
+    expect(within(details).getByText(/波束成形\/DOA（多麦）-> AEC -> NS\/ANR -> 去混响 -> AGC\/Limiter/)).toBeInTheDocument();
+    expect(within(details).getByText(/瑞芯微常见 AI\/AO\/AENC\/ADEC\/VQE/)).toBeInTheDocument();
+    expect(within(details).queryByRole("heading", { name: "处理流程图" })).not.toBeInTheDocument();
+    expect(within(details).queryByRole("img", { name: "语音增强 SDK 处理流程图" })).not.toBeInTheDocument();
+    expect(within(details).queryByText(/VAD/)).not.toBeInTheDocument();
+    expect(within(details).getByRole("button", { name: "打开语音增强实验室" })).toBeInTheDocument();
+  });
+
+  it("opens the speech enhancement lab with SDK flow and enhancement controls", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
+    await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await user.click(screen.getByRole("button", { name: /语音增强/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "打开语音增强实验室"
+      })
+    );
+
+    expect(screen.getByRole("heading", { name: "语音增强实验室" })).toBeInTheDocument();
+    const lab = screen.getByRole("region", { name: "语音增强实验台" });
+    const flowDiagram = within(lab).getByRole("img", { name: "语音增强处理流程图" });
+    expect(flowDiagram).toBeInTheDocument();
+    expect(within(lab).getByRole("img", { name: "语音增强前后波形对比" })).toBeInTheDocument();
+    expect(within(lab).getByText(/Rockchip VQE \/ SigmaStar Audio Process \/ Ingenic IMP Audio/)).toBeInTheDocument();
+    expect(within(lab).getAllByText("VQE / 3A").length).toBeGreaterThan(0);
+    expect(within(lab).getByText(/语音增强模块，常包含波束成形、AEC、NS\/ANR、去混响和 AGC/)).toBeInTheDocument();
+    const moduleTabs = within(lab).getByRole("group", { name: "语音增强模块" });
+    expect(within(moduleTabs).getAllByRole("button").map((button) => button.textContent)).toEqual([
+      "多麦波束成形",
+      "AEC 回声消除",
+      "NS / ANR 降噪",
+      "去混响",
+      "AGC 自动增益"
+    ]);
+    expect(within(flowDiagram).getAllByText("2 Mic 阵列").length).toBeGreaterThan(0);
+    expect(within(lab).getByText(/多麦阵列要求至少两路同步麦克风/)).toBeInTheDocument();
+    expect(within(lab).getByText(/当前模块强度只影响正在查看的算法/)).toBeInTheDocument();
+    expect(within(lab).getByText(/波形如何变化/)).toBeInTheDocument();
+    expect(within(lab).getByText(/噪声强度：增加原始波形上的高频细碎抖动/)).toBeInTheDocument();
+    expect(within(lab).getByText(/回声强度：增加与语音相似但延迟后的波峰和尾巴/)).toBeInTheDocument();
+    expect(within(lab).getByText(/混响拖尾：增加持续衰减的房间反射/)).toBeInTheDocument();
+    expect(within(lab).getByText("Rockchip RK Media / VQE")).toBeInTheDocument();
+    expect(within(lab).getByText("SigmaStar MI Audio")).toBeInTheDocument();
+    expect(within(lab).getByText("Ingenic IMP Audio")).toBeInTheDocument();
+    expect(within(lab).getByRole("img", { name: "Rockchip RK Media / VQE 音频处理流程图" })).toBeInTheDocument();
+    expect(within(lab).getByRole("img", { name: "SigmaStar MI Audio 音频处理流程图" })).toBeInTheDocument();
+    expect(within(lab).getByRole("img", { name: "Ingenic IMP Audio 音频处理流程图" })).toBeInTheDocument();
+    expect(within(lab).getByText("RV1103B / RV1106B")).toBeInTheDocument();
+    expect(within(lab).getByText("SSC338Q / SSC338G")).toBeInTheDocument();
+    expect(within(lab).getByText("T41")).toBeInTheDocument();
+    expect(within(lab).queryByText(/VAD/)).not.toBeInTheDocument();
+    const rawWave = within(lab).getByTestId("speech-raw-wave").getAttribute("d");
+    const enhancedWave = within(lab).getByTestId("speech-enhanced-wave").getAttribute("d");
+    expect(rawWave).not.toEqual(enhancedWave);
+
+    await user.click(screen.getByRole("button", { name: "NS / ANR 降噪" }));
+    expect(screen.getByText(/NS\/ANR 估计背景噪声频谱/)).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("slider", { name: "噪声强度" }), {
+      target: { value: "80" }
+    });
+    expect(screen.getByText("噪声强度：80%")).toBeInTheDocument();
+    expect(within(lab).getByTestId("speech-raw-wave").getAttribute("d")).not.toEqual(rawWave);
+    await user.click(screen.getByRole("button", { name: "4 Mic" }));
+    expect(within(flowDiagram).getAllByText("4 Mic 阵列").length).toBeGreaterThan(0);
+    expect(screen.getByText(/算法延迟：约/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "1 Mic" }));
+    expect(within(moduleTabs).getAllByRole("button").map((button) => button.textContent)).toEqual([
+      "AEC 回声消除",
+      "NS / ANR 降噪",
+      "去混响",
+      "AGC 自动增益"
+    ]);
+    expect(within(flowDiagram).getAllByText("1 Mic 单麦").length).toBeGreaterThan(0);
+    expect(within(flowDiagram).getByText("单麦跳过")).toBeInTheDocument();
+    expect(within(flowDiagram).getByText("单麦无空间信息，跳过多麦增强")).toBeInTheDocument();
+  });
+
   it("opens the core signal processing lab with FFT filters and dynamics views", async () => {
     const user = userEvent.setup();
     render(<App />);

@@ -19,6 +19,7 @@ type TopicDetailsProps = {
   onOpenListeningMetricsLab: () => void;
   onOpenMicrophoneLab: () => void;
   onOpenRealtimeAudioLab: () => void;
+  onOpenSpeechEnhancementLab: () => void;
   onOpenSoundLab: () => void;
   onOpenSystemAudioLab: () => void;
 };
@@ -103,6 +104,7 @@ export function TopicDetails({
   onOpenListeningMetricsLab,
   onOpenMicrophoneLab,
   onOpenRealtimeAudioLab,
+  onOpenSpeechEnhancementLab,
   onOpenSoundLab,
   onOpenSystemAudioLab
 }: TopicDetailsProps) {
@@ -241,6 +243,11 @@ export function TopicDetails({
 
                     if (topic.detail.lab?.type === "core-signal-processing") {
                       onOpenCoreSignalProcessingLab();
+                      return;
+                    }
+
+                    if (topic.detail.lab?.type === "speech-enhancement") {
+                      onOpenSpeechEnhancementLab();
                       return;
                     }
 

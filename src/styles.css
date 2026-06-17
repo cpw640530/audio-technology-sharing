@@ -1814,6 +1814,435 @@ body.details-open {
   padding: clamp(16px, 3vw, 26px);
 }
 
+.speech-enhancement-page {
+  display: grid;
+  gap: 24px;
+  padding: 24px clamp(18px, 4vw, 56px) 56px;
+}
+
+.speech-enhancement-workbench {
+  background: #17211f;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
+  display: grid;
+  gap: 18px;
+  padding: clamp(16px, 3vw, 26px);
+}
+
+.speech-enhancement-tabs {
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+}
+
+.speech-enhancement-tabs button,
+.speech-mic-selector button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #dbe8e4;
+  cursor: pointer;
+  font-weight: 760;
+  min-height: 40px;
+  padding: 8px 10px;
+}
+
+.speech-enhancement-tabs button.active,
+.speech-mic-selector button.active {
+  background: rgba(126, 231, 216, 0.18);
+  border-color: rgba(126, 231, 216, 0.42);
+  color: #ffffff;
+}
+
+.speech-enhancement-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.speech-enhancement-flow-area {
+  min-width: 0;
+}
+
+.speech-enhancement-wave-control-row {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
+}
+
+.speech-enhancement-visuals {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.speech-enhancement-panel {
+  align-content: start;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+}
+
+.speech-mic-selector {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.speech-enhancement-metrics {
+  display: grid;
+  gap: 8px;
+}
+
+.speech-enhancement-metrics strong {
+  background: rgba(126, 231, 216, 0.09);
+  border: 1px solid rgba(126, 231, 216, 0.18);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  padding: 10px 12px;
+}
+
+.speech-mic-note {
+  color: #c9d8d4;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.speech-wave-explain-card,
+.speech-principle-card,
+.speech-slider-analysis,
+.speech-soc-section {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.speech-wave-explain-card h2,
+.speech-principle-card h2,
+.speech-slider-analysis h2,
+.speech-soc-heading h2 {
+  color: #ffffff;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.speech-wave-explain-card ul,
+.speech-principle-card ul,
+.speech-slider-analysis ul {
+  color: #dbe8e4;
+  display: grid;
+  gap: 8px;
+  line-height: 1.55;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.speech-slider-analysis,
+.speech-soc-section {
+  margin-top: 18px;
+}
+
+.speech-soc-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.speech-soc-heading p {
+  color: #c9d8d4;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.speech-soc-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.speech-soc-grid article {
+  background: rgba(13, 24, 27, 0.46);
+  border: 1px solid rgba(126, 231, 216, 0.14);
+  border-radius: 8px;
+  display: grid;
+  gap: 9px;
+  padding: 14px;
+}
+
+.speech-soc-grid h3 {
+  color: #ffffff;
+  font-size: 0.98rem;
+  margin: 0;
+}
+
+.speech-soc-grid p,
+.speech-soc-grid ol {
+  color: #c9d8d4;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.speech-soc-grid ol {
+  display: grid;
+  gap: 7px;
+  padding-left: 18px;
+}
+
+.speech-soc-flow-chart {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+.speech-soc-flow-bg {
+  fill: rgba(255, 255, 255, 0.045);
+  stroke: rgba(255, 255, 255, 0.09);
+}
+
+.speech-soc-flow-title {
+  fill: #ffffff;
+  font-size: 14px;
+  font-weight: 820;
+}
+
+.speech-soc-flow-node rect {
+  fill: rgba(126, 231, 216, 0.1);
+  stroke: rgba(126, 231, 216, 0.26);
+  stroke-width: 1.3;
+}
+
+.speech-soc-flow-node.reference rect {
+  fill: rgba(125, 106, 184, 0.14);
+  stroke: rgba(190, 178, 236, 0.36);
+}
+
+.speech-soc-flow-node-title,
+.speech-soc-flow-node-sub {
+  text-anchor: middle;
+}
+
+.speech-soc-flow-node-title {
+  fill: #ffffff;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.speech-soc-flow-node-sub {
+  fill: #c9d8d4;
+  font-size: 10px;
+  font-weight: 680;
+}
+
+.speech-soc-flow-link,
+.speech-soc-flow-reference-link {
+  fill: none;
+  stroke: rgba(220, 236, 232, 0.62);
+  stroke-linecap: round;
+  stroke-width: 1.8;
+}
+
+.speech-soc-flow-reference-link {
+  stroke: rgba(190, 178, 236, 0.78);
+  stroke-dasharray: 6 6;
+}
+
+.speech-soc-chip-list {
+  background: rgba(126, 231, 216, 0.07);
+  border: 1px solid rgba(126, 231, 216, 0.14);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.speech-soc-chip-list strong {
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.speech-soc-chip-list p {
+  display: grid;
+  gap: 3px;
+}
+
+.speech-soc-chip-list span {
+  color: #ffe9c8;
+  font-weight: 820;
+}
+
+.speech-soc-note {
+  background: rgba(240, 180, 106, 0.08);
+  border: 1px solid rgba(240, 180, 106, 0.16);
+  border-radius: 8px;
+  color: #ffe9c8 !important;
+  font-size: 0.9rem;
+  padding: 10px;
+}
+
+.speech-enhancement-flow-chart,
+.speech-enhancement-wave-chart {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+.speech-lab-chart-title {
+  fill: #ffffff;
+  font-size: 18px;
+  font-weight: 820;
+}
+
+.speech-lab-flow-link,
+.speech-lab-reference-link {
+  fill: none;
+  marker-end: url("#speechLabArrow");
+  stroke: rgba(220, 236, 232, 0.62);
+  stroke-linecap: round;
+  stroke-width: 2.2;
+}
+
+.speech-lab-reference-link {
+  stroke: rgba(190, 178, 236, 0.82);
+  stroke-dasharray: 7 7;
+}
+
+.speech-lab-flow-link.muted {
+  opacity: 0.25;
+  stroke-dasharray: 5 7;
+}
+
+.speech-lab-flow-link.bypass {
+  stroke: rgba(240, 180, 106, 0.86);
+  stroke-dasharray: 6 6;
+}
+
+.speech-lab-node rect {
+  fill: rgba(126, 231, 216, 0.1);
+  stroke: rgba(126, 231, 216, 0.3);
+  stroke-width: 1.5;
+}
+
+.speech-lab-node.disabled rect {
+  fill: rgba(255, 255, 255, 0.035);
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-dasharray: 6 5;
+}
+
+.speech-lab-node.active rect {
+  fill: rgba(240, 180, 106, 0.16);
+  stroke: rgba(240, 180, 106, 0.54);
+}
+
+.speech-lab-node-title,
+.speech-lab-node-sub,
+.speech-lab-reference text {
+  text-anchor: middle;
+}
+
+.speech-lab-node-title,
+.speech-lab-reference text:first-of-type {
+  fill: #ffffff;
+  font-size: 13px;
+  font-weight: 820;
+}
+
+.speech-lab-node-sub,
+.speech-lab-reference text:last-of-type {
+  fill: #c9d8d4;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.speech-lab-reference rect {
+  fill: rgba(125, 106, 184, 0.16);
+  stroke: rgba(190, 178, 236, 0.42);
+  stroke-width: 1.5;
+}
+
+.speech-lab-note,
+.speech-lab-axis-label,
+.speech-lab-bypass-label {
+  fill: #dbe8e4;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.speech-lab-bypass-label {
+  fill: #ffe9c8;
+  text-anchor: middle;
+}
+
+.speech-lab-mic-array circle {
+  fill: #7ee7d8;
+  stroke: rgba(255, 255, 255, 0.74);
+  stroke-width: 1.5;
+}
+
+.speech-lab-mic-array text {
+  fill: #dbe8e4;
+  font-size: 11px;
+  font-weight: 760;
+  text-anchor: middle;
+}
+
+.speech-lab-sdk-label {
+  fill: #ffe9c8;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.speech-raw-wave,
+.speech-enhanced-wave {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.speech-raw-wave {
+  opacity: 0.72;
+  stroke: #dcece8;
+  stroke-width: 3.2;
+}
+
+.speech-enhanced-wave {
+  stroke: #f0b46a;
+  stroke-width: 4;
+}
+
+.speech-sdk-table {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.speech-sdk-table article {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(126, 231, 216, 0.14);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.speech-sdk-table h2 {
+  color: #ffffff;
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
+
+.speech-sdk-table p {
+  color: #c9d8d4;
+  line-height: 1.55;
+  margin: 0;
+}
+
 .core-signal-layout {
   align-items: stretch;
   display: grid;
@@ -4240,6 +4669,7 @@ body.details-open {
   .sound-lab-hero,
   .sound-lab-workbench,
   .core-signal-layout,
+  .speech-enhancement-wave-control-row,
   .audio-codec-workbench,
   .realtime-audio-workbench,
   .digital-lab-workbench,
@@ -4275,6 +4705,9 @@ body.details-open {
   .realtime-rule-grid,
   .core-flow-steps,
   .core-stage-flow,
+  .speech-enhancement-tabs,
+  .speech-sdk-table,
+  .speech-soc-grid,
   .core-key-concept-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -4345,6 +4778,7 @@ body.details-open {
 
   .sound-lab-page,
   .core-signal-page,
+  .speech-enhancement-page,
   .digital-lab-page,
   .listening-lab-page,
   .microphone-lab-page,
@@ -4356,6 +4790,9 @@ body.details-open {
   .waveform-tabs,
   .core-signal-tabs,
   .core-filter-tabs,
+  .speech-enhancement-tabs,
+  .speech-sdk-table,
+  .speech-soc-grid,
   .listening-effect-grid,
   .amp-principle-grid,
   .mic-principle-tabs,
