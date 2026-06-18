@@ -36,7 +36,8 @@ export type TopicLab = {
     | "audio-codec"
     | "realtime-audio"
     | "core-signal-processing"
-    | "speech-enhancement";
+    | "speech-enhancement"
+    | "spatial-audio";
   title: LocalizedText;
   description: LocalizedText;
   buttonLabel: LocalizedText;
@@ -1256,27 +1257,105 @@ export const categories: Category[] = [
           en: "Explain binaural rendering, HRTF, surround sound, 3D audio, and head tracking."
         },
         bullets: [
-          { zh: "HRTF", en: "HRTF" },
-          { zh: "双耳渲染", en: "Binaural rendering" },
-          { zh: "头部追踪音频", en: "Head-tracked audio" }
+          { zh: "ITD / ILD / HRTF", en: "ITD / ILD / HRTF" },
+          { zh: "双耳渲染、Ambisonics", en: "Binaural rendering, Ambisonics" },
+          { zh: "对象音频与头部追踪", en: "Object audio and head tracking" }
         ],
         detail: {
           explanation: {
-            zh: "空间音频通过声源方向、距离、房间反射和头部运动线索，让听众感到声音来自三维空间。耳机中常用双耳渲染和 HRTF，扬声器系统则常结合声道布局、对象音频和房间校正。",
-            en: "Spatial audio uses cues for direction, distance, room reflections, and head movement to make sound feel located in 3D space. Headphones often use binaural rendering and HRTFs, while speaker systems use channel layouts, object audio, and room correction."
+            zh: "空间音频不是单一格式，而是一套从内容制作、空间编码、渲染到播放设备的完整链路。它利用左右耳到达时间差、声级差、耳廓滤波、房间反射、距离衰减和头部运动线索，让听众觉得声音来自前后、上下、远近不同的位置。耳机里通常把每个虚拟声源经过 HRTF/HRIR 卷积，生成左右耳双耳信号；扬声器系统则按 5.1、7.1、Atmos、车载多扬声器等布局，把声道床或对象音频重新分配到实际扬声器，并结合延迟、增益、EQ 和房间校正。",
+            en: "Spatial audio is not one format, but a full chain from content creation, spatial encoding, rendering, and playback. It uses interaural time differences, level differences, pinna filtering, room reflections, distance attenuation, and head-motion cues so listeners perceive sources in front, behind, above, below, near, or far away. Headphones usually convolve each virtual source with HRTF/HRIR data to create binaural left/right ear signals; speaker systems render channel beds or object audio to layouts such as 5.1, 7.1, Atmos, or in-car speaker arrays, with delay, gain, EQ, and room correction."
           },
-          keyConcepts: [
-            { zh: "ITD 和 ILD 分别描述左右耳到达时间差和声级差。", en: "ITD and ILD describe interaural time and level differences." },
-            { zh: "HRTF 记录头部、耳廓和躯干对不同方向声音的滤波效果。", en: "HRTFs capture how the head, ears, and torso filter sound from different directions." },
-            { zh: "头部追踪需要低延迟更新声场，否则空间位置会漂移或眩晕。", en: "Head tracking requires low-latency scene updates, otherwise the image can drift or feel uncomfortable." }
+          termExplanations: [
+            {
+              name: { zh: "ITD 到达时间差", en: "ITD interaural time difference" },
+              explanation: {
+                zh: "ITD 表示同一个声音到达左右耳的时间差。声源在左侧时通常先到左耳、再到右耳，大脑会利用这个微小时间差判断水平方向，尤其对低频和中低频定位很重要。",
+                en: "ITD is the arrival-time difference between the two ears. A source on the left usually reaches the left ear first and the right ear later, and the brain uses this tiny delay to infer horizontal direction, especially at low and mid-low frequencies."
+              }
+            },
+            {
+              name: { zh: "ILD 声级差", en: "ILD interaural level difference" },
+              explanation: {
+                zh: "ILD 表示同一个声音到达左右耳的声级差。头部会遮挡较高频率的声音，所以右侧声源到左耳时高频会更弱，这种强弱差帮助判断左右方向。",
+                en: "ILD is the level difference between the two ears. The head shadows higher frequencies, so a source on the right reaches the left ear with less high-frequency energy; this level contrast helps localize left and right."
+              }
+            },
+            {
+              name: { zh: "HRTF / HRIR", en: "HRTF / HRIR" },
+              explanation: {
+                zh: "HRTF 描述声音从某个方向传到耳膜前，被头部、耳廓、肩膀和躯干滤波后的频率响应；对应的时域脉冲响应常叫 HRIR。耳机空间音频会把虚拟声源和对应方向的 HRIR 做卷积，得到左耳和右耳信号。",
+                en: "An HRTF describes the frequency response after sound from a direction is filtered by the head, pinna, shoulders, and torso before reaching the eardrum; the corresponding time-domain impulse response is often called an HRIR. Headphone spatial audio convolves a virtual source with direction-specific HRIRs to generate left-ear and right-ear signals."
+              }
+            },
+            {
+              name: { zh: "双耳渲染", en: "Binaural rendering" },
+              explanation: {
+                zh: "双耳渲染的输入可以是单个声源、多个对象、Ambisonics 声场或声道床。渲染器根据每个声源的方位、距离和房间参数，生成只能通过耳机正确还原的左右耳信号。",
+                en: "Binaural rendering can take mono sources, multiple objects, an Ambisonics scene, or a channel bed. The renderer uses direction, distance, and room parameters to create left/right ear signals that reproduce correctly over headphones."
+              }
+            },
+            {
+              name: { zh: "环绕声与声道床", en: "Surround and channel beds" },
+              explanation: {
+                zh: "传统环绕声把内容直接混到固定声道，例如左、右、中置、环绕、低频 LFE。它适合影院和家庭影院，但声场高度依赖扬声器摆位，换到耳机或不同房间时需要重新渲染或虚拟化。",
+                en: "Traditional surround mixes content directly to fixed channels such as left, right, center, surrounds, and LFE. It works well for cinema and home theater, but the image depends heavily on speaker placement and needs virtualization or re-rendering for headphones or different rooms."
+              }
+            },
+            {
+              name: { zh: "对象音频", en: "Object audio" },
+              explanation: {
+                zh: "对象音频把声音内容和空间元数据分开：一段声音是对象，位置、移动轨迹、大小和优先级是元数据。播放端渲染器再根据实际扬声器或耳机能力把对象放到空间里。",
+                en: "Object audio separates sound content from spatial metadata: an audio signal is an object, while position, motion, size, and priority are metadata. The playback renderer maps those objects to the actual speakers or headphones."
+              }
+            },
+            {
+              name: { zh: "Ambisonics", en: "Ambisonics" },
+              explanation: {
+                zh: "Ambisonics 是一种声场表示方式，常用于 VR、全景视频和游戏。它不直接绑定某几个扬声器，而是用一组通道描述球面声场，播放时再解码到耳机双耳渲染或多扬声器系统。",
+                en: "Ambisonics is a scene-based sound-field representation often used in VR, panoramic video, and games. It is not tied to fixed speakers; instead, a set of channels describes a spherical sound field that is decoded to binaural headphones or speaker arrays at playback."
+              }
+            },
+            {
+              name: { zh: "头部追踪", en: "Head tracking" },
+              explanation: {
+                zh: "头部追踪会实时读取头部朝向。当你转头时，渲染器要反向更新虚拟声源相对耳朵的方向，让外部声源听起来仍停在原来的世界位置。延迟过大会导致声像漂移、跟头转或眩晕感。",
+                en: "Head tracking reads head orientation in real time. When you turn your head, the renderer updates each virtual source direction relative to the ears so external sources stay fixed in world space. Excess latency can make the image drift, rotate with the head, or feel uncomfortable."
+              }
+            },
+            {
+              name: { zh: "距离感与房间反射", en: "Distance and room reflections" },
+              explanation: {
+                zh: "距离不只靠音量判断，还和直达声/混响声比例、高频衰减、早期反射、空气吸收和动态变化有关。只把声音变小通常会像远处的小声源，不一定像真实远距离。",
+                en: "Distance is not judged by level alone; it also depends on direct-to-reverberant ratio, high-frequency loss, early reflections, air absorption, and motion. Simply lowering volume often sounds like a quiet nearby source rather than a realistic far source."
+              }
+            }
           ],
+          keyConcepts: [
+            { zh: "人耳定位不是只靠左右音量差：水平定位常依赖 ITD 和 ILD，前后/上下定位更依赖耳廓造成的频谱凹陷和峰值，距离感还需要反射和混响线索。", en: "Localization is not just left/right volume difference: horizontal placement often relies on ITD and ILD, front/back and height rely more on pinna spectral notches and peaks, and distance needs reflection and reverberation cues." },
+            { zh: "耳机空间音频的典型链路是：声源或对象 -> 方位/距离参数 -> HRTF/HRIR 卷积 -> 房间反射/混响 -> 左右耳双耳 PCM。", en: "A typical headphone chain is: source or object -> direction/distance parameters -> HRTF/HRIR convolution -> room reflections/reverb -> binaural left/right PCM." },
+            { zh: "扬声器空间音频的典型链路是：声道床或对象音频 -> 渲染器 -> 扬声器布局映射 -> 延迟/增益/EQ/房间校正 -> 实际声场。", en: "A typical speaker chain is: channel bed or object audio -> renderer -> speaker-layout mapping -> delay/gain/EQ/room correction -> physical sound field." },
+            { zh: "对象音频关注“声音在哪里、如何移动”，Ambisonics 关注“整个球面声场如何表示”；二者都需要在播放端解码或渲染。", en: "Object audio focuses on where sounds are and how they move, while Ambisonics represents the whole spherical sound field; both require decoding or rendering at playback." },
+            { zh: "头部追踪的目标是让声源固定在外部世界，而不是粘在耳朵上。运动传感器、蓝牙链路、渲染 buffer 和系统调度都会影响端到端延迟。", en: "Head tracking aims to keep sources fixed in the outside world rather than attached to the ears. Motion sensors, Bluetooth links, render buffers, and system scheduling all affect end-to-end latency." },
+            { zh: "HRTF 有个体差异。通用 HRTF 能提供基本方向感，但前后混淆、头内定位和高度感不足很常见，个性化 HRTF 或校准可以改善效果。", en: "HRTFs vary by listener. Generic HRTFs can provide basic directionality, but front/back confusion, inside-the-head localization, and weak height are common; personalized HRTFs or calibration can improve results." },
+            { zh: "空间音频和语音增强里的波束成形方向相反：空间音频主要是把声音渲染到空间，波束成形主要是从空间中选择性拾取声音。", en: "Spatial audio and speech-enhancement beamforming are opposite in direction: spatial audio renders sound into space, while beamforming selectively captures sound from space." }
+          ],
+          lab: {
+            type: "spatial-audio",
+            title: { zh: "空间音频实验室", en: "Spatial Audio Lab" },
+            description: {
+              zh: "进入独立界面调节声源角度、距离、房间反射和头部朝向，观察 ITD、ILD、HRTF、双耳渲染和头部追踪指标如何变化。",
+              en: "Open an independent lab to adjust source angle, distance, room reflections, and head yaw, then observe ITD, ILD, HRTF, binaural rendering, and head-tracking metrics."
+            },
+            buttonLabel: { zh: "打开空间音频实验室", en: "Open spatial audio lab" }
+          },
           misconception: {
-            zh: "简单把左右声道拉宽不等于真正空间音频；真实空间感需要方向、距离、反射和头部运动等线索配合。",
-            en: "Simply widening stereo is not true spatial audio; convincing space needs direction, distance, reflections, and head-motion cues."
+            zh: "简单把左右声道拉宽、加一点混响或做左右声道延迟，不等于真正空间音频。真实空间感需要方向、距离、耳廓滤波、反射、头部运动和播放设备校准共同成立；否则可能只是“变宽”，但定位不准、中心发虚或听久疲劳。",
+            en: "Simply widening stereo, adding some reverb, or delaying one channel is not true spatial audio. Convincing space needs direction, distance, pinna filtering, reflections, head motion, and playback calibration together; otherwise it may only sound wider, with poor localization, weak center image, or listening fatigue."
           },
           contentDirection: {
-            zh: "适合做 HRTF 示意、头部转动时声源保持不动的交互演示，以及游戏、影院、耳机的案例对比。",
-            en: "This fits an HRTF explainer, an interactive head-rotation demo where the source stays fixed, and comparisons across games, cinema, and headphones."
+            zh: "后续适合做空间音频实验室：用一个俯视头部图展示声源角度，切换 ITD、ILD、HRTF、房间反射和头部追踪；再对比耳机双耳渲染、5.1/7.1 环绕声、对象音频、Ambisonics、游戏和车载座舱空间音频的链路差异。",
+            en: "A later spatial-audio lab could show a top-down head diagram with a movable source angle, toggling ITD, ILD, HRTF, room reflections, and head tracking; it could then compare headphone binaural rendering, 5.1/7.1 surround, object audio, Ambisonics, games, and in-cabin spatial audio."
           }
         }
       }

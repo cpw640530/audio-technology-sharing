@@ -93,6 +93,78 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("button", { name: "打开语音增强实验室" })).toBeInTheDocument();
   });
 
+  it("expands spatial audio with localization cues and rendering concepts", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
+    await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await user.click(screen.getByRole("button", { name: /空间音频/ }));
+
+    const details = screen.getByRole("dialog", { name: "主题详情" });
+    expect(within(details).getByText(/不是单一格式，而是一套从内容制作、空间编码、渲染到播放设备的完整链路/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "ITD 到达时间差" })).toBeInTheDocument();
+    expect(within(details).getByText(/声源在左侧时通常先到左耳/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "ILD 声级差" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "HRTF / HRIR" })).toBeInTheDocument();
+    expect(within(details).getByText(/方向的 HRIR 做卷积/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "双耳渲染" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "环绕声与声道床" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "对象音频" })).toBeInTheDocument();
+    expect(within(details).getByText(/声音内容和空间元数据分开/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "Ambisonics" })).toBeInTheDocument();
+    expect(within(details).getAllByText(/球面声场/).length).toBeGreaterThan(0);
+    expect(within(details).getByRole("heading", { name: "头部追踪" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "距离感与房间反射" })).toBeInTheDocument();
+    expect(within(details).getByText(/声源固定在外部世界/)).toBeInTheDocument();
+    expect(within(details).getByText(/空间音频和语音增强里的波束成形方向相反/)).toBeInTheDocument();
+    expect(within(details).getByText(/简单把左右声道拉宽、加一点混响或做左右声道延迟/)).toBeInTheDocument();
+    expect(within(details).getByText(/后续适合做空间音频实验室/)).toBeInTheDocument();
+    expect(within(details).getByRole("button", { name: "打开空间音频实验室" })).toBeInTheDocument();
+  });
+
+  it("opens the spatial audio lab with interactive source and head tracking controls", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
+    await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await user.click(screen.getByRole("button", { name: /空间音频/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "打开空间音频实验室"
+      })
+    );
+
+    expect(screen.getByRole("heading", { name: "空间音频实验室" })).toBeInTheDocument();
+    const lab = screen.getByRole("region", { name: "空间音频实验台" });
+    expect(within(lab).getByRole("img", { name: "空间音频声源定位图" })).toBeInTheDocument();
+    expect(within(lab).getByRole("list", { name: "空间音频渲染流程" })).toBeInTheDocument();
+    expect(within(lab).getAllByText("ITD / ILD").length).toBeGreaterThan(0);
+    expect(within(lab).getByRole("heading", { name: "HRTF / HRIR" })).toBeInTheDocument();
+    expect(within(lab).getByText(/对象音频保存每个声音的位置元数据/)).toBeInTheDocument();
+    expect(within(lab).getByText("相对角度：-35°")).toBeInTheDocument();
+    expect(within(lab).getByText(/ITD：0\.36 ms，左耳先到/)).toBeInTheDocument();
+
+    fireEvent.change(within(lab).getByRole("slider", { name: "声源角度" }), {
+      target: { value: "60" }
+    });
+    expect(within(lab).getByText("声源角度：+60°")).toBeInTheDocument();
+    expect(within(lab).getByText("相对角度：+60°")).toBeInTheDocument();
+    expect(within(lab).getByText(/右耳先到/)).toBeInTheDocument();
+
+    fireEvent.change(within(lab).getByRole("slider", { name: "头部朝向" }), {
+      target: { value: "30" }
+    });
+    expect(within(lab).getByText("头部朝向：+30°")).toBeInTheDocument();
+    expect(within(lab).getByText("相对角度：+30°")).toBeInTheDocument();
+
+    await user.click(within(lab).getByRole("button", { name: "头部追踪" }));
+    expect(within(lab).getByText(/头部追踪让声源固定在外部世界/)).toBeInTheDocument();
+    expect(within(lab).getByText("坐标变换")).toBeInTheDocument();
+    expect(within(lab).getByText("外部化声像")).toBeInTheDocument();
+  });
+
   it("opens the speech enhancement lab with SDK flow and enhancement controls", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -124,11 +196,32 @@ describe("Audio knowledge app", () => {
     ]);
     expect(within(flowDiagram).getAllByText("2 Mic 阵列").length).toBeGreaterThan(0);
     expect(within(lab).getByText(/多麦阵列要求至少两路同步麦克风/)).toBeInTheDocument();
+    expect(within(lab).getAllByText(/DOA 声源定位/).length).toBeGreaterThan(0);
+    expect(within(lab).getAllByText(/定向拾音/).length).toBeGreaterThan(0);
     expect(within(lab).getByText(/当前模块强度只影响正在查看的算法/)).toBeInTheDocument();
-    expect(within(lab).getByText(/波形如何变化/)).toBeInTheDocument();
+    const visualArea = lab.querySelector(".speech-enhancement-visuals");
+    const controlPanel = lab.querySelector(".speech-enhancement-panel");
+    expect(visualArea).not.toBeNull();
+    expect(controlPanel).not.toBeNull();
+    expect(within(visualArea as HTMLElement).getByText(/波形如何变化/)).toBeInTheDocument();
+    expect(within(controlPanel as HTMLElement).queryByText(/波形如何变化/)).not.toBeInTheDocument();
+    expect(
+      (within(controlPanel as HTMLElement).getByRole("group", { name: "麦克风数量" }).compareDocumentPosition(
+        within(controlPanel as HTMLElement).getByRole("slider", { name: "处理强度" })
+      ) &
+        Node.DOCUMENT_POSITION_FOLLOWING) !==
+        0
+    ).toBe(true);
+    expect(within(visualArea as HTMLElement).getByRole("region", { name: "当前算法基本原理" })).toBeInTheDocument();
+    expect(within(visualArea as HTMLElement).getByRole("region", { name: "核心算法数学形式" })).toBeInTheDocument();
+    expect(within(controlPanel as HTMLElement).queryByRole("region", { name: "当前算法基本原理" })).not.toBeInTheDocument();
+    expect(within(controlPanel as HTMLElement).queryByRole("region", { name: "核心算法数学形式" })).not.toBeInTheDocument();
     expect(within(lab).getByText(/噪声强度：增加原始波形上的高频细碎抖动/)).toBeInTheDocument();
     expect(within(lab).getByText(/回声强度：增加与语音相似但延迟后的波峰和尾巴/)).toBeInTheDocument();
     expect(within(lab).getByText(/混响拖尾：增加持续衰减的房间反射/)).toBeInTheDocument();
+    expect(within(lab).getByText(/x\(n\) 为播放参考，d_hat\(n\)/)).toBeInTheDocument();
+    expect(within(lab).getByText(/S_hat\(k\) = G\(k\)X\(k\)/)).toBeInTheDocument();
+    expect(within(lab).getByText(/g\(n\) = target \/ rms\(n\)/)).toBeInTheDocument();
     expect(within(lab).getByText("Rockchip RK Media / VQE")).toBeInTheDocument();
     expect(within(lab).getByText("SigmaStar MI Audio")).toBeInTheDocument();
     expect(within(lab).getByText("Ingenic IMP Audio")).toBeInTheDocument();

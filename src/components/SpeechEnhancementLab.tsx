@@ -48,8 +48,8 @@ const modeDescriptions: Record<EnhancementMode, Record<Language, string>> = {
     en: "AGC slowly adjusts gain from the speech-level envelope, raising quiet speech and limiting loud speech; the slider mainly changes envelope stability."
   },
   beamforming: {
-    zh: "多麦波束成形只在 2 Mic 或 4 Mic 阵列下启用，利用到达时间差和相位差增强目标方向，同时压低侧向噪声。",
-    en: "Beamforming is enabled only with 2-mic or 4-mic arrays. It uses arrival-time and phase differences to enhance a target direction and reduce side noise."
+    zh: "多麦波束成形只在 2 Mic 或 4 Mic 阵列下启用，先用到达时间差或相位差做 DOA 声源定位，再做定向拾音增强目标方向。",
+    en: "Beamforming is enabled only with 2-mic or 4-mic arrays. It first uses arrival-time or phase differences for DOA localization, then applies directional pickup toward the target."
   },
   dereverb: {
     zh: "去混响减弱房间后期反射造成的拖尾，让语音更近；强度滑块主要改变反射尾巴长度和密度。",
@@ -60,12 +60,12 @@ const modeDescriptions: Record<EnhancementMode, Record<Language, string>> = {
 const modePrinciples: Record<EnhancementMode, Record<Language, string>[]> = {
   beamforming: [
     {
-      zh: "多麦阵列要求至少两路同步麦克风。算法比较同一声源到不同麦克风的时间差和相位差，估计目标方向。",
-      en: "A microphone array needs at least two synchronized channels. It compares arrival-time and phase differences to estimate the target direction."
+      zh: "DOA 声源定位：多麦阵列要求至少两路同步麦克风，用到达时间差 τ 或相位差估计目标方向。",
+      en: "DOA localization: a microphone array needs at least two synchronized channels and estimates target direction from time difference tau or phase difference."
     },
     {
-      zh: "延时求和波束成形会把目标方向的多路麦克风对齐相加，目标语音被增强，侧向噪声因为相位不一致被抵消一部分。",
-      en: "Delay-and-sum beamforming aligns and adds channels from the target direction, boosting target speech while partially canceling side noise."
+      zh: "定向拾音：延时求和会把目标方向的多路麦克风对齐相加，目标语音被增强，侧向噪声因相位不一致被压低。",
+      en: "Directional pickup: delay-and-sum aligns channels from the target direction, boosting target speech while reducing side noise through phase mismatch."
     },
     {
       zh: "单麦没有空间信息，所以不能做真正的多麦增强；最多只能做单通道降噪、AGC 或去混响。",
@@ -128,6 +128,21 @@ const modePrinciples: Record<EnhancementMode, Record<Language, string>[]> = {
       en: "A limiter is often placed after AGC to prevent clipping. In the demo waveform, AGC evens the envelope rather than shifting the waveform up or down."
     }
   ]
+};
+
+const algorithmFormulaNotes: Record<"aec" | "ns" | "agc", Record<Language, string>> = {
+  aec: {
+    zh: "AEC：x(n) 为播放参考，d_hat(n)=sum_k w_k x(n-k)，输出 e(n)=y(n)-d_hat(n)。",
+    en: "AEC: x(n) is playback reference, d_hat(n)=sum_k w_k x(n-k), output e(n)=y(n)-d_hat(n)."
+  },
+  ns: {
+    zh: "ANR/NS：估计噪声 N(k)，计算增益 G(k)，S_hat(k) = G(k)X(k) 保留语音频段。",
+    en: "ANR/NS: estimate noise N(k), compute gain G(k), and keep speech bands with S_hat(k) = G(k)X(k)."
+  },
+  agc: {
+    zh: "AGC：估计短时 rms(n)，g(n) = target / rms(n)，平滑后乘到 PCM 并用 limiter 防削波。",
+    en: "AGC: estimate short-term rms(n), g(n) = target / rms(n), smooth it, apply to PCM, then limit clipping."
+  }
 };
 
 const sdkRows = [
@@ -331,7 +346,7 @@ function EnhancementFlowChart({
     {
       id: "beamforming",
       label: "Beamforming",
-      sub: { zh: isMultiMic ? "多麦增强" : "单麦跳过", en: isMultiMic ? "multi-mic" : "bypassed" },
+      sub: { zh: isMultiMic ? "DOA + 定向拾音" : "单麦跳过", en: isMultiMic ? "DOA + pickup" : "bypassed" },
       x: 338,
       y: 76
     },
@@ -587,38 +602,15 @@ export function SpeechEnhancementLab({ language, onBack }: SpeechEnhancementLabP
 
           <div className="speech-enhancement-wave-control-row">
             <div className="speech-enhancement-visuals">
-            <WaveComparison
-              echoLevel={echoLevel}
-              language={language}
-              micCount={micCount}
-              mode={mode}
-              noiseLevel={noiseLevel}
-              reverbLevel={reverbLevel}
-              strength={strength}
-            />
-            </div>
-
-            <aside className="speech-enhancement-panel">
-              <div className="codec-mode-concepts-header">
-                <span>{modeLabels[mode][language]}</span>
-                <strong>{modeDescriptions[mode][language]}</strong>
-              </div>
-              <label className="sound-lab-control">
-                <span>{language === "zh" ? `当前模块强度：${strength}%` : `Current module strength: ${strength}%`}</span>
-                <input aria-label={language === "zh" ? "处理强度" : "Processing strength"} max="100" min="0" step="5" type="range" value={strength} onChange={(event) => setStrength(Number(event.target.value))} />
-              </label>
-              <label className="sound-lab-control">
-                <span>{language === "zh" ? `噪声强度：${noiseLevel}%` : `Noise level: ${noiseLevel}%`}</span>
-                <input aria-label={language === "zh" ? "噪声强度" : "Noise level"} max="100" min="0" step="5" type="range" value={noiseLevel} onChange={(event) => setNoiseLevel(Number(event.target.value))} />
-              </label>
-              <label className="sound-lab-control">
-                <span>{language === "zh" ? `回声强度：${echoLevel}%` : `Echo level: ${echoLevel}%`}</span>
-                <input aria-label={language === "zh" ? "回声强度" : "Echo level"} max="100" min="0" step="5" type="range" value={echoLevel} onChange={(event) => setEchoLevel(Number(event.target.value))} />
-              </label>
-              <label className="sound-lab-control">
-                <span>{language === "zh" ? `混响拖尾：${reverbLevel}%` : `Reverb tail: ${reverbLevel}%`}</span>
-                <input aria-label={language === "zh" ? "混响拖尾" : "Reverb tail"} max="100" min="0" step="5" type="range" value={reverbLevel} onChange={(event) => setReverbLevel(Number(event.target.value))} />
-              </label>
+              <WaveComparison
+                echoLevel={echoLevel}
+                language={language}
+                micCount={micCount}
+                mode={mode}
+                noiseLevel={noiseLevel}
+                reverbLevel={reverbLevel}
+                strength={strength}
+              />
               <section className="speech-wave-explain-card" aria-label={language === "zh" ? "滑块如何影响波形" : "How sliders affect the waveform"}>
                 <h2>{language === "zh" ? "波形如何变化" : "How the waveform changes"}</h2>
                 <ul>
@@ -644,6 +636,29 @@ export function SpeechEnhancementLab({ language, onBack }: SpeechEnhancementLabP
                   </li>
                 </ul>
               </section>
+              <section className="speech-principle-card" aria-label={language === "zh" ? "当前算法基本原理" : "Current algorithm principle"}>
+                <h2>{language === "zh" ? "基本原理" : "Principle"}</h2>
+                <ul>
+                  {modePrinciples[mode].map((point) => (
+                    <li key={point.en}>{point[language]}</li>
+                  ))}
+                </ul>
+              </section>
+              <section className="speech-formula-card" aria-label={language === "zh" ? "核心算法数学形式" : "Core algorithm equations"}>
+                <h2>{language === "zh" ? "核心算法数学形式" : "Core equations"}</h2>
+                <ul>
+                  {(["aec", "ns", "agc"] as const).map((item) => (
+                    <li key={item}>{algorithmFormulaNotes[item][language]}</li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+
+            <aside className="speech-enhancement-panel">
+              <div className="codec-mode-concepts-header">
+                <span>{modeLabels[mode][language]}</span>
+                <strong>{modeDescriptions[mode][language]}</strong>
+              </div>
               <div className="speech-mic-selector" role="group" aria-label={language === "zh" ? "麦克风数量" : "Microphone count"}>
                 {[1, 2, 4].map((count) => (
                   <button className={micCount === count ? "active" : ""} key={count} type="button" onClick={() => handleMicCountChange(count)}>
@@ -655,11 +670,27 @@ export function SpeechEnhancementLab({ language, onBack }: SpeechEnhancementLabP
                 {language === "zh"
                   ? micCount === 1
                     ? "当前是单麦模式：流程图会跳过多麦波束成形，只保留 AEC、NS/ANR、去混响和 AGC。"
-                    : `当前是 ${micCount} Mic 阵列：流程图启用多麦波束成形，阵列通道越多，空间抑制能力和延迟/算力开销通常越高。`
+                    : `当前是 ${micCount} Mic 阵列：启用 DOA 声源定位和定向拾音，阵列通道越多，空间抑制能力和延迟/算力开销通常越高。`
                   : micCount === 1
                     ? "Single-mic mode: the flow bypasses beamforming and keeps AEC, NS/ANR, dereverb, and AGC."
-                    : `${micCount}-mic array: the flow enables beamforming; more channels usually mean better spatial suppression plus more latency and CPU cost.`}
+                    : `${micCount}-mic array: the flow enables DOA localization and directional pickup; more channels usually mean better spatial suppression plus more latency and CPU cost.`}
               </p>
+              <label className="sound-lab-control">
+                <span>{language === "zh" ? `当前模块强度：${strength}%` : `Current module strength: ${strength}%`}</span>
+                <input aria-label={language === "zh" ? "处理强度" : "Processing strength"} max="100" min="0" step="5" type="range" value={strength} onChange={(event) => setStrength(Number(event.target.value))} />
+              </label>
+              <label className="sound-lab-control">
+                <span>{language === "zh" ? `噪声强度：${noiseLevel}%` : `Noise level: ${noiseLevel}%`}</span>
+                <input aria-label={language === "zh" ? "噪声强度" : "Noise level"} max="100" min="0" step="5" type="range" value={noiseLevel} onChange={(event) => setNoiseLevel(Number(event.target.value))} />
+              </label>
+              <label className="sound-lab-control">
+                <span>{language === "zh" ? `回声强度：${echoLevel}%` : `Echo level: ${echoLevel}%`}</span>
+                <input aria-label={language === "zh" ? "回声强度" : "Echo level"} max="100" min="0" step="5" type="range" value={echoLevel} onChange={(event) => setEchoLevel(Number(event.target.value))} />
+              </label>
+              <label className="sound-lab-control">
+                <span>{language === "zh" ? `混响拖尾：${reverbLevel}%` : `Reverb tail: ${reverbLevel}%`}</span>
+                <input aria-label={language === "zh" ? "混响拖尾" : "Reverb tail"} max="100" min="0" step="5" type="range" value={reverbLevel} onChange={(event) => setReverbLevel(Number(event.target.value))} />
+              </label>
               <div className="speech-enhancement-metrics">
                 <strong>{language === "zh" ? `估计降噪：${metrics.noiseReduction} dB` : `Estimated NS: ${metrics.noiseReduction} dB`}</strong>
                 <strong>{language === "zh" ? `估计回声衰减：${metrics.echoReduction} dB` : `Estimated echo reduction: ${metrics.echoReduction} dB`}</strong>
@@ -667,14 +698,6 @@ export function SpeechEnhancementLab({ language, onBack }: SpeechEnhancementLabP
                 <strong>{language === "zh" ? `语音损伤风险：${metrics.speechLoss} / 10` : `Speech damage risk: ${metrics.speechLoss} / 10`}</strong>
                 <strong>{language === "zh" ? `算法延迟：约 ${metrics.latency} ms` : `Algorithm latency: about ${metrics.latency} ms`}</strong>
               </div>
-              <section className="speech-principle-card" aria-label={language === "zh" ? "当前算法基本原理" : "Current algorithm principle"}>
-                <h2>{language === "zh" ? "基本原理" : "Principle"}</h2>
-                <ul>
-                  {modePrinciples[mode].map((point) => (
-                    <li key={point.en}>{point[language]}</li>
-                  ))}
-                </ul>
-              </section>
             </aside>
           </div>
         </div>

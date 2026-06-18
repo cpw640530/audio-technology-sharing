@@ -21,6 +21,7 @@ type TopicDetailsProps = {
   onOpenRealtimeAudioLab: () => void;
   onOpenSpeechEnhancementLab: () => void;
   onOpenSoundLab: () => void;
+  onOpenSpatialAudioLab: () => void;
   onOpenSystemAudioLab: () => void;
 };
 
@@ -91,6 +92,7 @@ export function TopicDetails({
   onOpenRealtimeAudioLab,
   onOpenSpeechEnhancementLab,
   onOpenSoundLab,
+  onOpenSpatialAudioLab,
   onOpenSystemAudioLab
 }: TopicDetailsProps) {
   function closeDetails() {
@@ -150,6 +152,11 @@ export function TopicDetails({
 
     if (topic.detail.lab?.type === "speech-enhancement") {
       onOpenSpeechEnhancementLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "spatial-audio") {
+      onOpenSpatialAudioLab();
       return;
     }
 

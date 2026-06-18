@@ -15,6 +15,7 @@ import { Roadmap } from "./components/Roadmap";
 import { SearchBar } from "./components/SearchBar";
 import { SpeechEnhancementLab } from "./components/SpeechEnhancementLab";
 import { SoundWaveLab } from "./components/SoundWaveLab";
+import { SpatialAudioLab } from "./components/SpatialAudioLab";
 import { SystemAudioLab } from "./components/SystemAudioLab";
 import { TopicDetails } from "./components/TopicDetails";
 import { TopicGrid } from "./components/TopicGrid";
@@ -101,6 +102,7 @@ export default function App() {
     | "realtimeAudioLab"
     | "coreSignalProcessingLab"
     | "speechEnhancementLab"
+    | "spatialAudioLab"
   >("knowledge");
   const [query, setQuery] = useState("");
   const [selectedTopic, setSelectedTopic] = useState<DisplayTopic | null>(null);
@@ -365,6 +367,24 @@ export default function App() {
     );
   }
 
+  if (activeView === "spatialAudioLab") {
+    return (
+      <div className="app-shell">
+        <Header
+          language={language}
+          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+        />
+        <SpatialAudioLab language={language} onBack={() => setActiveView("knowledge")} />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+          <a href="docs/audio_technology_knowledge_outline.md">
+            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
+          </a>
+        </footer>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <Header
@@ -438,6 +458,10 @@ export default function App() {
               onOpenSpeechEnhancementLab={() => {
                 setSelectedTopic(null);
                 setActiveView("speechEnhancementLab");
+              }}
+              onOpenSpatialAudioLab={() => {
+                setSelectedTopic(null);
+                setActiveView("spatialAudioLab");
               }}
               topic={selectedTopic}
             />

@@ -1820,6 +1820,12 @@ body.details-open {
   padding: 24px clamp(18px, 4vw, 56px) 56px;
 }
 
+.spatial-audio-page {
+  display: grid;
+  gap: 24px;
+  padding: 24px clamp(18px, 4vw, 56px) 56px;
+}
+
 .speech-enhancement-workbench {
   background: #17211f;
   border: 1px solid rgba(23, 33, 31, 0.12);
@@ -1827,14 +1833,35 @@ body.details-open {
   box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
   display: grid;
   gap: 18px;
+  justify-self: center;
+  max-width: 1200px;
   padding: clamp(16px, 3vw, 26px);
+  width: 100%;
+}
+
+.spatial-audio-workbench {
+  background: #17211f;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
+  display: grid;
+  gap: 18px;
+  justify-self: center;
+  max-width: 1200px;
+  padding: clamp(16px, 3vw, 26px);
+  width: 100%;
 }
 
 .speech-enhancement-tabs {
   grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
 }
 
+.spatial-audio-tabs {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
 .speech-enhancement-tabs button,
+.spatial-audio-tabs button,
 .speech-mic-selector button {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1847,10 +1874,186 @@ body.details-open {
 }
 
 .speech-enhancement-tabs button.active,
+.spatial-audio-tabs button.active,
 .speech-mic-selector button.active {
   background: rgba(126, 231, 216, 0.18);
   border-color: rgba(126, 231, 216, 0.42);
   color: #ffffff;
+}
+
+.spatial-audio-layout {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
+}
+
+.spatial-audio-visuals {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.spatial-audio-panel {
+  align-content: start;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+}
+
+.spatial-audio-metrics {
+  display: grid;
+  gap: 8px;
+}
+
+.spatial-audio-metrics strong {
+  background: rgba(126, 231, 216, 0.09);
+  border: 1px solid rgba(126, 231, 216, 0.18);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  padding: 10px 12px;
+}
+
+.spatial-audio-scene {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+.spatial-chart-title {
+  fill: #ffffff;
+  font-size: 18px;
+  font-weight: 820;
+}
+
+.spatial-room-ring,
+.spatial-axis {
+  fill: none;
+  stroke: rgba(220, 236, 232, 0.25);
+  stroke-width: 1.5;
+}
+
+.spatial-room-ring.faint {
+  stroke: rgba(220, 236, 232, 0.12);
+}
+
+.spatial-axis-label,
+.spatial-ear-label,
+.spatial-relative-cue text {
+  fill: #dbe8e4;
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.spatial-direct-path {
+  stroke: rgba(126, 231, 216, 0.8);
+  stroke-dasharray: 8 8;
+  stroke-width: 2.5;
+}
+
+.spatial-reflection-path {
+  fill: none;
+  stroke: #f0b46a;
+  stroke-width: 4;
+}
+
+.spatial-head-forward {
+  stroke: #ffffff;
+  stroke-width: 3;
+}
+
+.spatial-head ellipse {
+  fill: rgba(255, 255, 255, 0.08);
+  stroke: rgba(255, 255, 255, 0.72);
+  stroke-width: 2;
+}
+
+.spatial-ear {
+  fill: #7ee7d8;
+  stroke: #ffffff;
+  stroke-width: 1.5;
+}
+
+.spatial-source circle {
+  fill: #f0b46a;
+  stroke: #fff3dc;
+  stroke-width: 2;
+}
+
+.spatial-source text {
+  fill: #fff3dc;
+  font-size: 15px;
+  font-weight: 820;
+}
+
+.spatial-relative-cue line {
+  stroke: rgba(255, 255, 255, 0.42);
+  stroke-width: 2;
+}
+
+.spatial-relative-cue circle {
+  fill: #7ee7d8;
+}
+
+.spatial-world-lock {
+  fill: none;
+  stroke: #7ee7d8;
+  stroke-dasharray: 5 6;
+  stroke-width: 2.5;
+}
+
+.spatial-pipeline {
+  counter-reset: spatial-step;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.spatial-pipeline li,
+.spatial-concept-grid article {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.spatial-pipeline span {
+  color: #7ee7d8;
+  font-size: 0.78rem;
+  font-weight: 820;
+}
+
+.spatial-pipeline strong,
+.spatial-concept-grid h2 {
+  color: #ffffff;
+  font-size: 0.98rem;
+  margin: 0;
+}
+
+.spatial-pipeline p,
+.spatial-concept-grid p {
+  color: #dbe8e4;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.spatial-concept-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .speech-enhancement-layout {
@@ -1916,6 +2119,7 @@ body.details-open {
 
 .speech-wave-explain-card,
 .speech-principle-card,
+.speech-formula-card,
 .speech-slider-analysis,
 .speech-soc-section {
   background: rgba(255, 255, 255, 0.055);
@@ -1929,6 +2133,7 @@ body.details-open {
 
 .speech-wave-explain-card h2,
 .speech-principle-card h2,
+.speech-formula-card h2,
 .speech-slider-analysis h2,
 .speech-soc-heading h2 {
   color: #ffffff;
@@ -1938,6 +2143,7 @@ body.details-open {
 
 .speech-wave-explain-card ul,
 .speech-principle-card ul,
+.speech-formula-card ul,
 .speech-slider-analysis ul {
   color: #dbe8e4;
   display: grid;
@@ -4605,6 +4811,15 @@ body.details-open {
 }
 
 @media (max-width: 1180px) {
+  .spatial-audio-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .spatial-pipeline,
+  .spatial-concept-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .realtime-audio-workbench {
     grid-template-columns: 1fr;
   }
@@ -4778,6 +4993,7 @@ body.details-open {
 
   .sound-lab-page,
   .core-signal-page,
+  .spatial-audio-page,
   .speech-enhancement-page,
   .digital-lab-page,
   .listening-lab-page,
@@ -4807,6 +5023,8 @@ body.details-open {
   .core-flow-steps,
   .core-stage-flow,
   .core-key-concept-grid,
+  .spatial-pipeline,
+  .spatial-concept-grid,
   .codec-table,
   .audio-codec-scenario-tabs,
   .audio-codec-table,
