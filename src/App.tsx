@@ -105,6 +105,11 @@ export default function App() {
     | "spatialAudioLab"
   >("knowledge");
   const [query, setQuery] = useState("");
+
+  // 切换视图时滚动到顶部
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activeView]);
   const [selectedTopic, setSelectedTopic] = useState<DisplayTopic | null>(null);
 
   const allTopics = useMemo<DisplayTopic[]>(
