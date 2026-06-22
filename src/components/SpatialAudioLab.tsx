@@ -81,6 +81,17 @@ function polarPoint(cx: number, cy: number, radius: number, angleDegrees: number
   };
 }
 
+function rotateOffset(cx: number, cy: number, offsetX: number, offsetY: number, angleDegrees: number) {
+  const radians = (angleDegrees * Math.PI) / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+
+  return {
+    x: cx + offsetX * cos - offsetY * sin,
+    y: cy + offsetX * sin + offsetY * cos
+  };
+}
+
 function formatSignedDegrees(value: number) {
   return `${value > 0 ? "+" : ""}${Math.round(value)}°`;
 }
@@ -90,6 +101,15 @@ function formatSignedDb(value: number) {
 
   return `${rounded > 0 ? "+" : ""}${rounded.toFixed(1)} dB`;
 }
+
+const reflectionPaths = [
+  { controlA: { x: 92, y: 86 }, controlB: { x: 98, y: 414 }, earOffset: -34, threshold: 0.08 },
+  { controlA: { x: 632, y: 88 }, controlB: { x: 636, y: 412 }, earOffset: 34, threshold: 0.08 },
+  { controlA: { x: 205, y: 54 }, controlB: { x: 506, y: 74 }, earOffset: -12, threshold: 0.32 },
+  { controlA: { x: 514, y: 456 }, controlB: { x: 214, y: 432 }, earOffset: 12, threshold: 0.52 },
+  { controlA: { x: 72, y: 250 }, controlB: { x: 214, y: 92 }, earOffset: -46, threshold: 0.72 },
+  { controlA: { x: 648, y: 250 }, controlB: { x: 506, y: 408 }, earOffset: 46, threshold: 0.72 }
+];
 
 function SpatialScene({
   distance,
@@ -112,7 +132,12 @@ function SpatialScene({
   const headForward = polarPoint(center.x, center.y, 88, headYaw);
   const relativeAngle = normalizeAngle(sourceAngle - headYaw);
   const relativeSource = polarPoint(center.x, center.y, 138, relativeAngle);
-  const reflectionOpacity = 0.12 + (reflection / 100) * 0.45;
+  const leftEar = rotateOffset(center.x, center.y, -52, 0, headYaw);
+  const rightEar = rotateOffset(center.x, center.y, 52, 0, headYaw);
+  const lateral = Math.sin((relativeAngle * Math.PI) / 180);
+  const leadingEarPoint = Math.abs(lateral) < 0.08 ? center : lateral < 0 ? leftEar : rightEar;
+  const laggingEarPoint = Math.abs(lateral) < 0.08 ? center : lateral < 0 ? rightEar : leftEar;
+  const reflectionAmount = reflection / 100;
   const showHeadTracking = mode === "headTracking";
 
   return (
@@ -141,23 +166,38 @@ function SpatialScene({
       <text className="spatial-axis-label" x="186" y="242">{language === "zh" ? "左" : "left"}</text>
       <text className="spatial-axis-label" x="508" y="242">{language === "zh" ? "右" : "right"}</text>
 
-      <path
-        className="spatial-reflection-path"
-        d={`M ${source.x.toFixed(1)} ${source.y.toFixed(1)} C 90 86 90 414 ${center.x - 34} ${center.y + 16}`}
-        opacity={reflectionOpacity}
-      />
-      <path
-        className="spatial-reflection-path"
-        d={`M ${source.x.toFixed(1)} ${source.y.toFixed(1)} C 640 88 640 412 ${center.x + 34} ${center.y + 16}`}
-        opacity={reflectionOpacity}
-      />
+      {reflectionPaths.map((path, index) => {
+        const pathStrength = clamp((reflectionAmount - path.threshold) / 0.28, 0, 1);
+
+        if (pathStrength <= 0) {
+          return null;
+        }
+
+        return (
+          <path
+            className={index < 2 ? "spatial-reflection-path early" : "spatial-reflection-path late"}
+            d={`M ${source.x.toFixed(1)} ${source.y.toFixed(1)} C ${path.controlA.x} ${path.controlA.y} ${path.controlB.x} ${path.controlB.y} ${(path.earOffset < 0 ? leftEar.x : rightEar.x).toFixed(1)} ${(path.earOffset < 0 ? leftEar.y : rightEar.y).toFixed(1)}`}
+            key={`${path.controlA.x}-${path.controlB.y}`}
+            opacity={0.12 + pathStrength * 0.55}
+          />
+        );
+      })}
       <line
         className="spatial-direct-path"
         x1={source.x}
-        x2={center.x}
+        x2={leadingEarPoint.x}
         y1={source.y}
-        y2={center.y}
+        y2={leadingEarPoint.y}
       />
+      {Math.abs(lateral) >= 0.08 ? (
+        <line
+          className="spatial-secondary-ear-path"
+          x1={source.x}
+          x2={laggingEarPoint.x}
+          y1={source.y}
+          y2={laggingEarPoint.y}
+        />
+      ) : null}
       <line
         className="spatial-head-forward"
         markerEnd="url(#spatialArrow)"
@@ -188,12 +228,107 @@ function SpatialScene({
       <g className="spatial-relative-cue">
         <line x1={center.x} x2={relativeSource.x} y1={center.y} y2={relativeSource.y} />
         <circle cx={relativeSource.x} cy={relativeSource.y} r="6" />
+        <text className="spatial-cue-chip" x="34" y="418">
+          {language === "zh"
+            ? `当前双耳线索：${Math.abs(lateral) < 0.08 ? "左右耳接近同时" : lateral < 0 ? "左耳先到 / 左侧更强" : "右耳先到 / 右侧更强"}`
+            : `Current binaural cue: ${Math.abs(lateral) < 0.08 ? "ears nearly aligned" : lateral < 0 ? "left ear first / stronger left" : "right ear first / stronger right"}`}
+        </text>
         <text x="34" y="462">
           {language === "zh"
             ? `相对耳朵方向：${formatSignedDegrees(relativeAngle)}；世界声源角度：${formatSignedDegrees(sourceAngle)}；头部朝向：${formatSignedDegrees(headYaw)}`
             : `Ear-relative direction: ${formatSignedDegrees(relativeAngle)}; world source: ${formatSignedDegrees(sourceAngle)}; head yaw: ${formatSignedDegrees(headYaw)}`}
         </text>
       </g>
+    </svg>
+  );
+}
+
+function RoomReflectionResponse({
+  distance,
+  language,
+  reflection
+}: {
+  distance: number;
+  language: Language;
+  reflection: number;
+}) {
+  const reflectionAmount = reflection / 100;
+  const directX = 74 + distance * 8;
+  const directPeak = clamp(114 - distance * 8, 48, 108);
+  const earlyPeaks = [
+    { x: directX + 64, height: 20 + reflectionAmount * 58 },
+    { x: directX + 112, height: 15 + reflectionAmount * 46 },
+    { x: directX + 168, height: 10 + reflectionAmount * 34 }
+  ];
+  const tailStart = directX + 190;
+  const tailLength = 92 + reflectionAmount * 210;
+  const tailHeight = 18 + reflectionAmount * 58;
+  const tailPath = `M ${tailStart.toFixed(1)} 214 C ${(tailStart + tailLength * 0.22).toFixed(1)} ${(214 - tailHeight).toFixed(1)} ${(tailStart + tailLength * 0.58).toFixed(1)} ${(206 - tailHeight * 0.48).toFixed(1)} ${(tailStart + tailLength).toFixed(1)} 214`;
+  const tailFillPath = `${tailPath} L ${(tailStart + tailLength).toFixed(1)} 214 L ${tailStart.toFixed(1)} 214 Z`;
+  const tailTexture = Array.from({ length: 18 }, (_, index) => {
+    const ratio = index / 17;
+    const x = tailStart + ratio * tailLength;
+    const decay = Math.exp(-ratio * (1.35 + (1 - reflectionAmount) * 1.4));
+    const height = tailHeight * decay * (0.28 + ((index * 7) % 5) * 0.08);
+
+    return { height, x };
+  });
+
+  return (
+    <svg
+      aria-label={language === "zh" ? "房间反射时间响应图" : "Room reflection time response"}
+      className="spatial-reflection-response"
+      role="img"
+      viewBox="0 0 720 260"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect className="lab-diagram-bg" height="260" rx="16" width="720" />
+      <text className="spatial-chart-title" x="34" y="38">
+        {language === "zh" ? "时间响应：直达声、早期反射和混响尾巴" : "Time response: direct sound, early reflections, and reverb tail"}
+      </text>
+      <line className="spatial-response-axis" x1="54" x2="666" y1="214" y2="214" />
+      <line className="spatial-response-axis" x1="54" x2="54" y1="62" y2="214" />
+      <text className="spatial-axis-label" x="600" y="238">{language === "zh" ? "时间 ms" : "time ms"}</text>
+      <text className="spatial-axis-label" x="28" y="72">{language === "zh" ? "能量" : "energy"}</text>
+      <path className="spatial-reverb-tail-fill" d={tailFillPath} opacity={0.1 + reflectionAmount * 0.28} />
+      <path className="spatial-reverb-tail-line" d={tailPath} opacity={0.35 + reflectionAmount * 0.52} />
+      {tailTexture.map((item) => (
+        <line
+          className="spatial-tail-texture"
+          key={item.x.toFixed(1)}
+          opacity={0.12 + reflectionAmount * 0.36}
+          x1={item.x}
+          x2={item.x}
+          y1={214}
+          y2={214 - item.height}
+        />
+      ))}
+      <path className="spatial-direct-impulse" d={`M ${(directX - 3).toFixed(1)} 214 L ${directX.toFixed(1)} ${directPeak.toFixed(1)} L ${(directX + 3).toFixed(1)} 214`} />
+      <text className="spatial-response-label" x={directX - 32} y={directPeak - 12}>
+        {language === "zh" ? "直达声" : "direct"}
+      </text>
+      {earlyPeaks.map((peak, index) => (
+        <g key={peak.x}>
+          <path
+            className="spatial-early-impulse"
+            d={`M ${(peak.x - 2.6).toFixed(1)} 214 L ${peak.x.toFixed(1)} ${(214 - peak.height).toFixed(1)} L ${(peak.x + 2.6).toFixed(1)} 214`}
+            opacity={0.22 + reflectionAmount * 0.68}
+          />
+          {index === 0 ? (
+            <text className="spatial-response-label" x={peak.x - 44} y={196 - peak.height}>
+              {language === "zh" ? "早期反射" : "early reflections"}
+            </text>
+          ) : null}
+        </g>
+      ))}
+      <text className="spatial-response-label" x={tailStart + 72} y={188 - tailHeight}>
+        {language === "zh" ? "混响尾巴" : "reverb tail"}
+      </text>
+      <text className="spatial-response-note" x="34" y="246">
+        {language === "zh"
+          ? "这是简化脉冲响应：前面尖峰是直达声，随后几个窄峰是早期反射，连续衰减区域是后期混响能量。"
+          : "This is a simplified impulse response: the first spike is direct sound, later narrow spikes are early reflections, and the continuous decay is late reverberant energy."}
+      </text>
     </svg>
   );
 }
@@ -282,6 +417,7 @@ export function SpatialAudioLab({ language, onBack }: SpatialAudioLabProps) {
               reflection={reflection}
               sourceAngle={sourceAngle}
             />
+            <RoomReflectionResponse distance={distance} language={language} reflection={reflection} />
             <SpatialPipeline language={language} mode={mode} />
           </div>
 

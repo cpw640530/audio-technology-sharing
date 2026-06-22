@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AmplifierSpeakerLab } from "./components/AmplifierSpeakerLab";
 import { AudioCodecLab } from "./components/AudioCodecLab";
+import { AudioPluginLab } from "./components/AudioPluginLab";
 import { CategoryTabs } from "./components/CategoryTabs";
 import { CodecHardwareLab } from "./components/CodecHardwareLab";
 import { CoreSignalProcessingLab } from "./components/CoreSignalProcessingLab";
@@ -99,6 +100,7 @@ export default function App() {
     | "amplifierSpeakerLab"
     | "systemAudioLab"
     | "audioCodecLab"
+    | "audioPluginLab"
     | "realtimeAudioLab"
     | "coreSignalProcessingLab"
     | "speechEnhancementLab"
@@ -155,6 +157,15 @@ export default function App() {
       window.removeEventListener("keydown", closeOnEscape);
     };
   }, [selectedTopic]);
+
+  useEffect(() => {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
+    if (!window.navigator.userAgent.toLowerCase().includes("jsdom")) {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  }, [activeView]);
 
   if (activeView === "soundLab") {
     return (
@@ -318,6 +329,24 @@ export default function App() {
     );
   }
 
+  if (activeView === "audioPluginLab") {
+    return (
+      <div className="app-shell">
+        <Header
+          language={language}
+          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+        />
+        <AudioPluginLab language={language} onBack={() => setActiveView("knowledge")} />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+          <a href="docs/audio_technology_knowledge_outline.md">
+            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
+          </a>
+        </footer>
+      </div>
+    );
+  }
+
   if (activeView === "realtimeAudioLab") {
     return (
       <div className="app-shell">
@@ -423,6 +452,10 @@ export default function App() {
               onOpenAudioCodecLab={() => {
                 setSelectedTopic(null);
                 setActiveView("audioCodecLab");
+              }}
+              onOpenAudioPluginLab={() => {
+                setSelectedTopic(null);
+                setActiveView("audioPluginLab");
               }}
               onOpenSoundLab={() => {
                 setSelectedTopic(null);

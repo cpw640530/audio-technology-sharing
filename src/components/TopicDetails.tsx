@@ -12,6 +12,7 @@ type TopicDetailsProps = {
   onClose: () => void;
   onOpenAmplifierSpeakerLab: () => void;
   onOpenAudioCodecLab: () => void;
+  onOpenAudioPluginLab: () => void;
   onOpenCodecLab: () => void;
   onOpenCoreSignalProcessingLab: () => void;
   onOpenDigitalLab: () => void;
@@ -83,6 +84,7 @@ export function TopicDetails({
   onClose,
   onOpenAmplifierSpeakerLab,
   onOpenAudioCodecLab,
+  onOpenAudioPluginLab,
   onOpenCodecLab,
   onOpenCoreSignalProcessingLab,
   onOpenDigitalLab,
@@ -137,6 +139,11 @@ export function TopicDetails({
 
     if (topic.detail.lab?.type === "audio-codec") {
       onOpenAudioCodecLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "audio-plugin") {
+      onOpenAudioPluginLab();
       return;
     }
 

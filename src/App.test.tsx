@@ -93,6 +93,78 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("button", { name: "打开语音增强实验室" })).toBeInTheDocument();
   });
 
+  it("expands audio programming with plugin development concepts and a lab", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
+    await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
+    await user.click(screen.getByRole("button", { name: /音频编程与插件开发/ }));
+
+    const details = screen.getByRole("dialog", { name: "主题详情" });
+    expect(within(details).getByText(/Host 提供采样率、block 和参数自动化环境/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "Host / DAW" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "processBlock" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "Sample frame" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "Biquad 滤波器" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "参数平滑" })).toBeInTheDocument();
+    expect(within(details).getByText(/不重复推导 FFT\/EQ\/压缩器原理/)).toBeInTheDocument();
+    expect(within(details).getByText(/实时线程中要避免锁等待/)).toBeInTheDocument();
+    expect(within(details).getByText(/插件不是离线脚本/)).toBeInTheDocument();
+    expect(within(details).getByRole("button", { name: "打开音频编程与插件实验室" })).toBeInTheDocument();
+  });
+
+  it("opens the audio programming lab with plugin modules and real-time metrics", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
+    await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
+    await user.click(screen.getByRole("button", { name: /音频编程与插件开发/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "打开音频编程与插件实验室"
+      })
+    );
+
+    expect(screen.getByRole("heading", { name: "音频编程与插件实验室" })).toBeInTheDocument();
+    const lab = screen.getByRole("region", { name: "音频插件实验台" });
+    expect(within(lab).getByRole("list", { name: "音频插件处理流程" })).toBeInTheDocument();
+    expect(within(lab).getByRole("img", { name: "音频插件信号处理对比图" })).toBeInTheDocument();
+    const processedWave = lab.querySelector(".audio-plugin-wave.processed");
+    const initialWavePath = processedWave?.getAttribute("d");
+    expect(initialWavePath).toBeTruthy();
+    expect(within(lab).getByText(/Zipper noise 风险/)).toBeInTheDocument();
+    expect(within(lab).getByText(/插件内部延迟/)).toBeInTheDocument();
+    expect(within(lab).getByText(/参数自动化风险/)).toBeInTheDocument();
+    expect(within(lab).getByRole("heading", { name: "实时安全" })).toBeInTheDocument();
+
+    await user.click(within(lab).getByRole("button", { name: "Compressor" }));
+    expect(within(lab).getByText(/检测电平包络/)).toBeInTheDocument();
+
+    fireEvent.change(within(lab).getByRole("slider", { name: "参数平滑" }), {
+      target: { value: "10" }
+    });
+    expect(within(lab).getByText("参数平滑：10%")).toBeInTheDocument();
+    expect(within(lab).getAllByText(/zipper noise/).length).toBeGreaterThan(0);
+
+    await user.click(within(lab).getByRole("button", { name: "Delay" }));
+    fireEvent.change(within(lab).getByRole("slider", { name: "反馈驱动" }), {
+      target: { value: "90" }
+    });
+    expect(within(lab).getByText("反馈 / 驱动：90%")).toBeInTheDocument();
+    expect(processedWave?.getAttribute("d")).not.toEqual(initialWavePath);
+
+    const delayWavePath = processedWave?.getAttribute("d");
+    await user.click(within(lab).getByRole("button", { name: "Waveshaper" }));
+    fireEvent.change(within(lab).getByRole("slider", { name: "Oversampling" }), {
+      target: { value: "4" }
+    });
+    expect(within(lab).getByText("Oversampling：4x")).toBeInTheDocument();
+    expect(within(lab).getByText(/非线性混叠风险/)).toBeInTheDocument();
+    expect(processedWave?.getAttribute("d")).not.toEqual(delayWavePath);
+  });
+
   it("expands spatial audio with localization cues and rendering concepts", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -139,25 +211,32 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("heading", { name: "空间音频实验室" })).toBeInTheDocument();
     const lab = screen.getByRole("region", { name: "空间音频实验台" });
     expect(within(lab).getByRole("img", { name: "空间音频声源定位图" })).toBeInTheDocument();
+    expect(within(lab).getByRole("img", { name: "房间反射时间响应图" })).toBeInTheDocument();
     expect(within(lab).getByRole("list", { name: "空间音频渲染流程" })).toBeInTheDocument();
     expect(within(lab).getAllByText("ITD / ILD").length).toBeGreaterThan(0);
     expect(within(lab).getByRole("heading", { name: "HRTF / HRIR" })).toBeInTheDocument();
     expect(within(lab).getByText(/对象音频保存每个声音的位置元数据/)).toBeInTheDocument();
+    expect(within(lab).getByText("直达声")).toBeInTheDocument();
+    expect(within(lab).getByText("早期反射")).toBeInTheDocument();
+    expect(within(lab).getByText("混响尾巴")).toBeInTheDocument();
+    expect(within(lab).getByText(/这是简化脉冲响应/)).toBeInTheDocument();
     expect(within(lab).getByText("相对角度：-35°")).toBeInTheDocument();
     expect(within(lab).getByText(/ITD：0\.36 ms，左耳先到/)).toBeInTheDocument();
+    expect(within(lab).getByText(/当前双耳线索：左耳先到 \/ 左侧更强/)).toBeInTheDocument();
 
     fireEvent.change(within(lab).getByRole("slider", { name: "声源角度" }), {
       target: { value: "60" }
     });
     expect(within(lab).getByText("声源角度：+60°")).toBeInTheDocument();
     expect(within(lab).getByText("相对角度：+60°")).toBeInTheDocument();
-    expect(within(lab).getByText(/右耳先到/)).toBeInTheDocument();
+    expect(within(lab).getByText(/当前双耳线索：右耳先到 \/ 右侧更强/)).toBeInTheDocument();
 
     fireEvent.change(within(lab).getByRole("slider", { name: "头部朝向" }), {
       target: { value: "30" }
     });
     expect(within(lab).getByText("头部朝向：+30°")).toBeInTheDocument();
     expect(within(lab).getByText("相对角度：+30°")).toBeInTheDocument();
+    expect(within(lab).getByText(/当前双耳线索：右耳先到 \/ 右侧更强/)).toBeInTheDocument();
 
     await user.click(within(lab).getByRole("button", { name: "头部追踪" }));
     expect(within(lab).getByText(/头部追踪让声源固定在外部世界/)).toBeInTheDocument();

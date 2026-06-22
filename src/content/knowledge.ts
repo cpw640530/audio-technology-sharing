@@ -35,6 +35,7 @@ export type TopicLab = {
     | "system-audio"
     | "audio-codec"
     | "realtime-audio"
+    | "audio-plugin"
     | "core-signal-processing"
     | "speech-enhancement"
     | "spatial-audio";
@@ -999,6 +1000,86 @@ export const categories: Category[] = [
           contentDirection: {
             zh: "适合做实时回调时间线、不同 buffer 大小的延迟对比，以及卡顿问题排查清单。",
             en: "This fits a real-time callback timeline, latency comparisons for buffer sizes, and a glitch debugging checklist."
+          }
+        }
+      },
+      {
+        title: { zh: "音频编程与插件开发", en: "Audio Programming and Plugin Development" },
+        summary: {
+          zh: "从 host、processBlock、参数自动化和插件 DSP 模块理解声音如何被实时改变。",
+          en: "Understand how sound is changed in real time through the host, processBlock, parameter automation, and plugin DSP modules."
+        },
+        bullets: [
+          { zh: "JUCE、VST、AU、AAX", en: "JUCE, VST, AU, AAX" },
+          { zh: "processBlock、buffer、sample frame", en: "processBlock, buffer, sample frame" },
+          { zh: "Gain、Filter、Delay、Compressor、Waveshaper", en: "Gain, filter, delay, compressor, waveshaper" }
+        ],
+        detail: {
+          explanation: {
+            zh: "音频插件开发把 DSP 算法放进 DAW、宿主 App 或系统音频链路里运行。Host 提供采样率、block 和参数自动化环境，插件则在 processBlock 中读取输入 PCM buffer，逐 sample 或逐 frame 执行 gain、pan、filter、delay、compressor、waveshaper 等模块，再写回输出 buffer。本卡重点不是系统 buffer 调度，而是插件内部处理：参数变化如何平滑、滤波器系数如何更新、delay line 如何读写、非线性失真如何产生谐波，以及这些处理如何影响当前 buffer。",
+            en: "Audio plugin development runs DSP algorithms inside a DAW, host app, or system audio chain. The host provides sample-rate, block, and automation context; the plugin reads input PCM buffers inside processBlock, applies gain, pan, filters, delay, compression, waveshaping, or other DSP sample by sample or frame by frame, then writes output buffers. This card does not focus on system buffer scheduling; it focuses on the plugin internals: smoothing parameter changes, updating filter coefficients, reading/writing delay lines, generating harmonics through nonlinear distortion, and how those choices affect the current buffer."
+          },
+          keyConcepts: [
+            { zh: "插件格式和框架不同：VST/AU/AAX 是宿主加载的插件生态，JUCE 是常用跨平台 C++ 开发框架。", en: "Plugin formats and frameworks differ: VST/AU/AAX are plugin ecosystems loaded by hosts, while JUCE is a common cross-platform C++ framework." },
+            { zh: "processBlock 的输入输出通常是连续 PCM buffer；本卡把它看作插件 DSP 的入口，不展开系统调度 deadline。", en: "processBlock usually receives and writes continuous PCM buffers; this card treats it as the DSP entry point and does not expand system scheduling deadlines." },
+            { zh: "与传统算法里的基础信号处理不同，本卡不重复推导 FFT/EQ/压缩器原理，而是说明这些模块在插件工程里如何接入、自动化和平滑。", en: "Unlike the core signal processing card in Traditional DSP, this card does not re-derive FFT/EQ/compressor theory; it explains how those modules are integrated, automated, and smoothed in plugin engineering." },
+            { zh: "参数自动化不能直接让系数突变，常用 smoothing 或插值避免 zipper noise 和爆音。", en: "Parameter automation should not jump coefficients directly; smoothing or interpolation avoids zipper noise and pops." },
+            { zh: "实时线程中要避免锁等待、磁盘 IO、网络请求、频繁内存分配和大量日志。", en: "Real-time threads should avoid lock waits, disk IO, network requests, frequent allocation, and heavy logging." },
+            { zh: "插件 DSP 模块可以拆成基础积木：增益/声像、滤波/EQ、延迟、混响、动态处理、失真和调制。", en: "Plugin DSP can be understood as building blocks: gain/pan, filtering/EQ, delay, reverb, dynamics, distortion, and modulation." }
+          ],
+          termExplanations: [
+            {
+              name: { zh: "Host / DAW", en: "Host / DAW" },
+              explanation: {
+                zh: "Host 是加载插件的软件，例如 DAW、剪辑软件或独立音频 App。它负责设备配置、采样率、buffer 调度、MIDI/自动化参数和插件生命周期。",
+                en: "A host is the software that loads the plugin, such as a DAW, editor, or standalone audio app. It manages device setup, sample rate, buffer scheduling, MIDI/automation, and plugin lifecycle."
+              }
+            },
+            {
+              name: { zh: "processBlock", en: "processBlock" },
+              explanation: {
+                zh: "processBlock 是很多插件框架中的实时处理入口。每次调用通常传入一块多声道 PCM buffer，插件必须在下一块到来前完成处理。",
+                en: "processBlock is the real-time processing entry in many plugin frameworks. Each call usually receives a multichannel PCM buffer, and the plugin must finish before the next block arrives."
+              }
+            },
+            {
+              name: { zh: "Sample frame", en: "Sample frame" },
+              explanation: {
+                zh: "一个 sample frame 表示同一时刻所有声道的采样值。立体声里 128 frames 等于左声道 128 个 sample 加右声道 128 个 sample。",
+                en: "A sample frame contains the samples for all channels at the same instant. In stereo, 128 frames means 128 left samples plus 128 right samples."
+              }
+            },
+            {
+              name: { zh: "Biquad 滤波器", en: "Biquad filter" },
+              explanation: {
+                zh: "Biquad 是插件里常见的二阶 IIR 滤波器结构，可以实现低通、高通、峰值 EQ、搁架 EQ 和陷波。改变 cutoff、Q 或 gain 时通常需要平滑系数。",
+                en: "A biquad is a common second-order IIR filter structure in plugins. It can implement low-pass, high-pass, peaking EQ, shelving EQ, and notch filters. Cutoff, Q, or gain changes usually need coefficient smoothing."
+              }
+            },
+            {
+              name: { zh: "参数平滑", en: "Parameter smoothing" },
+              explanation: {
+                zh: "参数平滑把用户或自动化的突变变成连续变化。它不改变算法目标，但能减少 zipper noise、爆音和滤波器系数突跳造成的不稳定听感。",
+                en: "Parameter smoothing turns abrupt user or automation changes into continuous ramps. It does not change the intended setting, but reduces zipper noise, pops, and unstable filter-coefficient jumps."
+              }
+            }
+          ],
+          lab: {
+            type: "audio-plugin",
+            title: { zh: "音频编程与插件实验室", en: "Audio Programming and Plugin Lab" },
+            description: {
+              zh: "进入独立界面切换 Gain、Filter、Delay、Compressor 和 Waveshaper，调节参数变化幅度、参数平滑、反馈/驱动和 oversampling，观察处理链、buffer 波形和插件内部指标。",
+              en: "Open an independent lab to switch between Gain, Filter, Delay, Compressor, and Waveshaper, then adjust automation step, smoothing, feedback/drive, and oversampling while inspecting the processing chain, buffer waveform, and plugin-internal metrics."
+            },
+            buttonLabel: { zh: "打开音频编程与插件实验室", en: "Open audio programming and plugin lab" }
+          },
+          misconception: {
+            zh: "插件不是离线脚本，不能在音频回调里随意等待、读文件、联网或分配大量内存；只要某个 block 没按时算完，用户就可能听到爆音或断续。",
+            en: "A plugin is not an offline script. It cannot freely wait, read files, access the network, or allocate lots of memory inside the audio callback. If one block misses its deadline, users may hear pops or dropouts."
+          },
+          contentDirection: {
+            zh: "适合继续扩展为 JUCE 插件最小工程、processBlock 伪代码、biquad 系数图解、参数自动化平滑和实时线程安全清单。",
+            en: "This can expand into a minimal JUCE plugin, processBlock pseudocode, biquad coefficient diagrams, automation smoothing, and a real-time safety checklist."
           }
         }
       },

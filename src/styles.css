@@ -1926,6 +1926,12 @@ body.details-open {
   max-width: 100%;
 }
 
+.spatial-reflection-response {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
 .spatial-chart-title {
   fill: #ffffff;
   font-size: 18px;
@@ -1957,10 +1963,26 @@ body.details-open {
   stroke-width: 2.5;
 }
 
+.spatial-secondary-ear-path {
+  stroke: rgba(240, 180, 106, 0.48);
+  stroke-dasharray: 4 7;
+  stroke-width: 2;
+}
+
 .spatial-reflection-path {
   fill: none;
+  stroke-linecap: round;
+}
+
+.spatial-reflection-path.early {
   stroke: #f0b46a;
   stroke-width: 4;
+}
+
+.spatial-reflection-path.late {
+  stroke: #ffcf91;
+  stroke-dasharray: 8 7;
+  stroke-width: 2.6;
 }
 
 .spatial-head-forward {
@@ -2008,6 +2030,60 @@ body.details-open {
   stroke-width: 2.5;
 }
 
+.spatial-response-axis {
+  stroke: rgba(220, 236, 232, 0.24);
+  stroke-width: 1.4;
+}
+
+.spatial-direct-impulse {
+  fill: rgba(126, 231, 216, 0.35);
+  stroke: #7ee7d8;
+  stroke-linejoin: round;
+  stroke-width: 2.4;
+}
+
+.spatial-early-impulse {
+  fill: rgba(240, 180, 106, 0.24);
+  stroke: #f0b46a;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.spatial-tail-texture {
+  stroke: rgba(255, 207, 145, 0.55);
+  stroke-linecap: round;
+  stroke-width: 1.8;
+}
+
+.spatial-reverb-tail-fill {
+  fill: #f0b46a;
+}
+
+.spatial-reverb-tail-line {
+  fill: none;
+  stroke: #f0b46a;
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+
+.spatial-response-label {
+  fill: #fff3dc;
+  font-size: 13px;
+  font-weight: 820;
+}
+
+.spatial-response-note {
+  fill: #dbe8e4;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.spatial-cue-chip {
+  fill: #7ee7d8;
+  font-size: 13px;
+  font-weight: 820;
+}
+
 .spatial-pipeline {
   counter-reset: spatial-step;
   display: grid;
@@ -2051,6 +2127,127 @@ body.details-open {
 }
 
 .spatial-concept-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.audio-plugin-workbench {
+  background: #17211f;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
+  display: grid;
+  gap: 18px;
+  justify-self: center;
+  max-width: 1200px;
+  padding: clamp(16px, 3vw, 26px);
+  width: 100%;
+}
+
+.audio-plugin-layout {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
+}
+
+.audio-plugin-visuals {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.audio-plugin-panel {
+  align-content: start;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+}
+
+.audio-plugin-flow {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.audio-plugin-flow li,
+.audio-plugin-concept-grid article {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.audio-plugin-flow span {
+  color: #7ee7d8;
+  font-size: 0.78rem;
+  font-weight: 820;
+}
+
+.audio-plugin-flow strong,
+.audio-plugin-concept-grid h2 {
+  color: #ffffff;
+  font-size: 0.98rem;
+  margin: 0;
+}
+
+.audio-plugin-flow p,
+.audio-plugin-concept-grid p {
+  color: #dbe8e4;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.audio-plugin-signal {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+.audio-plugin-wave {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.audio-plugin-wave.raw {
+  stroke: rgba(220, 236, 232, 0.72);
+  stroke-width: 2.5;
+}
+
+.audio-plugin-wave.processed {
+  stroke: #7ee7d8;
+  stroke-width: 3.2;
+}
+
+.audio-plugin-metrics {
+  display: grid;
+  gap: 8px;
+}
+
+.audio-plugin-metrics strong {
+  background: rgba(126, 231, 216, 0.09);
+  border: 1px solid rgba(126, 231, 216, 0.18);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  padding: 10px 12px;
+}
+
+.audio-plugin-concept-grid {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -4811,12 +5008,15 @@ body.details-open {
 }
 
 @media (max-width: 1180px) {
-  .spatial-audio-layout {
+  .spatial-audio-layout,
+  .audio-plugin-layout {
     grid-template-columns: 1fr;
   }
 
   .spatial-pipeline,
-  .spatial-concept-grid {
+  .spatial-concept-grid,
+  .audio-plugin-flow,
+  .audio-plugin-concept-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -4884,6 +5084,7 @@ body.details-open {
   .sound-lab-hero,
   .sound-lab-workbench,
   .core-signal-layout,
+  .audio-plugin-layout,
   .speech-enhancement-wave-control-row,
   .audio-codec-workbench,
   .realtime-audio-workbench,
@@ -4994,6 +5195,7 @@ body.details-open {
   .sound-lab-page,
   .core-signal-page,
   .spatial-audio-page,
+  .audio-plugin-page,
   .speech-enhancement-page,
   .digital-lab-page,
   .listening-lab-page,
@@ -5025,6 +5227,8 @@ body.details-open {
   .core-key-concept-grid,
   .spatial-pipeline,
   .spatial-concept-grid,
+  .audio-plugin-flow,
+  .audio-plugin-concept-grid,
   .codec-table,
   .audio-codec-scenario-tabs,
   .audio-codec-table,
