@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">音频技术科普</h1>
+  <h1 align="center">Audio Technology Sharing</h1>
   <p align="center">
     A structured knowledge base for explaining audio technology, planning web content, and building future interactive learning pages.
   </p>
