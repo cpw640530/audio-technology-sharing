@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import type { Category, Language, Topic } from "../content/knowledge";
+import type { AiAudioLabId, Category, Language, Topic } from "../content/knowledge";
 import { interfaceCopy } from "../content/knowledge";
 
 type DisplayTopic = Topic & {
@@ -11,13 +11,16 @@ type TopicDetailsProps = {
   topic: DisplayTopic;
   onClose: () => void;
   onOpenAmplifierSpeakerLab: () => void;
+  onOpenAiAudioLab: (initialMode?: AiAudioLabId) => void;
   onOpenAudioCodecLab: () => void;
   onOpenAudioPluginLab: () => void;
+  onOpenAutomotiveAudioLab: () => void;
   onOpenCodecLab: () => void;
   onOpenCoreSignalProcessingLab: () => void;
   onOpenDigitalLab: () => void;
   onOpenDigitalInterfaceLab: () => void;
   onOpenListeningMetricsLab: () => void;
+  onOpenMeetingCommunicationLab: () => void;
   onOpenMicrophoneLab: () => void;
   onOpenRealtimeAudioLab: () => void;
   onOpenSpeechEnhancementLab: () => void;
@@ -83,13 +86,16 @@ export function TopicDetails({
   topic,
   onClose,
   onOpenAmplifierSpeakerLab,
+  onOpenAiAudioLab,
   onOpenAudioCodecLab,
   onOpenAudioPluginLab,
+  onOpenAutomotiveAudioLab,
   onOpenCodecLab,
   onOpenCoreSignalProcessingLab,
   onOpenDigitalLab,
   onOpenDigitalInterfaceLab,
   onOpenListeningMetricsLab,
+  onOpenMeetingCommunicationLab,
   onOpenMicrophoneLab,
   onOpenRealtimeAudioLab,
   onOpenSpeechEnhancementLab,
@@ -164,6 +170,21 @@ export function TopicDetails({
 
     if (topic.detail.lab?.type === "spatial-audio") {
       onOpenSpatialAudioLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "ai-audio") {
+      onOpenAiAudioLab(topic.detail.lab.initialMode);
+      return;
+    }
+
+    if (topic.detail.lab?.type === "meeting-communication") {
+      onOpenMeetingCommunicationLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "automotive-audio") {
+      onOpenAutomotiveAudioLab();
       return;
     }
 

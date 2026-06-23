@@ -23,6 +23,9 @@ export type TopicDiagram = {
   caption: LocalizedText;
 };
 
+export type AiAudioMode = "asr" | "tts" | "generation" | "event" | "enhancement" | "codec";
+export type AiAudioLabId = "overview" | AiAudioMode;
+
 export type TopicLab = {
   type:
     | "sound-wave"
@@ -38,7 +41,11 @@ export type TopicLab = {
     | "audio-plugin"
     | "core-signal-processing"
     | "speech-enhancement"
-    | "spatial-audio";
+    | "spatial-audio"
+    | "meeting-communication"
+    | "automotive-audio"
+    | "ai-audio";
+  initialMode?: AiAudioLabId;
   title: LocalizedText;
   description: LocalizedText;
   buttonLabel: LocalizedText;
@@ -80,7 +87,7 @@ export const interfaceCopy = {
   navGithub: { zh: "GitHub", en: "GitHub" },
   languageButton: { zh: "English", en: "中文" },
   eyebrow: { zh: "音频技术科普", en: "Audio Technology Explained" },
-  title: { zh: "Audio Technology Explained", en: "Audio Technology Explained" },
+  title: { zh: "音频技术科普", en: "Audio Technology Explained" },
   subtitle: {
     zh: "把音频基础、硬件、软件、传统 DSP、AI 算法和应用场景整理成可浏览、可搜索、可扩展的网页内容底座。",
     en: "A searchable, browsable foundation for audio fundamentals, hardware, software, traditional DSP, AI algorithms, and real-world applications."
@@ -1448,10 +1455,82 @@ export const categories: Category[] = [
     accent: "#b44c6d",
     title: { zh: "AI 音频", en: "AI Audio" },
     description: {
-      zh: "把语音识别、合成、增强、分离和生成放进统一视角。",
-      en: "Unify speech recognition, synthesis, enhancement, separation, and generation."
+      zh: "把语音识别、合成、生成、事件识别、AI 增强和 AI 编码放进统一视角。",
+      en: "Unify speech recognition, synthesis, generation, event detection, AI enhancement, and AI coding."
     },
     topics: [
+      {
+        title: { zh: "AI 音频总流程", en: "AI Audio Overall Flow" },
+        summary: {
+          zh: "先理解一段声音如何从麦克风采集成 PCM，再变成特征并送入 AI 模型。",
+          en: "First understand how sound is captured as PCM, converted into features, and sent into AI models."
+        },
+        bullets: [
+          { zh: "采集得到 PCM", en: "Capture PCM" },
+          { zh: "FFT / STFT / Mel / MFCC", en: "FFT / STFT / Mel / MFCC" },
+          { zh: "不同 AI 音频任务的输出", en: "Outputs of different AI audio tasks" }
+        ],
+        detail: {
+          explanation: {
+            zh: "AI 音频可以先按一条通用链路理解：真实声音经过麦克风、Codec/ADC 采集后得到 PCM 数字音频；PCM 不是含义，只是数字波形。模型通常不会直接理解每个采样点，而是先分帧加窗，再通过 FFT、STFT、Mel 滤波、MFCC 或 learned embedding，把连续波形变成频谱、时间频率能量图或模型内部表示。很多声音分类任务会把频谱图当作二维特征图，再用 CNN、Transformer 等模型识别哭声、玻璃破碎、狗叫声等模式；但不同任务不会都走完全相同的模型路径，ASR、AI 降噪、AI 编码和生成式音频的输出目标不同。",
+            en: "AI audio can first be understood as a general chain: real sound is captured by a microphone and Codec/ADC into PCM digital audio; PCM is not meaning, only a numeric waveform. A model usually does not understand each sample directly. It first frames and windows the signal, then uses FFT, STFT, Mel filters, MFCCs, or learned embeddings to turn the waveform into spectra, time-frequency energy maps, or internal representations. Many sound-classification tasks treat spectrograms as two-dimensional feature maps and use CNNs, Transformers, or related models to recognize patterns such as baby cries, glass breaks, or dog barks. But not every task follows exactly the same path; ASR, AI denoising, AI coding, and generative audio have different output goals."
+          },
+          termExplanations: [
+            {
+              name: { zh: "PCM", en: "PCM" },
+              explanation: {
+                zh: "PCM 是麦克风采集和 ADC 转换后的原始数字采样值。它能还原波形，但不直接表示“说了什么”或“发生了什么声音”。",
+                en: "PCM is the raw digital sample stream after microphone capture and ADC conversion. It can reconstruct a waveform, but it does not directly represent what was said or what sound happened."
+              }
+            },
+            {
+              name: { zh: "FFT / STFT / Mel / MFCC", en: "FFT / STFT / Mel / MFCC" },
+              explanation: {
+                zh: "FFT 把短帧信号从时间域转到频率域；STFT 是对连续短帧反复做 FFT；Mel 滤波让频率尺度更接近人耳听感；MFCC 再把谱包络压缩成更紧凑的特征。",
+                en: "FFT converts a short frame from time domain to frequency domain; STFT repeatedly applies FFT over many frames; Mel filters make the frequency scale closer to human hearing; MFCCs compress the spectral envelope into compact features."
+              }
+            },
+            {
+              name: { zh: "频谱图像识别", en: "Spectrogram recognition" },
+              explanation: {
+                zh: "声音事件识别常把 log-mel 频谱图看成一张二维图：横轴是时间，纵轴是频率，颜色或亮度是能量。模型从中寻找事件特征，例如玻璃破碎的短促高频、狗叫声的重复脉冲、哭声的调制结构。",
+                en: "Sound event recognition often treats a log-mel spectrogram as a 2D map: time on the x-axis, frequency on the y-axis, and color or brightness as energy. The model looks for event patterns such as short high-frequency glass breaks, repeated dog-bark pulses, or modulated baby-cry structure."
+              }
+            },
+            {
+              name: { zh: "任务模型", en: "Task model" },
+              explanation: {
+                zh: "同样的 PCM 可以送去不同任务模型：ASR 输出文字，事件识别输出类别概率，AI 降噪输出增强后的 PCM，AI 编码输出 token/latent 或低码率码流，生成式音频输出新声音。",
+                en: "The same PCM can go to different task models: ASR outputs text, event detection outputs class probabilities, AI denoising outputs enhanced PCM, AI coding outputs tokens/latents or low-bitrate streams, and generative audio outputs new sound."
+              }
+            }
+          ],
+          keyConcepts: [
+            { zh: "先采集得到 PCM 数字音频；PCM 是波形数字，不是语义。", en: "Capture first produces PCM digital audio; PCM is waveform data, not semantic meaning." },
+            { zh: "FFT/STFT/Mel/MFCC 是把波形变成模型更容易分析的时间频率特征。", en: "FFT/STFT/Mel/MFCC turn waveforms into time-frequency features that models can analyze more easily." },
+            { zh: "把频谱图当图像识别是声音事件识别的一种常见解释方式，但不是所有 AI 音频任务都等同于图像识别。", en: "Treating spectrograms like images is a common way to explain sound event detection, but not every AI audio task is simply image recognition." },
+            { zh: "AI 音频的关键问题是：输入是什么、特征如何表示、模型输出什么、后处理如何变成用户可理解结果。", en: "The key AI audio questions are: what is the input, how are features represented, what does the model output, and how does post-processing turn it into a user-understandable result." }
+          ],
+          lab: {
+            type: "ai-audio",
+            initialMode: "overview",
+            title: { zh: "AI 音频总流程实验室", en: "AI Audio Overall Flow Lab" },
+            description: {
+              zh: "进入独立文章界面，用总流程图理解 PCM、特征、模型、任务输出和后处理的关系。",
+              en: "Open an independent article page with a flow diagram explaining PCM, features, models, task outputs, and post-processing."
+            },
+            buttonLabel: { zh: "打开 AI 音频总流程实验室", en: "Open AI audio overall flow lab" }
+          },
+          misconception: {
+            zh: "不要把所有 AI 音频都理解成“频谱图像识别”。频谱图分类确实常见，但语音识别、降噪、编码和生成会使用不同网络结构、训练目标和输出形式。",
+            en: "Do not treat all AI audio as spectrogram image recognition. Spectrogram classification is common, but speech recognition, denoising, coding, and generation use different network structures, training objectives, and outputs."
+          },
+          contentDirection: {
+            zh: "适合先作为 AI 音频章节的入口，用流程图解释从 PCM 到特征、模型、任务输出和后处理的完整链路。",
+            en: "This works as the entry point for the AI audio chapter, using a flow diagram to explain PCM, features, models, task outputs, and post-processing."
+          }
+        }
+      },
       {
         title: { zh: "语音识别 ASR", en: "Speech Recognition ASR" },
         summary: {
@@ -1465,14 +1544,85 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "语音识别把连续的语音波形转换成可编辑、可检索的文字。典型系统会先做特征提取或神经网络编码，再结合声学、语言和上下文信息，输出分词、标点和时间戳等结果。",
-            en: "Speech recognition turns continuous speech waveforms into editable, searchable text. A typical system extracts features or neural encodings, combines acoustic, language, and contextual information, then outputs words, punctuation, and timestamps."
+            zh: "语音识别把连续的语音波形转换成可编辑、可检索的文字，但 ASR 并不是把每个采样点直接翻译成文字。PCM 只是连续的压力变化数字，系统通常先把它切成 10 ms 或 20 ms 左右的短帧，再提取每帧的频率能量结构，形成 log-mel、MFCC 或神经网络 embedding。随后 Encoder 把这些连续声学变化压成更稳定的上下文表示，CTC、Attention 或 Transducer 等识别头再估计最可能的 token 序列，最后经过语言上下文、热词、标点、时间戳和说话人信息等后处理，得到最终文本。",
+            en: "Speech recognition turns continuous speech waveforms into editable, searchable text, but ASR does not translate each sample directly into words. PCM is only a sequence of pressure-change numbers. A system usually slices it into short frames of about 10 ms or 20 ms, extracts frequency-energy structure from each frame, and forms log-mel features, MFCCs, or neural embeddings. An encoder then compresses those acoustic changes into more stable contextual representations; CTC, attention, or transducer heads estimate the most likely token sequence; and language context, hotwords, punctuation, timestamps, and speaker metadata produce the final text."
           },
-          keyConcepts: [
-            { zh: "离线 ASR 可利用更完整上下文，流式 ASR 更重视低延迟和增量输出。", en: "Offline ASR can use fuller context, while streaming ASR prioritizes low latency and incremental output." },
-            { zh: "WER、CER、实时率和首字延迟是评估识别系统的重要指标。", en: "WER, CER, real-time factor, and first-token latency are key ASR evaluation metrics." },
-            { zh: "唤醒词、端点检测、标点恢复和说话人分离常与 ASR 组成完整语音入口。", en: "Wake words, endpointing, punctuation restoration, and speaker diarization often combine with ASR to form a complete voice interface." }
+          termExplanations: [
+            {
+              name: { zh: "PCM 输入", en: "PCM input" },
+              explanation: {
+                zh: "输入通常是麦克风采集到的 PCM 采样值，例如 16 kHz 单声道语音。PCM 能描述波形，但它本身没有“字”的概念，因此不能直接等于文本，需要先变成模型能理解的短时声学模式。",
+                en: "The input is usually PCM samples captured by a microphone, such as 16 kHz mono speech. PCM describes the waveform, but it has no word-level meaning by itself, so it must be converted into short-time acoustic patterns a model can use."
+              }
+            },
+            {
+              name: { zh: "分帧加窗", en: "Framing and windowing" },
+              explanation: {
+                zh: "语音在很短时间内可以近似看成稳定信号，所以 ASR 会把长波形切成短帧，例如 10 ms 或 20 ms，并用窗函数减少帧边界突变。输出是一串短时分析片段，后面才能计算频谱或送入神经网络。",
+                en: "Speech can be treated as roughly stable over a short interval, so ASR slices a long waveform into frames such as 10 ms or 20 ms and applies a window to reduce boundary jumps. The output is a sequence of short analysis segments ready for spectral features or neural input."
+              }
+            },
+            {
+              name: { zh: "log-mel / MFCC", en: "log-mel / MFCC" },
+              explanation: {
+                zh: "log-mel 和 MFCC 都是在描述每帧语音里不同频率区域的能量。log-mel 会把每帧语音变成更接近人耳听感的频率能量图，MFCC 则进一步压缩频谱包络；它们让模型更关注音素、元音、辅音等语音结构，而不是原始采样点细节。",
+                en: "Log-mel and MFCC features describe how much energy each speech frame has in different frequency regions. Log-mel is like a time-varying frequency-energy map, while MFCC compresses the spectral envelope further; both help models focus on phonetic structure rather than raw sample details."
+              }
+            },
+            {
+              name: { zh: "Encoder 编码器", en: "Encoder" },
+              explanation: {
+                zh: "Encoder 接收连续的特征帧，结合前后上下文，把“局部频谱变化”变成更高层的语音表示。输出仍然是时间序列，但每个位置已经包含更多上下文信息，方便后续判断它像哪个音素、拼音、字或 token。",
+                en: "The encoder consumes feature frames, combines surrounding context, and turns local spectral changes into higher-level speech representations. Its output is still a time sequence, but each position carries richer context for predicting phonemes, pinyin, characters, or tokens."
+              }
+            },
+            {
+              name: { zh: "CTC / Attention / Transducer", en: "CTC / Attention / Transducer" },
+              explanation: {
+                zh: "CTC 适合把很多帧对齐到较短 token 序列，中间允许空白符；Attention 更像看完整上下文后逐步生成文本；Transducer/RNNT 适合流式识别，把声学帧和已输出 token 一起决定下一个 token。",
+                en: "CTC maps many acoustic frames to a shorter token sequence with blank symbols. Attention generates text step by step while looking at context. Transducer/RNNT is well suited to streaming ASR because it uses both acoustic frames and previously emitted tokens to decide the next token."
+              }
+            },
+            {
+              name: { zh: "解码与后处理", en: "Decoding and post-processing" },
+              explanation: {
+                zh: "模型输出通常是多个 token 候选和概率，解码器会结合语言约束、热词和上下文选择更合理的句子。后处理再补标点、大小写、数字格式、时间戳和说话人信息，让输出更适合字幕、会议纪要或语音控制。",
+                en: "The model usually outputs token candidates and probabilities. A decoder uses language constraints, hotwords, and context to choose a more plausible sentence. Post-processing adds punctuation, casing, number formatting, timestamps, and speaker metadata for captions, meeting notes, or voice control."
+              }
+            },
+            {
+              name: { zh: "流式识别", en: "Streaming ASR" },
+              explanation: {
+                zh: "流式 ASR 不能等整句话结束才处理，需要边接收小块音频边输出文字。它要控制首字延迟和实时率，还要处理临时结果回滚，例如先显示“打开客”，再修正为“打开客厅灯”。",
+                en: "Streaming ASR cannot wait for the full utterance; it receives small audio chunks and emits text incrementally. It must control first-token latency and real-time factor, while handling partial-result rollback such as correcting an early phrase once more context arrives."
+              }
+            },
+            {
+              name: { zh: "WER / CER / RTF", en: "WER / CER / RTF" },
+              explanation: {
+                zh: "WER 是词错误率，CER 是字错误率，RTF 是实时率。离线转写更看最终 WER/CER，实时交互还要看首字延迟、稳定性、端点检测和噪声鲁棒性。",
+                en: "WER is word error rate, CER is character error rate, and RTF is real-time factor. Offline transcription focuses on final WER/CER, while real-time interaction also depends on first-token latency, stability, endpointing, and noise robustness."
+              }
+            }
           ],
+          keyConcepts: [
+            { zh: "ASR 的核心不是“采样点到文字”的直接映射，而是把短时声学模式逐步抽象成 token 序列。", en: "ASR is not a direct sample-to-word mapping; it gradually abstracts short-time acoustic patterns into token sequences." },
+            { zh: "离线 ASR 可利用更长上下文和更复杂解码，流式 ASR 更重视首字延迟、增量稳定性和临时结果回滚。", en: "Offline ASR can use longer context and heavier decoding, while streaming ASR prioritizes first-token latency, incremental stability, and partial-result rollback." },
+            { zh: "声学模型解决“听起来像什么”，语言上下文和解码器解决“这句话更可能是什么”。", en: "Acoustic models answer what the sound resembles, while language context and decoding answer what sentence is most plausible." },
+            { zh: "WER、CER、RTF、首字延迟、端点检测、热词召回和噪声鲁棒性需要一起评估。", en: "WER, CER, RTF, first-token latency, endpointing, hotword recall, and noise robustness need to be evaluated together." },
+            { zh: "唤醒词、标点恢复、数字格式化、时间戳和说话人分离常与 ASR 组成完整语音入口。", en: "Wake words, punctuation restoration, number formatting, timestamps, and speaker diarization often combine with ASR to form a complete voice interface." },
+            { zh: "ASR 输出的是语言内容，不负责判断玻璃破碎、狗叫声这类非语音事件；这些属于声音事件识别。", en: "ASR outputs language content and does not classify non-speech events such as glass breaks or dog barks; those belong to sound event detection." }
+          ],
+          lab: {
+            type: "ai-audio",
+            initialMode: "asr",
+            title: { zh: "语音识别 ASR 实验室", en: "Speech Recognition ASR Lab" },
+            description: {
+              zh: "进入独立文章界面，理解语音从 PCM、特征、Encoder、CTC/RNNT 到文本后处理的流程。",
+              en: "Open an independent article page explaining speech from PCM, features, encoder, CTC/RNNT, and text post-processing."
+            },
+            buttonLabel: { zh: "打开语音识别 ASR 实验室", en: "Open speech recognition ASR lab" }
+          },
           misconception: {
             zh: "识别率高不等于在所有噪声、口音和设备上都稳定；真实产品还要验证远场、多人、打断、专有名词和隐私边界。",
             en: "High recognition accuracy does not mean stable behavior across all noise, accents, and devices; real products must also validate far-field use, multiple speakers, interruptions, proper nouns, and privacy boundaries."
@@ -1499,11 +1649,45 @@ export const categories: Category[] = [
             zh: "语音合成把文本转换成自然语音。现代 TTS 通常先处理文本、读音和韵律，再由声学模型生成声学表示，最后通过声码器输出波形，可用于导航、客服、播客、配音和无障碍阅读。",
             en: "Text-to-speech converts text into natural speech. Modern TTS usually normalizes text, predicts pronunciation and prosody, generates acoustic representations, and uses a vocoder to output waveforms for navigation, support, podcasts, dubbing, and accessibility."
           },
+          termExplanations: [
+            {
+              name: { zh: "文本规范化", en: "Text normalization" },
+              explanation: {
+                zh: "把 2026、3.5V、USB、kg 等文本转成可朗读的形式。规范化错误会让语音听起来像读错数字或单位。",
+                en: "Converts text such as 2026, 3.5V, USB, or kg into speakable forms. Errors here sound like wrong numbers or units."
+              }
+            },
+            {
+              name: { zh: "韵律预测", en: "Prosody prediction" },
+              explanation: {
+                zh: "预测停顿、重音、语速和语调。它决定一句话像机械朗读，还是像自然表达。",
+                en: "Predicts pauses, stress, speed, and intonation. It decides whether a sentence sounds mechanical or naturally expressed."
+              }
+            },
+            {
+              name: { zh: "神经声码器", en: "Neural vocoder" },
+              explanation: {
+                zh: "把梅尔谱、codec token 或其他声学表示还原成波形。声码器直接影响音质、实时性和端侧算力需求。",
+                en: "Turns mel spectrograms, codec tokens, or other acoustic representations into waveform audio, directly affecting quality, latency, and edge compute."
+              }
+            }
+          ],
           keyConcepts: [
             { zh: "文本规范化负责把数字、日期、单位和缩写转换成可朗读形式。", en: "Text normalization converts numbers, dates, units, and abbreviations into speakable forms." },
             { zh: "韵律包含停顿、重音、语速和语调，决定语音是否自然。", en: "Prosody includes pauses, stress, speed, and intonation, which strongly shape naturalness." },
-            { zh: "声码器把声学特征转换成最终波形，影响音质、速度和设备成本。", en: "The vocoder converts acoustic features into the final waveform and affects quality, speed, and device cost." }
+            { zh: "声码器把声学特征转换成最终波形，影响音质、速度和设备成本。", en: "The vocoder converts acoustic features into the final waveform and affects quality, speed, and device cost." },
+            { zh: "TTS 生成的是可听语音，不等同于音乐/音效生成；它更关注可懂度、自然度、音色一致性和延迟。", en: "TTS generates intelligible speech rather than music or sound effects; it focuses more on intelligibility, naturalness, voice consistency, and latency." }
           ],
+          lab: {
+            type: "ai-audio",
+            initialMode: "tts",
+            title: { zh: "语音合成 TTS 实验室", en: "Text-to-Speech TTS Lab" },
+            description: {
+              zh: "进入独立文章界面，理解文本规范化、韵律预测、声学模型和神经声码器如何生成语音。",
+              en: "Open an independent article page explaining how text normalization, prosody prediction, acoustic models, and neural vocoders generate speech."
+            },
+            buttonLabel: { zh: "打开语音合成 TTS 实验室", en: "Open text-to-speech TTS lab" }
+          },
           misconception: {
             zh: "音色像真人不代表表达自然；断句、重音、情绪、上下文理解和长文本稳定性同样决定体验。",
             en: "A realistic voice timbre does not guarantee natural expression; phrasing, stress, emotion, context, and long-form stability also define the experience."
@@ -1530,11 +1714,45 @@ export const categories: Category[] = [
             zh: "音频生成使用 AI 根据文本、旋律、参考声音或视频画面生成新的音乐、音效、人声或环境声。它能提升内容生产效率，但也需要处理可控性、版权、身份冒用和质量一致性问题。",
             en: "Audio generation uses AI to create music, sound effects, voices, or ambience from text, melody, reference audio, or video. It can speed up content creation, but it also raises control, copyright, impersonation, and consistency challenges."
           },
+          termExplanations: [
+            {
+              name: { zh: "条件控制", en: "Conditioning" },
+              explanation: {
+                zh: "条件可以是文本、旋律、节拍、风格标签、参考音色或视频画面。条件越清楚，模型越容易生成符合目标的声音。",
+                en: "Conditioning can be text, melody, tempo, style tags, reference timbre, or video. Clearer conditioning makes the generated audio easier to steer."
+              }
+            },
+            {
+              name: { zh: "扩散 / Transformer", en: "Diffusion / Transformer" },
+              explanation: {
+                zh: "扩散模型常把噪声逐步还原成音频表示；Transformer 常把音频 token 当序列生成。不同模型在质量、速度和可控性上取舍不同。",
+                en: "Diffusion models often denoise audio representations step by step; Transformers often generate audio tokens as sequences. They trade quality, speed, and controllability differently."
+              }
+            },
+            {
+              name: { zh: "声音克隆", en: "Voice cloning" },
+              explanation: {
+                zh: "用少量参考音频学习或匹配某个音色。产品中必须处理授权、身份验证、水印和滥用检测。",
+                en: "Matches a voice from a small reference sample. Products must handle consent, identity checks, watermarking, and abuse detection."
+              }
+            }
+          ],
           keyConcepts: [
             { zh: "条件控制决定生成结果如何响应文本、风格、节奏、旋律或参考音色。", en: "Conditioning determines how generation responds to text, style, rhythm, melody, or reference timbre." },
             { zh: "扩散、Transformer、神经声码器等方法常用于不同粒度的音频生成。", en: "Diffusion models, Transformers, neural vocoders, and related methods are used at different audio granularities." },
-            { zh: "水印、授权数据和滥用检测是生成式音频产品的重要安全环节。", en: "Watermarking, licensed data, and abuse detection are important safety layers for generative audio products." }
+            { zh: "水印、授权数据和滥用检测是生成式音频产品的重要安全环节。", en: "Watermarking, licensed data, and abuse detection are important safety layers for generative audio products." },
+            { zh: "生成式音频的目标是创造新内容，和 ASR 的识别、TTS 的朗读、事件识别的分类目标不同。", en: "Generative audio creates new content, which differs from ASR recognition, TTS reading, and event-classification goals." }
           ],
+          lab: {
+            type: "ai-audio",
+            initialMode: "generation",
+            title: { zh: "音频生成实验室", en: "Audio Generation Lab" },
+            description: {
+              zh: "进入独立文章界面，理解文本、旋律、参考音色和生成模型如何产生音乐、音效、人声和环境声。",
+              en: "Open an independent article page explaining how text, melody, reference timbre, and generative models create music, effects, voices, and ambience."
+            },
+            buttonLabel: { zh: "打开音频生成实验室", en: "Open audio generation lab" }
+          },
           misconception: {
             zh: "AI 生成内容不天然等于可商用或可控；训练数据来源、相似性、声音授权和平台规则都需要确认。",
             en: "AI-generated audio is not automatically commercial-safe or controllable; training data, similarity, voice consent, and platform rules must be checked."
@@ -1542,6 +1760,201 @@ export const categories: Category[] = [
           contentDirection: {
             zh: "适合做生成式音频应用地图，分别讲音乐、音效、声音克隆、修复和自动配乐的边界。",
             en: "This can become a generative-audio application map covering music, sound effects, voice cloning, restoration, and automatic scoring."
+          }
+        }
+      },
+      {
+        title: { zh: "AI 音频事件识别", en: "AI Audio Event Detection" },
+        summary: {
+          zh: "识别哭声、玻璃破碎、狗叫声、警报声等非语音事件。",
+          en: "Detect non-speech events such as baby cries, glass breaks, dog barks, and alarms."
+        },
+        bullets: [
+          { zh: "声音事件分类", en: "Sound event classification" },
+          { zh: "连续监听与误报控制", en: "Continuous listening and false-alarm control" },
+          { zh: "安防、看护、车载与 IoT", en: "Security, care, automotive, and IoT" }
+        ],
+        detail: {
+          explanation: {
+            zh: "AI 音频事件识别关注“发生了什么声音”，而不是“说了什么话”。系统通常把 PCM 变成梅尔谱、log-mel 特征或 learned embedding，再用分类模型判断哭声、玻璃破碎、狗叫声、烟雾报警器、门铃、枪声、碰撞声等事件，并输出时间范围和置信度。",
+            en: "AI audio event detection asks what sound happened, not what words were spoken. A system usually converts PCM into mel spectrograms, log-mel features, or learned embeddings, then uses a classifier to detect events such as baby cries, glass breaks, dog barks, smoke alarms, doorbells, gunshots, or impacts with timestamps and confidence."
+          },
+          termExplanations: [
+            {
+              name: { zh: "声音事件分类", en: "Sound event classification" },
+              explanation: {
+                zh: "给一段音频打标签，例如“哭声”“狗叫声”“玻璃破碎”。如果还要标出发生时间，就接近声音事件检测 SED。",
+                en: "Assigns labels to an audio segment, such as baby cry, dog bark, or glass break. If it also marks time ranges, it becomes closer to sound event detection."
+              }
+            },
+            {
+              name: { zh: "置信度阈值", en: "Confidence threshold" },
+              explanation: {
+                zh: "阈值越低越容易触发，但误报更多；阈值越高误报减少，但可能漏掉较弱或被噪声遮挡的事件。",
+                en: "A lower threshold triggers more easily but raises false alarms; a higher threshold reduces false alarms but may miss quiet or masked events."
+              }
+            },
+            {
+              name: { zh: "边缘监听", en: "Edge listening" },
+              explanation: {
+                zh: "摄像头、门铃、婴儿看护器和车机常在本地跑小模型，只有命中事件或用户授权时才上传片段，降低延迟和隐私风险。",
+                en: "Cameras, doorbells, baby monitors, and vehicles often run small local models and upload clips only on events or with consent, reducing latency and privacy risk."
+              }
+            }
+          ],
+          keyConcepts: [
+            { zh: "事件识别通常不是 ASR：哭声、玻璃破碎、狗叫声没有明确文字内容，但仍有可学习的频谱和时间模式。", en: "Event recognition is usually not ASR: baby cries, glass breaks, and dog barks have no clear words, but they still have learnable spectral and temporal patterns." },
+            { zh: "短促事件要关注时间分辨率和触发延迟，持续事件要关注起止边界和重复告警策略。", en: "Short events need time resolution and trigger latency; sustained events need onset/offset boundaries and repeated-alert strategy." },
+            { zh: "模型准确率必须和误报、漏报、场景噪声、设备麦克风位置一起评估。", en: "Model accuracy must be evaluated together with false alarms, misses, scene noise, and microphone placement." },
+            { zh: "常见产品会把唤醒词、事件识别和本地隐私策略组合，而不是把所有原始音频长期上传。", en: "Products often combine wake words, event detection, and local privacy policy instead of uploading raw audio continuously." }
+          ],
+          lab: {
+            type: "ai-audio",
+            initialMode: "event",
+            title: { zh: "AI 音频事件识别实验室", en: "AI Audio Event Detection Lab" },
+            description: {
+              zh: "进入独立文章界面，理解哭声、玻璃破碎、狗叫声等事件如何由频谱图和分类模型识别。",
+              en: "Open an independent article page explaining how baby cries, glass breaks, dog barks, and related events are detected from spectrograms and classifiers."
+            },
+            buttonLabel: { zh: "打开 AI 音频事件识别实验室", en: "Open AI audio event detection lab" }
+          },
+          misconception: {
+            zh: "声音事件识别不是简单比音量大小。玻璃破碎可能很短但高频能量强，哭声有调制和谐波结构，狗叫声有重复脉冲；模型要看时间和频率模式。",
+            en: "Sound event detection is not simple loudness matching. Glass breaks can be short with strong high-frequency energy, baby cries have modulation and harmonic structure, and dog barks have repeated pulses; models need temporal and spectral patterns."
+          },
+          contentDirection: {
+            zh: "适合做事件识别实验室：用频谱块展示哭声、玻璃破碎、狗叫声的不同模式，并加入阈值、误报和边缘部署说明。",
+            en: "This fits an event-detection lab showing different spectrogram patterns for baby cries, glass breaks, and dog barks, with threshold, false-alarm, and edge-deployment notes."
+          }
+        }
+      },
+      {
+        title: { zh: "AI 音频增强", en: "AI Audio Enhancement" },
+        summary: {
+          zh: "说明 AI 降噪、去混响、语音分离、神经后滤波和模型部署。",
+          en: "Explain AI denoising, dereverberation, speech separation, neural post-filters, and deployment."
+        },
+        bullets: [
+          { zh: "AI 降噪与语音保真", en: "AI denoising and speech preservation" },
+          { zh: "语音分离、去混响", en: "Speech separation and dereverberation" },
+          { zh: "端侧模型、延迟和算力", en: "Edge models, latency, and compute" }
+        ],
+        detail: {
+          explanation: {
+            zh: "AI 音频增强把带噪、混响或多人叠加的音频输入神经网络，让模型估计干净语音、目标声源或频谱掩蔽。它常用于会议、耳机、直播、助听、车载和短视频处理。和传统 DSP 的固定滤波不同，AI 增强依赖训练数据学习噪声、语音和房间模式，但也可能引入音乐噪声、语音发闷、断字和过度抑制。",
+            en: "AI audio enhancement feeds noisy, reverberant, or overlapping audio into neural networks so the model can estimate clean speech, a target source, or a spectral mask. It is common in conferencing, headsets, live streaming, hearing assistance, cars, and short-video processing. Unlike fixed traditional DSP filters, AI enhancement learns noise, speech, and room patterns from data, but can introduce artifacts such as musical noise, muffled speech, clipped words, or over-suppression."
+          },
+          termExplanations: [
+            {
+              name: { zh: "神经降噪", en: "Neural denoising" },
+              explanation: {
+                zh: "模型估计每个时间频率区域中语音和噪声的占比，再保留语音、压低噪声。强降噪会降低底噪，但可能损伤辅音和空气感。",
+                en: "The model estimates how much speech and noise exist in each time-frequency region, preserving speech while reducing noise. Strong denoising lowers background noise but may damage consonants and airiness."
+              }
+            },
+            {
+              name: { zh: "语音分离", en: "Speech separation" },
+              explanation: {
+                zh: "从重叠说话或背景人声中分离目标说话人。它比普通降噪更难，因为干扰源也是语音。",
+                en: "Separates a target speaker from overlapping speech or background voices. It is harder than ordinary denoising because the interference is also speech."
+              }
+            },
+            {
+              name: { zh: "神经后滤波", en: "Neural post-filter" },
+              explanation: {
+                zh: "在传统 AEC/NS/AGC 之后再用小模型修补残留噪声、回声和音色损伤，是很多实时产品折中质量和算力的方式。",
+                en: "A small model after traditional AEC/NS/AGC can clean residual noise, echo, and timbre damage, which is a common compromise between quality and compute."
+              }
+            }
+          ],
+          keyConcepts: [
+            { zh: "AI 增强应和语音增强卡片区分：传统语音增强讲 AEC/AGC/ANR/Beamforming 的工程链路，这里重点讲学习型模型如何估计掩蔽、目标语音或残差信号。", en: "AI enhancement should be separated from the speech-enhancement card: traditional enhancement covers AEC/AGC/ANR/beamforming engineering chains, while this card focuses on learned models estimating masks, target speech, or residual signals." },
+            { zh: "训练数据决定鲁棒性；模型没见过的噪声、口音、麦克风和房间会显著影响效果。", en: "Training data defines robustness; unseen noise, accents, microphones, and rooms can strongly affect results." },
+            { zh: "端侧实时 AI 增强要同时满足帧长、模型大小、NPU/DSP/CPU 算力、功耗和隐私。", en: "Real-time edge AI enhancement must satisfy frame size, model size, NPU/DSP/CPU compute, power, and privacy constraints." },
+            { zh: "评估不能只看降噪量，也要看语音可懂度、自然度、延迟、残留噪声和算法伪影。", en: "Evaluation cannot only measure noise reduction; it also needs intelligibility, naturalness, latency, residual noise, and artifacts." }
+          ],
+          lab: {
+            type: "ai-audio",
+            initialMode: "enhancement",
+            title: { zh: "AI 音频增强实验室", en: "AI Audio Enhancement Lab" },
+            description: {
+              zh: "进入独立文章界面，理解 AI 降噪、语音分离、去混响和神经后滤波的基本链路。",
+              en: "Open an independent article page explaining AI denoising, speech separation, dereverberation, and neural post-filtering."
+            },
+            buttonLabel: { zh: "打开 AI 音频增强实验室", en: "Open AI audio enhancement lab" }
+          },
+          misconception: {
+            zh: "AI 降噪不是越强越好。过强的模型或参数可能把轻声、尾音、摩擦音当成噪声切掉，让语音听起来更干净但更不自然。",
+            en: "AI denoising is not better just because it is stronger. Aggressive models or settings can remove soft speech, endings, and fricatives as if they were noise, making speech cleaner but less natural."
+          },
+          contentDirection: {
+            zh: "适合做 AI 增强实验室：展示带噪波形、特征图、模型掩蔽、增强后波形和伪影风险，并和传统 AEC/NS 链路做边界说明。",
+            en: "This fits an AI enhancement lab showing noisy waveform, feature map, model mask, enhanced waveform, and artifact risk, with clear boundaries from traditional AEC/NS pipelines."
+          }
+        }
+      },
+      {
+        title: { zh: "AI 音频编码", en: "AI Audio Coding" },
+        summary: {
+          zh: "介绍神经音频编码、语义 token、低码率语音和生成式重建。",
+          en: "Introduce neural audio coding, semantic tokens, low-bitrate speech, and generative reconstruction."
+        },
+        bullets: [
+          { zh: "神经编码器 / 解码器", en: "Neural encoder / decoder" },
+          { zh: "codec token 与 latent", en: "Codec tokens and latents" },
+          { zh: "低码率语音、音乐和通信", en: "Low-bitrate speech, music, and communication" }
+        ],
+        detail: {
+          explanation: {
+            zh: "AI 音频编码用神经网络把 PCM 压缩成离散 token 或连续 latent，再由神经解码器重建波形。它和 MP3/AAC/Opus 这类传统 codec 不同：传统 codec 主要依赖听觉模型、变换和熵编码，AI codec 则让模型学习哪些声音信息最该保留，甚至可用生成模型补全细节。它适合低码率语音、实时通信、生成式语音 token、内容编辑和弱网传输，但要关注延迟、算力、跨设备一致性和失真类型。",
+            en: "AI audio coding uses neural networks to compress PCM into discrete tokens or continuous latents, then reconstructs waveform audio with a neural decoder. It differs from traditional codecs such as MP3, AAC, and Opus: traditional codecs rely mainly on psychoacoustic models, transforms, and entropy coding, while AI codecs learn which sound information to preserve and may use generative reconstruction. It suits low-bitrate speech, real-time communication, generative speech tokens, content editing, and weak networks, but latency, compute, device consistency, and distortion types matter."
+          },
+          termExplanations: [
+            {
+              name: { zh: "codec token", en: "Codec token" },
+              explanation: {
+                zh: "模型把短帧音频映射成离散编号序列。生成式语音模型可以直接预测这些 token，再由解码器还原为语音。",
+                en: "The model maps short audio frames into a sequence of discrete IDs. Generative speech models can predict these tokens directly, then a decoder turns them back into speech."
+              }
+            },
+            {
+              name: { zh: "latent", en: "Latent" },
+              explanation: {
+                zh: "latent 是模型内部的压缩表示，可以是连续向量或量化后的 token。它不是人能直接听到的音频，而是供解码器重建声音的表示。",
+                en: "A latent is a compressed internal representation, either continuous vectors or quantized tokens. It is not directly audible audio; it is used by a decoder to reconstruct sound."
+              }
+            },
+            {
+              name: { zh: "生成式重建", en: "Generative reconstruction" },
+              explanation: {
+                zh: "在极低码率下，模型可能不是逐点还原所有细节，而是根据保留下来的语音/音色信息生成听起来合理的细节。",
+                en: "At very low bitrates, the model may not reconstruct every detail sample by sample; it generates plausible details from preserved speech and timbre information."
+              }
+            }
+          ],
+          keyConcepts: [
+            { zh: "AI codec 的基本流程是 PCM -> 神经编码器 -> token/latent -> 码流/网络 -> 神经解码器 -> PCM。", en: "The basic AI codec flow is PCM -> neural encoder -> token/latent -> bitstream/network -> neural decoder -> PCM." },
+            { zh: "AI 编码和传统音频编解码卡片不冲突：传统卡片讲 PCM/WAV/MP3/AAC/Opus 的工程和原理，这里讲学习型压缩表示和神经重建。", en: "AI coding does not conflict with the traditional audio-codec card: that card explains PCM/WAV/MP3/AAC/Opus engineering and principles, while this one covers learned compressed representations and neural reconstruction." },
+            { zh: "低码率并不等于无损；AI codec 可能保留语音可懂度，但改变空间感、背景声、瞬态或音色细节。", en: "Low bitrate does not mean lossless; an AI codec may preserve intelligibility while changing spatial cues, background sound, transients, or timbre details." },
+            { zh: "实时通信要看算法延迟、帧长、丢包恢复和端侧算力；离线生成则更看自然度和一致性。", en: "Real-time communication depends on algorithmic latency, frame size, packet-loss recovery, and edge compute; offline generation focuses more on naturalness and consistency." }
+          ],
+          lab: {
+            type: "ai-audio",
+            initialMode: "codec",
+            title: { zh: "AI 音频编码实验室", en: "AI Audio Coding Lab" },
+            description: {
+              zh: "进入独立文章界面，理解 PCM、神经编码器、token/latent、低码率码流和神经解码器之间的关系。",
+              en: "Open an independent article page explaining PCM, neural encoders, tokens/latents, low-bitrate streams, and neural decoders."
+            },
+            buttonLabel: { zh: "打开 AI 音频编码实验室", en: "Open AI audio coding lab" }
+          },
+          misconception: {
+            zh: "AI 编码不是把 MP3 再包一层 AI，也不是一定比传统 codec 更好。它在低码率和语义表示上有优势，但对算力、训练数据、延迟和兼容性更敏感。",
+            en: "AI coding is not MP3 wrapped in AI, and it is not always better than traditional codecs. It can help at low bitrates and semantic representation, but is more sensitive to compute, training data, latency, and compatibility."
+          },
+          contentDirection: {
+            zh: "适合做 AI 编码实验室：把传统 codec 的“变换/量化/熵编码”和 AI codec 的“神经编码/token/神经解码”并排对比，并展示低码率通信与生成式语音 token 两种场景。",
+            en: "This fits an AI coding lab comparing traditional transform/quantization/entropy coding with neural encoding/tokens/neural decoding, plus low-bitrate communication and generative speech-token scenarios."
           }
         }
       }
@@ -1570,21 +1983,31 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "会议与通信音频要在网络、设备和环境都不稳定的情况下保持清晰、同步和低延迟。完整链路通常包含采集、回声消除、降噪、编码、传输、解码、播放、字幕和翻译。",
-            en: "Conferencing and communication audio must stay clear, synchronized, and low-latency despite unstable networks, devices, and rooms. The full chain often includes capture, echo cancellation, noise suppression, encoding, transport, decoding, playback, captions, and translation."
+            zh: "会议与通信音频要在网络、设备和环境都不稳定的情况下保持清晰、同步和低延迟。采集端从麦克风阵列拿到近端语音，经 AEC、降噪、AGC、编码和网络发送到远端；播放端接收远端码流，经 Jitter Buffer、PLC、解码、混音和扬声器播放。AEC 需要拿到扬声器播放的远端参考信号，才能估计并抵消被麦克风再次拾取的回声。Jitter Buffer 会用少量缓存换取连续播放，但缓存过大也会让通话和字幕变慢。",
+            en: "Conferencing and communication audio must stay clear, synchronized, and low-latency despite unstable networks, devices, and rooms. The capture side takes near-end speech from the microphone array, then passes AEC, noise suppression, AGC, encoding, and network transport. The playback side receives remote packets, then applies a jitter buffer, PLC, decoding, mixing, and speaker playback. AEC needs the far-end reference signal being played by the speaker so it can estimate and cancel the echo picked up again by the microphone. A jitter buffer trades a little buffering for continuous playback, but too much buffering makes calls and captions feel slow."
+          },
+          lab: {
+            type: "meeting-communication",
+            title: { zh: "会议与通信实验室", en: "Conferencing and Communication Lab" },
+            description: {
+              zh: "用端到端链路图理解上行采集、下行播放、回采参考、网络缓冲和字幕链路如何共同影响会议体验。",
+              en: "Use an end-to-end chain diagram to understand how uplink capture, downlink playback, render reference, network buffering, and captions shape meeting quality."
+            },
+            buttonLabel: { zh: "打开会议与通信实验室", en: "Open conferencing and communication lab" }
           },
           keyConcepts: [
-            { zh: "回声消除和双讲处理决定远程会议能否自然打断。", en: "Echo cancellation and double-talk handling determine whether remote meetings support natural interruptions." },
-            { zh: "抖动缓冲和丢包隐藏影响网络波动时的连续性。", en: "Jitter buffers and packet-loss concealment affect continuity under network variation." },
-            { zh: "说话人分离、实时字幕和翻译把音频链路连接到会议生产力。", en: "Diarization, live captions, and translation connect the audio chain to meeting productivity." }
+            { zh: "上行链路关注本端说话是否清楚：麦克风、AEC、NS/ANR、AGC、编码和上行网络共同决定对方听到什么。", en: "The uplink asks whether local speech is clear: microphones, AEC, NS/ANR, AGC, encoding, and upstream network together shape what the far end hears." },
+            { zh: "下行链路关注远端声音是否连续：Jitter Buffer、PLC、解码、混音和扬声器共同决定本端听到什么。", en: "The downlink asks whether remote audio is continuous: jitter buffer, PLC, decoding, mixing, and speaker playback shape what the local user hears." },
+            { zh: "回声消除和双讲处理决定远程会议能否自然打断；AEC 参考信号错位或缺失时，回声会明显变大。", en: "Echo cancellation and double-talk handling determine natural interruption; echo grows when the AEC reference is missing or misaligned." },
+            { zh: "实时字幕和翻译通常走 ASR/翻译链路，受采集质量、端点检测、网络、模型推理和稳定出字策略共同影响。", en: "Live captions and translation usually go through ASR/translation chains and depend on capture quality, endpointing, network, inference, and partial-result stabilization." }
           ],
           misconception: {
-            zh: "会议音质不是只靠一个好麦克风；房间、扬声器回放、网络、算法和平台策略都会共同决定体验。",
-            en: "Meeting quality does not come from a good microphone alone; room acoustics, speaker playback, network behavior, algorithms, and platform policy all shape the experience."
+            zh: "会议音质不是只靠一个好麦克风。房间混响、扬声器回放、回采参考、网络抖动、算法强度、编码策略和平台是否开启字幕/翻译，都会共同决定体验。",
+            en: "Meeting quality does not come from a good microphone alone. Room reverb, speaker playback, render reference, network jitter, processing strength, codec policy, and whether captions or translation are enabled all shape the experience."
           },
           contentDirection: {
-            zh: "适合做视频会议端到端链路图，并拆解“回声大、听不清、字幕慢”三个典型问题。",
-            en: "This fits an end-to-end conferencing chain diagram and breakdowns of echo, poor intelligibility, and delayed captions."
+            zh: "重点用端到端链路图和问题诊断说明“回声大、听不清、字幕慢”分别该看哪些模块，而不是把所有算法孤立介绍。",
+            en: "Focus on an end-to-end chain diagram and troubleshooting flow for echo, poor intelligibility, and delayed captions, rather than explaining every algorithm in isolation."
           }
         }
       },
@@ -1601,21 +2024,31 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "智能汽车中的音频系统同时服务语音交互、通话、娱乐、提示音和主动降噪。车内空间封闭、噪声随车速变化、乘员位置固定但反射复杂，因此算法和硬件布置需要一起设计。",
-            en: "Vehicle audio systems support voice interaction, calls, entertainment, alerts, and active noise control. Cabins are enclosed, noise changes with speed, occupants have known seats but complex reflections, so algorithms and hardware placement must be designed together."
+            zh: "智能汽车中的音频系统同时服务语音交互、通话、娱乐、提示音、声源定位和座舱空间音频。车载语音助手不是一个单独 App，而是麦克风阵列、唤醒词、ASR、NLU/LLM、车辆状态、座位位置和安全策略共同组成的链路。声源定位要回答谁在说、坐在哪里、是否正在对车辆发指令；座舱空间音频则要把音乐、导航、告警和语音反馈按座位、方向和安全优先级渲染出来。",
+            en: "Vehicle audio systems support voice interaction, calls, entertainment, alerts, sound-source localization, and in-cabin spatial audio. An in-car voice assistant is not a standalone app; it is a chain across microphone arrays, wake words, ASR, NLU/LLM, vehicle state, seat position, and safety policy. Localization must answer who is speaking, where they sit, and whether they are addressing the car. Cabin spatial audio renders music, navigation, alerts, and voice feedback by seat, direction, and safety priority."
+          },
+          lab: {
+            type: "automotive-audio",
+            title: { zh: "智能汽车实验室", en: "Intelligent Vehicle Audio Lab" },
+            description: {
+              zh: "用汽车座舱图理解声源定位、分区拾音、语音助手链路和座舱空间音频如何在同一套车内音频系统中协同。",
+              en: "Use an in-cabin car diagram to understand how localization, zone pickup, voice assistants, and spatial audio work together in one vehicle audio system."
+            },
+            buttonLabel: { zh: "打开智能汽车实验室", en: "Open intelligent vehicle lab" }
           },
           keyConcepts: [
-            { zh: "多麦克风阵列可用于唤醒、定位、分区拾音和免提通话。", en: "Microphone arrays support wake words, localization, zone pickup, and hands-free calls." },
-            { zh: "主动降噪和路噪控制需要低延迟传感、建模和扬声器补偿。", en: "Active noise and road-noise control need low-latency sensing, modeling, and speaker compensation." },
-            { zh: "座舱空间音频要考虑座位差异、声场校准和安全提示优先级。", en: "Cabin spatial audio must consider seat differences, field calibration, and safety alert priority." }
+            { zh: "多麦克风阵列可用于唤醒、声源定位、分区拾音和免提通话；车内音乐、路噪和多人说话会让定位更困难。", en: "Microphone arrays support wake words, localization, zone pickup, and hands-free calls; music, road noise, and overlapping talkers make localization harder." },
+            { zh: "语音助手链路通常是唤醒词 -> ASR -> NLU/LLM -> 车辆控制，但车速、驾驶状态和安全策略会限制能执行的动作。", en: "A voice-assistant chain is usually wake word -> ASR -> NLU/LLM -> vehicle control, while speed, driving state, and safety policy constrain executable actions." },
+            { zh: "座舱空间音频要考虑座位差异、声场校准、扬声器布局和安全提示优先级。", en: "Cabin spatial audio must consider seat differences, field calibration, speaker layout, and safety-alert priority." },
+            { zh: "上下文感知语音 AI 会结合说话人、座位、乘员身份、车辆状态和外部环境，给出更个性化但更受约束的交互。", en: "Context-aware voice AI combines speaker, seat, occupant identity, vehicle state, and outside context for more personalized but more constrained interaction." }
           ],
           misconception: {
-            zh: "车内更安静不代表语音更容易；空调、路噪、音乐、乘客说话和车窗状态都会让场景快速变化。",
-            en: "A quieter cabin does not automatically make speech easier; HVAC, road noise, music, passengers, and window state can change the scene quickly."
+            zh: "车内更安静不代表语音更容易。真正的难点常常是音乐回放、路噪、空调、乘客重叠说话、座位反射和安全策略共同变化。",
+            en: "A quieter cabin does not automatically make speech easier. The hard cases often combine music playback, road noise, HVAC, overlapping passengers, seat reflections, and changing safety policy."
           },
           contentDirection: {
-            zh: "适合做座舱音频拓扑图，展示麦克风、扬声器、座位和算法模块之间的关系。",
-            en: "This can become a cabin audio topology showing microphones, speakers, seats, and algorithm modules."
+            zh: "重点用汽车座舱拓扑图展示麦克风、扬声器、座位、声源定位、语音助手和空间音频之间的关系，并按“唤醒错人、助手听错、声场不对”做问题诊断。",
+            en: "Focus on an in-cabin topology showing microphones, speakers, seats, localization, voice assistants, and spatial audio, then diagnose wrong wake owner, misunderstood assistant commands, and incorrect sound field."
           }
         }
       },

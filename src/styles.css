@@ -2247,6 +2247,702 @@ body.details-open {
   padding: 10px 12px;
 }
 
+.ai-audio-page {
+  display: grid;
+  gap: 24px;
+  padding: 24px clamp(18px, 4vw, 56px) 56px;
+}
+
+.ai-audio-workbench {
+  background: #17211f;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
+  display: grid;
+  gap: 18px;
+  justify-self: center;
+  max-width: 1200px;
+  padding: clamp(16px, 3vw, 26px);
+  width: 100%;
+}
+
+.ai-article-page {
+  justify-items: center;
+}
+
+.ai-article-hero,
+.ai-article-diagram,
+.ai-model-section,
+.ai-article-body {
+  max-width: 1200px;
+  width: 100%;
+}
+
+.ai-article-diagram {
+  background: #17211f;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
+  display: grid;
+  gap: 18px;
+  padding: clamp(16px, 3vw, 26px);
+}
+
+.ai-article-section-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.ai-article-section-heading span {
+  color: #f0b46a;
+  font-size: 0.78rem;
+  font-weight: 820;
+}
+
+.ai-article-section-heading h2 {
+  color: #ffffff;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  margin: 0;
+}
+
+.ai-article-flow {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ai-article-flow li {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px;
+  position: relative;
+}
+
+.ai-article-flow li:not(:last-child)::after {
+  color: rgba(240, 180, 106, 0.8);
+  content: "→";
+  font-size: 1.2rem;
+  font-weight: 820;
+  position: absolute;
+  right: -13px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.ai-article-flow span {
+  color: #f0b46a;
+  font-size: 0.78rem;
+  font-weight: 820;
+}
+
+.ai-article-flow strong {
+  color: #ffffff;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.ai-article-flow p {
+  color: #dbe8e4;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.ai-article-body {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ai-article-card {
+  background: #ffffff;
+  border: 1px solid rgba(23, 33, 31, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 16px 44px rgba(23, 33, 31, 0.08);
+  display: grid;
+  gap: 10px;
+  padding: clamp(16px, 2.4vw, 22px);
+}
+
+.ai-article-card h2 {
+  color: #17211f;
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.ai-article-card p {
+  color: #3f4d49;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.ai-article-card ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ai-article-card li {
+  background: rgba(180, 76, 109, 0.09);
+  border: 1px solid rgba(180, 76, 109, 0.14);
+  border-radius: 8px;
+  color: #6f2843;
+  font-size: 0.86rem;
+  font-weight: 760;
+  padding: 7px 10px;
+}
+
+.ai-model-section {
+  background: #ffffff;
+  border: 1px solid rgba(23, 33, 31, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.12);
+  display: grid;
+  gap: 16px;
+  padding: clamp(16px, 3vw, 26px);
+}
+
+.ai-model-heading h2 {
+  color: #17211f;
+}
+
+.ai-model-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.ai-model-card {
+  background: #f7faf8;
+  border: 1px solid rgba(31, 117, 105, 0.14);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.ai-model-card h3 {
+  color: #17211f;
+  font-size: 1rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.ai-model-card dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.ai-model-card div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ai-model-card dt {
+  color: #1f7569;
+  font-size: 0.75rem;
+  font-weight: 820;
+}
+
+.ai-model-card dd {
+  color: #3f4d49;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.meeting-lab-page {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+}
+
+.meeting-lab-hero,
+.meeting-diagram-section,
+.meeting-module-section,
+.meeting-issue-section {
+  max-width: 1200px;
+  width: 100%;
+}
+
+.meeting-diagram-section,
+.meeting-module-section,
+.meeting-issue-section {
+  background: #ffffff;
+  border: 1px solid rgba(23, 33, 31, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.1);
+  display: grid;
+  gap: 16px;
+  padding: clamp(16px, 3vw, 26px);
+}
+
+.meeting-diagram {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.meeting-diagram svg {
+  background: #f7faf8;
+  border: 1px solid rgba(31, 117, 105, 0.12);
+  border-radius: 8px;
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+.meeting-diagram figcaption {
+  color: #51615d;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.meeting-diagram-bg {
+  fill: #f7faf8;
+}
+
+.meeting-diagram-title {
+  fill: #17211f;
+  font-size: 20px;
+  font-weight: 820;
+}
+
+.meeting-lane-title {
+  fill: #1f7569;
+  font-size: 15px;
+  font-weight: 820;
+}
+
+.meeting-box {
+  stroke-width: 1.4;
+}
+
+.meeting-box.capture {
+  fill: #e8f4f1;
+  stroke: rgba(31, 117, 105, 0.36);
+}
+
+.meeting-box.process {
+  fill: #fff7ea;
+  stroke: rgba(196, 111, 42, 0.34);
+}
+
+.meeting-box.network {
+  fill: #eef2ff;
+  stroke: rgba(79, 124, 189, 0.32);
+}
+
+.meeting-box.remote {
+  fill: #f5eef9;
+  stroke: rgba(125, 106, 184, 0.32);
+}
+
+.meeting-box.buffer {
+  fill: #eef5dc;
+  stroke: rgba(109, 140, 63, 0.36);
+}
+
+.meeting-box.playback {
+  fill: #eaf5f8;
+  stroke: rgba(31, 117, 105, 0.26);
+}
+
+.meeting-box.caption {
+  fill: #fbf0f4;
+  stroke: rgba(180, 76, 109, 0.28);
+}
+
+.meeting-box-title {
+  fill: #17211f;
+  font-size: 13px;
+  font-weight: 820;
+}
+
+.meeting-box-sub {
+  fill: #51615d;
+  font-size: 11px;
+  font-weight: 680;
+}
+
+.meeting-arrow {
+  fill: none;
+  stroke: #1f7569;
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
+.meeting-echo-arrow {
+  fill: none;
+  stroke: #b44c6d;
+  stroke-dasharray: 6 6;
+  stroke-linecap: round;
+  stroke-width: 2.2;
+}
+
+.meeting-reference-chip {
+  fill: #fff1f5;
+  stroke: rgba(180, 76, 109, 0.28);
+}
+
+.meeting-reference-text {
+  fill: #8d3152;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.meeting-section-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.meeting-section-heading span {
+  color: #1f7569;
+  font-size: 0.78rem;
+  font-weight: 820;
+}
+
+.meeting-section-heading h2 {
+  color: #17211f;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  margin: 0;
+}
+
+.meeting-module-grid,
+.meeting-issue-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.meeting-module-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.meeting-issue-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.meeting-module-card,
+.meeting-issue-card {
+  background: #f7faf8;
+  border: 1px solid rgba(31, 117, 105, 0.12);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.meeting-module-card h3,
+.meeting-issue-card h3 {
+  color: #17211f;
+  font-size: 1rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.meeting-module-card p,
+.meeting-issue-card p {
+  color: #3f4d49;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.meeting-issue-card ol {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.meeting-issue-card li {
+  color: #3f4d49;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.automotive-lab-page {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+}
+
+.automotive-lab-hero,
+.automotive-diagram-section,
+.automotive-module-section,
+.automotive-issue-section {
+  max-width: 1200px;
+  width: 100%;
+}
+
+.automotive-diagram-section,
+.automotive-module-section,
+.automotive-issue-section {
+  background: #ffffff;
+  border: 1px solid rgba(23, 33, 31, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.1);
+  display: grid;
+  gap: 16px;
+  padding: clamp(16px, 3vw, 26px);
+}
+
+.automotive-diagram {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.automotive-diagram svg {
+  background: #f7faf8;
+  border: 1px solid rgba(31, 117, 105, 0.12);
+  border-radius: 8px;
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+.automotive-diagram figcaption {
+  color: #51615d;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.auto-diagram-bg {
+  fill: #f7faf8;
+}
+
+.auto-diagram-title {
+  fill: #17211f;
+  font-size: 19px;
+  font-weight: 820;
+}
+
+.auto-body {
+  fill: #dcece8;
+  stroke: rgba(23, 33, 31, 0.42);
+  stroke-width: 2;
+}
+
+.auto-window {
+  fill: rgba(255, 255, 255, 0.58);
+  stroke: rgba(31, 117, 105, 0.24);
+  stroke-width: 1.5;
+}
+
+.auto-console {
+  fill: rgba(23, 33, 31, 0.12);
+}
+
+.auto-wheel {
+  fill: none;
+  stroke: rgba(23, 33, 31, 0.55);
+  stroke-width: 8;
+}
+
+.auto-seat-back,
+.auto-seat-base {
+  fill: #ffffff;
+  stroke: rgba(31, 117, 105, 0.18);
+  stroke-width: 1.5;
+}
+
+.auto-seat-label {
+  fill: #17211f;
+  font-size: 14px;
+  font-weight: 820;
+}
+
+.auto-mic {
+  fill: #1f7569;
+  stroke: #ffffff;
+  stroke-width: 3;
+}
+
+.auto-speaker {
+  fill: #f0b46a;
+  stroke: #ffffff;
+  stroke-width: 3;
+}
+
+.auto-localization-beam,
+.auto-arrow {
+  fill: none;
+  stroke: #1f7569;
+  stroke-linecap: round;
+  stroke-width: 2.4;
+}
+
+.auto-localization-beam {
+  stroke-dasharray: 7 7;
+}
+
+.auto-localization-beam.rear {
+  stroke: #4f7cbd;
+}
+
+.auto-voice-arrow {
+  fill: none;
+  stroke: #b44c6d;
+  stroke-linecap: round;
+  stroke-width: 2.6;
+}
+
+.auto-chip,
+.auto-assistant-panel,
+.auto-spatial-panel,
+.auto-noise-chip {
+  stroke-width: 1.4;
+}
+
+.auto-chip.localization {
+  fill: #e8f4f1;
+  stroke: rgba(31, 117, 105, 0.3);
+}
+
+.auto-chip-text {
+  fill: #1f7569;
+  font-size: 14px;
+  font-weight: 820;
+}
+
+.auto-assistant-panel {
+  fill: #fff1f5;
+  stroke: rgba(180, 76, 109, 0.28);
+}
+
+.auto-spatial-panel {
+  fill: #eef2ff;
+  stroke: rgba(79, 124, 189, 0.28);
+}
+
+.auto-panel-title {
+  fill: #17211f;
+  font-size: 15px;
+  font-weight: 820;
+}
+
+.auto-panel-copy {
+  fill: #3f4d49;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.auto-spatial-ring {
+  fill: none;
+  stroke: rgba(79, 124, 189, 0.55);
+  stroke-dasharray: 9 8;
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+
+.auto-noise-chip {
+  fill: #fff7ea;
+  stroke: rgba(196, 111, 42, 0.28);
+}
+
+.auto-noise-text {
+  fill: #8f4f1d;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.auto-legend {
+  fill: #51615d;
+  font-size: 13px;
+  font-weight: 720;
+}
+
+.automotive-section-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.automotive-section-heading span {
+  color: #1f7569;
+  font-size: 0.78rem;
+  font-weight: 820;
+}
+
+.automotive-section-heading h2 {
+  color: #17211f;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  margin: 0;
+}
+
+.automotive-module-grid,
+.automotive-issue-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.automotive-module-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.automotive-issue-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.automotive-module-card,
+.automotive-issue-card {
+  background: #f7faf8;
+  border: 1px solid rgba(31, 117, 105, 0.12);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.automotive-module-card h3,
+.automotive-issue-card h3 {
+  color: #17211f;
+  font-size: 1rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.automotive-module-card p,
+.automotive-issue-card p {
+  color: #3f4d49;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.automotive-issue-card ol {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.automotive-issue-card li {
+  color: #3f4d49;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
 .audio-plugin-concept-grid {
   display: grid;
   gap: 12px;
@@ -5015,6 +5711,13 @@ body.details-open {
 
   .spatial-pipeline,
   .spatial-concept-grid,
+  .ai-article-flow,
+  .ai-model-grid,
+  .ai-article-body,
+  .meeting-module-grid,
+  .meeting-issue-grid,
+  .automotive-module-grid,
+  .automotive-issue-grid,
   .audio-plugin-flow,
   .audio-plugin-concept-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5030,6 +5733,14 @@ body.details-open {
 
   .realtime-flow-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ai-article-flow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ai-article-flow li:not(:last-child)::after {
+    display: none;
   }
 }
 
@@ -5193,6 +5904,7 @@ body.details-open {
   }
 
   .sound-lab-page,
+  .ai-audio-page,
   .core-signal-page,
   .spatial-audio-page,
   .audio-plugin-page,
@@ -5225,6 +5937,13 @@ body.details-open {
   .core-flow-steps,
   .core-stage-flow,
   .core-key-concept-grid,
+  .ai-article-flow,
+  .ai-model-grid,
+  .ai-article-body,
+  .meeting-module-grid,
+  .meeting-issue-grid,
+  .automotive-module-grid,
+  .automotive-issue-grid,
   .spatial-pipeline,
   .spatial-concept-grid,
   .audio-plugin-flow,

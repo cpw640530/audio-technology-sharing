@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { AiAudioLab } from "./components/AiAudioLab";
 import { AmplifierSpeakerLab } from "./components/AmplifierSpeakerLab";
 import { AudioCodecLab } from "./components/AudioCodecLab";
 import { AudioPluginLab } from "./components/AudioPluginLab";
+import { AutomotiveAudioLab } from "./components/AutomotiveAudioLab";
 import { CategoryTabs } from "./components/CategoryTabs";
 import { CodecHardwareLab } from "./components/CodecHardwareLab";
 import { CoreSignalProcessingLab } from "./components/CoreSignalProcessingLab";
@@ -10,6 +12,7 @@ import { DigitalInterfaceLab } from "./components/DigitalInterfaceLab";
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
 import { ListeningMetricsLab } from "./components/ListeningMetricsLab";
+import { MeetingCommunicationLab } from "./components/MeetingCommunicationLab";
 import { MicrophoneLab } from "./components/MicrophoneLab";
 import { RealtimeAudioLab } from "./components/RealtimeAudioLab";
 import { Roadmap } from "./components/Roadmap";
@@ -25,6 +28,7 @@ import {
   interfaceCopy,
   roadmapItems,
   type Category,
+  type AiAudioLabId,
   type Language,
   type Topic
 } from "./content/knowledge";
@@ -94,6 +98,8 @@ export default function App() {
     | "soundLab"
     | "digitalLab"
     | "listeningLab"
+    | "meetingCommunicationLab"
+    | "automotiveAudioLab"
     | "microphoneLab"
     | "codecLab"
     | "digitalInterfaceLab"
@@ -105,13 +111,11 @@ export default function App() {
     | "coreSignalProcessingLab"
     | "speechEnhancementLab"
     | "spatialAudioLab"
+    | "aiAudioLab"
   >("knowledge");
+  const [aiAudioLabId, setAiAudioLabId] = useState<AiAudioLabId>("event");
   const [query, setQuery] = useState("");
 
-  // 切换视图时滚动到顶部
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [activeView]);
   const [selectedTopic, setSelectedTopic] = useState<DisplayTopic | null>(null);
 
   const allTopics = useMemo<DisplayTopic[]>(
@@ -229,6 +233,42 @@ export default function App() {
           onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
         />
         <MicrophoneLab language={language} onBack={() => setActiveView("knowledge")} />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+          <a href="docs/audio_technology_knowledge_outline.md">
+            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
+          </a>
+        </footer>
+      </div>
+    );
+  }
+
+  if (activeView === "meetingCommunicationLab") {
+    return (
+      <div className="app-shell">
+        <Header
+          language={language}
+          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+        />
+        <MeetingCommunicationLab language={language} onBack={() => setActiveView("knowledge")} />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+          <a href="docs/audio_technology_knowledge_outline.md">
+            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
+          </a>
+        </footer>
+      </div>
+    );
+  }
+
+  if (activeView === "automotiveAudioLab") {
+    return (
+      <div className="app-shell">
+        <Header
+          language={language}
+          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+        />
+        <AutomotiveAudioLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
           <a href="docs/audio_technology_knowledge_outline.md">
@@ -419,6 +459,28 @@ export default function App() {
     );
   }
 
+  if (activeView === "aiAudioLab") {
+    return (
+      <div className="app-shell">
+        <Header
+          language={language}
+          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+        />
+        <AiAudioLab
+          labId={aiAudioLabId}
+          language={language}
+          onBack={() => setActiveView("knowledge")}
+        />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+          <a href="docs/audio_technology_knowledge_outline.md">
+            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
+          </a>
+        </footer>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <Header
@@ -457,6 +519,15 @@ export default function App() {
                 setSelectedTopic(null);
                 setActiveView("audioPluginLab");
               }}
+              onOpenAutomotiveAudioLab={() => {
+                setSelectedTopic(null);
+                setActiveView("automotiveAudioLab");
+              }}
+              onOpenAiAudioLab={(initialMode) => {
+                setSelectedTopic(null);
+                setAiAudioLabId(initialMode ?? "event");
+                setActiveView("aiAudioLab");
+              }}
               onOpenSoundLab={() => {
                 setSelectedTopic(null);
                 setActiveView("soundLab");
@@ -472,6 +543,10 @@ export default function App() {
               onOpenListeningMetricsLab={() => {
                 setSelectedTopic(null);
                 setActiveView("listeningLab");
+              }}
+              onOpenMeetingCommunicationLab={() => {
+                setSelectedTopic(null);
+                setActiveView("meetingCommunicationLab");
               }}
               onOpenMicrophoneLab={() => {
                 setSelectedTopic(null);
