@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">Audio Technology Sharing</h1>
   <p align="center">
-    A structured knowledge base for explaining audio technology, planning web content, and building future interactive learning pages.
+    Audio Technology Sharing: a structured knowledge base and interactive website for learning audio fundamentals, hardware, software, DSP, AI audio, and applications.
   </p>
 </p>
 
@@ -14,7 +14,7 @@
   <img alt="Docs" src="https://img.shields.io/badge/docs-Markdown-blue">
   <img alt="App" src="https://img.shields.io/badge/app-React%20%2B%20Vite-1f9d8a">
   <img alt="Language" src="https://img.shields.io/badge/language-English%20%7C%20Chinese-brightgreen">
-  <img alt="Project Type" src="https://img.shields.io/badge/type-Audio%20Technology%20Explained-purple">
+  <img alt="Project Type" src="https://img.shields.io/badge/type-Audio%20Technology%20Sharing-purple">
   <img alt="Status" src="https://img.shields.io/badge/status-planning-orange">
 </p>
 
@@ -22,9 +22,9 @@
 
 ## Overview
 
-Audio Technology Explained is a content-first repository for organizing audio technology concepts before turning them into web pages, diagrams, articles, and interactive learning experiences.
+Audio Technology Sharing is a content-first repository and web app for organizing audio technology concepts into searchable cards, diagrams, articles, and interactive learning labs.
 
-The current focus is to build a clear knowledge map covering audio fundamentals, hardware, software, signal processing, AI audio algorithms, and real-world applications. A React/Vite web app is included to browse, search, and filter the structured knowledge content.
+The website provides a simple way to browse audio fundamentals, hardware, software, signal processing, AI audio algorithms, and real-world applications. Topic cards can open detailed explanations and focused labs for visual or interactive learning.
 
 ## Why This Repository Exists
 
@@ -32,7 +32,7 @@ Audio technology spans physics, electronics, embedded systems, operating systems
 
 It is designed for:
 
-- Preparing educational website content.
+- Preparing audio technology sharing website content.
 - Building article outlines and topic pages.
 - Planning diagrams for audio signal chains and algorithms.
 - Organizing traditional DSP and AI audio concepts together.
@@ -108,26 +108,6 @@ The current outline is intended to evolve into these web content modules:
 - **Algorithm visualizations**: FFT, filtering, noise suppression, echo cancellation, beamforming.
 - **AI audio series**: speech recognition, speech synthesis, AI denoising, voice cloning, audio generation.
 - **Application case studies**: conferencing systems, smart speakers, in-car voice interaction, live streaming audio.
-
-## Roadmap
-
-- [x] Create the first audio technology knowledge outline.
-- [x] Add bilingual README entry points.
-- [x] Build the first React/Vite knowledge-base web app.
-- [x] Publish the web app with GitHub Pages.
-- [ ] Split the outline into website-ready topic pages.
-- [ ] Add diagrams for signal chains, spectrograms, and algorithm flows.
-- [ ] Expand each topic using a consistent article template.
-- [ ] Add source references and recommended reading lists.
-- [ ] Prepare a future web interface for browsing the knowledge base.
-
-## Writing Principles
-
-- Keep explanations approachable without losing technical accuracy.
-- Use diagrams for signal flow, hardware chains, and algorithm processes.
-- Separate foundational concepts from advanced topics.
-- Explain both traditional DSP and AI-based approaches.
-- Include practical product and engineering context where useful.
 
 ## Language
 

@@ -19,6 +19,7 @@ type TopicDetailsProps = {
   onOpenCoreSignalProcessingLab: () => void;
   onOpenDigitalLab: () => void;
   onOpenDigitalInterfaceLab: () => void;
+  onOpenIotContentLab: () => void;
   onOpenListeningMetricsLab: () => void;
   onOpenMeetingCommunicationLab: () => void;
   onOpenMicrophoneLab: () => void;
@@ -94,6 +95,7 @@ export function TopicDetails({
   onOpenCoreSignalProcessingLab,
   onOpenDigitalLab,
   onOpenDigitalInterfaceLab,
+  onOpenIotContentLab,
   onOpenListeningMetricsLab,
   onOpenMeetingCommunicationLab,
   onOpenMicrophoneLab,
@@ -185,6 +187,11 @@ export function TopicDetails({
 
     if (topic.detail.lab?.type === "automotive-audio") {
       onOpenAutomotiveAudioLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "iot-content") {
+      onOpenIotContentLab();
       return;
     }
 

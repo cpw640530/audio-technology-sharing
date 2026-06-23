@@ -319,8 +319,19 @@ main {
 .content-layout {
   display: grid;
   gap: 28px;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
   margin: 0 auto;
   max-width: 1180px;
+}
+
+.content-layout > .search-box,
+.content-layout > .section-block {
+  grid-column: 2;
+}
+
+.content-layout > .knowledge-outline {
+  grid-column: 1;
+  grid-row: 1 / span 3;
 }
 
 .search-box {
@@ -356,6 +367,104 @@ main {
   flex: 1;
   min-width: 0;
   outline: 0;
+}
+
+.knowledge-outline {
+  align-self: start;
+  background: #ffffff;
+  border: 1px solid rgba(23, 33, 31, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.1);
+  display: grid;
+  gap: 16px;
+  max-height: calc(100vh - 120px);
+  overflow: auto;
+  padding: 18px;
+  position: sticky;
+  top: 88px;
+}
+
+.knowledge-outline-header {
+  display: grid;
+  gap: 6px;
+}
+
+.knowledge-outline-header span {
+  color: #6d8c3f;
+  font-size: 0.78rem;
+  font-weight: 820;
+}
+
+.knowledge-outline-header h2 {
+  color: #17211f;
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.knowledge-outline-header p {
+  color: #53615e;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.knowledge-outline-list {
+  display: grid;
+  gap: 14px;
+}
+
+.knowledge-outline-group {
+  border-top: 1px solid rgba(23, 33, 31, 0.08);
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+.knowledge-outline-group:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.knowledge-outline-group h3 {
+  align-items: center;
+  color: #17211f;
+  display: flex;
+  font-size: 0.98rem;
+  gap: 8px;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.knowledge-outline-group h3 svg {
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.knowledge-outline-group ul {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.knowledge-outline-group li {
+  color: #53615e;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  padding-left: 14px;
+  position: relative;
+}
+
+.knowledge-outline-group li::before {
+  background: rgba(109, 140, 63, 0.55);
+  border-radius: 999px;
+  content: "";
+  height: 5px;
+  left: 0;
+  position: absolute;
+  top: 0.62em;
+  width: 5px;
 }
 
 .section-block {
@@ -2784,6 +2893,18 @@ body.details-open {
   stroke-width: 3;
 }
 
+.auto-subwoofer {
+  fill: #b44c6d;
+  stroke: #ffffff;
+  stroke-width: 3;
+}
+
+.auto-error-mic {
+  fill: #4f7cbd;
+  stroke: #ffffff;
+  stroke-width: 3;
+}
+
 .auto-localization-beam,
 .auto-arrow {
   fill: none;
@@ -2810,6 +2931,7 @@ body.details-open {
 .auto-chip,
 .auto-assistant-panel,
 .auto-spatial-panel,
+.auto-anc-panel,
 .auto-noise-chip {
   stroke-width: 1.4;
 }
@@ -2835,6 +2957,11 @@ body.details-open {
   stroke: rgba(79, 124, 189, 0.28);
 }
 
+.auto-anc-panel {
+  fill: #f4f0ff;
+  stroke: rgba(125, 106, 184, 0.3);
+}
+
 .auto-panel-title {
   fill: #17211f;
   font-size: 15px;
@@ -2853,6 +2980,55 @@ body.details-open {
   stroke-dasharray: 9 8;
   stroke-linecap: round;
   stroke-width: 3;
+}
+
+.auto-component-label {
+  fill: #e8f4f1;
+  stroke: rgba(31, 117, 105, 0.26);
+  stroke-width: 1.2;
+}
+
+.auto-component-label.speaker-label {
+  fill: #fff7ea;
+  stroke: rgba(196, 111, 42, 0.28);
+}
+
+.auto-component-label.anc-label {
+  fill: #eef2ff;
+  stroke: rgba(79, 124, 189, 0.28);
+}
+
+.auto-component-text {
+  fill: #17211f;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.auto-component-line {
+  fill: none;
+  stroke: #1f7569;
+  stroke-linecap: round;
+  stroke-width: 1.8;
+}
+
+.auto-component-line.speaker-line {
+  stroke: #c46f2a;
+}
+
+.auto-component-line.anc-line {
+  stroke: #4f7cbd;
+}
+
+.auto-anc-wave {
+  fill: none;
+  stroke: #7d6ab8;
+  stroke-linecap: round;
+  stroke-width: 2.4;
+}
+
+.auto-anc-wave.inverse {
+  stroke: #c46f2a;
+  stroke-dasharray: 5 5;
 }
 
 .auto-noise-chip {
@@ -2938,6 +3114,232 @@ body.details-open {
 }
 
 .automotive-issue-card li {
+  color: #3f4d49;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.iot-content-lab-page {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+}
+
+.iot-content-lab-hero,
+.iot-content-diagram-section,
+.iot-content-module-section,
+.iot-content-issue-section {
+  max-width: 1200px;
+  width: 100%;
+}
+
+.iot-content-diagram-section,
+.iot-content-module-section,
+.iot-content-issue-section {
+  background: #ffffff;
+  border: 1px solid rgba(23, 33, 31, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.1);
+  display: grid;
+  gap: 16px;
+  padding: clamp(16px, 3vw, 26px);
+}
+
+.iot-content-diagram {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.iot-content-diagram svg {
+  background: #f8faf7;
+  border: 1px solid rgba(109, 140, 63, 0.14);
+  border-radius: 8px;
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+.iot-content-diagram figcaption {
+  color: #51615d;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.iot-diagram-bg {
+  fill: #f8faf7;
+}
+
+.iot-diagram-title {
+  fill: #17211f;
+  font-size: 19px;
+  font-weight: 820;
+}
+
+.iot-lane-title,
+.creator-lane-title {
+  fill: #17211f;
+  font-size: 16px;
+  font-weight: 820;
+}
+
+.iot-flow-box,
+.creator-flow-box {
+  stroke-width: 1.4;
+}
+
+.iot-flow-box {
+  fill: #edf7f3;
+  stroke: rgba(31, 117, 105, 0.28);
+}
+
+.iot-flow-box.wake,
+.iot-flow-box.policy {
+  fill: #e8f4f1;
+}
+
+.iot-flow-box.action,
+.iot-flow-box.feedback {
+  fill: #f4faee;
+  stroke: rgba(109, 140, 63, 0.3);
+}
+
+.creator-flow-box {
+  fill: #fff1f5;
+  stroke: rgba(180, 76, 109, 0.26);
+}
+
+.creator-flow-box.edit,
+.creator-flow-box.master {
+  fill: #f6f1ff;
+  stroke: rgba(125, 106, 184, 0.28);
+}
+
+.iot-box-title,
+.creator-box-title {
+  fill: #17211f;
+  font-size: 13px;
+  font-weight: 820;
+}
+
+.iot-box-sub,
+.creator-box-sub {
+  fill: #51615d;
+  font-size: 11px;
+  font-weight: 720;
+}
+
+.iot-arrow,
+.creator-arrow {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 2.4;
+}
+
+.iot-arrow {
+  stroke: #1f7569;
+}
+
+.creator-arrow {
+  stroke: #b44c6d;
+}
+
+.iot-note-box,
+.creator-note-box {
+  stroke-width: 1.4;
+}
+
+.iot-note-box {
+  fill: #edf7f3;
+  stroke: rgba(31, 117, 105, 0.24);
+}
+
+.creator-note-box {
+  fill: #fff1f5;
+  stroke: rgba(180, 76, 109, 0.24);
+}
+
+.iot-note-title,
+.creator-note-title {
+  fill: #17211f;
+  font-size: 14px;
+  font-weight: 820;
+}
+
+.iot-note-copy,
+.creator-note-copy {
+  fill: #51615d;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.iot-content-section-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.iot-content-section-heading span {
+  color: #6d8c3f;
+  font-size: 0.78rem;
+  font-weight: 820;
+}
+
+.iot-content-section-heading h2 {
+  color: #17211f;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  margin: 0;
+}
+
+.iot-content-module-grid,
+.iot-content-issue-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.iot-content-module-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.iot-content-issue-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.iot-content-module-card,
+.iot-content-issue-card {
+  background: #f8faf7;
+  border: 1px solid rgba(109, 140, 63, 0.12);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.iot-content-module-card h3,
+.iot-content-issue-card h3 {
+  color: #17211f;
+  font-size: 1rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.iot-content-module-card p,
+.iot-content-issue-card p {
+  color: #3f4d49;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.iot-content-issue-card ol {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.iot-content-issue-card li {
   color: #3f4d49;
   font-size: 0.9rem;
   line-height: 1.55;
@@ -5704,6 +6106,22 @@ body.details-open {
 }
 
 @media (max-width: 1180px) {
+  .content-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .content-layout > .search-box,
+  .content-layout > .section-block,
+  .content-layout > .knowledge-outline {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .knowledge-outline {
+    max-height: none;
+    position: static;
+  }
+
   .spatial-audio-layout,
   .audio-plugin-layout {
     grid-template-columns: 1fr;
@@ -5718,6 +6136,8 @@ body.details-open {
   .meeting-issue-grid,
   .automotive-module-grid,
   .automotive-issue-grid,
+  .iot-content-module-grid,
+  .iot-content-issue-grid,
   .audio-plugin-flow,
   .audio-plugin-concept-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5944,6 +6364,8 @@ body.details-open {
   .meeting-issue-grid,
   .automotive-module-grid,
   .automotive-issue-grid,
+  .iot-content-module-grid,
+  .iot-content-issue-grid,
   .spatial-pipeline,
   .spatial-concept-grid,
   .audio-plugin-flow,

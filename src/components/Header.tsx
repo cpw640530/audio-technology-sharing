@@ -12,14 +12,13 @@ export function Header({ language, onToggleLanguage }: HeaderProps) {
 
   return (
     <header className="site-header">
-      <a className="brand" href="#top" aria-label="Audio Technology Explained">
+      <a className="brand" href="#top" aria-label="Audio Technology Sharing">
         <span className="brand-mark">
           <LibraryBig size={20} aria-hidden="true" />
         </span>
-        <span>Audio Technology Explained</span>
+        <span>Audio Technology Sharing</span>
       </a>
       <nav className="header-actions" aria-label="Primary navigation">
-        <a href="docs/audio_technology_knowledge_outline.md">{interfaceCopy.navDocs[language]}</a>
         <a href="https://github.com/cpw640530/audio-technology-explained" rel="noreferrer" target="_blank">
           <Github size={18} aria-hidden="true" />
           <span>{interfaceCopy.navGithub[language]}</span>

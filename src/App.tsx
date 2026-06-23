@@ -11,11 +11,12 @@ import { DigitalAudioLab } from "./components/DigitalAudioLab";
 import { DigitalInterfaceLab } from "./components/DigitalInterfaceLab";
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
+import { IotContentLab } from "./components/IotContentLab";
+import { KnowledgeOutline } from "./components/KnowledgeOutline";
 import { ListeningMetricsLab } from "./components/ListeningMetricsLab";
 import { MeetingCommunicationLab } from "./components/MeetingCommunicationLab";
 import { MicrophoneLab } from "./components/MicrophoneLab";
 import { RealtimeAudioLab } from "./components/RealtimeAudioLab";
-import { Roadmap } from "./components/Roadmap";
 import { SearchBar } from "./components/SearchBar";
 import { SpeechEnhancementLab } from "./components/SpeechEnhancementLab";
 import { SoundWaveLab } from "./components/SoundWaveLab";
@@ -26,7 +27,6 @@ import { TopicGrid } from "./components/TopicGrid";
 import {
   categories,
   interfaceCopy,
-  roadmapItems,
   type Category,
   type AiAudioLabId,
   type Language,
@@ -100,6 +100,7 @@ export default function App() {
     | "listeningLab"
     | "meetingCommunicationLab"
     | "automotiveAudioLab"
+    | "iotContentLab"
     | "microphoneLab"
     | "codecLab"
     | "digitalInterfaceLab"
@@ -181,9 +182,6 @@ export default function App() {
         <SoundWaveLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -199,9 +197,6 @@ export default function App() {
         <DigitalAudioLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -217,9 +212,6 @@ export default function App() {
         <ListeningMetricsLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -235,9 +227,6 @@ export default function App() {
         <MicrophoneLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -253,9 +242,6 @@ export default function App() {
         <MeetingCommunicationLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -271,9 +257,21 @@ export default function App() {
         <AutomotiveAudioLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
+        </footer>
+      </div>
+    );
+  }
+
+  if (activeView === "iotContentLab") {
+    return (
+      <div className="app-shell">
+        <Header
+          language={language}
+          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+        />
+        <IotContentLab language={language} onBack={() => setActiveView("knowledge")} />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
         </footer>
       </div>
     );
@@ -289,9 +287,6 @@ export default function App() {
         <CodecHardwareLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -307,9 +302,6 @@ export default function App() {
         <DigitalInterfaceLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -325,9 +317,6 @@ export default function App() {
         <AmplifierSpeakerLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -343,9 +332,6 @@ export default function App() {
         <SystemAudioLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -361,9 +347,6 @@ export default function App() {
         <AudioCodecLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -379,9 +362,6 @@ export default function App() {
         <AudioPluginLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -397,9 +377,6 @@ export default function App() {
         <RealtimeAudioLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -415,9 +392,6 @@ export default function App() {
         <CoreSignalProcessingLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -433,9 +407,6 @@ export default function App() {
         <SpeechEnhancementLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -451,9 +422,6 @@ export default function App() {
         <SpatialAudioLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -473,9 +441,6 @@ export default function App() {
         />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
-          <a href="docs/audio_technology_knowledge_outline.md">
-            {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-          </a>
         </footer>
       </div>
     );
@@ -490,6 +455,7 @@ export default function App() {
       <main>
         <Hero language={language} totalTopics={allTopics.length} />
         <div className="content-layout">
+          <KnowledgeOutline categories={categories} language={language} />
           <SearchBar language={language} value={query} onChange={setQuery} />
           <CategoryTabs
             activeCategory={activeCategory}
@@ -522,6 +488,10 @@ export default function App() {
               onOpenAutomotiveAudioLab={() => {
                 setSelectedTopic(null);
                 setActiveView("automotiveAudioLab");
+              }}
+              onOpenIotContentLab={() => {
+                setSelectedTopic(null);
+                setActiveView("iotContentLab");
               }}
               onOpenAiAudioLab={(initialMode) => {
                 setSelectedTopic(null);
@@ -579,14 +549,10 @@ export default function App() {
               topic={selectedTopic}
             />
           ) : null}
-          <Roadmap language={language} items={roadmapItems} />
         </div>
       </main>
       <footer className="site-footer">
         <span>{interfaceCopy.footer[language]}</span>
-        <a href="docs/audio_technology_knowledge_outline.md">
-          {language === "zh" ? "查看 Markdown 大纲" : "Open Markdown outline"}
-        </a>
       </footer>
     </div>
   );

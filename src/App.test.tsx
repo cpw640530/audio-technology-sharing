@@ -8,11 +8,31 @@ describe("Audio knowledge app", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: "音频技术科普" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "音频技术分享" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "内容路线图" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "写作原则" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "文档" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "查看 Markdown 大纲" })).not.toBeInTheDocument();
+    const outline = screen.getByRole("complementary", { name: "知识分类大纲" });
+    expect(within(outline).getByRole("heading", { name: "知识分类大纲" })).toBeInTheDocument();
+    expect(within(outline).getByText("音频基础")).toBeInTheDocument();
+    expect(within(outline).getByText("什么是声音")).toBeInTheDocument();
+    expect(within(outline).getByText("IoT 与内容创作")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "主题卡片" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "English" }));
 
-    expect(screen.getByRole("heading", { name: "Audio Technology Explained" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Audio Technology Sharing" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Content Roadmap" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Writing Principles" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Docs" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Open Markdown outline" })).not.toBeInTheDocument();
+    const englishOutline = screen.getByRole("complementary", { name: "Knowledge Outline" });
+    expect(within(englishOutline).getByRole("heading", { name: "Knowledge Outline" })).toBeInTheDocument();
+    expect(within(englishOutline).getByText("Audio Fundamentals")).toBeInTheDocument();
+    expect(within(englishOutline).getByText("What Sound Is")).toBeInTheDocument();
+    expect(within(englishOutline).getByText("IoT and Content Creation")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Topic Cards" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "中文" })).toBeInTheDocument();
   });
 
@@ -197,41 +217,77 @@ describe("Audio knowledge app", () => {
     expect(within(lab).getByText(/先看回采参考是否正确进入 AEC/)).toBeInTheDocument();
   });
 
-  it("expands intelligent vehicles with an in-cabin audio topology lab", async () => {
+  it("expands in-car acoustics with cabin component layout and acoustic processing lab", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /应用场景/ }));
-    await user.click(screen.getByRole("button", { name: /智能汽车/ }));
+    await user.click(screen.getByRole("button", { name: /车载声学/ }));
 
     const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(within(details).getByText(/车载语音助手不是一个单独 App/)).toBeInTheDocument();
-    expect(within(details).getByText(/声源定位要回答谁在说、坐在哪里/)).toBeInTheDocument();
-    expect(within(details).getByRole("button", { name: "打开智能汽车实验室" })).toBeInTheDocument();
+    expect(within(details).getByText(/车载声学不是只讲听歌/)).toBeInTheDocument();
+    expect(within(details).getByText(/主动降噪通常针对低频发动机噪声、胎噪和路噪/)).toBeInTheDocument();
+    expect(within(details).getByRole("button", { name: "打开车载声学实验室" })).toBeInTheDocument();
 
-    await user.click(within(details).getByRole("button", { name: "打开智能汽车实验室" }));
+    await user.click(within(details).getByRole("button", { name: "打开车载声学实验室" }));
 
-    const lab = screen.getByRole("main", { name: "智能汽车实验室" });
-    expect(within(lab).getByRole("heading", { name: "智能汽车实验室" })).toBeInTheDocument();
-    const cabinImage = within(lab).getByRole("img", { name: "智能汽车座舱音频拓扑图" });
+    const lab = screen.getByRole("main", { name: "车载声学实验室" });
+    expect(within(lab).getByRole("heading", { name: "车载声学实验室" })).toBeInTheDocument();
+    const cabinImage = within(lab).getByRole("img", { name: "车载声学座舱部件位置图" });
     expect(cabinImage).toBeInTheDocument();
-    expect(within(cabinImage).getByText("驾驶员")).toBeInTheDocument();
-    expect(within(cabinImage).getByText("副驾")).toBeInTheDocument();
-    expect(within(cabinImage).getByText("后排乘客")).toBeInTheDocument();
+    expect(within(cabinImage).getByText("顶灯麦克风阵列")).toBeInTheDocument();
+    expect(within(cabinImage).getByText("门板扬声器")).toBeInTheDocument();
+    expect(within(cabinImage).getByText("中置扬声器")).toBeInTheDocument();
+    expect(within(cabinImage).getByText("ANC 误差麦")).toBeInTheDocument();
     expect(within(cabinImage).getByText("声源定位")).toBeInTheDocument();
     expect(within(cabinImage).getByText("语音助手")).toBeInTheDocument();
     expect(within(cabinImage).getByText("座舱空间音频")).toBeInTheDocument();
-    expect(within(cabinImage).getByText("唤醒词 -> ASR -> NLU / LLM -> 车辆控制")).toBeInTheDocument();
+    expect(within(cabinImage).getByText("主动降噪 ANC")).toBeInTheDocument();
+    expect(within(cabinImage).getByText("唤醒词 -> ASR -> NLU / LLM -> 车辆控制 / 语音反馈")).toBeInTheDocument();
     expect(within(lab).getByRole("heading", { name: "每个模块解决什么问题" })).toBeInTheDocument();
-    expect(within(lab).getByText("多麦阵列与分区拾音")).toBeInTheDocument();
-    expect(within(lab).getByText("声源定位与座位识别")).toBeInTheDocument();
-    expect(within(lab).getByText("语音助手链路")).toBeInTheDocument();
+    expect(within(lab).getByText("车载语音助手交互")).toBeInTheDocument();
+    expect(within(lab).getByText("麦克风与扬声器位置")).toBeInTheDocument();
+    expect(within(lab).getByText("主动降噪 ANC / RNC")).toBeInTheDocument();
     expect(within(lab).getAllByText("座舱空间音频").length).toBeGreaterThanOrEqual(2);
     expect(within(lab).getByRole("heading", { name: "典型问题诊断" })).toBeInTheDocument();
     expect(within(lab).getByText("唤醒错人")).toBeInTheDocument();
-    expect(within(lab).getByText("助手听错")).toBeInTheDocument();
-    expect(within(lab).getByText("声场不对")).toBeInTheDocument();
+    expect(within(lab).getByText("定位漂移")).toBeInTheDocument();
+    expect(within(lab).getByText("ANC 压耳或轰鸣")).toBeInTheDocument();
+  });
+
+  it("expands IoT and content creation with a dual-path audio workflow lab", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
+    await user.click(within(categoriesRegion).getByRole("button", { name: /应用场景/ }));
+    await user.click(screen.getByRole("button", { name: /IoT 与内容创作/ }));
+
+    const details = screen.getByRole("dialog", { name: "主题详情" });
+    expect(within(details).getByText(/IoT 音频更像一个长期待机的边缘感知系统/)).toBeInTheDocument();
+    expect(within(details).getByText(/内容创作音频更像一条可反复编辑和交付的生产流水线/)).toBeInTheDocument();
+    expect(within(details).getByRole("button", { name: "打开 IoT 与内容创作实验室" })).toBeInTheDocument();
+
+    await user.click(within(details).getByRole("button", { name: "打开 IoT 与内容创作实验室" }));
+
+    const lab = screen.getByRole("main", { name: "IoT 与内容创作实验室" });
+    expect(within(lab).getByRole("heading", { name: "IoT 与内容创作实验室" })).toBeInTheDocument();
+    expect(within(lab).getByRole("img", { name: "IoT 与内容创作双路径音频流程图" })).toBeInTheDocument();
+    expect(within(lab).getByText("IoT 语音控制路径")).toBeInTheDocument();
+    expect(within(lab).getByText("内容创作生产路径")).toBeInTheDocument();
+    expect(within(lab).getByText("低功耗监听")).toBeInTheDocument();
+    expect(within(lab).getByText("本地唤醒词")).toBeInTheDocument();
+    expect(within(lab).getByText("录音 / 导入")).toBeInTheDocument();
+    expect(within(lab).getByText("剪辑 / 修音")).toBeInTheDocument();
+    expect(within(lab).getByRole("heading", { name: "每个模块解决什么问题" })).toBeInTheDocument();
+    expect(within(lab).getByText("边缘语音唤醒")).toBeInTheDocument();
+    expect(within(lab).getByText("内容响度与动态")).toBeInTheDocument();
+    expect(within(lab).getByText("AI 配音与自动母带")).toBeInTheDocument();
+    expect(within(lab).getByRole("heading", { name: "典型问题诊断" })).toBeInTheDocument();
+    expect(within(lab).getByText("误唤醒")).toBeInTheDocument();
+    expect(within(lab).getByText("直播声音忽大忽小")).toBeInTheDocument();
+    expect(within(lab).getByText("AI 配音不自然")).toBeInTheDocument();
   });
 
   it("searches across visible knowledge topics", async () => {
@@ -1012,7 +1068,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: "返回知识库" }));
 
-    expect(screen.getByRole("heading", { name: "音频技术科普" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "音频技术分享" })).toBeInTheDocument();
   });
 
   it("explains digital audio basics and links to the sampling lab", async () => {
@@ -1063,7 +1119,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: "返回知识库" }));
 
-    expect(screen.getByRole("heading", { name: "音频技术科普" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "音频技术分享" })).toBeInTheDocument();
   });
 
   it("shows how quantized samples become PCM words", async () => {

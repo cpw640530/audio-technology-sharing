@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">音频技术分享</h1>
   <p align="center">
-    面向音频技术分享、网页内容规划和后续交互式学习页面的结构化知识库。
+    面向音频技术学习、网页内容规划和交互式实验室的结构化知识库。
   </p>
 </p>
 
@@ -14,16 +14,16 @@
   <img alt="Docs" src="https://img.shields.io/badge/docs-Markdown-blue">
   <img alt="App" src="https://img.shields.io/badge/app-React%20%2B%20Vite-1f9d8a">
   <img alt="Language" src="https://img.shields.io/badge/language-English%20%7C%20Chinese-brightgreen">
-  <img alt="Project Type" src="https://img.shields.io/badge/type-Audio%20Technology%20Explained-purple">
+  <img alt="Project Type" src="https://img.shields.io/badge/type-Audio%20Technology%20Sharing-purple">
   <img alt="Status" src="https://img.shields.io/badge/status-planning-orange">
 </p>
 
 ---
 
 ## 项目简介
-音频技术科普 是一个内容优先的资料仓库，用于在制作网页、图解文章和交互式学习页面之前，先系统整理音频技术相关知识。
+音频技术分享 是一个内容优先的资料仓库和网页应用，用于把音频技术相关知识整理成可搜索的卡片、图解文章和交互式实验室。
 
-当前重点是建立一张清晰的知识地图，覆盖音频基础、硬件、软件、信号处理、AI 音频算法和真实应用场景。仓库中也包含一个 React/Vite 网页应用，用于浏览、搜索和筛选结构化后的知识内容。
+当前网页可用于浏览音频基础、硬件、软件、信号处理、AI 音频算法和真实应用场景。主题卡片可以打开详细解释和对应实验室，方便用图解或交互方式理解关键概念。
 
 ## 为什么建立这个仓库
 
@@ -31,7 +31,7 @@
 
 它适合用于：
 
-- 准备音频技术科普网站内容。
+- 准备音频技术分享网站内容。
 - 构建文章大纲和专题页面。
 - 规划音频信号链路和算法图解。
 - 将传统 DSP 与 AI 音频概念放在同一套知识体系中。
@@ -56,7 +56,7 @@
 
 先从主知识大纲开始阅读：
 
-- [音频技术科普知识大纲](../docs/audio_technology_knowledge_outline.md)
+- [音频技术分享知识大纲](../docs/audio_technology_knowledge_outline.md)
 
 这份大纲是后续内容扩展的源文档。每个章节后续都可以拆成网页栏目、文章系列、图解页面或交互式说明。
 
@@ -107,26 +107,6 @@ npm run build
 - **算法图解**：FFT、滤波、降噪、回声消除、波束成形。
 - **AI 音频系列**：语音识别、语音合成、AI 降噪、声音克隆、音频生成。
 - **应用案例**：会议音频系统、智能音箱、车载语音交互、直播音频处理。
-
-## 路线图
-
-- [x] 创建第一版音频技术知识大纲。
-- [x] 增加双语 README 入口。
-- [x] 搭建第一版 React/Vite 知识库网页应用。
-- [x] 使用 GitHub Pages 发布网页应用。
-- [ ] 将大纲拆分为适合网页展示的专题页面。
-- [ ] 增加信号链路、频谱图和算法流程图。
-- [ ] 使用统一文章模板扩展每个主题。
-- [ ] 补充资料来源和延伸阅读列表。
-- [ ] 为后续知识库浏览准备网页界面。
-
-## 写作原则
-
-- 保持解释易懂，同时不牺牲技术准确性。
-- 对信号流、硬件链路和算法流程优先使用图解。
-- 区分基础概念和进阶主题。
-- 同时解释传统 DSP 方法和 AI 方法。
-- 在合适位置补充产品和工程实践背景。
 
 ## 语言
 

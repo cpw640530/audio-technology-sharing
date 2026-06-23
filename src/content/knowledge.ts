@@ -44,6 +44,7 @@ export type TopicLab = {
     | "spatial-audio"
     | "meeting-communication"
     | "automotive-audio"
+    | "iot-content"
     | "ai-audio";
   initialMode?: AiAudioLabId;
   title: LocalizedText;
@@ -77,20 +78,14 @@ export type Category = {
   topics: Topic[];
 };
 
-export type RoadmapItem = {
-  done: boolean;
-  text: LocalizedText;
-};
-
 export const interfaceCopy = {
-  navDocs: { zh: "文档", en: "Docs" },
   navGithub: { zh: "GitHub", en: "GitHub" },
   languageButton: { zh: "English", en: "中文" },
-  eyebrow: { zh: "音频技术科普", en: "Audio Technology Explained" },
-  title: { zh: "音频技术科普", en: "Audio Technology Explained" },
+  eyebrow: { zh: "音频技术分享", en: "Audio Technology Sharing" },
+  title: { zh: "音频技术分享", en: "Audio Technology Sharing" },
   subtitle: {
-    zh: "把音频基础、硬件、软件、传统 DSP、AI 算法和应用场景整理成可浏览、可搜索、可扩展的网页内容底座。",
-    en: "A searchable, browsable foundation for audio fundamentals, hardware, software, traditional DSP, AI algorithms, and real-world applications."
+    zh: "一个可搜索、可筛选、带交互实验室的音频技术分享网页，覆盖音频基础、硬件、软件、传统 DSP、AI 算法和应用场景。",
+    en: "A searchable, filterable audio technology sharing site with interactive labs, covering fundamentals, hardware, software, traditional DSP, AI algorithms, and applications."
   },
   searchLabel: { zh: "搜索知识点", en: "Search knowledge topics" },
   searchPlaceholder: {
@@ -122,14 +117,8 @@ export const interfaceCopy = {
     zh: "文章 / 图解 / 案例 / 交互说明",
     en: "Article / Diagram / Case study / Interactive explainer"
   },
-  roadmapTitle: { zh: "内容路线图", en: "Content Roadmap" },
-  roadmapSubtitle: {
-    zh: "从大纲到网页内容的下一步建设顺序。",
-    en: "The next steps from outline to web-ready content."
-  },
-  principlesTitle: { zh: "写作原则", en: "Writing Principles" },
   footer: {
-    zh: "内容来自当前仓库的音频技术科普知识大纲。",
+    zh: "内容来自当前仓库的音频技术分享知识大纲。",
     en: "Content is derived from the repository's audio technology knowledge outline."
   }
 } satisfies Record<string, LocalizedText>;
@@ -2012,51 +2001,51 @@ export const categories: Category[] = [
         }
       },
       {
-        title: { zh: "智能汽车", en: "Intelligent Vehicles" },
+        title: { zh: "车载声学", en: "In-Car Acoustics" },
         summary: {
-          zh: "关注车载语音助手、车内降噪、声源定位和座舱空间音频。",
-          en: "Focus on in-car voice assistants, cabin noise control, localization, and spatial audio."
+          zh: "关注车内麦克风、扬声器、语音助手、声源定位、座舱空间音频和主动降噪。",
+          en: "Focus on cabin microphones, speakers, voice assistants, localization, spatial audio, and active noise control."
         },
         bullets: [
           { zh: "车载语音交互", en: "In-car voice interaction" },
-          { zh: "声源定位", en: "Sound source localization" },
-          { zh: "座舱空间音频", en: "Cabin spatial audio" }
+          { zh: "声源定位与分区拾音", en: "Localization and zone pickup" },
+          { zh: "座舱空间音频与 ANC", en: "Cabin spatial audio and ANC" }
         ],
         detail: {
           explanation: {
-            zh: "智能汽车中的音频系统同时服务语音交互、通话、娱乐、提示音、声源定位和座舱空间音频。车载语音助手不是一个单独 App，而是麦克风阵列、唤醒词、ASR、NLU/LLM、车辆状态、座位位置和安全策略共同组成的链路。声源定位要回答谁在说、坐在哪里、是否正在对车辆发指令；座舱空间音频则要把音乐、导航、告警和语音反馈按座位、方向和安全优先级渲染出来。",
-            en: "Vehicle audio systems support voice interaction, calls, entertainment, alerts, sound-source localization, and in-cabin spatial audio. An in-car voice assistant is not a standalone app; it is a chain across microphone arrays, wake words, ASR, NLU/LLM, vehicle state, seat position, and safety policy. Localization must answer who is speaking, where they sit, and whether they are addressing the car. Cabin spatial audio renders music, navigation, alerts, and voice feedback by seat, direction, and safety priority."
+            zh: "车载声学不是只讲听歌，而是把车内麦克风、扬声器、功放、Codec/DSP、语音助手、声源定位、免提通话、主动降噪和安全提示整合到同一套座舱声学系统。车载语音助手通常从顶灯、后视镜或车顶麦克风阵列采集语音，经过唤醒词、ASR、NLU/LLM 和车辆控制策略，再通过扬声器给出语音反馈。声源定位要判断谁在说、坐在哪个座位、是否在对车辆下指令；座舱空间音频要根据扬声器位置、座位补偿和安全优先级渲染音乐、导航与提示音。主动降噪通常针对低频发动机噪声、胎噪和路噪，用参考传感器或车内误差麦估计噪声，再通过扬声器播放反相信号降低乘员听到的噪声。",
+            en: "In-car acoustics is not only about music playback. It combines cabin microphones, speakers, amplifiers, Codec/DSP, voice assistants, localization, hands-free calling, active noise control, and safety alerts into one acoustic system. A vehicle voice assistant usually captures speech from overhead, mirror, or roof microphone arrays, then passes through wake word, ASR, NLU/LLM, and vehicle-control policy before responding through speakers. Localization decides who is speaking, which seat they occupy, and whether they are addressing the car. Cabin spatial audio renders music, navigation, and alerts according to speaker positions, seat compensation, and safety priority. Active noise cancellation usually targets low-frequency engine, tire, and road noise by estimating noise through reference sensors or in-cabin error microphones and playing anti-phase sound through speakers."
           },
           lab: {
             type: "automotive-audio",
-            title: { zh: "智能汽车实验室", en: "Intelligent Vehicle Audio Lab" },
+            title: { zh: "车载声学实验室", en: "In-Car Acoustics Lab" },
             description: {
-              zh: "用汽车座舱图理解声源定位、分区拾音、语音助手链路和座舱空间音频如何在同一套车内音频系统中协同。",
-              en: "Use an in-cabin car diagram to understand how localization, zone pickup, voice assistants, and spatial audio work together in one vehicle audio system."
+              zh: "用车内饰部件位置图理解麦克风、扬声器、声源定位、语音助手、座舱空间音频和主动降噪如何协同。",
+              en: "Use a cabin component layout to understand how microphones, speakers, localization, voice assistants, spatial audio, and active noise control work together."
             },
-            buttonLabel: { zh: "打开智能汽车实验室", en: "Open intelligent vehicle lab" }
+            buttonLabel: { zh: "打开车载声学实验室", en: "Open in-car acoustics lab" }
           },
           keyConcepts: [
-            { zh: "多麦克风阵列可用于唤醒、声源定位、分区拾音和免提通话；车内音乐、路噪和多人说话会让定位更困难。", en: "Microphone arrays support wake words, localization, zone pickup, and hands-free calls; music, road noise, and overlapping talkers make localization harder." },
-            { zh: "语音助手链路通常是唤醒词 -> ASR -> NLU/LLM -> 车辆控制，但车速、驾驶状态和安全策略会限制能执行的动作。", en: "A voice-assistant chain is usually wake word -> ASR -> NLU/LLM -> vehicle control, while speed, driving state, and safety policy constrain executable actions." },
-            { zh: "座舱空间音频要考虑座位差异、声场校准、扬声器布局和安全提示优先级。", en: "Cabin spatial audio must consider seat differences, field calibration, speaker layout, and safety-alert priority." },
-            { zh: "上下文感知语音 AI 会结合说话人、座位、乘员身份、车辆状态和外部环境，给出更个性化但更受约束的交互。", en: "Context-aware voice AI combines speaker, seat, occupant identity, vehicle state, and outside context for more personalized but more constrained interaction." }
+            { zh: "麦克风常见位置包括顶灯/车顶、内后视镜、中控、头枕或 B 柱；位置越接近目标乘员，拾音越直接，但整车布线、外观和风噪也更难处理。", en: "Common microphone locations include overhead lamp/roof, mirror, console, headrest, and B-pillar. Closer placement gives more direct pickup but complicates wiring, styling, and wind-noise handling." },
+            { zh: "扬声器常见位置包括仪表台中置、A 柱高音、门板中低音、后门/后环绕和低音炮；空间音频依赖正确的声道映射、延迟、EQ、相位和座位补偿。", en: "Common speaker locations include center dash, A-pillar tweeters, door mid-woofers, rear surrounds, and subwoofers. Spatial audio depends on correct channel mapping, delay, EQ, phase, and seat compensation." },
+            { zh: "语音助手链路通常是唤醒词 -> ASR -> NLU/LLM -> 车辆控制 / 语音反馈，但车速、驾驶状态、座位权限和安全策略会限制能执行的动作。", en: "A voice-assistant chain is usually wake word -> ASR -> NLU/LLM -> vehicle control / voice response, while speed, driving state, seat permission, and safety policy constrain executable actions." },
+            { zh: "主动降噪 ANC/RNC 不是把音乐变小，而是用反相信号抵消低频噪声；它更擅长稳定低频，对高频、人声和突发声通常不适合强行抵消。", en: "ANC/RNC does not simply lower music volume. It cancels low-frequency noise with anti-phase sound; it works best on stable low frequencies and is usually unsuitable for aggressive cancellation of high frequencies, speech, or transients." }
           ],
           misconception: {
-            zh: "车内更安静不代表语音更容易。真正的难点常常是音乐回放、路噪、空调、乘客重叠说话、座位反射和安全策略共同变化。",
-            en: "A quieter cabin does not automatically make speech easier. The hard cases often combine music playback, road noise, HVAC, overlapping passengers, seat reflections, and changing safety policy."
+            zh: "车载声学不能只看某一个麦克风或某一个扬声器。车内空间很小、反射强、噪声源多，语音、音乐、导航、告警和主动降噪会互相影响。",
+            en: "In-car acoustics cannot be judged from one microphone or one speaker. The cabin is small, reflective, and noisy, so voice, music, navigation, alerts, and ANC interact with one another."
           },
           contentDirection: {
-            zh: "重点用汽车座舱拓扑图展示麦克风、扬声器、座位、声源定位、语音助手和空间音频之间的关系，并按“唤醒错人、助手听错、声场不对”做问题诊断。",
-            en: "Focus on an in-cabin topology showing microphones, speakers, seats, localization, voice assistants, and spatial audio, then diagnose wrong wake owner, misunderstood assistant commands, and incorrect sound field."
+            zh: "重点用车内饰部件位置图展示麦克风、扬声器、座位、声源定位、语音助手、座舱空间音频和 ANC 之间的关系，并按“唤醒错人、定位漂移、ANC 压耳或轰鸣”做问题诊断。",
+            en: "Focus on a cabin component layout showing microphones, speakers, seats, localization, voice assistants, spatial audio, and ANC, then diagnose wrong wake owner, localization drift, and ANC pressure or rumble."
           }
         }
       },
       {
         title: { zh: "IoT 与内容创作", en: "IoT and Content Creation" },
         summary: {
-          zh: "覆盖语音唤醒、边缘 AI、播客、直播、AI 配音和自动混音。",
-          en: "Cover wake words, edge AI, podcasts, streaming, AI dubbing, and automatic mixing."
+          zh: "覆盖低功耗语音唤醒、边缘控制、播客、直播、AI 配音和自动混音。",
+          en: "Cover low-power wake words, edge control, podcasts, streaming, AI dubbing, and automatic mixing."
         },
         bullets: [
           { zh: "本地语音控制", en: "Local voice control" },
@@ -2065,81 +2054,34 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "IoT 音频强调低功耗、低成本、隐私和边缘响应，内容创作音频强调效率、可编辑性和一致交付。两者都在使用语音唤醒、降噪、自动混音、AI 配音和云端协作来降低使用门槛。",
-            en: "IoT audio emphasizes low power, low cost, privacy, and edge responsiveness, while content-creation audio emphasizes efficiency, editability, and consistent delivery. Both use wake words, noise reduction, automatic mixing, AI dubbing, and cloud collaboration to lower the barrier."
+            zh: "IoT 音频更像一个长期待机的边缘感知系统，核心目标是低功耗、低成本、隐私、安全和快速响应。典型链路是麦克风持续监听低功耗唤醒词，唤醒后把短语音送入本地命令识别或云端 ASR/LLM，再控制灯、门锁、家电、摄像头或机器人。内容创作音频更像一条可反复编辑和交付的生产流水线，核心目标是可听、稳定、可修改、跨平台响度一致。典型链路是录音或导入素材，经过降噪、剪辑、EQ、压缩、响度标准化、AI 配音、自动母带和多平台导出。两者都可能用 AI，但 IoT 更在意实时性和资源预算，内容创作更在意质量、可控性和最终交付。",
+            en: "IoT audio is more like an always-on edge sensing system whose goals are low power, low cost, privacy, safety, and fast response. A typical chain keeps a microphone listening for a low-power wake word, then sends short speech to local command recognition or cloud ASR/LLM to control lights, locks, appliances, cameras, or robots. Content-creation audio is more like an editable production pipeline whose goals are intelligibility, consistency, editability, and platform-ready loudness. A typical chain records or imports material, then applies denoising, editing, EQ, compression, loudness normalization, AI dubbing, automatic mastering, and multi-platform export. Both may use AI, but IoT cares more about latency and resource budget, while content creation cares more about quality, control, and delivery."
+          },
+          lab: {
+            type: "iot-content",
+            title: { zh: "IoT 与内容创作实验室", en: "IoT and Content Creation Lab" },
+            description: {
+              zh: "用双路径流程图对比 IoT 语音控制和内容创作工具链，理解实时控制与内容生产的目标差异。",
+              en: "Use a dual-path flow diagram to compare IoT voice control with creator audio workflows and understand the different goals of real-time control and production."
+            },
+            buttonLabel: { zh: "打开 IoT 与内容创作实验室", en: "Open IoT and content creation lab" }
           },
           keyConcepts: [
-            { zh: "边缘语音唤醒需要在功耗、误唤醒、漏唤醒和模型大小之间取舍。", en: "Edge wake-word detection trades power, false accepts, false rejects, and model size." },
-            { zh: "播客和直播常用响度标准、降噪、压缩、限幅和自动电平控制。", en: "Podcasts and live streams often use loudness targets, noise reduction, compression, limiting, and automatic leveling." },
-            { zh: "AI 配音和自动母带把复杂后期流程变成可重复的工具链。", en: "AI dubbing and automatic mastering turn complex post-production into repeatable toolchains." }
+            { zh: "边缘语音唤醒需要在功耗、误唤醒、漏唤醒、模型大小、唤醒词体验和隐私之间取舍。", en: "Edge wake-word detection trades power, false accepts, false rejects, model size, wake-word UX, and privacy." },
+            { zh: "IoT 的音频采集通常短、轻、实时：16 kHz 单声道 PCM、低功耗 DSP/NPU、本地关键词和少量命令词很常见。", en: "IoT capture is often short, lightweight, and real-time: 16 kHz mono PCM, low-power DSP/NPU, local keywords, and small command sets are common." },
+            { zh: "播客和直播常用响度标准、降噪、压缩、限幅、去齿音和自动电平控制，目标是让听众换设备也不觉得忽大忽小。", en: "Podcasts and live streams use loudness targets, denoising, compression, limiting, de-essing, and automatic leveling so listeners do not hear large level jumps across devices." },
+            { zh: "AI 配音、自动剪辑、自动母带和多语言翻译把复杂后期流程变成可重复的工具链，但仍需要人工检查情绪、语义和版权风险。", en: "AI dubbing, auto editing, automatic mastering, and multilingual translation turn post-production into repeatable toolchains, but emotion, meaning, and rights still require human review." }
           ],
           misconception: {
-            zh: "边缘 AI 不代表完全不需要云端；很多产品会把本地唤醒、轻量命令和云端大模型能力组合使用。",
-            en: "Edge AI does not mean the cloud disappears; many products combine local wake words and lightweight commands with larger cloud models."
+            zh: "边缘 AI 不代表完全不需要云端，自动母带也不代表完全不用听。很多 IoT 产品会组合本地唤醒、轻量命令和云端大模型；很多创作工具会自动处理响度和动态，但最终仍要按内容风格和发布平台检查。",
+            en: "Edge AI does not mean the cloud disappears, and automatic mastering does not mean nobody listens. Many IoT products combine local wake words and lightweight commands with cloud models; many creator tools automate loudness and dynamics, but final checks still depend on content style and publishing platform."
           },
           contentDirection: {
-            zh: "适合做 IoT 语音链路和创作者音频工具链两条路径，对比实时控制与内容生产的不同目标。",
-            en: "This fits two paths: an IoT voice pipeline and a creator audio toolchain, comparing real-time control with content production goals."
+            zh: "重点用双路径图讲清 IoT 语音控制和内容创作生产线：前者看功耗、延迟、误唤醒和隐私，后者看响度、动态、噪声、编辑效率和交付一致性。",
+            en: "Use a dual-path diagram to explain IoT voice control and creator production workflows: the former focuses on power, latency, false wakes, and privacy; the latter focuses on loudness, dynamics, noise, editing speed, and delivery consistency."
           }
         }
       }
     ]
-  }
-];
-
-export const roadmapItems: RoadmapItem[] = [
-  {
-    done: true,
-    text: {
-      zh: "建立第一版音频技术知识大纲。",
-      en: "Create the first audio technology knowledge outline."
-    }
-  },
-  {
-    done: true,
-    text: {
-      zh: "搭建可搜索、可筛选的知识库网页。",
-      en: "Build a searchable and filterable knowledge-base web page."
-    }
-  },
-  {
-    done: false,
-    text: {
-      zh: "把重点主题拆分为独立文章页面。",
-      en: "Split key topics into dedicated article pages."
-    }
-  },
-  {
-    done: false,
-    text: {
-      zh: "补充声波、频谱、音频链路和算法流程图。",
-      en: "Add diagrams for waves, spectra, audio chains, and algorithm flows."
-    }
-  },
-  {
-    done: false,
-    text: {
-      zh: "增加参考资料、延伸阅读和真实案例。",
-      en: "Add references, further reading, and real-world case studies."
-    }
-  }
-];
-
-export const writingPrinciples: LocalizedText[] = [
-  {
-    zh: "概念解释优先清晰，避免堆砌术语。",
-    en: "Prioritize clarity over terminology density."
-  },
-  {
-    zh: "硬件和算法内容优先配图解。",
-    en: "Use diagrams for hardware chains and algorithm flows."
-  },
-  {
-    zh: "同时解释传统 DSP 和 AI 方法的差异。",
-    en: "Explain the differences between traditional DSP and AI approaches."
-  },
-  {
-    zh: "在合适位置补充产品和工程实践背景。",
-    en: "Add product and engineering context where it helps understanding."
   }
 ];
