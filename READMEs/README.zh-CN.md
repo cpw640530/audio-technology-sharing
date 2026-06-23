@@ -46,13 +46,13 @@
 | 音频软件 | 驱动、系统音频架构、音频数据流、编解码、实时音频处理 |
 | 传统算法 | FFT、滤波器、EQ、动态处理、降噪、回声消除、波束成形 |
 | AI 音频算法 | ASR、TTS、AI 降噪、音源分离、声音克隆、音乐生成 |
-| 应用场景 | 消费电子、会议通信、智能汽车、IoT、内容创作、医疗和工业声学 |
+| 应用场景 | 会议通信、车载声学、IoT、内容创作、医疗和工业声学 |
 
 ## 快速开始
 
 在线访问网页：
 
-- [https://cpw640530.github.io/audio-technology-explained/](https://cpw640530.github.io/audio-technology-explained/)
+- [https://cpw640530.github.io/audio-technology-sharing/](https://cpw640530.github.io/audio-technology-sharing/)
 
 先从主知识大纲开始阅读：
 
@@ -70,7 +70,7 @@ npm run dev
 默认本地访问地址：
 
 ```text
-http://127.0.0.1:5173/audio-technology-explained/
+http://127.0.0.1:5173/audio-technology-sharing/
 ```
 
 常用命令：

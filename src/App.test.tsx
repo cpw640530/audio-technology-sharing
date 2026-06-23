@@ -1757,7 +1757,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("img", { name: "SPDIF 设备链路图" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "SPDIF 同轴光纤线示例图" })).toHaveAttribute(
       "href",
-      "/audio-technology-explained/images/spdif-line.png"
+      "/audio-technology-sharing/images/spdif-line.png"
     );
     expect(screen.getByText("SPDIF 线缆示例")).toBeInTheDocument();
     expect(screen.getByText("同轴或光纤用于设备之间传数字音频")).toBeInTheDocument();
@@ -1770,7 +1770,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("img", { name: "USB Audio 包传输图" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "USB 外置声卡示例图" })).toHaveAttribute(
       "href",
-      "/audio-technology-explained/images/usb-audio-card.png.png"
+      "/audio-technology-sharing/images/usb-audio-card.png.png"
     );
     expect(screen.getByText("USB 外置声卡示例")).toBeInTheDocument();
     expect(screen.getByText("USB 连接主机，设备提供耳机、麦克风和耳麦一体接口")).toBeInTheDocument();

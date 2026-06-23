@@ -19,7 +19,7 @@ export function Header({ language, onToggleLanguage }: HeaderProps) {
         <span>Audio Technology Sharing</span>
       </a>
       <nav className="header-actions" aria-label="Primary navigation">
-        <a href="https://github.com/cpw640530/audio-technology-explained" rel="noreferrer" target="_blank">
+        <a href="https://github.com/cpw640530/audio-technology-sharing" rel="noreferrer" target="_blank">
           <Github size={18} aria-hidden="true" />
           <span>{interfaceCopy.navGithub[language]}</span>
         </a>

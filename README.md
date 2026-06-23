@@ -47,17 +47,17 @@ It is designed for:
 | Audio software | Drivers, system audio architecture, audio data flow, codecs, real-time processing |
 | Traditional algorithms | FFT, filters, EQ, dynamics, noise suppression, echo cancellation, beamforming |
 | AI audio algorithms | ASR, TTS, AI denoising, source separation, voice cloning, music generation |
-| Applications | Consumer electronics, conferencing, vehicles, IoT, content creation, medical and industrial audio |
+| Applications | Conferencing, in-car acoustics, IoT, content creation, medical and industrial audio |
 
 ## Quick Start
 
 Visit the published website:
 
-- [https://cpw640530.github.io/audio-technology-explained/](https://cpw640530.github.io/audio-technology-explained/)
+- [https://cpw640530.github.io/audio-technology-sharing/](https://cpw640530.github.io/audio-technology-sharing/)
 
 Start from the main knowledge outline:
 
-- [Audio Technology Knowledge Outline](docs/audio_technology_knowledge_outline.md)
+- [Audio Technology Sharing Knowledge Outline](docs/audio_technology_knowledge_outline.md)
 
 The outline is the source document for future content expansion. Each section can later become a website category, article series, diagram page, or interactive explanation.
 
@@ -71,7 +71,7 @@ npm run dev
 The default local URL is:
 
 ```text
-http://127.0.0.1:5173/audio-technology-explained/
+http://127.0.0.1:5173/audio-technology-sharing/
 ```
 
 Useful commands:
