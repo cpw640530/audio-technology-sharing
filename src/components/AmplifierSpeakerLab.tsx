@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 
 import type { Language } from "../content/knowledge";
 
-type DiagramMode = "amplifier" | "speaker" | "enclosure" | "matching";
+type DiagramMode = "amplifier" | "speaker" | "enclosure" | "ts" | "crossover" | "activePassive" | "lineArray" | "matching";
 type AmpClass = "class-a" | "class-ab" | "class-d";
 type AmpPrincipleDetail = {
   principle: string;
@@ -26,6 +26,10 @@ const diagramModes: Array<{ id: DiagramMode; label: Record<Language, string> }> 
   { id: "amplifier", label: { zh: "功放类型", en: "Amplifier class" } },
   { id: "speaker", label: { zh: "扬声器单元", en: "Speaker driver" } },
   { id: "enclosure", label: { zh: "箱体与分频", en: "Enclosure and crossover" } },
+  { id: "ts", label: { zh: "T/S 参数", en: "T/S parameters" } },
+  { id: "crossover", label: { zh: "分频阶数", en: "Crossover order" } },
+  { id: "activePassive", label: { zh: "主动 / 被动分频", en: "Active / passive" } },
+  { id: "lineArray", label: { zh: "线阵列", en: "Line array" } },
   { id: "matching", label: { zh: "匹配关系", en: "Matching" } }
 ];
 
@@ -371,6 +375,213 @@ function renderEnclosureDiagram(language: Language) {
   );
 }
 
+function renderTsDiagram(language: Language) {
+  return (
+    <figure className="amp-diagram-figure">
+      <svg
+        aria-label={language === "zh" ? "Thiele-Small 参数与箱体关系图" : "Thiele-Small parameter enclosure diagram"}
+        role="img"
+        viewBox="0 0 760 430"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <marker id="tsFlowArrow" markerHeight="10" markerWidth="10" orient="auto" refX="8" refY="5">
+            <path d="M 0 0 L 10 5 L 0 10 Z" fill="#f0b46a" />
+          </marker>
+        </defs>
+        <rect className="lab-diagram-bg" height="430" rx="14" width="760" />
+        <text className="lab-label" x="48" y="42">
+          {language === "zh" ? "T/S 参数不是音色玄学，而是低频箱体设计的输入条件" : "T/S parameters are input data for low-frequency box design"}
+        </text>
+        <text className="interface-node-sub amp-flow-note" x="48" y="66">
+          {language === "zh" ? "Fs、Qts、Vas 会影响箱体容积、低频下潜、瞬态和倒相调谐" : "Fs, Qts, and Vas affect box volume, extension, transient behavior, and port tuning"}
+        </text>
+
+        {[
+          { key: "Fs", y: 116, body: language === "zh" ? "自由空气谐振频率" : "free-air resonance" },
+          { key: "Qts", y: 202, body: language === "zh" ? "总 Q 值，反映阻尼" : "total Q, damping" },
+          { key: "Vas", y: 288, body: language === "zh" ? "等效空气顺性体积" : "equivalent compliance volume" }
+        ].map((item) => (
+          <g key={item.key}>
+            <rect className="amp-match-card" height="64" rx="12" width="150" x="56" y={item.y - 32} />
+            <text className="interface-node-text" x="131" y={item.y - 4}>{item.key}</text>
+            <text className="interface-node-sub" x="131" y={item.y + 22}>{item.body}</text>
+            <path className="amp-matching-arrow" d={`M 210 ${item.y} C 252 ${item.y} 272 204 314 204`} />
+          </g>
+        ))}
+
+        <rect className="amp-block" height="128" rx="16" width="174" x="318" y="140" />
+        <text className="interface-node-text" x="405" y="182">{language === "zh" ? "箱体计算" : "Box model"}</text>
+        <text className="interface-node-sub" x="405" y="208">{language === "zh" ? "容积 / 调谐 / 阻尼" : "volume / tuning / damping"}</text>
+        <text className="interface-node-sub" x="405" y="232">{language === "zh" ? "不是只看单元口径" : "not just driver size"}</text>
+
+        <path className="amp-matching-arrow" d="M 496 172 C 536 142 558 126 604 126" />
+        <path className="amp-matching-arrow" d="M 496 236 C 536 268 558 292 604 292" />
+
+        <rect className="amp-speaker-box" height="118" rx="14" width="122" x="606" y="70" />
+        <circle className="amp-driver-low" cx="666" cy="130" r="32" />
+        <text className="lab-label" x="666" y="214">{language === "zh" ? "密闭箱" : "Sealed box"}</text>
+        <text className="interface-node-sub" x="666" y="238">{language === "zh" ? "空气弹簧控制振膜" : "air spring controls cone"}</text>
+
+        <rect className="amp-speaker-box" height="118" rx="14" width="122" x="606" y="248" />
+        <circle className="amp-driver-low" cx="654" cy="306" r="30" />
+        <path className="amp-port" d="M 690 330 H 724" />
+        <text className="lab-label" x="666" y="392">{language === "zh" ? "倒相箱" : "Bass reflex"}</text>
+        <text className="interface-node-sub" x="666" y="414">{language === "zh" ? "导管共振增强低频" : "port resonance boosts bass"}</text>
+      </svg>
+      <figcaption>
+        {language === "zh"
+          ? "常见经验是：Qts 较低的单元更常用于倒相箱，Qts 较高的单元更容易做密闭箱；但最终还要看目标体积、低频下潜、最大声压和保护策略。"
+          : "A common rule of thumb is that lower-Qts drivers often suit bass-reflex boxes, while higher-Qts drivers are easier in sealed boxes; final choices still depend on target volume, extension, maximum SPL, and protection."}
+      </figcaption>
+    </figure>
+  );
+}
+
+function renderCrossoverOrderDiagram(language: Language) {
+  const rows = [
+    { label: language === "zh" ? "一阶" : "1st order", slope: "6 dB/oct", phase: language === "zh" ? "相位旋转小" : "less phase rotation", d: "M 84 132 C 220 132 302 142 420 230" },
+    { label: language === "zh" ? "二阶" : "2nd order", slope: "12 dB/oct", phase: language === "zh" ? "常需反相/对齐" : "often needs polarity/alignment", d: "M 84 212 C 196 212 292 222 420 310" },
+    { label: language === "zh" ? "四阶" : "4th order", slope: "24 dB/oct", phase: language === "zh" ? "保护强，设计更严格" : "more protection, stricter design", d: "M 84 292 C 190 292 262 302 420 382" }
+  ];
+
+  return (
+    <figure className="amp-diagram-figure">
+      <svg
+        aria-label={language === "zh" ? "分频阶数与相位对齐图" : "Crossover order and phase alignment diagram"}
+        role="img"
+        viewBox="0 0 760 430"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <rect className="lab-diagram-bg" height="430" rx="14" width="760" />
+        <text className="lab-label" x="48" y="42">
+          {language === "zh" ? "分频阶数决定斜率，分频点附近还要看相位叠加" : "Crossover order sets slope; phase summing near crossover also matters"}
+        </text>
+        <line className="spatial-response-axis" x1="84" x2="430" y1="352" y2="352" />
+        <line className="spatial-response-axis" x1="84" x2="84" y1="92" y2="352" />
+        <text className="interface-node-sub" x="86" y="380">{language === "zh" ? "频率升高" : "frequency increases"}</text>
+        <text className="interface-node-sub" x="44" y="94">{language === "zh" ? "电平" : "level"}</text>
+        {rows.map((row, index) => (
+          <g key={row.label}>
+            <path className={`amp-crossover-slope order-${index + 1}`} d={row.d} />
+            <text className="lab-label" x="468" y={126 + index * 80}>{row.label}</text>
+            <text className="interface-node-sub" x="548" y={126 + index * 80}>{row.slope}</text>
+            <text className="interface-node-sub" x="468" y={150 + index * 80}>{row.phase}</text>
+          </g>
+        ))}
+        <rect className="amp-block muted" height="142" rx="14" width="210" x="500" y="248" />
+        <text className="interface-node-text" x="605" y="284">{language === "zh" ? "相位对齐" : "Phase alignment"}</text>
+        <text className="interface-node-sub" x="605" y="312">{language === "zh" ? "低音 + 高音在分频点相加" : "woofer + tweeter sum at crossover"}</text>
+        <text className="interface-node-sub" x="605" y="338">{language === "zh" ? "不对齐会凹陷、隆起或声像漂移" : "misalignment causes dips, peaks, or image shift"}</text>
+      </svg>
+      <figcaption>
+        {language === "zh"
+          ? "分频不是简单切一刀。阶数越高，带外衰减越快，单元更安全；但电声相位、单元声学中心和摆位都会影响最终叠加。"
+          : "A crossover is not just a cut. Higher order gives faster out-of-band attenuation and better driver protection, but electrical/acoustic phase, acoustic centers, and placement affect the final sum."}
+      </figcaption>
+    </figure>
+  );
+}
+
+function renderActivePassiveDiagram(language: Language) {
+  return (
+    <figure className="amp-diagram-figure">
+      <svg
+        aria-label={language === "zh" ? "主动分频与被动分频对比图" : "Active and passive crossover comparison diagram"}
+        role="img"
+        viewBox="0 0 760 430"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <marker id="activePassiveArrow" markerHeight="10" markerWidth="10" orient="auto" refX="8" refY="5">
+            <path d="M 0 0 L 10 5 L 0 10 Z" fill="#f0b46a" />
+          </marker>
+        </defs>
+        <rect className="lab-diagram-bg" height="430" rx="14" width="760" />
+        <text className="lab-label" x="48" y="42">{language === "zh" ? "主动分频：先分频，再分别功放" : "Active crossover: split first, then amplify each band"}</text>
+        <rect className="amp-block" height="58" rx="10" width="112" x="54" y="84" />
+        <text className="interface-node-text" x="110" y="120">DSP</text>
+        <path className="amp-enclosure-arrow" d="M 170 112 H 220" />
+        <rect className="amp-block" height="58" rx="10" width="112" x="224" y="62" />
+        <text className="interface-node-text" x="280" y="98">{language === "zh" ? "低频功放" : "LF amp"}</text>
+        <rect className="amp-block" height="58" rx="10" width="112" x="224" y="146" />
+        <text className="interface-node-text" x="280" y="182">{language === "zh" ? "高频功放" : "HF amp"}</text>
+        <path className="amp-enclosure-arrow" d="M 340 92 H 404" />
+        <path className="amp-enclosure-arrow" d="M 340 176 H 404" />
+        <circle className="amp-driver-low" cx="452" cy="92" r="28" />
+        <circle className="amp-driver-high" cx="452" cy="176" r="20" />
+        <text className="interface-node-sub" x="596" y="92">{language === "zh" ? "优点：延迟/EQ/限幅/保护精确" : "Pros: precise delay/EQ/limiting/protection"}</text>
+        <text className="interface-node-sub" x="596" y="122">{language === "zh" ? "代价：需要多路 DAC/功放" : "Cost: needs more DAC/amp channels"}</text>
+
+        <line className="amp-match-divider" x1="48" x2="712" y1="228" y2="228" />
+        <text className="lab-label" x="48" y="270">{language === "zh" ? "被动分频：先功放，再用 L/C/R 分给单元" : "Passive crossover: amplify first, then split with L/C/R"}</text>
+        <rect className="amp-block" height="58" rx="10" width="112" x="54" y="306" />
+        <text className="interface-node-text" x="110" y="342">{language === "zh" ? "功放" : "Amp"}</text>
+        <path className="amp-enclosure-arrow" d="M 170 334 H 220" />
+        <rect className="amp-block muted" height="82" rx="10" width="126" x="224" y="294" />
+        <text className="interface-node-text" x="287" y="324">{language === "zh" ? "L / C / R" : "L / C / R"}</text>
+        <text className="interface-node-sub" x="287" y="350">{language === "zh" ? "被动分频网络" : "passive network"}</text>
+        <path className="amp-enclosure-arrow" d="M 354 314 H 404" />
+        <path className="amp-enclosure-arrow" d="M 354 356 H 404" />
+        <circle className="amp-driver-low" cx="452" cy="314" r="28" />
+        <circle className="amp-driver-high" cx="452" cy="356" r="20" />
+        <text className="interface-node-sub" x="596" y="314">{language === "zh" ? "优点：结构简单，一路功放即可" : "Pros: simple, one amp channel can work"}</text>
+        <text className="interface-node-sub" x="596" y="344">{language === "zh" ? "代价：受阻抗曲线影响，元件会损耗" : "Cost: load-dependent, components dissipate power"}</text>
+      </svg>
+      <figcaption>
+        {language === "zh"
+          ? "主动分频更像系统设计，适合 DSP 音箱、车载和有源监听；被动分频更像模拟网络设计，常见于传统无源音箱。"
+          : "Active crossover is closer to system design and fits DSP speakers, cars, and active monitors; passive crossover is an analog network design common in traditional passive speakers."}
+      </figcaption>
+    </figure>
+  );
+}
+
+function renderLineArrayDiagram(language: Language) {
+  const drivers = [92, 132, 172, 212, 252, 292, 332];
+
+  return (
+    <figure className="amp-diagram-figure">
+      <svg
+        aria-label={language === "zh" ? "线阵列扬声器覆盖控制图" : "Line array coverage control diagram"}
+        role="img"
+        viewBox="0 0 760 430"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <rect className="lab-diagram-bg" height="430" rx="14" width="760" />
+        <text className="lab-label" x="48" y="42">
+          {language === "zh" ? "线阵列通过多个单元的叠加控制垂直覆盖" : "A line array controls vertical coverage by combining many drivers"}
+        </text>
+        <rect className="amp-block muted" height="300" rx="16" width="96" x="86" y="72" />
+        {drivers.map((y, index) => (
+          <g key={y}>
+            <circle className="amp-driver-high" cx="134" cy={y} r="14" />
+            <text className="interface-node-sub" x="196" y={y + 4}>{language === "zh" ? `单元 ${index + 1}` : `Driver ${index + 1}`}</text>
+          </g>
+        ))}
+        <path className="amp-linearray-main" d="M 184 212 C 290 126 462 100 684 130" />
+        <path className="amp-linearray-main lower" d="M 184 212 C 290 298 462 324 684 294" />
+        <path className="amp-linearray-side" d="M 184 212 C 294 176 438 182 622 210" />
+        <path className="amp-linearray-side" d="M 184 212 C 294 248 438 242 622 214" />
+        <text className="lab-chip" x="388" y="96">{language === "zh" ? "目标覆盖区" : "target coverage"}</text>
+        <text className="lab-chip" x="392" y="340">{language === "zh" ? "减少垂直扩散" : "reduced vertical spill"}</text>
+        <rect className="amp-block" height="94" rx="14" width="210" x="476" y="154" />
+        <text className="interface-node-text" x="581" y="186">{language === "zh" ? "延迟 / 电平 / 角度" : "Delay / level / splay"}</text>
+        <text className="interface-node-sub" x="581" y="214">{language === "zh" ? "让远近听众声压更均匀" : "more even SPL for near/far listeners"}</text>
+        <text className="interface-node-sub" x="581" y="238">{language === "zh" ? "阵列越长，低频指向控制越强" : "longer arrays control lower frequencies better"}</text>
+        <text className="interface-node-sub" x="92" y="402">
+          {language === "zh" ? "注意：线阵列不是简单堆喇叭，单元间距过大会产生梳状滤波和旁瓣。" : "Note: a line array is not just stacked speakers; excessive spacing causes comb filtering and side lobes."}
+        </text>
+      </svg>
+      <figcaption>
+        {language === "zh"
+          ? "线阵列常用于大型扩声。它通过多个单元在空间中的相干叠加控制覆盖范围，设计重点是阵列长度、单元间距、吊挂角度、延迟和电平 shading。"
+          : "Line arrays are common in large sound reinforcement. They use coherent spatial summing to control coverage; key design points are array length, driver spacing, splay angle, delay, and level shading."}
+      </figcaption>
+    </figure>
+  );
+}
+
 function renderMatchingDiagram(language: Language) {
   const nodes = [
     {
@@ -477,6 +688,18 @@ function renderDiagram({
   }
   if (diagramMode === "enclosure") {
     return renderEnclosureDiagram(language);
+  }
+  if (diagramMode === "ts") {
+    return renderTsDiagram(language);
+  }
+  if (diagramMode === "crossover") {
+    return renderCrossoverOrderDiagram(language);
+  }
+  if (diagramMode === "activePassive") {
+    return renderActivePassiveDiagram(language);
+  }
+  if (diagramMode === "lineArray") {
+    return renderLineArrayDiagram(language);
   }
   if (diagramMode === "matching") {
     return renderMatchingDiagram(language);

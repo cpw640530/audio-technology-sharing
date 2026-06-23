@@ -14,6 +14,7 @@ type TopicDetailsProps = {
   onOpenAiAudioLab: (initialMode?: AiAudioLabId) => void;
   onOpenAudioCodecLab: () => void;
   onOpenAudioPluginLab: () => void;
+  onOpenAudioUnitsLab: () => void;
   onOpenAutomotiveAudioLab: () => void;
   onOpenCodecLab: () => void;
   onOpenCoreSignalProcessingLab: () => void;
@@ -90,6 +91,7 @@ export function TopicDetails({
   onOpenAiAudioLab,
   onOpenAudioCodecLab,
   onOpenAudioPluginLab,
+  onOpenAudioUnitsLab,
   onOpenAutomotiveAudioLab,
   onOpenCodecLab,
   onOpenCoreSignalProcessingLab,
@@ -112,6 +114,11 @@ export function TopicDetails({
   function openTopicLab() {
     if (topic.detail.lab?.type === "sound-wave") {
       onOpenSoundLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "audio-units") {
+      onOpenAudioUnitsLab();
       return;
     }
 

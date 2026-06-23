@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Pause, Play } from "lucide-react";
 import type { Language } from "../content/knowledge";
 
@@ -13,6 +13,25 @@ type MicPrinciple = "electret" | "digitalMems" | "dynamicVocal" | "array";
 
 type ActiveMicAudio = {
   context: AudioContext;
+  directGain: GainNode;
+  filter: BiquadFilterNode;
+  noiseGain: GainNode;
+  outputGain: GainNode;
+  shaper: WaveShaperNode;
+  stopAt: number;
+  timeoutId: number;
+};
+
+type MicPlaybackProfile = {
+  directLevel: number;
+  distortionAmount: number;
+  duration: number;
+  filterFrequency: number;
+  filterQ: number;
+  noiseLevel: number;
+  oscillatorFrequency: number;
+  outputLevel: number;
+  plosiveLevel: number;
 };
 
 type PrincipleCopy = {
@@ -183,6 +202,10 @@ function getPolarGain(pattern: PolarPattern, angleDegrees: number) {
   return Math.max(0, 0.5 + 0.5 * cosine);
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
 function createPolarPath(pattern: PolarPattern, angleDegrees: number) {
   const centerX = 190;
   const centerY = 190;
@@ -223,7 +246,7 @@ function getPickupAnalysis({
   pattern: PolarPattern;
 }) {
   const directionalGain = getPolarGain(pattern, Math.abs(angle));
-  const distanceGain = 1 / Math.max(1, distance);
+  const distanceGain = 1 / Math.max(0.35, distance);
   const preampGain = gain / 50;
   const level = directionalGain * distanceGain * preampGain;
   const levelPercent = Math.min(100, Math.round(level * 82));
@@ -259,10 +282,106 @@ function createDistortionCurve(amount: number) {
 
   for (let index = 0; index < curve.length; index += 1) {
     const x = (index * 2) / (curve.length - 1) - 1;
-    curve[index] = Math.tanh(x * drive);
+    curve[index] = amount <= 0.01 ? x : Math.tanh(x * drive);
   }
 
   return curve;
+}
+
+function createMicPlaybackProfile({
+  analysis,
+  distance,
+  example,
+  gain
+}: {
+  analysis: ReturnType<typeof getPickupAnalysis>;
+  distance: number;
+  example: MicExample;
+  gain: number;
+}): MicPlaybackProfile {
+  const distanceGain = 1 / Math.max(0.35, distance);
+  const preampGain = gain / 50;
+  const offAxisAmount = 1 - analysis.directionalGain;
+  const normalizedPickup = clamp(analysis.directionalGain * distanceGain * preampGain, 0, 1.8);
+  const exampleLevel =
+    example === "near"
+      ? 1.1
+      : example === "far"
+        ? 0.72
+        : example === "noise"
+          ? 0.62
+          : example === "plosive"
+            ? 0.9
+            : example === "clipping"
+              ? 1.35
+              : 0.82;
+  const baseFilter =
+    example === "plosive"
+      ? 190
+      : example === "far"
+        ? 2400
+        : example === "offAxis"
+          ? 1800
+          : example === "noise"
+            ? 3100
+            : 4300;
+  const clippingBoost = example === "clipping" ? 0.55 : 0;
+  const distanceNoise = clamp((distance - 0.8) * 0.014, 0, 0.05);
+
+  return {
+    directLevel: clamp(normalizedPickup * 0.12 * exampleLevel, 0.0006, 0.24),
+    distortionAmount: clamp((analysis.clippingRisk / 100) * 0.9 + clippingBoost, 0, 1),
+    duration: example === "plosive" ? 1.55 : 2.8,
+    filterFrequency: clamp(baseFilter - offAxisAmount * 1900 - distance * 140 + analysis.directionalGain * 260, 150, 4800),
+    filterQ: example === "plosive" ? 0.65 : example === "offAxis" || example === "far" ? 0.82 : 1.05,
+    noiseLevel: clamp(
+      0.005 +
+        analysis.noiseRisk * 0.00052 +
+        offAxisAmount * 0.018 +
+        distanceNoise +
+        (example === "noise" ? 0.048 : 0) +
+        (example === "far" ? 0.022 : 0),
+      0.004,
+      0.12
+    ),
+    oscillatorFrequency: example === "plosive" ? 130 : example === "clipping" ? 230 : 210,
+    outputLevel: clamp(0.72 + gain / 220, 0.76, 1.14),
+    plosiveLevel: clamp(normalizedPickup * 0.16 + (example === "plosive" ? 0.035 : 0), 0.002, 0.26)
+  };
+}
+
+function setParamNow(param: AudioParam, value: number, now: number) {
+  const runtimeParam = param as AudioParam & {
+    cancelScheduledValues?: (startTime: number) => AudioParam;
+    setTargetAtTime?: (target: number, startTime: number, timeConstant: number) => AudioParam;
+  };
+
+  if (typeof runtimeParam.cancelScheduledValues === "function") {
+    runtimeParam.cancelScheduledValues(now);
+  }
+
+  if (typeof runtimeParam.setTargetAtTime === "function") {
+    runtimeParam.setTargetAtTime(value, now, 0.025);
+    return;
+  }
+
+  param.setValueAtTime(value, now);
+}
+
+function applyLiveMicProfile(graph: ActiveMicAudio, profile: MicPlaybackProfile) {
+  const now = graph.context.currentTime;
+
+  setParamNow(graph.directGain.gain, profile.directLevel, now);
+  setParamNow(graph.noiseGain.gain, profile.noiseLevel, now);
+  setParamNow(graph.outputGain.gain, profile.outputLevel, now);
+  setParamNow(graph.filter.frequency, profile.filterFrequency, now);
+  setParamNow(graph.filter.Q, profile.filterQ, now);
+  graph.shaper.curve = createDistortionCurve(profile.distortionAmount);
+
+  if (graph.stopAt > now + 0.08) {
+    graph.directGain.gain.linearRampToValueAtTime(0.0001, graph.stopAt);
+    graph.noiseGain.gain.linearRampToValueAtTime(0.0001, graph.stopAt);
+  }
 }
 
 function stopGraph(graph: ActiveMicAudio | null) {
@@ -270,6 +389,7 @@ function stopGraph(graph: ActiveMicAudio | null) {
     return;
   }
 
+  window.clearTimeout(graph.timeoutId);
   void graph.context.close();
 }
 
@@ -404,6 +524,20 @@ export function MicrophoneLab({ language, onBack }: MicrophoneLabProps) {
     () => getPickupAnalysis({ angle, distance, gain, pattern }),
     [angle, distance, gain, pattern]
   );
+  const playbackProfile = useMemo(
+    () => createMicPlaybackProfile({ analysis, distance, example, gain }),
+    [analysis, distance, example, gain]
+  );
+
+  useEffect(() => {
+    if (!audioRef.current) {
+      return;
+    }
+
+    applyLiveMicProfile(audioRef.current, playbackProfile);
+  }, [playbackProfile]);
+
+  useEffect(() => () => stopGraph(audioRef.current), []);
 
   function stopAudio() {
     stopGraph(audioRef.current);
@@ -422,62 +556,48 @@ export function MicrophoneLab({ language, onBack }: MicrophoneLabProps) {
     const context = new AudioContextConstructor();
     const now = context.currentTime;
     const oscillator = context.createOscillator();
-    const gainNode = context.createGain();
+    const directGain = context.createGain();
     const filter = context.createBiquadFilter();
+    const shaper = context.createWaveShaper();
     const outputGain = context.createGain();
-    const sourceLevel = Math.max(0.02, analysis.levelPercent / 100);
+    const noiseSource = context.createBufferSource();
+    const noiseGain = context.createGain();
+    const noiseFilter = context.createBiquadFilter();
+    const stopAt = now + playbackProfile.duration;
 
     oscillator.type = "sawtooth";
-    oscillator.frequency.setValueAtTime(example === "plosive" ? 130 : 210, now);
-    filter.type = example === "offAxis" || example === "far" ? "lowpass" : "bandpass";
-    filter.frequency.setValueAtTime(
-      example === "offAxis" ? 1500 : example === "far" ? 2200 : example === "plosive" ? 170 : 920,
-      now
-    );
-    filter.Q.setValueAtTime(example === "plosive" ? 0.7 : 1.1, now);
-    gainNode.gain.setValueAtTime(0.0001, now);
-    gainNode.gain.linearRampToValueAtTime(
-      example === "far" ? 0.035 : example === "noise" ? 0.045 : 0.05 + sourceLevel * 0.08,
-      now + 0.04
-    );
-    gainNode.gain.linearRampToValueAtTime(0.0001, now + 1.05);
-    outputGain.gain.setValueAtTime(0.86, now);
+    oscillator.frequency.setValueAtTime(playbackProfile.oscillatorFrequency, now);
+    filter.type = example === "plosive" ? "bandpass" : "lowpass";
+    filter.frequency.setValueAtTime(playbackProfile.filterFrequency, now);
+    filter.Q.setValueAtTime(playbackProfile.filterQ, now);
+    shaper.curve = createDistortionCurve(playbackProfile.distortionAmount);
+    shaper.oversample = "4x";
+    directGain.gain.setValueAtTime(0.0001, now);
+    directGain.gain.linearRampToValueAtTime(playbackProfile.directLevel, now + 0.04);
+    directGain.gain.linearRampToValueAtTime(0.0001, stopAt);
+    outputGain.gain.setValueAtTime(playbackProfile.outputLevel, now);
+
+    noiseSource.buffer = createNoiseBuffer(context, playbackProfile.duration, 0.72);
+    noiseSource.loop = true;
+    noiseFilter.type = "highpass";
+    noiseFilter.frequency.setValueAtTime(example === "plosive" ? 120 : 520, now);
+    noiseGain.gain.setValueAtTime(0.0001, now);
+    noiseGain.gain.linearRampToValueAtTime(playbackProfile.noiseLevel, now + 0.04);
+    noiseGain.gain.linearRampToValueAtTime(0.0001, stopAt);
 
     oscillator.connect(filter);
-    let lastNode: AudioNode = filter;
-
-    if (example === "clipping") {
-      const shaper = context.createWaveShaper();
-      shaper.curve = createDistortionCurve(0.82);
-      shaper.oversample = "4x";
-      lastNode.connect(shaper);
-      lastNode = shaper;
-    }
-
-    lastNode.connect(gainNode);
-    gainNode.connect(outputGain);
+    filter.connect(shaper);
+    shaper.connect(directGain);
+    directGain.connect(outputGain);
+    noiseSource.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(outputGain);
     outputGain.connect(context.destination);
 
     oscillator.start(now);
-    oscillator.stop(now + 1.08);
-
-    if (example === "noise" || example === "far") {
-      const noiseSource = context.createBufferSource();
-      const noiseGain = context.createGain();
-      const noiseFilter = context.createBiquadFilter();
-      noiseSource.buffer = createNoiseBuffer(context, 1.1, 0.7);
-      noiseSource.loop = true;
-      noiseFilter.type = "highpass";
-      noiseFilter.frequency.setValueAtTime(700, now);
-      noiseGain.gain.setValueAtTime(0.0001, now);
-      noiseGain.gain.linearRampToValueAtTime(example === "far" ? 0.028 : 0.05, now + 0.04);
-      noiseGain.gain.linearRampToValueAtTime(0.0001, now + 1.05);
-      noiseSource.connect(noiseFilter);
-      noiseFilter.connect(noiseGain);
-      noiseGain.connect(context.destination);
-      noiseSource.start(now);
-      noiseSource.stop(now + 1.08);
-    }
+    oscillator.stop(stopAt + 0.02);
+    noiseSource.start(now);
+    noiseSource.stop(stopAt + 0.02);
 
     if (example === "plosive") {
       const burst = context.createOscillator();
@@ -488,18 +608,22 @@ export function MicrophoneLab({ language, onBack }: MicrophoneLabProps) {
       burstFilter.type = "lowpass";
       burstFilter.frequency.setValueAtTime(210, now);
       burstGain.gain.setValueAtTime(0.0001, now);
-      burstGain.gain.linearRampToValueAtTime(0.22, now + 0.03);
+      burstGain.gain.linearRampToValueAtTime(playbackProfile.plosiveLevel, now + 0.03);
       burstGain.gain.linearRampToValueAtTime(0.0001, now + 0.22);
       burst.connect(burstFilter);
       burstFilter.connect(burstGain);
-      burstGain.connect(context.destination);
+      burstGain.connect(outputGain);
       burst.start(now);
       burst.stop(now + 0.24);
     }
 
-    audioRef.current = { context };
+    const timeoutId = window.setTimeout(() => {
+      audioRef.current = null;
+      setIsPlaying(false);
+    }, playbackProfile.duration * 1000 + 80);
+
+    audioRef.current = { context, directGain, filter, noiseGain, outputGain, shaper, stopAt, timeoutId };
     setIsPlaying(true);
-    window.setTimeout(() => setIsPlaying(false), 1120);
   }
 
   return (

@@ -29,6 +29,7 @@ export type AiAudioLabId = "overview" | AiAudioMode;
 export type TopicLab = {
   type:
     | "sound-wave"
+    | "audio-units"
     | "sampling-quantization"
     | "listening-metrics"
     | "microphone"
@@ -223,6 +224,99 @@ export const categories: Category[] = [
           contentDirection: {
             zh: "上方交互实验已经把频率、振幅、相位和播放音高连接起来；后续可以继续补充谐波、噪声和真实乐器波形对比。",
             en: "The interactive experiment above already connects frequency, amplitude, phase, and audible pitch; next it can add harmonics, noise, and real-instrument waveform comparisons."
+          }
+        }
+      },
+      {
+        title: { zh: "声音与音频单位", en: "Sound and Audio Units" },
+        summary: {
+          zh: "区分 dBSPL、dBFS、dBu、dBV、LUFS、Hz、bit、ms 等常见单位和参考点。",
+          en: "Distinguish common units and references such as dBSPL, dBFS, dBu, dBV, LUFS, Hz, bit, and ms."
+        },
+        bullets: [
+          { zh: "dB 是比例，dBSPL / dBFS / dBu / dBV 的参考点不同", en: "dB is a ratio; dBSPL, dBFS, dBu, and dBV use different references" },
+          { zh: "LUFS 描述节目响度，dBFS 描述数字满刻度余量", en: "LUFS describes program loudness, while dBFS describes digital full-scale headroom" },
+          { zh: "Hz、kHz、bit、sample、ms 常用于频率、采样、位深和延迟", en: "Hz, kHz, bit, sample, and ms describe frequency, sampling, bit depth, and latency" }
+        ],
+        detail: {
+          explanation: {
+            zh: "音频里很多单位都写成 dB，但它们不是同一种东西。dB 本身只是两个量之间的对数比例；加上不同后缀后，参考点才被确定：dBSPL 参考空气声压，dBFS 参考数字满刻度，dBu 和 dBV 参考模拟电压，LUFS 则用于描述节目响度。理解这些单位的关键，是先问“相对于什么参考值”。",
+            en: "Many audio units include dB, but they are not the same thing. dB itself is a logarithmic ratio between two quantities; the suffix defines the reference: dBSPL refers to acoustic pressure, dBFS to digital full scale, dBu and dBV to analog voltage, and LUFS to program loudness. The key question is always: relative to what reference?"
+          },
+          keyConcepts: [
+            { zh: "dB 不是绝对单位，必须知道参考点。20 dB SPL、-20 dBFS 和 +20 dBu 不能直接比较大小。", en: "dB is not absolute without a reference. 20 dB SPL, -20 dBFS, and +20 dBu cannot be directly compared." },
+            { zh: "dBFS 的 0 dBFS 是数字满刻度上限，正常数字音频电平通常是负数，超过 0 dBFS 往往会削波。", en: "0 dBFS is digital full scale, so normal digital levels are usually negative; exceeding 0 dBFS often clips." },
+            { zh: "dBSPL 关注空气中的声压级，常用于扬声器、噪声和听力安全；94 dB SPL 常对应 1 Pa 声压。", en: "dBSPL describes acoustic sound pressure, used for speakers, noise, and hearing safety; 94 dB SPL corresponds to 1 Pa pressure." },
+            { zh: "dBu 和 dBV 是模拟电压单位：0 dBu = 0.775 Vrms，0 dBV = 1 Vrms，常用于线路电平和专业/消费设备接口。", en: "dBu and dBV are analog voltage units: 0 dBu = 0.775 Vrms and 0 dBV = 1 Vrms, common for line level and pro/consumer interfaces." },
+            { zh: "LUFS 加入人耳频率权重和时间积分，更适合描述一段节目整体听起来有多响。", en: "LUFS includes perceptual weighting and time integration, making it better for how loud a program feels overall." }
+          ],
+          termExplanations: [
+            {
+              name: { zh: "dB", en: "dB" },
+              explanation: {
+                zh: "dB 是对数比例单位，用来表示两个量的相对大小。电压、电平这类幅度比常用 20×log10，功率比常用 10×log10。没有参考点时，单独说“多少 dB”通常是不完整的。",
+                en: "dB is a logarithmic ratio. Amplitude ratios such as voltage often use 20 x log10, while power ratios use 10 x log10. Saying only 'some dB' is usually incomplete without a reference."
+              }
+            },
+            {
+              name: { zh: "dBSPL", en: "dBSPL" },
+              explanation: {
+                zh: "dBSPL 是声压级，参考值是 20 µPa，接近人耳在 1 kHz 附近的听阈。它用来描述空气中的声音强弱，例如环境噪声、扬声器最大声压和听力安全。",
+                en: "dBSPL is sound pressure level, referenced to 20 uPa, near the threshold of hearing around 1 kHz. It describes acoustic sound strength, such as environmental noise, speaker maximum SPL, and hearing safety."
+              }
+            },
+            {
+              name: { zh: "dBFS", en: "dBFS" },
+              explanation: {
+                zh: "dBFS 是数字音频相对于满刻度的电平。0 dBFS 是系统能表示的最大数字幅度，-6 dBFS 约表示幅度减半，录音和混音常保留一定 headroom 避免削波。",
+                en: "dBFS is digital level relative to full scale. 0 dBFS is the maximum representable digital amplitude, -6 dBFS is roughly half amplitude, and recording/mixing often leaves headroom to avoid clipping."
+              }
+            },
+            {
+              name: { zh: "dBu / dBV", en: "dBu / dBV" },
+              explanation: {
+                zh: "dBu 和 dBV 描述模拟电压电平。0 dBu = 0.775 Vrms，0 dBV = 1 Vrms。专业线路电平常说 +4 dBu，消费设备常见 -10 dBV。",
+                en: "dBu and dBV describe analog voltage level. 0 dBu = 0.775 Vrms and 0 dBV = 1 Vrms. Professional line level is often +4 dBu, while consumer gear often uses -10 dBV."
+              }
+            },
+            {
+              name: { zh: "LUFS", en: "LUFS" },
+              explanation: {
+                zh: "LUFS 是响度单位，常用于节目响度标准化。它不是简单峰值，而是考虑人耳频率敏感度和时间积分，适合比较歌曲、视频、播客或直播整体响度。",
+                en: "LUFS is a loudness unit used for program loudness normalization. It is not a simple peak value; it uses perceptual weighting and time integration, useful for comparing music, video, podcasts, or streams."
+              }
+            },
+            {
+              name: { zh: "Hz / kHz", en: "Hz / kHz" },
+              explanation: {
+                zh: "Hz 表示每秒次数。20 Hz 到 20 kHz 常用来描述人耳可听频率范围；44.1 kHz 或 48 kHz 描述数字音频每秒采样次数。",
+                en: "Hz means cycles or events per second. 20 Hz to 20 kHz often describes human hearing range; 44.1 kHz or 48 kHz describes digital audio samples per second."
+              }
+            },
+            {
+              name: { zh: "bit / sample / ms", en: "bit / sample / ms" },
+              explanation: {
+                zh: "bit 常用于位深或码率，sample 是一个采样点，ms 是毫秒，常用于延迟和 buffer 长度。例如 48 kHz 下 480 samples 对应 10 ms。",
+                en: "bit is used for bit depth or bitrate, sample is one sampled point, and ms is milliseconds, often used for latency and buffer length. For example, at 48 kHz, 480 samples equal 10 ms."
+              }
+            }
+          ],
+          lab: {
+            type: "audio-units",
+            title: { zh: "声音与音频单位实验室", en: "Sound and Audio Units Lab" },
+            description: {
+              zh: "进入独立界面查看 dBSPL、dBFS、dBu、dBV、LUFS、Hz、bit、sample 和 ms 的参考点、典型范围和换算关系。",
+              en: "Open an independent lab to inspect references, typical ranges, and conversion relationships for dBSPL, dBFS, dBu, dBV, LUFS, Hz, bit, sample, and ms."
+            },
+            buttonLabel: { zh: "打开声音与音频单位实验室", en: "Open sound and audio units lab" }
+          },
+          misconception: {
+            zh: "看到 dB 不能默认它们能直接比较。声压、电压、数字满刻度和节目响度的参考点不同，必须先看后缀和测量场景。",
+            en: "Do not assume all dB values are directly comparable. Acoustic pressure, analog voltage, digital full scale, and program loudness use different references, so check the suffix and measurement context first."
+          },
+          contentDirection: {
+            zh: "适合扩展为单位速查表、参考点对照图、dBu/dBV 电压换算、dBFS headroom 图和 samples/ms 延迟换算工具。",
+            en: "This can expand into a unit cheat sheet, reference comparison diagram, dBu/dBV voltage conversion, dBFS headroom chart, and samples/ms latency calculator."
           }
         }
       },
@@ -749,23 +843,29 @@ export const categories: Category[] = [
       {
         title: { zh: "功放与扬声器", en: "Amplifiers and Speakers" },
         summary: {
-          zh: "覆盖 Class D 功放、扬声器单元、箱体、分频器和小体积声学限制。",
-          en: "Cover Class D amplifiers, speaker drivers, enclosures, crossovers, and small-device acoustic constraints."
+          zh: "覆盖功放类型、扬声器单元、T/S 参数、箱体、分频器和线阵列。",
+          en: "Cover amplifier classes, speaker drivers, T/S parameters, enclosures, crossovers, and line arrays."
         },
         bullets: [
           { zh: "Class A / AB / D", en: "Class A / AB / D" },
-          { zh: "频响、灵敏度、阻抗", en: "Frequency response, sensitivity, impedance" },
-          { zh: "TWS 和嵌入式音频链路", en: "TWS and embedded audio chains" }
+          { zh: "Thiele-Small 参数、密闭箱和倒相箱", en: "Thiele-Small parameters, sealed and bass-reflex boxes" },
+          { zh: "分频阶数、相位对齐、主动/被动分频", en: "Crossover order, phase alignment, active/passive crossovers" },
+          { zh: "线阵列扬声器和覆盖控制", en: "Line arrays and coverage control" }
         ],
         detail: {
           explanation: {
-            zh: "功放负责把 DAC、Codec 或前级输出的小信号变成能推动扬声器的电压、电流和功率；扬声器再把电能转换成振膜运动和空气声波。实际听感不是由某一个参数决定，而是由功放类型、输出能力、扬声器单元、箱体、分频、保护算法和声学结构共同决定。",
-            en: "An amplifier turns the small signal from a DAC, codec, or preamp into voltage, current, and power that can drive a speaker. The speaker then turns electrical energy into diaphragm motion and air pressure. The listening result depends on amplifier class, output capability, driver design, enclosure, crossover, protection, and acoustics together."
+            zh: "功放负责把 DAC、Codec 或前级输出的小信号变成能推动扬声器的电压、电流和功率；扬声器再把电能转换成振膜运动和空气声波。实际听感不是由某一个参数决定，而是由功放类型、输出能力、扬声器单元、Thiele-Small 参数、箱体形式、分频阶数、相位对齐、保护算法和声学结构共同决定。",
+            en: "An amplifier turns the small signal from a DAC, codec, or preamp into voltage, current, and power that can drive a speaker. The speaker then turns electrical energy into diaphragm motion and air pressure. The listening result depends on amplifier class, output capability, driver design, Thiele-Small parameters, enclosure type, crossover order, phase alignment, protection, and acoustics together."
           },
           keyConcepts: [
             { zh: "功放要提供足够电压摆幅和电流能力；电源电压、负载阻抗、散热和保护策略会限制最大输出。", en: "An amplifier needs enough voltage swing and current capability; supply voltage, load impedance, heat, and protection limit maximum output." },
             { zh: "Class A 线性好但效率低，Class AB 是传统折中方案，Class D 通过开关/PWM 工作，效率高但需要关注滤波、布局和 EMI。", en: "Class A is linear but inefficient, Class AB is a traditional compromise, and Class D uses switching/PWM for high efficiency while requiring care with filtering, layout, and EMI." },
             { zh: "扬声器的音圈在磁场中受力，推动振膜往复运动；行程、热容量和机械结构决定它能承受多大声压和低频。", en: "A speaker voice coil moves in a magnetic field and drives the diaphragm; excursion, thermal capacity, and mechanics determine sound pressure and bass limits." },
+            { zh: "Thiele-Small 参数描述低频小信号行为：Fs、Qts、Vas 会影响适合密闭箱还是倒相箱，以及箱体容积和调谐频率。", en: "Thiele-Small parameters describe low-frequency small-signal behavior: Fs, Qts, and Vas influence whether a driver suits sealed or bass-reflex boxes, and guide box volume and tuning frequency." },
+            { zh: "密闭箱用箱内空气弹簧控制振膜，响应通常更平滑；倒相箱用导管共振增强低频效率，但调谐点以下更容易失控。", en: "A sealed box uses the trapped air as a spring and is often smoother; a bass-reflex box uses port resonance to improve bass efficiency, but below tuning the driver is less controlled." },
+            { zh: "分频阶数决定斜率：一阶约 6 dB/oct，二阶约 12 dB/oct，四阶约 24 dB/oct；阶数越高越能保护单元，但相位、延迟和叠加要更小心。", en: "Crossover order sets slope: first order is about 6 dB/oct, second order 12 dB/oct, and fourth order 24 dB/oct. Higher order protects drivers better but needs more care with phase, delay, and summing." },
+            { zh: "主动分频在功放之前用 DSP/有源滤波拆频，每个单元独立功放；被动分频在功放之后用电感、电容、电阻分频，结构简单但受负载阻抗影响。", en: "Active crossovers split bands before amplification with DSP/active filters and use one amp per driver; passive crossovers split after the amp with inductors, capacitors, and resistors, simpler but load-dependent." },
+            { zh: "线阵列通过多个单元垂直排列和延迟/幅度控制，把能量集中到目标覆盖区域，减少不必要的垂直扩散。", en: "A line array uses vertically stacked drivers plus delay/amplitude control to focus energy into the target coverage area and reduce unwanted vertical spread." },
             { zh: "阻抗越低，同电压下电流越大，对功放输出级和散热要求越高。", en: "Lower impedance draws more current at the same voltage, increasing amplifier output-stage and thermal demands." },
             { zh: "灵敏度、功率、箱体和分频共同决定实际响度；瓦数更大不等于一定更响或更好听。", en: "Sensitivity, power, enclosure, and crossover jointly determine loudness; more watts do not guarantee louder or better sound." }
           ],
@@ -811,14 +911,49 @@ export const categories: Category[] = [
                 zh: "分频器把低频、中频和高频送给适合的单元。分频点、斜率、相位和单元摆位都会影响衔接和声像。",
                 en: "A crossover sends bass, midrange, and treble to suitable drivers. Crossover point, slope, phase, and driver placement affect integration and imaging."
               }
+            },
+            {
+              name: { zh: "Thiele-Small 参数", en: "Thiele-Small parameters" },
+              explanation: {
+                zh: "T/S 参数是一组描述低频小信号行为的单元参数。Fs 是自由空气谐振频率，Qts 是总 Q 值，Vas 是等效空气顺性体积；它们常用于估算箱体容积、低频下潜和是否适合倒相调谐。",
+                en: "T/S parameters describe a driver's low-frequency small-signal behavior. Fs is free-air resonance, Qts is total Q, and Vas is equivalent compliance volume; they help estimate box volume, bass extension, and ported-box suitability."
+              }
+            },
+            {
+              name: { zh: "密闭箱 vs 倒相箱", en: "Sealed vs bass reflex" },
+              explanation: {
+                zh: "密闭箱没有导管，箱内空气像弹簧一样限制振膜，瞬态和滚降通常更可控；倒相箱通过导管和箱体形成共振，在调谐频率附近提高低频效率，但导管噪声、群延迟和调谐点以下保护要注意。",
+                en: "A sealed box has no port; trapped air works like a spring and often gives controlled rolloff and transient behavior. A bass-reflex box uses a port resonance to increase efficiency near tuning, but port noise, group delay, and below-tuning protection matter."
+              }
+            },
+            {
+              name: { zh: "分频阶数与相位", en: "Crossover order and phase" },
+              explanation: {
+                zh: "一阶、二阶、四阶分频对应不同衰减斜率和相位旋转。真正设计时要让低音和高音在分频点附近幅度相加、相位尽量对齐，否则会出现凹陷、隆起或声像漂移。",
+                en: "First-, second-, and fourth-order crossovers have different slopes and phase rotation. Real designs must make woofer and tweeter sum correctly near the crossover point, or dips, peaks, and image shifts appear."
+              }
+            },
+            {
+              name: { zh: "主动分频 vs 被动分频", en: "Active vs passive crossover" },
+              explanation: {
+                zh: "主动分频在功放之前完成，便于做精确延迟、EQ、限幅和单元保护；被动分频在功放之后完成，不需要多路功放，但元件会发热，且滤波结果会跟随扬声器阻抗曲线变化。",
+                en: "Active crossovers happen before amplifiers and allow precise delay, EQ, limiting, and driver protection. Passive crossovers happen after the amplifier and avoid multiple amps, but components heat up and filter behavior follows the speaker impedance curve."
+              }
+            },
+            {
+              name: { zh: "线阵列扬声器", en: "Line array speaker" },
+              explanation: {
+                zh: "线阵列把多个单元排成一列，通过物理间距、角度、延迟和电平控制覆盖范围。它不是简单把喇叭堆多，而是用干涉和指向性控制让远近听众获得更均匀的声压。",
+                en: "A line array stacks drivers vertically and controls coverage with spacing, splay angle, delay, and level. It is not just more speakers; interference and directivity are used to make SPL more even across near and far listeners."
+              }
             }
           ],
           lab: {
             type: "amplifier-speaker",
             title: { zh: "功放与扬声器实验室", en: "Amplifier and Speaker Lab" },
             description: {
-              zh: "进入独立界面观察小信号、功放、分频/保护、扬声器单元和空气声波之间的关系，并试听削波、谐波失真、低频不足、箱体共振和动态保护。",
-              en: "Open an independent lab to inspect the path from small signal to amplifier, crossover/protection, speaker driver, and air pressure, then audition clipping, harmonic distortion, bass loss, enclosure resonance, and limiting."
+              zh: "进入独立界面观察小信号、功放、扬声器单元、T/S 参数、箱体、分频阶数、主动/被动分频、线阵列和空气声波之间的关系。",
+              en: "Open an independent lab to inspect the relationships among small signals, amplifiers, speaker drivers, T/S parameters, enclosures, crossover order, active/passive crossovers, line arrays, and air pressure."
             },
             buttonLabel: { zh: "打开功放与扬声器实验室", en: "Open amplifier and speaker lab" }
           },
@@ -827,8 +962,8 @@ export const categories: Category[] = [
             en: "More watts do not guarantee louder or better sound; impedance, sensitivity, enclosure, distortion, heat, protection, and placement all shape the result."
           },
           contentDirection: {
-            zh: "适合继续扩展为 Class D 工作原理图、扬声器结构动画、箱体/分频案例、小音箱保护算法和真实产品播放链路拆解。",
-            en: "This can expand into Class D diagrams, speaker-structure animation, enclosure/crossover cases, small-speaker protection, and real product playback-chain breakdowns."
+            zh: "适合继续扩展为 T/S 参数选箱工具、密闭/倒相低频响应对比、分频相位对齐案例、小音箱保护算法和真实产品播放链路拆解。",
+            en: "This can expand into a T/S parameter box-selection tool, sealed/ported bass-response comparison, crossover phase-alignment cases, small-speaker protection, and real product playback-chain breakdowns."
           }
         }
       }
@@ -1064,8 +1199,8 @@ export const categories: Category[] = [
             type: "audio-plugin",
             title: { zh: "音频编程与插件实验室", en: "Audio Programming and Plugin Lab" },
             description: {
-              zh: "进入独立界面切换 Gain、Filter、Delay、Compressor 和 Waveshaper，调节参数变化幅度、参数平滑、反馈/驱动和 oversampling，观察处理链、buffer 波形和插件内部指标。",
-              en: "Open an independent lab to switch between Gain, Filter, Delay, Compressor, and Waveshaper, then adjust automation step, smoothing, feedback/drive, and oversampling while inspecting the processing chain, buffer waveform, and plugin-internal metrics."
+              zh: "进入独立界面切换 Gain、Filter、Delay、Compressor 和 Waveshaper，调节各模块自己的关键参数、参数平滑和非线性过采样，观察处理链、buffer 波形和插件指标。",
+              en: "Open an independent lab to switch between Gain, Filter, Delay, Compressor, and Waveshaper, then adjust each module's own key parameters, smoothing, and nonlinear oversampling while inspecting the processing chain, buffer waveform, and plugin metrics."
             },
             buttonLabel: { zh: "打开音频编程与插件实验室", en: "Open audio programming and plugin lab" }
           },

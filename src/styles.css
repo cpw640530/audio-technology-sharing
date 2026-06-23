@@ -1116,6 +1116,10 @@ body.details-open {
   font-weight: 780;
 }
 
+.audio-units-note {
+  text-anchor: middle;
+}
+
 .sound-lab-panel {
   align-content: start;
   background: rgba(255, 255, 255, 0.055);
@@ -1977,6 +1981,126 @@ body.details-open {
   max-width: 1200px;
   padding: clamp(16px, 3vw, 26px);
   width: 100%;
+}
+
+.audio-units-workbench {
+  background: #17211f;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
+  display: grid;
+  gap: 18px;
+  justify-self: center;
+  max-width: 1200px;
+  padding: clamp(16px, 3vw, 26px);
+  width: 100%;
+}
+
+.audio-units-visual svg {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  width: 100%;
+}
+
+.audio-units-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.audio-unit-card {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.audio-unit-card h2 {
+  color: #ffffff;
+  font-size: 0.98rem;
+  margin: 0;
+}
+
+.audio-unit-card strong {
+  color: #7ee7d8;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.audio-unit-card p,
+.audio-unit-card span {
+  color: #dbe8e4;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.audio-unit-card span {
+  color: #aabbb7;
+}
+
+.audio-unit-card.compact {
+  background: rgba(126, 231, 216, 0.07);
+}
+
+.audio-units-conversions {
+  display: grid;
+  gap: 12px;
+}
+
+.unit-reference-axis line {
+  stroke: rgba(220, 236, 232, 0.28);
+  stroke-width: 2;
+}
+
+.unit-reference-axis circle {
+  fill: #7ee7d8;
+  stroke: #17211f;
+  stroke-width: 2;
+}
+
+.unit-reference-axis text {
+  fill: #dbe8e4;
+  font-size: 12px;
+  font-weight: 720;
+  text-anchor: middle;
+}
+
+.unit-reference-axis .unit-axis-label {
+  fill: #ffffff;
+  font-size: 15px;
+  font-weight: 820;
+}
+
+.unit-reference-axis .unit-axis-sub {
+  fill: #aabbb7;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.unit-meter {
+  fill: rgba(126, 231, 216, 0.11);
+  stroke: rgba(126, 231, 216, 0.35);
+  stroke-width: 2;
+}
+
+.unit-meter.digital {
+  fill: rgba(240, 180, 106, 0.12);
+  stroke: rgba(240, 180, 106, 0.4);
+}
+
+.unit-meter.voltage {
+  fill: rgba(214, 134, 167, 0.12);
+  stroke: rgba(214, 134, 167, 0.4);
+}
+
+.unit-meter.loudness {
+  fill: rgba(126, 160, 231, 0.12);
+  stroke: rgba(126, 160, 231, 0.4);
 }
 
 .speech-enhancement-tabs {
@@ -5466,6 +5590,50 @@ body.details-open {
   stroke-width: 3;
 }
 
+.amp-matching-arrow {
+  fill: none;
+  marker-end: url("#ampMatchArrow");
+  stroke: #f0b46a;
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+
+.amp-crossover-slope {
+  fill: none;
+  stroke: #7ee7d8;
+  stroke-linecap: round;
+  stroke-width: 4;
+}
+
+.amp-crossover-slope.order-2 {
+  stroke: #f0b46a;
+}
+
+.amp-crossover-slope.order-3 {
+  stroke: #d686a7;
+}
+
+.amp-linearray-main,
+.amp-linearray-side {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 4;
+}
+
+.amp-linearray-main {
+  stroke: rgba(126, 231, 216, 0.76);
+}
+
+.amp-linearray-main.lower {
+  stroke: rgba(126, 231, 216, 0.58);
+}
+
+.amp-linearray-side {
+  stroke: rgba(240, 180, 106, 0.44);
+  stroke-dasharray: 9 9;
+  stroke-width: 2.5;
+}
+
 .amp-motion-line {
   marker-end: url("#speakerFlowArrow");
   stroke: #f0b46a;
@@ -6147,6 +6315,7 @@ body.details-open {
 
   .spatial-pipeline,
   .spatial-concept-grid,
+  .audio-units-grid,
   .ai-article-flow,
   .ai-model-grid,
   .ai-article-body,
@@ -6386,6 +6555,7 @@ body.details-open {
   .iot-content-issue-grid,
   .spatial-pipeline,
   .spatial-concept-grid,
+  .audio-units-grid,
   .audio-plugin-flow,
   .audio-plugin-concept-grid,
   .codec-table,

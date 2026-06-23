@@ -52,51 +52,117 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
+const pluginWaveComponents = [
+  { amplitude: 0.58, cycles: 4, phase: 0 },
+  { amplitude: 0.23, cycles: 9, phase: 0.4 },
+  { amplitude: 0.14, cycles: 16, phase: 1.1 },
+  { amplitude: 0.08, cycles: 29, phase: 1.7 }
+];
+
+function getGainDb(value: number) {
+  return -24 + value * 0.36;
+}
+
+function getPanOffset(value: number) {
+  return value * 2 - 1;
+}
+
+function getFilterCutoffHz(value: number) {
+  return Math.round(160 + value ** 1.8 * 7840);
+}
+
+function getFilterCutoffCycles(value: number) {
+  return 3 + value ** 1.8 * 28;
+}
+
+function getFilterQ(value: number) {
+  return 0.4 + value * 11.6;
+}
+
+function getDelayTimeMs(value: number) {
+  return Math.round(35 + value * 565);
+}
+
+function getCompressorThresholdDb(value: number) {
+  return -8 - value * 36;
+}
+
+function getCompressorRatio(value: number) {
+  return 1 + value * 14;
+}
+
+function getWaveshaperDrive(value: number) {
+  return 1 + value * 9;
+}
+
+function dbToLinear(db: number) {
+  return 10 ** (db / 20);
+}
+
+function synthesizePluginSample(ratio: number, gains?: Array<number>) {
+  const envelope = 0.58 + Math.sin(ratio * Math.PI * 2) * 0.16;
+
+  return pluginWaveComponents.reduce((sum, component, index) => {
+    const gain = gains?.[index] ?? 1;
+    return sum + Math.sin(ratio * Math.PI * 2 * component.cycles + component.phase) * component.amplitude * gain;
+  }, 0) * envelope;
+}
+
+function getLowpassMagnitude(cycles: number, cutoffCycles: number, q: number) {
+  const ratio = cycles / Math.max(0.1, cutoffCycles);
+  const magnitude = 1 / Math.sqrt((1 - ratio ** 2) ** 2 + (ratio / Math.max(0.1, q)) ** 2);
+
+  return clamp(magnitude, 0, 1 + q * 0.08);
+}
+
 function createPluginWavePath({
-  drive,
   module,
-  mix,
+  primary,
   oversampling,
+  secondary,
   smoothing,
   yBase
 }: {
-  drive: number;
   module: PluginModule;
-  mix: number;
+  primary: number;
   oversampling: number;
+  secondary: number;
   smoothing: number;
   yBase: number;
 }) {
   const points = Array.from({ length: 96 }, (_, index) => {
     const ratio = index / 95;
-    const carrier = Math.sin(ratio * Math.PI * 8);
-    const harmonic = Math.sin(ratio * Math.PI * 24) * 0.22;
-    const envelope = 0.48 + Math.sin(ratio * Math.PI * 2) * 0.18;
-    let value = carrier * envelope + harmonic;
+    let value = synthesizePluginSample(ratio);
 
     if (module === "filter") {
-      const filterAmount = clamp(mix * 0.72 + drive * 0.28, 0, 1);
-      value = carrier * envelope * (0.5 + filterAmount * 0.45) + harmonic * (1 - filterAmount * 0.82);
+      const cutoffCycles = getFilterCutoffCycles(primary);
+      const q = getFilterQ(secondary);
+      const componentGains = pluginWaveComponents.map((component) => getLowpassMagnitude(component.cycles, cutoffCycles, q));
+      value = synthesizePluginSample(ratio, componentGains) * 0.72;
     } else if (module === "delay") {
-      const delayOffset = 0.08 + drive * 0.16;
+      const delayOffset = 0.04 + primary * 0.22;
       const repeats = [1, 2, 3].reduce((sum, tap) => {
         const delayedRatio = Math.max(0, ratio - delayOffset * tap);
-        const tapGain = Math.pow(drive, tap) * Math.exp(-tap * (1.05 - mix * 0.36));
-        return sum + Math.sin(delayedRatio * Math.PI * 8) * tapGain;
+        const tapGain = Math.pow(secondary, tap) * Math.exp(-tap * 0.52);
+        return sum + synthesizePluginSample(delayedRatio) * tapGain;
       }, 0);
-      value = value * (0.72 - drive * 0.18) + repeats * mix * 0.62;
+      value = value * (0.72 - secondary * 0.16) + repeats * 0.64;
     } else if (module === "compressor") {
-      const threshold = 0.44 + (1 - mix) * 0.14 - drive * 0.08;
+      const threshold = 0.18 + (1 - primary) * 0.42;
+      const ratioAmount = getCompressorRatio(secondary);
       const sign = Math.sign(value);
       const amount = Math.abs(value);
-      value = sign * (amount > threshold ? threshold + (amount - threshold) * (1 - mix * (0.45 + drive * 0.36)) : amount);
+      value = sign * (amount > threshold ? threshold + (amount - threshold) / ratioAmount : amount);
     } else if (module === "waveshaper") {
-      const shapeDrive = 1.1 + mix * 2.4 + drive * 5.2;
+      const shapeDrive = getWaveshaperDrive(secondary);
       const shaped = Math.tanh(value * shapeDrive) / Math.tanh(shapeDrive);
-      const aliasRipple = Math.sin(ratio * Math.PI * (36 + drive * 42)) * drive * mix * (0.24 / oversampling);
-      value = shaped + aliasRipple;
+      const nonlinearMix = primary;
+      const foldbackResidue = Math.sin(ratio * Math.PI * 2 * (32 + secondary * 46)) * secondary * nonlinearMix * (0.2 / oversampling);
+      value = value * (1 - nonlinearMix * 0.35) + shaped * nonlinearMix + foldbackResidue;
     } else {
-      value *= 0.42 + mix * 0.64 + drive * 0.24;
+      const gain = dbToLinear(getGainDb(primary));
+      const panOffset = Math.abs(getPanOffset(secondary));
+      value *= gain * (1 - panOffset * 0.18);
     }
 
     const smoothed = clamp(value * (1 - smoothing * 0.18), -1.15, 1.15);
@@ -166,33 +232,33 @@ function ProcessingGraph({
 }
 
 function PluginSignalView({
-  drive,
   language,
-  mix,
   module,
   oversampling,
+  primary,
+  secondary,
   smoothing
 }: {
-  drive: number;
   language: Language;
-  mix: number;
   module: PluginModule;
   oversampling: number;
+  primary: number;
+  secondary: number;
   smoothing: number;
 }) {
   const rawPath = createPluginWavePath({
-    drive: 0,
-    mix: 0.72,
     module: "gain",
     oversampling: 1,
+    primary: 0.72,
+    secondary: 0.5,
     smoothing: 0,
     yBase: 124
   });
   const processedPath = createPluginWavePath({
-    drive: drive / 100,
-    mix: mix / 100,
     module,
     oversampling,
+    primary: primary / 100,
+    secondary: secondary / 100,
     smoothing: smoothing / 100,
     yBase: 264
   });
@@ -226,41 +292,100 @@ function PluginSignalView({
 
 export function AudioPluginLab({ language, onBack }: AudioPluginLabProps) {
   const [module, setModule] = useState<PluginModule>("filter");
-  const [automationStep, setAutomationStep] = useState(62);
+  const [primaryAmount, setPrimaryAmount] = useState(62);
   const [smoothing, setSmoothing] = useState(45);
-  const [driveOrFeedback, setDriveOrFeedback] = useState(42);
+  const [secondaryAmount, setSecondaryAmount] = useState(42);
   const [oversampling, setOversampling] = useState(2);
 
   const metrics = useMemo(() => {
-    const zipperRisk = clamp(automationStep * (1 - smoothing / 100), 0, 100);
-    const internalDelaySamples =
+    const primary = primaryAmount / 100;
+    const secondary = secondaryAmount / 100;
+    const zipperRisk = clamp(primaryAmount * (1 - smoothing / 100), 0, 100);
+    const latencyLabel =
       module === "delay"
-        ? Math.round(1200 + driveOrFeedback * 58)
+        ? {
+            zh: `效果延迟线：${Math.round((getDelayTimeMs(primary) / 1000) * 48_000).toLocaleString("en-US")} samples`,
+            en: `Effect delay line: ${Math.round((getDelayTimeMs(primary) / 1000) * 48_000).toLocaleString("en-US")} samples`
+          }
         : module === "filter"
-          ? 2
+          ? { zh: "算法延迟：IIR biquad 通常 0 samples", en: "Algorithmic latency: IIR biquad is usually 0 samples" }
           : module === "compressor"
-            ? Math.round(64 + smoothing * 1.4)
-            : 0;
+            ? {
+                zh: "算法延迟：普通压缩器通常 0 samples；只有 lookahead 才额外延迟",
+                en: "Algorithmic latency: a basic compressor is usually 0 samples; lookahead adds latency"
+              }
+            : { zh: "算法延迟：0 samples", en: "Algorithmic latency: 0 samples" };
     const colorAmount =
       module === "waveshaper"
-        ? driveOrFeedback * 0.92 + automationStep * 0.18
+        ? secondaryAmount * 0.92 + primaryAmount * 0.18
         : module === "delay"
-          ? driveOrFeedback * 0.68
+          ? secondaryAmount * 0.68
           : module === "filter"
-            ? automationStep * 0.35
+            ? primaryAmount * 0.5 + secondaryAmount * 0.18
             : module === "compressor"
-              ? automationStep * 0.42
-              : automationStep * 0.22;
-    const aliasRisk = module === "waveshaper" ? clamp((colorAmount / oversampling) * 0.8, 0, 100) : 0;
+              ? primaryAmount * 0.42 + secondaryAmount * 0.22
+              : primaryAmount * 0.42;
+    const rawAliasRisk = module === "waveshaper" ? clamp(secondaryAmount * primary * 0.95, 0, 100) : 0;
+    const aliasRisk = module === "waveshaper" ? clamp(rawAliasRisk / oversampling, 0, 100) : 0;
     const automationRisk =
       zipperRisk > 50
         ? { zh: "高：容易 zipper noise", en: "high: zipper noise risk" }
         : zipperRisk > 22
           ? { zh: "中：适合多数参数", en: "medium: suitable for most parameters" }
           : { zh: "低：更平滑但响应慢", en: "low: smoother but slower" };
+    const primaryLabel =
+      module === "gain"
+        ? {
+            zh: `增益：${getGainDb(primaryAmount).toFixed(1)} dB`,
+            en: `Gain: ${getGainDb(primaryAmount).toFixed(1)} dB`
+          }
+        : module === "filter"
+          ? {
+              zh: `Cutoff：${getFilterCutoffHz(primary).toLocaleString("en-US")} Hz`,
+              en: `Cutoff: ${getFilterCutoffHz(primary).toLocaleString("en-US")} Hz`
+            }
+          : module === "delay"
+            ? {
+                zh: `Delay time：${getDelayTimeMs(primary)} ms`,
+                en: `Delay time: ${getDelayTimeMs(primary)} ms`
+              }
+            : module === "compressor"
+              ? {
+                  zh: `Threshold：${getCompressorThresholdDb(primary).toFixed(1)} dBFS`,
+                  en: `Threshold: ${getCompressorThresholdDb(primary).toFixed(1)} dBFS`
+                }
+              : {
+                  zh: `非线性混合：${primaryAmount}%`,
+                  en: `Nonlinear mix: ${primaryAmount}%`
+                };
+    const secondaryLabel =
+      module === "gain"
+        ? {
+            zh: `声像偏移：${getPanOffset(secondary).toFixed(2)}`,
+            en: `Pan offset: ${getPanOffset(secondary).toFixed(2)}`
+          }
+        : module === "filter"
+          ? {
+              zh: `Q / 共振：${getFilterQ(secondary).toFixed(1)}`,
+              en: `Q / resonance: ${getFilterQ(secondary).toFixed(1)}`
+            }
+          : module === "delay"
+            ? {
+                zh: `Feedback：${secondaryAmount}%`,
+                en: `Feedback: ${secondaryAmount}%`
+              }
+            : module === "compressor"
+              ? {
+                  zh: `Ratio：${getCompressorRatio(secondary).toFixed(1)}:1`,
+                  en: `Ratio: ${getCompressorRatio(secondary).toFixed(1)}:1`
+                }
+              : {
+                  zh: `Drive：${getWaveshaperDrive(secondary).toFixed(1)}x`,
+                  en: `Drive: ${getWaveshaperDrive(secondary).toFixed(1)}x`
+                };
 
-    return { aliasRisk, automationRisk, colorAmount, internalDelaySamples, zipperRisk };
-  }, [automationStep, driveOrFeedback, module, oversampling, smoothing]);
+    return { aliasRisk, automationRisk, colorAmount, latencyLabel, primaryLabel, rawAliasRisk, secondaryLabel, zipperRisk };
+  }, [module, oversampling, primaryAmount, secondaryAmount, smoothing]);
 
   return (
     <main className="codec-lab-page audio-plugin-page">
@@ -293,11 +418,11 @@ export function AudioPluginLab({ language, onBack }: AudioPluginLabProps) {
           <div className="audio-plugin-visuals">
             <ProcessingGraph language={language} module={module} />
             <PluginSignalView
-              drive={driveOrFeedback}
               language={language}
-              mix={automationStep}
               module={module}
               oversampling={oversampling}
+              primary={primaryAmount}
+              secondary={secondaryAmount}
               smoothing={smoothing}
             />
           </div>
@@ -308,28 +433,33 @@ export function AudioPluginLab({ language, onBack }: AudioPluginLabProps) {
               <strong>{moduleDescriptions[module][language]}</strong>
             </div>
             <label className="sound-lab-control">
-              <span>{language === "zh" ? `参数变化幅度：${automationStep}%` : `Automation step: ${automationStep}%`}</span>
-              <input aria-label={language === "zh" ? "参数变化幅度" : "Automation step"} max="100" min="0" step="5" type="range" value={automationStep} onChange={(event) => setAutomationStep(Number(event.target.value))} />
+              <span>{metrics.primaryLabel[language]}</span>
+              <input aria-label={language === "zh" ? "主参数" : "Primary parameter"} max="100" min="0" step="5" type="range" value={primaryAmount} onChange={(event) => setPrimaryAmount(Number(event.target.value))} />
             </label>
             <label className="sound-lab-control">
               <span>{language === "zh" ? `参数平滑：${smoothing}%` : `Parameter smoothing: ${smoothing}%`}</span>
               <input aria-label={language === "zh" ? "参数平滑" : "Parameter smoothing"} max="100" min="0" step="5" type="range" value={smoothing} onChange={(event) => setSmoothing(Number(event.target.value))} />
             </label>
             <label className="sound-lab-control">
-              <span>{language === "zh" ? `反馈 / 驱动：${driveOrFeedback}%` : `Feedback / drive: ${driveOrFeedback}%`}</span>
-              <input aria-label={language === "zh" ? "反馈驱动" : "Feedback drive"} max="100" min="0" step="5" type="range" value={driveOrFeedback} onChange={(event) => setDriveOrFeedback(Number(event.target.value))} />
+              <span>{metrics.secondaryLabel[language]}</span>
+              <input aria-label={language === "zh" ? "模块参数" : "Module parameter"} max="100" min="0" step="5" type="range" value={secondaryAmount} onChange={(event) => setSecondaryAmount(Number(event.target.value))} />
             </label>
-            <label className="sound-lab-control">
-              <span>{language === "zh" ? `Oversampling：${oversampling}x` : `Oversampling: ${oversampling}x`}</span>
-              <input aria-label="Oversampling" max="4" min="1" step="1" type="range" value={oversampling} onChange={(event) => setOversampling(Number(event.target.value))} />
-            </label>
+            {module === "waveshaper" ? (
+              <label className="sound-lab-control">
+                <span>{language === "zh" ? `Oversampling：${oversampling}x` : `Oversampling: ${oversampling}x`}</span>
+                <input aria-label="Oversampling" max="4" min="1" step="1" type="range" value={oversampling} onChange={(event) => setOversampling(Number(event.target.value))} />
+              </label>
+            ) : null}
             <div className="audio-plugin-metrics">
               <strong>{language === "zh" ? `模块关注点：${getModuleFocus(module, language)}` : `Module focus: ${getModuleFocus(module, language)}`}</strong>
               <strong>{language === "zh" ? `Zipper noise 风险：${metrics.zipperRisk.toFixed(0)}%` : `Zipper-noise risk: ${metrics.zipperRisk.toFixed(0)}%`}</strong>
               <strong>{language === "zh" ? `音色变化量：${metrics.colorAmount.toFixed(0)}%` : `Tone-color change: ${metrics.colorAmount.toFixed(0)}%`}</strong>
-              <strong>{language === "zh" ? `插件内部延迟：${metrics.internalDelaySamples} samples` : `Plugin internal delay: ${metrics.internalDelaySamples} samples`}</strong>
+              <strong>{metrics.latencyLabel[language]}</strong>
               {module === "waveshaper" ? (
-                <strong>{language === "zh" ? `非线性混叠风险：${metrics.aliasRisk.toFixed(0)}%` : `Nonlinear aliasing risk: ${metrics.aliasRisk.toFixed(0)}%`}</strong>
+                <>
+                  <strong>{language === "zh" ? `未过采样混叠风险：${metrics.rawAliasRisk.toFixed(0)}%` : `Pre-oversampling aliasing risk: ${metrics.rawAliasRisk.toFixed(0)}%`}</strong>
+                  <strong>{language === "zh" ? `过采样后残留混叠风险：${metrics.aliasRisk.toFixed(0)}%` : `Residual aliasing risk after oversampling: ${metrics.aliasRisk.toFixed(0)}%`}</strong>
+                </>
               ) : null}
               <strong>{language === "zh" ? `参数自动化风险：${metrics.automationRisk.zh}` : `Automation risk: ${metrics.automationRisk.en}`}</strong>
             </div>

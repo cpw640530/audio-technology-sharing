@@ -28,13 +28,13 @@ const protocolCopy: Record<
   i2s: {
     title: { zh: "协议：I2S / IIS / I²S", en: "Protocol: I2S / IIS / I²S" },
     body: {
-      zh: "I2S 用 BCLK 移动每一位数据，用 LRCLK 标记左右声道，SD 线上按固定对齐方式传 PCM 样本。MCLK 常作为 Codec 或 DAC 内部 PLL 的参考时钟。",
-      en: "I2S uses BCLK to shift each data bit, LRCLK to mark left and right channels, and SD to carry PCM words with fixed alignment. MCLK is often the reference for a codec or DAC PLL."
+      zh: "I2S 用 BCLK 移动每一位数据，用 LRCLK 标记每条 SD 线上的左右半帧，SD 线上按固定对齐方式传 PCM 样本。MCLK 常作为 Codec 或 DAC 内部 PLL 的参考时钟。",
+      en: "I2S uses BCLK to shift each data bit, LRCLK to mark left/right half-frames on each SD line, and SD to carry PCM words with fixed alignment. MCLK is often the reference for a codec or DAC PLL."
     },
     keyPoints: [
-      { zh: "BCLK = 采样率 × 位深 × 声道数。", en: "BCLK = sample rate × bit depth × channel count." },
-      { zh: "LRCLK 的频率就是音频采样率。", en: "LRCLK frequency equals the audio sample rate." },
-      { zh: "左右对齐、标准 I2S 和 DSP 模式不能混用。", en: "Left-justified, standard I2S, and DSP modes cannot be mixed casually." }
+      { zh: "BCLK = 采样率(Hz) × 位深 × 声道数；如果采样率用 kHz 显示，要先乘 1000 再换算成 MHz。", en: "BCLK = sample rate in Hz x bit depth x channel count; if the UI shows kHz, multiply by 1000 before converting to MHz." },
+      { zh: "LRCLK 的频率就是音频采样率；在多条 SD 并行的多通道 I2S 中，LRCLK 仍只区分每条 SD 的 L / R 半帧。", en: "LRCLK frequency equals the audio sample rate; in multichannel I2S with parallel SD lines, LRCLK still only separates L/R half-frames on each SD line." },
+      { zh: "多通道 I2S 用多条 SD 线并行扩展声道；TDM 则用一条 SD 线按 slot 时分复用，两者不要混为一谈。", en: "Multichannel I2S expands channels with parallel SD lines; TDM time-multiplexes slots on one SD line, so keep the two concepts separate." }
     ]
   },
   tdm: {
@@ -275,8 +275,8 @@ function renderI2sDiagram(language: Language, bitDepth: number, channels: number
           </g>
           <text className="interface-tdm-note" x="124" y={i2sNotesY}>
             {language === "zh"
-              ? `多通道 I2S：${dataLines.length} 条 SD 数据线并行，每条 SD 仍传一对左右声道`
-              : `Multichannel I2S: ${dataLines.length} parallel SD lines, each still carries one L/R pair`}
+              ? `多通道 I2S（并行 SD 线）：${dataLines.length} 条 SD 数据线同时工作`
+              : `Multichannel I2S (parallel SD lines): ${dataLines.length} SD data lines work at once`}
           </text>
           <text className="interface-tdm-note" x="124" y={i2sNotesY + 22}>
             {language === "zh"
@@ -289,10 +289,10 @@ function renderI2sDiagram(language: Language, bitDepth: number, channels: number
               : `The right half-frame captures ${rightFrameChannels} at the same time`}
           </text>
           <text className="interface-tdm-note" x="124" y={i2sNotesY + 44}>
-            {language === "zh" ? "LRCLK 仍只区分每条 SD 上的 L / R" : "LRCLK still only separates L / R on each SD line"}
+            {language === "zh" ? "每条 SD 仍只传一对 L / R；LRCLK 只负责左右半帧" : "Each SD still carries one L/R pair; LRCLK only marks the two half-frames"}
           </text>
           <text className="interface-tdm-note" x="430" y={i2sNotesY + 44}>
-            {language === "zh" ? "单条 SD 要放多路声道时，应看 TDM" : "Use TDM when one SD line must carry many channels"}
+            {language === "zh" ? "如果只用一条 SD 放多声道，那是 TDM 的 slot 思路" : "If one SD carries many channels, that is the TDM slot approach"}
           </text>
           <path className="interface-clock-line faint" d={createSquareWavePath({ height: 18, pulses: 12, width: 588, x: 124, y: i2sMclkWaveY })} />
           <g>
@@ -616,8 +616,11 @@ export function DigitalInterfaceLab({ language, onBack }: DigitalInterfaceLabPro
   const [bitDepth, setBitDepth] = useState(24);
   const [channels, setChannels] = useState(2);
 
-  const bclkMhz = useMemo(() => formatMhz((sampleRate * bitDepth * channels) / 1000), [bitDepth, channels, sampleRate]);
-  const mclkMhz = useMemo(() => formatMhz((sampleRate * 256) / 1000), [sampleRate]);
+  const sampleRateHz = sampleRate * 1000;
+  const bclkMhz = useMemo(() => formatMhz((sampleRateHz * bitDepth * channels) / 1_000_000), [bitDepth, channels, sampleRateHz]);
+  const mclkMhz = useMemo(() => formatMhz((sampleRateHz * 256) / 1_000_000), [sampleRateHz]);
+  const bclkFormula = `${sampleRate} kHz × 1000 × ${bitDepth} bit × ${channels} ch ÷ 1,000,000 = ${bclkMhz} MHz`;
+  const mclkFormula = `${sampleRate} kHz × 1000 × 256 ÷ 1,000,000 = ${mclkMhz} MHz`;
   const activeCopy = protocolCopy[protocol];
   const usesClockControls = protocol === "i2s" || protocol === "tdm";
 
@@ -662,8 +665,8 @@ export function DigitalInterfaceLab({ language, onBack }: DigitalInterfaceLabPro
             {usesClockControls ? (
               <span>
                 {language === "zh"
-                  ? `BCLK = ${sampleRate} kHz × ${bitDepth} bit × ${channels} ch = ${bclkMhz} MHz`
-                  : `BCLK = ${sampleRate} kHz × ${bitDepth} bit × ${channels} ch = ${bclkMhz} MHz`}
+                  ? `BCLK = ${bclkFormula}`
+                  : `BCLK = ${bclkFormula}`}
               </span>
             ) : null}
           </div>
@@ -735,8 +738,16 @@ export function DigitalInterfaceLab({ language, onBack }: DigitalInterfaceLabPro
               </div>
 
               <div className="digital-lab-metrics">
-                <strong>{language === "zh" ? `BCLK ${bclkMhz} MHz` : `BCLK ${bclkMhz} MHz`}</strong>
-                <strong>{language === "zh" ? `MCLK 常见 ${mclkMhz} MHz` : `Common MCLK ${mclkMhz} MHz`}</strong>
+                <strong>
+                  {language === "zh"
+                    ? `BCLK：${sampleRateHz.toLocaleString("en-US")} Hz × ${bitDepth} bit × ${channels} ch = ${bclkMhz} MHz`
+                    : `BCLK: ${sampleRateHz.toLocaleString("en-US")} Hz x ${bitDepth} bit x ${channels} ch = ${bclkMhz} MHz`}
+                </strong>
+                <strong>
+                  {language === "zh"
+                    ? `MCLK 常见 256fs：${mclkFormula}`
+                    : `Common MCLK 256fs: ${mclkFormula}`}
+                </strong>
               </div>
             </>
           ) : null}

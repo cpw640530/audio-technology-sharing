@@ -3,6 +3,7 @@ import { AiAudioLab } from "./components/AiAudioLab";
 import { AmplifierSpeakerLab } from "./components/AmplifierSpeakerLab";
 import { AudioCodecLab } from "./components/AudioCodecLab";
 import { AudioPluginLab } from "./components/AudioPluginLab";
+import { AudioUnitsLab } from "./components/AudioUnitsLab";
 import { AutomotiveAudioLab } from "./components/AutomotiveAudioLab";
 import { CategoryTabs } from "./components/CategoryTabs";
 import { CodecHardwareLab } from "./components/CodecHardwareLab";
@@ -96,6 +97,7 @@ export default function App() {
   const [activeView, setActiveView] = useState<
     | "knowledge"
     | "soundLab"
+    | "audioUnitsLab"
     | "digitalLab"
     | "listeningLab"
     | "meetingCommunicationLab"
@@ -180,6 +182,21 @@ export default function App() {
           onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
         />
         <SoundWaveLab language={language} onBack={() => setActiveView("knowledge")} />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+        </footer>
+      </div>
+    );
+  }
+
+  if (activeView === "audioUnitsLab") {
+    return (
+      <div className="app-shell">
+        <Header
+          language={language}
+          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+        />
+        <AudioUnitsLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -484,6 +501,10 @@ export default function App() {
               onOpenAudioPluginLab={() => {
                 setSelectedTopic(null);
                 setActiveView("audioPluginLab");
+              }}
+              onOpenAudioUnitsLab={() => {
+                setSelectedTopic(null);
+                setActiveView("audioUnitsLab");
               }}
               onOpenAutomotiveAudioLab={() => {
                 setSelectedTopic(null);
