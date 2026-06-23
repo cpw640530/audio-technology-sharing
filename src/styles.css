@@ -1,4 +1,10 @@
 :root {
+  --accent: #1f9d8a;
+  --background-wave-deep: 31 117 105;
+  --background-wave-muted: 109 140 63;
+  --background-wave-primary: 31 157 138;
+  --background-wave-rose: 180 76 109;
+  --background-wave-secondary: 196 111 42;
   color: #17211f;
   background: #f5f2eb;
   font-family:
@@ -17,9 +23,19 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    linear-gradient(135deg, rgba(31, 157, 138, 0.1), transparent 38%),
-    linear-gradient(315deg, rgba(196, 111, 42, 0.12), transparent 36%),
+    linear-gradient(135deg, rgb(var(--background-wave-primary) / 0.1), transparent 38%),
+    linear-gradient(315deg, rgb(var(--background-wave-secondary) / 0.12), transparent 36%),
     #f5f2eb;
+}
+
+.background-wave {
+  height: 100vh;
+  inset: 0;
+  opacity: 0.75;
+  pointer-events: none;
+  position: fixed;
+  width: 100vw;
+  z-index: 0;
 }
 
 button,
@@ -34,6 +50,8 @@ a {
 
 .app-shell {
   min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
 .site-header {
@@ -6392,5 +6410,9 @@ body.details-open {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
+  }
+
+  .background-wave {
+    opacity: 0.35;
   }
 }

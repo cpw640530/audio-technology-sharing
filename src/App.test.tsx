@@ -6,9 +6,12 @@ import App from "./App";
 describe("Audio knowledge app", () => {
   it("switches between Chinese and English interface copy", async () => {
     const user = userEvent.setup();
-    render(<App />);
+    const { container } = render(<App />);
 
     expect(screen.getByRole("heading", { name: "音频技术分享" })).toBeInTheDocument();
+    const backgroundWave = container.querySelector(".background-wave");
+    expect(backgroundWave).toBeInstanceOf(HTMLCanvasElement);
+    expect(backgroundWave).toHaveAttribute("aria-hidden", "true");
     expect(screen.queryByRole("heading", { name: "内容路线图" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "写作原则" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "文档" })).not.toBeInTheDocument();
