@@ -1,9 +1,25 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
 describe("Audio knowledge app", () => {
+  beforeEach(() => {
+    window.localStorage.setItem("audio-technology-language", "zh");
+  });
+
+  it("defaults to English when no language preference is stored", () => {
+    window.localStorage.removeItem("audio-technology-language");
+
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: "Audio Technology Sharing" })).toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "Knowledge Outline" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Topic Cards" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "中文" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "音频技术分享" })).not.toBeInTheDocument();
+  });
+
   it("switches between Chinese and English interface copy", async () => {
     const user = userEvent.setup();
     const { container } = render(<App />);

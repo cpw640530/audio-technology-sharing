@@ -26,6 +26,18 @@ Audio Technology Sharing is a content-first repository and web app for organizin
 
 The website provides a simple way to browse audio fundamentals, hardware, software, signal processing, AI audio algorithms, and real-world applications. Topic cards can open detailed explanations and focused labs for visual or interactive learning.
 
+<p align="center">
+  <img alt="Audio Technology Sharing website overview" src="./public/images/audio_technology_sharing.png" width="900">
+</p>
+
+## Interactive Labs
+
+The project includes visual learning labs for key audio concepts. For example, the sound wave lab helps readers connect waveform parameters with what they hear and see.
+
+<p align="center">
+  <img alt="Sound Wave Lab interactive waveform demo" src="./public/images/Sound%20Wave%20Lab.png" width="900">
+</p>
+
 ## Why This Repository Exists
 
 Audio technology spans physics, electronics, embedded systems, operating systems, digital signal processing, machine learning, and product applications. This repository keeps those topics in one structured place so future website content can be planned and expanded consistently.
@@ -39,6 +51,10 @@ It is designed for:
 - Creating a reusable content foundation for future audio technology projects.
 
 ## Knowledge Areas
+
+<p align="center">
+  <img alt="Knowledge areas outline in the audio technology website" src="./public/images/Knowledge%20Areas.png" width="900">
+</p>
 
 | Area | Topics |
 | --- | --- |
@@ -66,12 +82,6 @@ To run the web app locally:
 ```bash
 npm install
 npm run dev
-```
-
-The default local URL is:
-
-```text
-http://127.0.0.1:5173/audio-technology-sharing/
 ```
 
 Useful commands:

@@ -39,6 +39,18 @@ type DisplayTopic = Topic & {
   category: Category;
 };
 
+const languageStorageKey = "audio-technology-language";
+
+function getInitialLanguage(): Language {
+  if (typeof window === "undefined") {
+    return "en";
+  }
+
+  const storedLanguage = window.localStorage.getItem(languageStorageKey);
+
+  return storedLanguage === "zh" || storedLanguage === "en" ? storedLanguage : "en";
+}
+
 function topicMatchesSearch(topic: DisplayTopic, query: string): boolean {
   if (!query.trim()) {
     return true;
@@ -92,7 +104,7 @@ function topicMatchesSearch(topic: DisplayTopic, query: string): boolean {
 }
 
 export default function App() {
-  const [language, setLanguage] = useState<Language>("zh");
+  const [language, setLanguage] = useState<Language>(getInitialLanguage);
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeView, setActiveView] = useState<
     | "knowledge"
@@ -145,6 +157,14 @@ export default function App() {
     ? `${selectedTopic.category.id}-${selectedTopic.title.en}`
     : undefined;
 
+  function toggleLanguage() {
+    setLanguage((current) => {
+      const nextLanguage = current === "zh" ? "en" : "zh";
+      window.localStorage.setItem(languageStorageKey, nextLanguage);
+      return nextLanguage;
+    });
+  }
+
   useEffect(() => {
     if (!selectedTopic) {
       return undefined;
@@ -179,7 +199,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <SoundWaveLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -194,7 +214,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <AudioUnitsLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -209,7 +229,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <DigitalAudioLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -224,7 +244,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <ListeningMetricsLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -239,7 +259,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <MicrophoneLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -254,7 +274,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <MeetingCommunicationLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -269,7 +289,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <AutomotiveAudioLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -284,7 +304,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <IotContentLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -299,7 +319,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <CodecHardwareLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -314,7 +334,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <DigitalInterfaceLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -329,7 +349,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <AmplifierSpeakerLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -344,7 +364,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <SystemAudioLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -359,7 +379,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <AudioCodecLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -374,7 +394,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <AudioPluginLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -389,7 +409,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <RealtimeAudioLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -404,7 +424,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <CoreSignalProcessingLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -419,7 +439,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <SpeechEnhancementLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -434,7 +454,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <SpatialAudioLab language={language} onBack={() => setActiveView("knowledge")} />
         <footer className="site-footer">
@@ -449,7 +469,7 @@ export default function App() {
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+          onToggleLanguage={toggleLanguage}
         />
         <AiAudioLab
           labId={aiAudioLabId}
@@ -467,7 +487,7 @@ export default function App() {
     <div className="app-shell">
       <Header
         language={language}
-        onToggleLanguage={() => setLanguage((current) => (current === "zh" ? "en" : "zh"))}
+        onToggleLanguage={toggleLanguage}
       />
       <main>
         <Hero language={language} totalTopics={allTopics.length} />
