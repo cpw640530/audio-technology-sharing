@@ -493,7 +493,7 @@ function ListeningEffectChart({
         />
         <text className="lab-chip" x="70" y="74">L</text>
         <text className="lab-chip" x="70" y="158">R</text>
-        <text className="lab-chip" x="528" y="256">Pan: center → right</text>
+        <text className="lab-chip" data-testid="listening-stereo-pan-label" x="528" y="284">Pan: center → right</text>
       </>
     );
   }

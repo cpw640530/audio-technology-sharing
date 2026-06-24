@@ -2358,6 +2358,7 @@ describe("Audio knowledge app", () => {
     await user.click(screen.getByRole("button", { name: "声像偏移" }));
     expect(screen.getByTestId("listening-stereo-left")).toHaveClass("listening-stereo-left");
     expect(screen.getByTestId("listening-stereo-right")).toHaveClass("listening-stereo-right");
+    expect(screen.getByTestId("listening-stereo-pan-label")).toHaveAttribute("y", "284");
     const leftChannelBefore = screen.getByTestId("listening-stereo-left").getAttribute("d");
     const rightChannelBefore = screen.getByTestId("listening-stereo-right").getAttribute("d");
     fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
