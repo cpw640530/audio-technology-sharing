@@ -145,6 +145,50 @@ const algorithmFormulaNotes: Record<"aec" | "ns" | "agc", Record<Language, strin
   }
 };
 
+const sourceReferenceRows = [
+  {
+    title: "AEC",
+    keyword: "NLMS adaptive filter",
+    pseudo: "e[n] = mic[n] - sum(w[k] * ref[n-k]); w += mu * e[n] * ref",
+    note: {
+      zh: "源码关键词：NLMS adaptive filter、delay estimation、double-talk detection。重点看播放 reference 如何对齐麦克风回声。",
+      en: "Source keywords: NLMS adaptive filter, delay estimation, double-talk detection. Focus on how playback reference is aligned to mic echo."
+    }
+  },
+  {
+    title: "NS / ANR",
+    keyword: "STFT spectral subtraction",
+    pseudo: "X[k] = STFT(x); G[k] = max(floor, 1 - N[k] / |X[k]|); y = ISTFT(G * X)",
+    note: {
+      zh: "源码关键词：STFT spectral subtraction、Wiener filter、noise estimator。重点看噪声谱估计和最小增益地板。",
+      en: "Source keywords: STFT spectral subtraction, Wiener filter, noise estimator. Focus on noise spectrum estimation and gain floor."
+    }
+  },
+  {
+    title: "AGC",
+    keyword: "envelope follower gain smoothing",
+    pseudo: "rms = sqrt(mean(x^2)); targetGain = target / rms; gain = smooth(targetGain)",
+    note: {
+      zh: "源码关键词：envelope follower、attack/release、limiter。重点看增益平滑，避免抽吸和削波。",
+      en: "Source keywords: envelope follower, attack/release, limiter. Focus on gain smoothing to avoid pumping and clipping."
+    }
+  },
+  {
+    title: "EQ / Filter",
+    keyword: "biquad filter",
+    pseudo: "y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]",
+    note: {
+      zh: "源码关键词：biquad filter、IIR、frequency response。重点看系数如何决定低通、高通、峰值 EQ。",
+      en: "Source keywords: biquad filter, IIR, frequency response. Focus on how coefficients set low-pass, high-pass, and peaking EQ."
+    }
+  }
+] satisfies Array<{
+  keyword: string;
+  note: Record<Language, string>;
+  pseudo: string;
+  title: string;
+}>;
+
 const sdkRows = [
   {
     module: "AI",
@@ -263,26 +307,30 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function createSpeechWavePath({
+  centerY,
   echoLevel,
   enhanced,
   micCount,
   mode,
   noiseLevel,
   reverbLevel,
+  pathWidth = 656,
+  startX = 42,
   strength
 }: {
+  centerY?: number;
   echoLevel: number;
   enhanced: boolean;
   micCount: number;
   mode: EnhancementMode;
   noiseLevel: number;
+  pathWidth?: number;
   reverbLevel: number;
+  startX?: number;
   strength: number;
 }) {
   const points = 140;
-  const x = 42;
-  const y = enhanced ? 282 : 150;
-  const width = 656;
+  const y = centerY ?? (enhanced ? 282 : 150);
   const strengthRatio = strength / 100;
   const noise = noiseLevel / 100;
   const echo = echoLevel / 100;
@@ -300,7 +348,7 @@ function createSpeechWavePath({
 
   return Array.from({ length: points }, (_, index) => {
     const ratio = index / (points - 1);
-    const pointX = x + ratio * width;
+    const pointX = startX + ratio * pathWidth;
     const speechEnvelope = 0.42 + Math.sin(ratio * Math.PI) * 0.58;
     const leveledEnvelope = speechEnvelope + (0.74 - speechEnvelope) * agcAmount * 0.72;
     const speech =
@@ -535,6 +583,99 @@ function WaveComparison({
   );
 }
 
+function AlgorithmStageWaveChart({
+  echoLevel,
+  language,
+  micCount,
+  noiseLevel,
+  reverbLevel,
+  strength
+}: {
+  echoLevel: number;
+  language: Language;
+  micCount: number;
+  noiseLevel: number;
+  reverbLevel: number;
+  strength: number;
+}) {
+  const stages = [
+    {
+      id: "raw",
+      label: { zh: "原始采集", en: "Raw capture" },
+      mode: "aec",
+      enhanced: false,
+      x: 54,
+      y: 90
+    },
+    {
+      id: "aec",
+      label: { zh: "AEC 后", en: "After AEC" },
+      mode: "aec",
+      enhanced: true,
+      x: 54,
+      y: 168
+    },
+    {
+      id: "ns",
+      label: { zh: "NS / ANR 后", en: "After NS / ANR" },
+      mode: "ns",
+      enhanced: true,
+      x: 54,
+      y: 246
+    },
+    {
+      id: "agc",
+      label: { zh: "AGC 后", en: "After AGC" },
+      mode: "agc",
+      enhanced: true,
+      x: 54,
+      y: 324
+    }
+  ] as const;
+
+  return (
+    <svg
+      aria-label={language === "zh" ? "语音增强算法链路波形变化图" : "Speech enhancement algorithm-stage waveform chart"}
+      className="speech-stage-wave-chart"
+      role="img"
+      viewBox="0 0 740 390"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect className="lab-diagram-bg" height="390" rx="16" width="740" />
+      <text className="speech-lab-chart-title" x="44" y="42">
+        {language === "zh" ? "算法链路中波形如何逐步变化" : "How the waveform changes through the algorithm chain"}
+      </text>
+      {stages.map((stage) => (
+        <g className="speech-stage-row" key={stage.id}>
+          <line className="lab-axis" x1="176" x2="700" y1={stage.y} y2={stage.y} />
+          <text className="speech-lab-axis-label" x={stage.x} y={stage.y + 5}>{stage.label[language]}</text>
+          <path
+            className={`speech-stage-wave ${stage.id}`}
+            data-testid={`speech-stage-${stage.id}`}
+            d={createSpeechWavePath({
+              centerY: stage.y,
+              echoLevel,
+              enhanced: stage.enhanced,
+              micCount,
+              mode: stage.mode,
+              noiseLevel,
+              pathWidth: 524,
+              reverbLevel,
+              startX: 176,
+              strength
+            })}
+          />
+        </g>
+      ))}
+      <text className="speech-lab-note" x="54" y="370">
+        {language === "zh"
+          ? "示意：AEC 压低延迟回声，NS/ANR 减少细碎噪声，AGC 让包络更均匀。"
+          : "Illustration: AEC lowers delayed echo, NS/ANR reduces fine noise, and AGC evens the envelope."}
+      </text>
+    </svg>
+  );
+}
+
 export function SpeechEnhancementLab({ language, onBack }: SpeechEnhancementLabProps) {
   const [mode, setMode] = useState<EnhancementMode>("beamforming");
   const [strength, setStrength] = useState(65);
@@ -611,6 +752,14 @@ export function SpeechEnhancementLab({ language, onBack }: SpeechEnhancementLabP
                 reverbLevel={reverbLevel}
                 strength={strength}
               />
+              <AlgorithmStageWaveChart
+                echoLevel={echoLevel}
+                language={language}
+                micCount={micCount}
+                noiseLevel={noiseLevel}
+                reverbLevel={reverbLevel}
+                strength={strength}
+              />
               <section className="speech-wave-explain-card" aria-label={language === "zh" ? "滑块如何影响波形" : "How sliders affect the waveform"}>
                 <h2>{language === "zh" ? "波形如何变化" : "How the waveform changes"}</h2>
                 <ul>
@@ -651,6 +800,19 @@ export function SpeechEnhancementLab({ language, onBack }: SpeechEnhancementLabP
                     <li key={item}>{algorithmFormulaNotes[item][language]}</li>
                   ))}
                 </ul>
+              </section>
+              <section className="speech-source-reference-card" aria-label={language === "zh" ? "算法源码参考" : "Algorithm source-code references"}>
+                <h2>{language === "zh" ? "算法源码参考" : "Algorithm source references"}</h2>
+                <div className="speech-source-reference-grid">
+                  {sourceReferenceRows.map((row) => (
+                    <article key={row.title}>
+                      <h3>{row.title}</h3>
+                      <strong>{`${row.title} ${language === "zh" ? "源码关键词" : "source keywords"}：${row.keyword}`}</strong>
+                      <code>{row.pseudo}</code>
+                      <p>{row.note[language]}</p>
+                    </article>
+                  ))}
+                </div>
               </section>
             </div>
 

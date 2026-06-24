@@ -687,6 +687,14 @@ describe("Audio knowledge app", () => {
     expect(within(lab).getByText(/x\(n\) 为播放参考，d_hat\(n\)/)).toBeInTheDocument();
     expect(within(lab).getByText(/S_hat\(k\) = G\(k\)X\(k\)/)).toBeInTheDocument();
     expect(within(lab).getByText(/g\(n\) = target \/ rms\(n\)/)).toBeInTheDocument();
+    expect(within(lab).getByRole("img", { name: "语音增强算法链路波形变化图" })).toBeInTheDocument();
+    expect(within(lab).getByTestId("speech-stage-raw")).toBeInTheDocument();
+    expect(within(lab).getByTestId("speech-stage-aec")).toBeInTheDocument();
+    expect(within(lab).getByTestId("speech-stage-ns")).toBeInTheDocument();
+    expect(within(lab).getByTestId("speech-stage-agc")).toBeInTheDocument();
+    expect(within(lab).getByRole("region", { name: "算法源码参考" })).toBeInTheDocument();
+    expect(within(lab).getByText(/AEC 源码关键词：NLMS adaptive filter/)).toBeInTheDocument();
+    expect(within(lab).getByText(/NS \/ ANR 源码关键词：STFT spectral subtraction/)).toBeInTheDocument();
     expect(within(lab).getByText("Rockchip RK Media / VQE")).toBeInTheDocument();
     expect(within(lab).getByText("SigmaStar MI Audio")).toBeInTheDocument();
     expect(within(lab).getByText("Ingenic IMP Audio")).toBeInTheDocument();
@@ -1227,6 +1235,8 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("img", { name: "采样与量化可视化图" })).toBeInTheDocument();
     expect(screen.getByText("当前采样点：24 个")).toBeInTheDocument();
     expect(screen.getByText("当前量化等级：16 级")).toBeInTheDocument();
+    expect(screen.getByTestId("digital-bit-depth-guide")).toBeInTheDocument();
+    expect(screen.getAllByTestId("digital-bit-depth-level")).toHaveLength(16);
 
     fireEvent.change(screen.getByRole("slider", { name: "采样率" }), {
       target: { value: "12" }
@@ -1237,6 +1247,16 @@ describe("Audio knowledge app", () => {
 
     expect(screen.getByText("当前采样点：12 个")).toBeInTheDocument();
     expect(screen.getByText("当前量化等级：8 级")).toBeInTheDocument();
+    expect(screen.getAllByTestId("digital-bit-depth-level")).toHaveLength(8);
+    expect(screen.getByText(/位深决定纵向幅度等级/)).toBeInTheDocument();
+
+    const quantizedPathBeforeFrequencyChange = screen.getByTestId("digital-step-path").getAttribute("d");
+    fireEvent.change(screen.getByRole("slider", { name: "输入频率" }), {
+      target: { value: "5" }
+    });
+
+    expect(screen.getByText("输入频率：5 个周期")).toBeInTheDocument();
+    expect(screen.getByTestId("digital-step-path").getAttribute("d")).not.toBe(quantizedPathBeforeFrequencyChange);
 
     await user.click(screen.getByRole("button", { name: "误差曲线" }));
 
@@ -1567,7 +1587,7 @@ describe("Audio knowledge app", () => {
     const scenarioSection = screen.getByRole("region", { name: "音频编解码应用场景" });
     expect(flowSection.compareDocumentPosition(scenarioSection) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole("heading", { name: "格式对比" })).toBeInTheDocument();
-    expect(screen.getByText("FLAC")).toBeInTheDocument();
+    expect(screen.getAllByText("FLAC").length).toBeGreaterThan(0);
     expect(screen.getByText("LDAC")).toBeInTheDocument();
     expect(screen.getByText("LC3")).toBeInTheDocument();
     expect(screen.getByText(/通俗理解：像把原始录音直接逐点记下来/)).toBeInTheDocument();
@@ -1576,6 +1596,16 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText(/例子：FLAC 像把重复规律写成公式/)).toBeInTheDocument();
     expect(screen.getByText(/例子：Opus 在网络变差时可以降低码率/)).toBeInTheDocument();
     expect(screen.getByText(/例子：LDAC 990 kbps 更像走更宽的无线通道/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "编码压缩率对比" })).toBeInTheDocument();
+    expect(screen.getByText("PCM / WAV")).toBeInTheDocument();
+    expect(screen.getByText("约 1:1")).toBeInTheDocument();
+    expect(screen.getByText("MP3 / AAC")).toBeInTheDocument();
+    expect(screen.getByText("约 6:1 到 16:1")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "采样率音质差异对比" })).toBeInTheDocument();
+    expect(screen.getByText("8 kHz")).toBeInTheDocument();
+    expect(screen.getByText("最高约 4 kHz")).toBeInTheDocument();
+    expect(screen.getByText("48 kHz")).toBeInTheDocument();
+    expect(screen.getByText("最高约 24 kHz")).toBeInTheDocument();
     expect(screen.getByText("音乐存储")).toBeInTheDocument();
     expect(screen.getByText("蓝牙耳机")).toBeInTheDocument();
     expect(screen.getByText("低延迟互动")).toBeInTheDocument();
@@ -2216,18 +2246,44 @@ describe("Audio knowledge app", () => {
     );
 
     expect(screen.getByRole("heading", { name: "麦克风工作原理" })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "模拟驻极体咪头工作原理图" })).toBeInTheDocument();
+    const electretDiagram = screen.getByRole("img", { name: "模拟驻极体咪头工作原理图" });
+    expect(electretDiagram).toBeInTheDocument();
     expect(screen.getByText(/驻极体材料预先带电/)).toBeInTheDocument();
     expect(screen.getAllByText("输出：模拟电压").length).toBeGreaterThan(0);
+    const numericFlow = screen.getByRole("region", { name: "麦克风数值链路" });
+    expect(numericFlow.closest(".mic-principle-visual")).toBeTruthy();
+    expect(electretDiagram.compareDocumentPosition(numericFlow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(numericFlow).getByText("教学近似：-44 dBV/Pa，20 dB 前级，1 Vrms ADC 满量程")).toBeInTheDocument();
+    expect(within(numericFlow).getByText("输入声压：94 dBSPL")).toBeInTheDocument();
+    expect(within(numericFlow).getByText("声压：1.000 Pa")).toBeInTheDocument();
+    expect(within(numericFlow).getByText("JFET 输出")).toBeInTheDocument();
+    expect(within(numericFlow).getByText("6.31 mVrms")).toBeInTheDocument();
+    expect(within(numericFlow).getByText("20 dB 前级后")).toBeInTheDocument();
+    expect(within(numericFlow).getByText("63.10 mVrms")).toBeInTheDocument();
+    expect(within(numericFlow).getByText("约 -24.0 dBFS")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("slider", { name: "工作原理输入声压" }), {
+      target: { value: "114" }
+    });
+
+    expect(within(numericFlow).getByText("输入声压：114 dBSPL")).toBeInTheDocument();
+    expect(within(numericFlow).getByText("声压：10.000 Pa")).toBeInTheDocument();
+    expect(within(numericFlow).getByText("63.10 mVrms")).toBeInTheDocument();
+    expect(within(numericFlow).getByText("631.00 mVrms")).toBeInTheDocument();
+    expect(within(numericFlow).getByText("约 -4.0 dBFS")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "数字 MEMS 麦" }));
     expect(screen.getByRole("img", { name: "数字 MEMS 麦工作原理图" })).toBeInTheDocument();
     expect(screen.getByText(/Σ-Δ 调制输出 PDM/)).toBeInTheDocument();
     expect(screen.getAllByText("输出：PDM / I2S").length).toBeGreaterThan(0);
+    expect(within(numericFlow).getByText(/数字 MEMS 约 -26 dBFS\/Pa/)).toBeInTheDocument();
+    expect(within(numericFlow).getByText("PDM 1-bit 流")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "动圈话筒" }));
     expect(screen.getByRole("img", { name: "动圈话筒工作原理图" })).toBeInTheDocument();
     expect(screen.getByText(/线圈在磁场中随声音运动/)).toBeInTheDocument();
+    expect(within(numericFlow).getByText(/动圈约 -54 dBV\/Pa/)).toBeInTheDocument();
+    expect(within(numericFlow).getByText("音圈感应")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "多麦阵列" }));
     const arrayDiagram = screen.getByRole("img", { name: "多麦阵列工作原理图" });
@@ -2236,6 +2292,8 @@ describe("Audio knowledge app", () => {
     expect(arrayDiagram.querySelectorAll("path.mic-signal-line[d*='404']")).toHaveLength(4);
     expect(screen.getByText(/延时对齐并加权求和/)).toBeInTheDocument();
     expect(screen.getAllByText("输出：增强后的目标声").length).toBeGreaterThan(0);
+    expect(within(numericFlow).getByText(/4 Mic 目标方向延时对齐后/)).toBeInTheDocument();
+    expect(within(numericFlow).getByText("延时对齐求和")).toBeInTheDocument();
   });
 
   it("expands listening perception with metrics and an audio effects lab", async () => {
@@ -2310,11 +2368,32 @@ describe("Audio knowledge app", () => {
     expect(screen.getByTestId("listening-metric-response")).toBeInTheDocument();
     expect(screen.getByTestId("listening-clean-wave")).toHaveClass("listening-clean-wave");
     expect(screen.getByTestId("listening-processed-wave")).toHaveClass("listening-processed-wave");
+    expect(screen.getByTestId("listening-frequency-x-axis")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-level-y-axis")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-clean-time-axis")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-clean-amplitude-axis")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-processed-time-axis")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-processed-amplitude-axis")).toBeInTheDocument();
+    expect(screen.getByText("横轴：频率")).toBeInTheDocument();
+    expect(screen.getByText("纵轴：增益 dB")).toBeInTheDocument();
+    expect(screen.getAllByText("横轴：时间")).toHaveLength(2);
+    expect(screen.getAllByText("纵轴：幅度")).toHaveLength(2);
+    expect(screen.getByText("低频")).toBeInTheDocument();
+    expect(screen.getByText("中频")).toBeInTheDocument();
+    expect(screen.getByText("高频")).toBeInTheDocument();
+    expect(screen.getByText("+12 dB")).toBeInTheDocument();
+    expect(screen.getByText("0 dB")).toBeInTheDocument();
+    expect(screen.getByText("-12 dB")).toBeInTheDocument();
+    expect(screen.getByText("高频提升区")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-tone-emphasis-band")).toHaveClass("listening-tone-emphasis-band");
+    const brightMetricPath = screen.getByTestId("listening-metric-response").getAttribute("d");
     const brightProcessedWave = screen.getByTestId("listening-processed-wave").getAttribute("d");
 
     await user.click(screen.getByRole("button", { name: "浑浊低中频" }));
     expect(screen.getByTestId("listening-metric-response")).toBeInTheDocument();
     expect(screen.getByTestId("listening-clean-wave")).toBeInTheDocument();
+    expect(screen.getByText("低中频堆积区")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-metric-response").getAttribute("d")).not.toEqual(brightMetricPath);
     expect(screen.getByTestId("listening-processed-wave").getAttribute("d")).not.toEqual(brightProcessedWave);
 
     await user.click(screen.getByRole("button", { name: "明亮高频" }));
@@ -2330,6 +2409,14 @@ describe("Audio knowledge app", () => {
     expect(screen.getByTestId("listening-noise-band")).toHaveClass("listening-noise-band");
     expect(screen.getByTestId("listening-noise-signal")).toHaveClass("listening-metric-path");
     expect(screen.getByTestId("listening-noisy-signal")).toHaveClass("listening-noisy-signal");
+    expect(screen.getByRole("img", { name: "SNR 良好与较差波形对比图" })).toBeInTheDocument();
+    expect(screen.getByTestId("snr-good-wave")).toHaveClass("listening-snr-good-wave");
+    expect(screen.getByTestId("snr-poor-wave")).toHaveClass("listening-snr-poor-wave");
+    expect(screen.getByText("SNR 良好：信号明显高于噪声底")).toBeInTheDocument();
+    expect(screen.getByText("SNR 较差：噪声底接近有效信号")).toBeInTheDocument();
+    expect(Number(screen.getByTestId("listening-noise-floor-label").getAttribute("y"))).toBeGreaterThan(
+      Number(screen.getByTestId("listening-axis-guide-label").getAttribute("y")) + 20
+    );
     const noiseBandBefore = screen.getByTestId("listening-noise-band").getAttribute("d");
     const noiseSignalBefore = screen.getByTestId("listening-noise-signal").getAttribute("d");
     const noisySignalBefore = screen.getByTestId("listening-noisy-signal").getAttribute("d");
@@ -2343,8 +2430,41 @@ describe("Audio knowledge app", () => {
     expect(screen.getByTestId("listening-noise-signal").getAttribute("d")).toEqual(noiseSignalBefore);
     expect(screen.getByTestId("listening-noisy-signal").getAttribute("d")).not.toEqual(noisySignalBefore);
 
+    await user.click(screen.getByRole("button", { name: "谐波失真" }));
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
+      target: { value: "45" }
+    });
+    expect(screen.getByText("纯净基波输入")).toBeInTheDocument();
+    expect(screen.getByText("基波 + 谐波叠加输出")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-clean-wave")).toHaveClass("listening-clean-wave");
+    expect(screen.getByTestId("listening-harmonic-sum")).toHaveClass("listening-processed-wave");
+    expect(screen.getByTestId("listening-harmonic-2")).toHaveClass("listening-harmonic-component");
+    expect(screen.getByTestId("listening-harmonic-3")).toHaveClass("listening-harmonic-component");
+    expect(screen.getByTestId("listening-harmonic-5")).toHaveClass("listening-harmonic-component");
+    expect(screen.queryByTestId("listening-harmonic-7")).not.toBeInTheDocument();
+    const harmonicSumBefore = screen.getByTestId("listening-harmonic-sum").getAttribute("d");
+
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
+      target: { value: "95" }
+    });
+    expect(screen.getByText("1f + 2f + 3f + 5f + 7f")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-harmonic-7")).toHaveClass("listening-harmonic-component");
+    expect(screen.getByTestId("listening-harmonic-sum").getAttribute("d")).not.toEqual(harmonicSumBefore);
+
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
+      target: { value: "55" }
+    });
+
     await user.click(screen.getByRole("button", { name: "动态压缩" }));
+    expect(screen.getByText("Input waveform")).toBeInTheDocument();
+    expect(screen.getByText("Compressed waveform")).toBeInTheDocument();
+    expect(screen.getByText("Threshold")).toBeInTheDocument();
+    expect(screen.getByText("Gain reduction")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-compression-threshold-positive")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-compression-threshold-negative")).toBeInTheDocument();
     const compressedEnvelopeBefore = screen.getByTestId("listening-compressed-envelope").getAttribute("d");
+    const inputWaveformBefore = screen.getByTestId("listening-input-envelope").getAttribute("d");
+    const thresholdBefore = screen.getByTestId("listening-compression-threshold-positive").getAttribute("y1");
     expect(screen.getByTestId("listening-input-envelope")).toBeInTheDocument();
     expect(screen.getByTestId("listening-compressed-envelope")).toBeInTheDocument();
     expect(screen.getByTestId("listening-input-envelope")).toHaveClass("listening-envelope-input");
@@ -2352,8 +2472,9 @@ describe("Audio knowledge app", () => {
     fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
       target: { value: "95" }
     });
+    expect(screen.getByTestId("listening-input-envelope").getAttribute("d")).toEqual(inputWaveformBefore);
     expect(screen.getByTestId("listening-compressed-envelope").getAttribute("d")).not.toEqual(compressedEnvelopeBefore);
-    expect(screen.getByTestId("listening-input-envelope").getAttribute("d")).toBeTruthy();
+    expect(screen.getByTestId("listening-compression-threshold-positive").getAttribute("y1")).not.toEqual(thresholdBefore);
 
     await user.click(screen.getByRole("button", { name: "声像偏移" }));
     expect(screen.getByTestId("listening-stereo-left")).toHaveClass("listening-stereo-left");

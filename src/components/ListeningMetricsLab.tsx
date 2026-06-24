@@ -36,6 +36,12 @@ type ActiveAudioGraph = {
   noiseGain?: GainNode;
 };
 
+type HarmonicComponent = {
+  gain: number;
+  order: number;
+  phase: number;
+};
+
 declare global {
   interface Window {
     webkitAudioContext?: typeof AudioContext;
@@ -83,12 +89,12 @@ const effectCopy: Record<ListeningEffect, EffectCopy> = {
     label: { zh: "谐波失真", en: "Harmonic distortion" },
     metric: "THD / THD+N",
     description: {
-      zh: "失真：非线性会产生额外谐波，少量可能有温暖感，过多会破音。",
-      en: "Distortion: nonlinearity adds harmonics; a little can feel warm, too much clips."
+      zh: "失真：非线性会在基波外生成 2f、3f、5f 等谐波；强度越高，高阶谐波越多，波形越偏离正弦。",
+      en: "Distortion: nonlinearity adds 2f, 3f, 5f, and higher harmonics; stronger drive adds more high-order content and bends the waveform away from a sine."
     },
     hearing: {
-      zh: "听感重点：毛刺、破音、边缘变粗。",
-      en: "Listen for: grit, clipping, and rough edges."
+      zh: "听感重点：温暖感、毛刺、破音、边缘变粗。",
+      en: "Listen for: warmth, grit, clipping, and rough edges."
     }
   },
   compression: {
@@ -213,20 +219,23 @@ const metricDetails: MetricDetail[] = [
 ];
 
 function createMetricPath(effect: ListeningEffect, intensity: number) {
-  const width = 660;
-  const height = 240;
-  const midY = 130;
+  const x = 76;
+  const width = 608;
+  const midY = 120;
   const amount = intensity / 100;
 
-  return Array.from({ length: 80 }, (_, index) => {
-    const ratio = index / 79;
-    const x = 50 + ratio * width;
+  return Array.from({ length: 96 }, (_, index) => {
+    const ratio = index / 95;
+    const pointX = x + ratio * width;
     let y = midY;
 
     if (effect === "brightness") {
-      y = midY - Math.max(0, ratio - 0.52) * amount * 150;
+      const lift = Math.max(0, (ratio - 0.52) / 0.48);
+      y = midY - lift ** 1.35 * amount * 72;
     } else if (effect === "muddy") {
-      y = midY - Math.exp(-((ratio - 0.26) ** 2) / 0.018) * amount * 76;
+      const lowMidBump = Math.exp(-((ratio - 0.28) ** 2) / 0.012);
+      const highLoss = Math.max(0, (ratio - 0.58) / 0.42);
+      y = midY - lowMidBump * amount * 58 + highLoss ** 1.3 * amount * 28;
     } else if (effect === "noise") {
       y = 210 - amount * 74 + Math.sin(ratio * Math.PI * 24) * 5;
     } else if (effect === "distortion") {
@@ -237,8 +246,8 @@ function createMetricPath(effect: ListeningEffect, intensity: number) {
       y = midY - Math.sin(ratio * Math.PI * 2) * 18 - amount * 48;
     }
 
-    const clampedY = Math.min(height - 26, Math.max(28, y));
-    return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${clampedY.toFixed(2)}`;
+    const clampedY = Math.min(196, Math.max(36, y));
+    return `${index === 0 ? "M" : "L"} ${pointX.toFixed(2)} ${clampedY.toFixed(2)}`;
   }).join(" ");
 }
 
@@ -266,6 +275,32 @@ function createListeningWavePath({
       Math.sin(ratio * Math.PI * cycles + phase) * 0.78 +
       Math.sin(ratio * Math.PI * cycles * 2.4 + phase * 0.7) * 0.22;
     const pointY = centerY - value * amplitude;
+
+    return `${index === 0 ? "M" : "L"} ${pointX.toFixed(2)} ${pointY.toFixed(2)}`;
+  }).join(" ");
+}
+
+function createPureSinePath({
+  amplitude = 34,
+  centerY = 130,
+  cycles = 4,
+  phase = 0,
+  points = 128,
+  width = 660,
+  x = 50
+}: {
+  amplitude?: number;
+  centerY?: number;
+  cycles?: number;
+  phase?: number;
+  points?: number;
+  width?: number;
+  x?: number;
+}) {
+  return Array.from({ length: points }, (_, index) => {
+    const ratio = index / (points - 1);
+    const pointX = x + ratio * width;
+    const pointY = centerY - Math.sin(ratio * Math.PI * 2 * cycles + phase) * amplitude;
 
     return `${index === 0 ? "M" : "L"} ${pointX.toFixed(2)} ${pointY.toFixed(2)}`;
   }).join(" ");
@@ -319,27 +354,55 @@ function createNoisySignalPath(intensity: number) {
   }).join(" ");
 }
 
-function createToneComparisonPath(effect: "brightness" | "muddy", intensity: number, processed: boolean) {
-  const amount = intensity / 100;
-  const width = 248;
-  const x = processed ? 410 : 76;
-  const centerY = 238;
-  const amplitude = 14;
-
+function createSnrWavePath({
+  amplitude,
+  centerY,
+  noiseAmount,
+  width,
+  x
+}: {
+  amplitude: number;
+  centerY: number;
+  noiseAmount: number;
+  width: number;
+  x: number;
+}) {
   return Array.from({ length: 96 }, (_, index) => {
     const ratio = index / 95;
     const pointX = x + ratio * width;
+    const clean =
+      Math.sin(ratio * Math.PI * 5.2) * 0.78 +
+      Math.sin(ratio * Math.PI * 10.6 + 0.4) * 0.22;
+    const noise =
+      Math.sin(ratio * Math.PI * 61 + 0.2) * 0.42 +
+      Math.sin(ratio * Math.PI * 107 + 0.9) * 0.25;
+    const pointY = centerY - clean * amplitude - noise * noiseAmount * 18;
+
+    return `${index === 0 ? "M" : "L"} ${pointX.toFixed(1)} ${pointY.toFixed(1)}`;
+  }).join(" ");
+}
+
+function createToneComparisonPath(effect: "brightness" | "muddy", intensity: number, processed: boolean) {
+  const amount = intensity / 100;
+  const width = 260;
+  const x = processed ? 410 : 76;
+  const centerY = 242;
+  const amplitude = 17;
+
+  return Array.from({ length: 128 }, (_, index) => {
+    const ratio = index / 127;
+    const pointX = x + ratio * width;
     const low = Math.sin(ratio * Math.PI * 4.2) * 0.54;
     const mid = Math.sin(ratio * Math.PI * 9.2 + 0.25) * 0.28;
-    const high = Math.sin(ratio * Math.PI * 34 + 0.7) * 0.18;
+    const high = Math.sin(ratio * Math.PI * 44 + 0.7) * 0.18;
     let value = low + mid + high * 0.65;
 
     if (processed && effect === "brightness") {
-      value = low * 0.86 + mid * 0.94 + high * (0.9 + amount * 1.8);
+      value = low * Math.max(0.7, 0.92 - amount * 0.16) + mid * 0.92 + high * (1.1 + amount * 3.1);
     }
 
     if (processed && effect === "muddy") {
-      value = low * (1 + amount * 0.7) + mid * (0.95 + amount * 0.35) + high * Math.max(0.18, 0.58 - amount * 0.32);
+      value = low * (1 + amount * 1.15) + mid * (1 + amount * 0.74) + high * Math.max(0.08, 0.55 - amount * 0.5);
     }
 
     const pointY = centerY - value * amplitude;
@@ -348,41 +411,222 @@ function createToneComparisonPath(effect: "brightness" | "muddy", intensity: num
   }).join(" ");
 }
 
+function ToneFrequencyAxes({ language }: { language: Language }) {
+  const x = 76;
+  const y = 120;
+  const width = 608;
+  const height = 82;
+  const ticks = [
+    { label: language === "zh" ? "低频" : "Low", x: 76 },
+    { label: language === "zh" ? "中频" : "Mid", x: 338 },
+    { label: language === "zh" ? "高频" : "High", x: 684 }
+  ];
+  const gainTicks = [
+    { label: "+12 dB", y: y - height },
+    { label: "0 dB", y },
+    { label: "-12 dB", y: y + height }
+  ];
+
+  return (
+    <g className="listening-tone-axis">
+      <line data-testid="listening-frequency-x-axis" x1={x} x2={x + width} y1={y} y2={y} />
+      <line data-testid="listening-level-y-axis" x1={x} x2={x} y1={y - height} y2={y + height} />
+      {ticks.map((tick) => (
+        <g key={tick.label}>
+          <line x1={tick.x} x2={tick.x} y1={y - 6} y2={y + 6} />
+          <text className="lab-chip" textAnchor="middle" x={tick.x} y={y + 26}>{tick.label}</text>
+        </g>
+      ))}
+      {gainTicks.map((tick) => (
+        <g key={tick.label}>
+          <line className="faint" x1={x - 6} x2={x + width} y1={tick.y} y2={tick.y} />
+          <text className="lab-chip" textAnchor="end" x={x - 12} y={tick.y + 4}>{tick.label}</text>
+        </g>
+      ))}
+      <text className="lab-chip" x="532" y="182">{language === "zh" ? "横轴：频率" : "X: frequency"}</text>
+      <text className="lab-chip" x="92" y="34">{language === "zh" ? "纵轴：增益 dB" : "Y: gain dB"}</text>
+    </g>
+  );
+}
+
+function ToneWaveAxes({
+  language,
+  prefix,
+  x
+}: {
+  language: Language;
+  prefix: "clean" | "processed";
+  x: number;
+}) {
+  const width = 260;
+  const midY = 242;
+  const height = 26;
+  const tickYs = [
+    { label: "+A", y: midY - height },
+    { label: "0", y: midY },
+    { label: "-A", y: midY + height }
+  ];
+
+  return (
+    <g className="listening-wave-axis">
+      <line data-testid={`listening-${prefix}-time-axis`} x1={x} x2={x + width} y1={midY} y2={midY} />
+      <line data-testid={`listening-${prefix}-amplitude-axis`} x1={x} x2={x} y1={midY - height} y2={midY + height} />
+      {[x, x + width / 2, x + width].map((tickX) => (
+        <line key={tickX} x1={tickX} x2={tickX} y1={midY - 4} y2={midY + 4} />
+      ))}
+      {tickYs.map((tick) => (
+        <g key={tick.label}>
+          <line x1={x - 4} x2={x + 4} y1={tick.y} y2={tick.y} />
+          <text className="lab-chip" textAnchor="end" x={x - 8} y={tick.y + 4}>
+            {tick.label}
+          </text>
+        </g>
+      ))}
+      <text className="lab-chip" textAnchor="middle" x={x + width / 2} y="292">
+        {language === "zh" ? "横轴：时间" : "X: time"}
+      </text>
+      <text className="lab-chip" textAnchor="middle" transform={`translate(${x - 34} ${midY}) rotate(-90)`}>
+        {language === "zh" ? "纵轴：幅度" : "Y: amplitude"}
+      </text>
+    </g>
+  );
+}
+
 function createDistortionPath(intensity: number) {
   const amount = intensity / 100;
+  const harmonics = getDistortionHarmonics(intensity);
   const width = 660;
   const centerY = 130;
-  const amplitude = 30 + amount * 34;
-  const clipLimit = 0.42 + (1 - amount) * 0.42;
+  const amplitude = 34 + amount * 12;
+  const baseCycles = 4;
+  const normalizer = 1 + amount * 0.34;
 
-  return Array.from({ length: 96 }, (_, index) => {
-    const ratio = index / 95;
+  return Array.from({ length: 128 }, (_, index) => {
+    const ratio = index / 127;
     const x = 50 + ratio * width;
-    const raw =
-      Math.sin(ratio * Math.PI * 8) * 0.82 +
-      Math.sin(ratio * Math.PI * 16) * amount * 0.34;
-    const clipped = Math.max(-clipLimit, Math.min(clipLimit, raw));
-    const y = centerY - clipped * amplitude;
+    const summed = harmonics.reduce(
+      (total, harmonic) =>
+        total + Math.sin(ratio * Math.PI * 2 * baseCycles * harmonic.order + harmonic.phase) * harmonic.gain,
+      0
+    );
+    const y = centerY - (summed / normalizer) * amplitude;
 
     return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
   }).join(" ");
 }
 
-function createCompressionEnvelopePath(intensity: number, compressed: boolean) {
+function getDistortionHarmonics(intensity: number): HarmonicComponent[] {
   const amount = intensity / 100;
-  const peaks = [0.92, 0.28, 1, 0.34, 0.78, 0.2, 0.86, 0.26, 0.66];
-  const centerY = compressed ? 184 : 94;
-  const maxAmplitude = compressed ? 38 : 62;
-  const threshold = 0.34 + (1 - amount) * 0.42;
-  const ratio = 1 + amount * 11;
+  const harmonics: HarmonicComponent[] = [{ gain: 1, order: 1, phase: 0 }];
 
-  return peaks.map((peak, index) => {
-    const x = 76 + index * 76;
-    const level = compressed && peak > threshold ? threshold + (peak - threshold) / ratio : peak;
-    const y = centerY - level * maxAmplitude;
+  if (amount > 0) {
+    harmonics.push(
+      { gain: amount * 0.3, order: 2, phase: Math.PI * 0.08 },
+      { gain: amount * 0.24, order: 3, phase: -Math.PI * 0.06 }
+    );
+  }
+
+  if (amount >= 0.35) {
+    harmonics.push({ gain: (amount - 0.26) * 0.24, order: 5, phase: Math.PI * 0.12 });
+  }
+
+  if (amount >= 0.8) {
+    harmonics.push({ gain: (amount - 0.7) * 0.2, order: 7, phase: -Math.PI * 0.1 });
+  }
+
+  return harmonics;
+}
+
+function getHarmonicComponentLayout(total: number, index: number) {
+  const gap = 22;
+  const totalWidth = 608;
+  const width = (totalWidth - gap * (total - 1)) / total;
+  const x = 76 + index * (width + gap);
+
+  return { width, x };
+}
+
+function createHarmonicComponentPath(component: HarmonicComponent, index: number, total: number) {
+  const layout = getHarmonicComponentLayout(total, index);
+  const amplitude = component.order === 1 ? 9 : component.gain * 76;
+
+  return createPureSinePath({
+    amplitude,
+    centerY: 232,
+    cycles: component.order,
+    phase: component.phase,
+    points: 58,
+    width: layout.width,
+    x: layout.x
+  });
+}
+
+function getCompressionVisualSettings(intensity: number) {
+  const amount = intensity / 100;
+
+  return {
+    amplitude: 72,
+    centerY: 130,
+    ratio: 1 + amount * 11,
+    threshold: 0.34 + (1 - amount) * 0.34
+  };
+}
+
+function getCompressionSourceSample(ratio: number) {
+  const envelope =
+    0.2 +
+    Math.exp(-((ratio - 0.18) ** 2) / 0.0035) * 0.78 +
+    Math.exp(-((ratio - 0.48) ** 2) / 0.006) * 0.58 +
+    Math.exp(-((ratio - 0.78) ** 2) / 0.0045) * 0.72;
+  const carrier =
+    Math.sin(ratio * Math.PI * 28) * 0.82 +
+    Math.sin(ratio * Math.PI * 56 + 0.35) * 0.12;
+
+  return carrier * Math.min(1, envelope);
+}
+
+function compressNormalizedSample(sample: number, threshold: number, ratio: number) {
+  const sign = Math.sign(sample);
+  const magnitude = Math.abs(sample);
+  const compressedMagnitude = magnitude <= threshold ? magnitude : threshold + (magnitude - threshold) / ratio;
+
+  return sign * compressedMagnitude;
+}
+
+function createCompressionEnvelopePath(intensity: number, compressed: boolean) {
+  const settings = getCompressionVisualSettings(intensity);
+
+  return Array.from({ length: 160 }, (_, index) => {
+    const ratio = index / 159;
+    const x = 50 + ratio * 660;
+    const input = getCompressionSourceSample(ratio);
+    const output = compressed ? compressNormalizedSample(input, settings.threshold, settings.ratio) : input;
+    const y = settings.centerY - output * settings.amplitude;
 
     return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
   }).join(" ");
+}
+
+function getCompressionGainMarker(intensity: number) {
+  const settings = getCompressionVisualSettings(intensity);
+  let peak = { ratio: 0, sample: 0 };
+
+  for (let index = 0; index < 160; index += 1) {
+    const ratio = index / 159;
+    const sample = getCompressionSourceSample(ratio);
+
+    if (sample > peak.sample) {
+      peak = { ratio, sample };
+    }
+  }
+
+  const compressed = compressNormalizedSample(peak.sample, settings.threshold, settings.ratio);
+
+  return {
+    inputY: settings.centerY - peak.sample * settings.amplitude,
+    outputY: settings.centerY - compressed * settings.amplitude,
+    x: 50 + peak.ratio * 660
+  };
 }
 
 function createStereoChannelPath(intensity: number, channel: "left" | "right") {
@@ -429,10 +673,12 @@ function createNoiseBuffer(context: AudioContext, amount: number) {
 
 function ListeningEffectChart({
   effect,
-  intensity
+  intensity,
+  language
 }: {
   effect: ListeningEffect;
   intensity: number;
+  language: Language;
 }) {
   if (effect === "noise") {
     return (
@@ -454,14 +700,36 @@ function ListeningEffectChart({
         />
         <text className="lab-chip" x="92" y="92">Clean signal</text>
         <text className="lab-chip" x="428" y="92">Signal + noise</text>
-        <text className="lab-chip" x="560" y="246">Noise floor</text>
+        <text className="lab-chip" data-testid="listening-noise-floor-label" x="560" y="286">Noise floor</text>
       </>
     );
   }
 
   if (effect === "compression") {
+    const settings = getCompressionVisualSettings(intensity);
+    const thresholdOffset = settings.threshold * settings.amplitude;
+    const positiveThresholdY = settings.centerY - thresholdOffset;
+    const negativeThresholdY = settings.centerY + thresholdOffset;
+    const gainMarker = getCompressionGainMarker(intensity);
+
     return (
       <>
+        <line
+          className="listening-compression-threshold"
+          data-testid="listening-compression-threshold-positive"
+          x1="50"
+          x2="710"
+          y1={positiveThresholdY.toFixed(2)}
+          y2={positiveThresholdY.toFixed(2)}
+        />
+        <line
+          className="listening-compression-threshold"
+          data-testid="listening-compression-threshold-negative"
+          x1="50"
+          x2="710"
+          y1={negativeThresholdY.toFixed(2)}
+          y2={negativeThresholdY.toFixed(2)}
+        />
         <path
           className="listening-envelope-input"
           data-testid="listening-input-envelope"
@@ -472,8 +740,20 @@ function ListeningEffectChart({
           data-testid="listening-compressed-envelope"
           d={createCompressionEnvelopePath(intensity, true)}
         />
-        <text className="lab-chip" x="76" y="62">Input dynamics</text>
-        <text className="lab-chip" x="76" y="226">Compressed output</text>
+        <line
+          className="listening-compression-gain-reduction"
+          data-testid="listening-compression-gain-reduction"
+          x1={gainMarker.x.toFixed(2)}
+          x2={gainMarker.x.toFixed(2)}
+          y1={gainMarker.inputY.toFixed(2)}
+          y2={gainMarker.outputY.toFixed(2)}
+        />
+        <text className="lab-chip" x="76" y="62">Input waveform</text>
+        <text className="lab-chip" x="248" y="62">Compressed waveform</text>
+        <text className="lab-chip" x="570" y={Math.max(72, positiveThresholdY - 10).toFixed(2)}>Threshold</text>
+        <text className="lab-chip" x={Math.min(548, gainMarker.x + 16).toFixed(2)} y={((gainMarker.inputY + gainMarker.outputY) / 2).toFixed(2)}>
+          Gain reduction
+        </text>
       </>
     );
   }
@@ -499,20 +779,46 @@ function ListeningEffectChart({
   }
 
   if (effect === "distortion") {
+    const harmonics = getDistortionHarmonics(intensity);
+    const harmonicLabel = harmonics.map((harmonic) => `${harmonic.order}f`).join(" + ");
+
     return (
       <>
         <path
           className="listening-clean-wave"
           data-testid="listening-clean-wave"
-          d={createListeningWavePath({ amplitude: 34, centerY: 130, cycles: 4 })}
+          d={createPureSinePath({ amplitude: 34, centerY: 130, cycles: 4 })}
         />
         <path
           className="listening-processed-wave"
-          data-testid="listening-metric-response"
+          data-testid="listening-harmonic-sum"
           d={createDistortionPath(intensity)}
         />
-        <text className="lab-chip" x="76" y="86">Clean input</text>
-        <text className="lab-chip" x="520" y="86">Clipped output</text>
+        <text className="lab-chip" x="76" y="82">{language === "zh" ? "纯净基波输入" : "Clean fundamental input"}</text>
+        <text className="lab-chip" x="476" y="82">{language === "zh" ? "基波 + 谐波叠加输出" : "Fundamental + harmonic sum"}</text>
+        <text className="lab-chip" x="76" y="206">{language === "zh" ? "谐波分量拆解" : "Harmonic components"}</text>
+        {harmonics.map((harmonic, index) => {
+          const layout = getHarmonicComponentLayout(harmonics.length, index);
+
+          return (
+            <g key={harmonic.order}>
+              <path
+                className="listening-harmonic-component"
+                data-testid={`listening-harmonic-${harmonic.order}`}
+                d={createHarmonicComponentPath(harmonic, index, harmonics.length)}
+              />
+              <text
+                className="lab-chip listening-harmonic-label"
+                textAnchor="middle"
+                x={layout.x + layout.width / 2}
+                y="266"
+              >
+                {harmonic.order}f
+              </text>
+            </g>
+          );
+        })}
+        <text className="lab-chip" x="76" y="286">{harmonicLabel}</text>
       </>
     );
   }
@@ -520,13 +826,23 @@ function ListeningEffectChart({
   if (effect === "brightness" || effect === "muddy") {
     return (
       <>
+        <rect
+          className="listening-tone-emphasis-band"
+          data-testid="listening-tone-emphasis-band"
+          height={effect === "brightness" ? 126 : 116}
+          rx="8"
+          width={effect === "brightness" ? 172 : 190}
+          x={effect === "brightness" ? 512 : 174}
+          y={effect === "brightness" ? 44 : 52}
+        />
+        <ToneFrequencyAxes language={language} />
         <path
           className="listening-metric-path"
           data-testid="listening-metric-response"
           d={createMetricPath(effect, intensity)}
         />
-        <line className="lab-axis faint" x1="76" x2="324" y1="238" y2="238" />
-        <line className="lab-axis faint" x1="410" x2="658" y1="238" y2="238" />
+        <ToneWaveAxes language={language} prefix="clean" x={76} />
+        <ToneWaveAxes language={language} prefix="processed" x={410} />
         <path
           className="listening-clean-wave"
           data-testid="listening-clean-wave"
@@ -541,6 +857,15 @@ function ListeningEffectChart({
         <text className="lab-chip" x="410" y="274">
           {effect === "brightness" ? "Treble boosted" : "Low-mid buildup"}
         </text>
+        <text className="lab-chip" x={effect === "brightness" ? "526" : "188"} y={effect === "brightness" ? "56" : "64"}>
+          {effect === "brightness"
+            ? language === "zh"
+              ? "高频提升区"
+              : "Treble boost zone"
+            : language === "zh"
+              ? "低中频堆积区"
+              : "Low-mid buildup zone"}
+        </text>
       </>
     );
   }
@@ -551,6 +876,35 @@ function ListeningEffectChart({
       data-testid="listening-metric-response"
       d={createMetricPath(effect, intensity)}
     />
+  );
+}
+
+function SnrComparisonChart({ language }: { language: Language }) {
+  const goodWave = createSnrWavePath({ amplitude: 34, centerY: 106, noiseAmount: 0.18, width: 270, x: 60 });
+  const poorWave = createSnrWavePath({ amplitude: 24, centerY: 106, noiseAmount: 0.92, width: 270, x: 430 });
+
+  return (
+    <svg
+      aria-label={language === "zh" ? "SNR 良好与较差波形对比图" : "Good and poor SNR waveform comparison"}
+      className="listening-snr-chart"
+      role="img"
+      viewBox="0 0 760 260"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect className="lab-diagram-bg" height="260" rx="14" width="760" />
+      <line className="lab-axis" x1="54" x2="340" y1="106" y2="106" />
+      <line className="lab-axis" x1="424" x2="710" y1="106" y2="106" />
+      <rect className="listening-snr-good-floor" height="16" rx="8" width="286" x="54" y="176" />
+      <rect className="listening-snr-poor-floor" height="50" rx="10" width="286" x="424" y="146" />
+      <path className="listening-snr-good-wave" data-testid="snr-good-wave" d={goodWave} />
+      <path className="listening-snr-poor-wave" data-testid="snr-poor-wave" d={poorWave} />
+      <path className="listening-snr-gap good" d="M 354 84 V 184" />
+      <path className="listening-snr-gap poor" d="M 724 92 V 170" />
+      <text className="lab-label" x="58" y="42">{language === "zh" ? "SNR 良好：信号明显高于噪声底" : "Good SNR: signal sits clearly above noise"}</text>
+      <text className="lab-label" x="428" y="42">{language === "zh" ? "SNR 较差：噪声底接近有效信号" : "Poor SNR: noise floor approaches signal"}</text>
+      <text className="lab-chip" x="62" y="214">{language === "zh" ? "底噪低，安静段更干净" : "Low floor, cleaner quiet parts"}</text>
+      <text className="lab-chip" x="432" y="214">{language === "zh" ? "底噪高，嘶声更明显" : "High floor, hiss is obvious"}</text>
+    </svg>
   );
 }
 
@@ -603,14 +957,20 @@ export function ListeningMetricsLab({ language, onBack }: ListeningMetricsLabPro
   const audioRef = useRef<ActiveAudioGraph | null>(null);
   const activeCopy = effectCopy[activeEffect];
   const chartAxisLabel =
-    activeEffect === "brightness" || activeEffect === "muddy"
+    activeEffect === "distortion"
+      ? language === "zh"
+        ? "时间 / 谐波分量"
+        : "Time / harmonic components"
+      : activeEffect === "brightness" || activeEffect === "muddy"
       ? language === "zh"
         ? "低频 → 高频"
         : "Low → high"
       : language === "zh"
         ? "时间 / 声道示意"
         : "Time / channel view";
-  const chartAxisLabelY = activeEffect === "brightness" || activeEffect === "muddy" ? 292 : 256;
+  const chartAxisLabelY = activeEffect === "brightness" || activeEffect === "muddy" ? 292 : activeEffect === "distortion" ? 288 : 256;
+  const showAxisGuideLabel = activeEffect !== "brightness" && activeEffect !== "muddy";
+  const showGenericChartGuides = activeEffect !== "brightness" && activeEffect !== "muddy";
 
   function stopAudio() {
     if (audioRef.current) {
@@ -773,13 +1133,20 @@ export function ListeningMetricsLab({ language, onBack }: ListeningMetricsLabPro
               </linearGradient>
             </defs>
             <rect className="lab-diagram-bg" height="300" rx="14" width="760" />
-            <line className="lab-axis" x1="50" x2="710" y1="130" y2="130" />
-            <line className="lab-axis faint" x1="50" x2="710" y1="58" y2="58" />
-            <line className="lab-axis faint" x1="50" x2="710" y1="210" y2="210" />
-            <ListeningEffectChart effect={activeEffect} intensity={intensity} />
-            <text className="lab-label" x="54" y="42">{activeCopy.metric}</text>
-            <text className="lab-chip" x="520" y={chartAxisLabelY}>{chartAxisLabel}</text>
+            {showGenericChartGuides ? (
+              <>
+                <line className="lab-axis" x1="50" x2="710" y1="130" y2="130" />
+                <line className="lab-axis faint" x1="50" x2="710" y1="58" y2="58" />
+                <line className="lab-axis faint" x1="50" x2="710" y1="210" y2="210" />
+              </>
+            ) : null}
+            <ListeningEffectChart effect={activeEffect} intensity={intensity} language={language} />
+            {showGenericChartGuides ? <text className="lab-label" x="54" y="42">{activeCopy.metric}</text> : null}
+            {showAxisGuideLabel ? (
+              <text className="lab-chip" data-testid="listening-axis-guide-label" x="520" y={chartAxisLabelY}>{chartAxisLabel}</text>
+            ) : null}
           </svg>
+          {activeEffect === "noise" ? <SnrComparisonChart language={language} /> : null}
         </div>
 
         <div className="listening-panel">

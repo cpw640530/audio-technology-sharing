@@ -44,6 +44,17 @@ type PrincipleCopy = {
   notes: Array<Record<Language, string>>;
 };
 
+type MicNumericStep = {
+  label: string;
+  note: string;
+  value: string;
+};
+
+type MicNumericModel = {
+  assumption: string;
+  steps: MicNumericStep[];
+};
+
 const polarLabels: Record<PolarPattern, Record<Language, string>> = {
   omni: { zh: "全指向", en: "Omnidirectional" },
   cardioid: { zh: "心形", en: "Cardioid" },
@@ -204,6 +215,170 @@ function getPolarGain(pattern: PolarPattern, angleDegrees: number) {
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
+}
+
+function splToTeachingPascal(spl: number) {
+  return 10 ** ((spl - 94) / 20);
+}
+
+function formatPascal(value: number) {
+  return `${value.toFixed(3)} Pa`;
+}
+
+function formatMillivolts(valueVrms: number) {
+  return `${(valueVrms * 1000).toFixed(2)} mVrms`;
+}
+
+function formatDb(value: number) {
+  return `${value.toFixed(1)} dB`;
+}
+
+function getElectretNumericModel(inputSpl: number, language: Language): MicNumericModel {
+  const pressurePa = splToTeachingPascal(inputSpl);
+  const jfetOutputVrms = pressurePa * 0.00631;
+  const capsuleHighImpedanceVrms = jfetOutputVrms / 0.9;
+  const preampVrms = jfetOutputVrms * 10;
+  const dbfs = 20 * Math.log10(Math.max(preampVrms, 0.000001));
+  const diaphragmNm = pressurePa * 20;
+  const capacitanceDeltaPf = pressurePa * 0.02;
+
+  return {
+    assumption:
+      language === "zh"
+        ? "教学近似：-44 dBV/Pa，20 dB 前级，1 Vrms ADC 满量程"
+        : "Teaching approximation: -44 dBV/Pa, 20 dB preamp, 1 Vrms ADC full scale",
+    steps: [
+      {
+        label: language === "zh" ? "声波输入" : "Sound input",
+        note: language === "zh" ? `声压：${formatPascal(pressurePa)}` : `Pressure: ${formatPascal(pressurePa)}`,
+        value: language === "zh" ? `输入声压：${inputSpl} dBSPL` : `Input SPL: ${inputSpl} dBSPL`
+      },
+      {
+        label: language === "zh" ? "振膜 / 电容" : "Diaphragm / capacitance",
+        note:
+          language === "zh"
+            ? `电容变化约 ${capacitanceDeltaPf.toFixed(3)} pF`
+            : `Capacitance change about ${capacitanceDeltaPf.toFixed(3)} pF`,
+        value:
+          language === "zh"
+            ? `振膜位移约 ${diaphragmNm.toFixed(1)} nm`
+            : `Diaphragm motion about ${diaphragmNm.toFixed(1)} nm`
+      },
+      {
+        label: language === "zh" ? "高阻节点" : "High-Z node",
+        note: language === "zh" ? "电容换能后的微弱高阻抗信号" : "Weak high-impedance signal after capacitance transduction",
+        value: formatMillivolts(capsuleHighImpedanceVrms)
+      },
+      {
+        label: language === "zh" ? "JFET 输出" : "JFET output",
+        note: language === "zh" ? "缓冲后电压接近不变，输出阻抗降低" : "Buffered voltage is similar, with lower output impedance",
+        value: formatMillivolts(jfetOutputVrms)
+      },
+      {
+        label: language === "zh" ? "20 dB 前级后" : "After 20 dB preamp",
+        note: language === "zh" ? `约 ${formatDb(dbfs)}FS` : `About ${formatDb(dbfs)}FS`,
+        value: formatMillivolts(preampVrms)
+      }
+    ]
+  };
+}
+
+function getPrincipleNumericModel(principle: MicPrinciple, inputSpl: number, language: Language): MicNumericModel {
+  const pressurePa = splToTeachingPascal(inputSpl);
+
+  if (principle === "digitalMems") {
+    const pcmDbfs = inputSpl - 120;
+
+    return {
+      assumption:
+        language === "zh"
+          ? "教学近似：数字 MEMS 约 -26 dBFS/Pa，ASIC 内部完成放大和调制"
+          : "Teaching approximation: digital MEMS about -26 dBFS/Pa, with gain and modulation inside the ASIC",
+      steps: [
+        {
+          label: language === "zh" ? "声波输入" : "Sound input",
+          note: language === "zh" ? `声压：${formatPascal(pressurePa)}` : `Pressure: ${formatPascal(pressurePa)}`,
+          value: language === "zh" ? `输入声压：${inputSpl} dBSPL` : `Input SPL: ${inputSpl} dBSPL`
+        },
+        {
+          label: language === "zh" ? "MEMS 电容" : "MEMS capacitance",
+          note: language === "zh" ? "微结构电容变化进入 ASIC 前端" : "Micro-capacitance change enters the ASIC front end",
+          value: language === "zh" ? "片内模拟信号" : "On-chip analog signal"
+        },
+        {
+          label: language === "zh" ? "Σ-Δ 调制" : "Sigma-delta",
+          note: language === "zh" ? "把模拟量调制成高速 1-bit PDM" : "Converts analog level into high-rate 1-bit PDM",
+          value: language === "zh" ? "PDM 1-bit 流" : "PDM 1-bit stream"
+        },
+        {
+          label: language === "zh" ? "抽取后 PCM" : "Decimated PCM",
+          note: language === "zh" ? `约 ${formatDb(pcmDbfs)}FS` : `About ${formatDb(pcmDbfs)}FS`,
+          value: language === "zh" ? "多 bit 采样值" : "Multi-bit samples"
+        }
+      ]
+    };
+  }
+
+  if (principle === "dynamicVocal") {
+    const coilVrms = pressurePa * 0.002;
+    const preampVrms = coilVrms * 100;
+    const dbfs = 20 * Math.log10(Math.max(preampVrms, 0.000001));
+
+    return {
+      assumption:
+        language === "zh"
+          ? "教学近似：动圈约 -54 dBV/Pa，40 dB 前级，1 Vrms ADC 满量程"
+          : "Teaching approximation: dynamic mic about -54 dBV/Pa, 40 dB preamp, 1 Vrms ADC full scale",
+      steps: [
+        {
+          label: language === "zh" ? "声波输入" : "Sound input",
+          note: language === "zh" ? `声压：${formatPascal(pressurePa)}` : `Pressure: ${formatPascal(pressurePa)}`,
+          value: language === "zh" ? `输入声压：${inputSpl} dBSPL` : `Input SPL: ${inputSpl} dBSPL`
+        },
+        {
+          label: language === "zh" ? "音圈感应" : "Coil induction",
+          note: language === "zh" ? "线圈在磁场中运动产生电压" : "Moving coil in magnetic field induces voltage",
+          value: formatMillivolts(coilVrms)
+        },
+        {
+          label: language === "zh" ? "40 dB 前级后" : "After 40 dB preamp",
+          note: language === "zh" ? `约 ${formatDb(dbfs)}FS` : `About ${formatDb(dbfs)}FS`,
+          value: formatMillivolts(preampVrms)
+        }
+      ]
+    };
+  }
+
+  if (principle === "array") {
+    const singleMicVrms = pressurePa * 0.00631;
+    const coherentArrayVrms = singleMicVrms * 2;
+
+    return {
+      assumption:
+        language === "zh"
+          ? "教学近似：4 Mic 目标方向延时对齐后，相干目标约 +6 dB"
+          : "Teaching approximation: after delay alignment, a 4-mic target direction can gain about +6 dB",
+      steps: [
+        {
+          label: language === "zh" ? "声波输入" : "Sound input",
+          note: language === "zh" ? `声压：${formatPascal(pressurePa)}` : `Pressure: ${formatPascal(pressurePa)}`,
+          value: language === "zh" ? `输入声压：${inputSpl} dBSPL` : `Input SPL: ${inputSpl} dBSPL`
+        },
+        {
+          label: language === "zh" ? "单颗麦输出" : "Single mic output",
+          note: language === "zh" ? "每路仍先是独立麦克风信号" : "Each channel is still an independent microphone signal",
+          value: formatMillivolts(singleMicVrms)
+        },
+        {
+          label: language === "zh" ? "延时对齐求和" : "Delay-align sum",
+          note: language === "zh" ? "目标方向相干增强，非目标方向相消" : "Target direction adds coherently; off-axis sound is reduced",
+          value: formatMillivolts(coherentArrayVrms)
+        }
+      ]
+    };
+  }
+
+  return getElectretNumericModel(inputSpl, language);
 }
 
 function createPolarPath(pattern: PolarPattern, angleDegrees: number) {
@@ -394,16 +569,21 @@ function stopGraph(graph: ActiveMicAudio | null) {
 }
 
 function PrincipleDiagram({
+  inputSpl,
   language,
+  onInputSplChange,
   principle
 }: {
+  inputSpl: number;
   language: Language;
+  onInputSplChange: (value: number) => void;
   principle: MicPrinciple;
 }) {
   const copy = principleCopy[principle];
   const isArray = principle === "array";
   const isDigital = principle === "digitalMems";
   const isDynamic = principle === "dynamicVocal";
+  const numericModel = getPrincipleNumericModel(principle, inputSpl, language);
 
   return (
     <section className="mic-principle-workbench" aria-label={language === "zh" ? "麦克风工作原理可视化" : "Microphone working principle visualization"}>
@@ -486,6 +666,41 @@ function PrincipleDiagram({
             ))}
           </g>
         </svg>
+        <section className="mic-principle-numeric" aria-label={language === "zh" ? "麦克风数值链路" : "Microphone numeric signal path"}>
+          <div className="mic-numeric-heading">
+            <div>
+              <span className="section-kicker">{language === "zh" ? "数值链路" : "Numeric path"}</span>
+              <h3>{language === "zh" ? "声压到电压是多少？" : "How much voltage does SPL create?"}</h3>
+            </div>
+            <p>{numericModel.assumption}</p>
+          </div>
+          <div className="lab-sliders mic-principle-numeric-slider">
+            <label>
+              <span>
+                {language === "zh" ? "输入声压" : "Input SPL"}
+                <strong>{inputSpl} dBSPL</strong>
+              </span>
+              <input
+                aria-label={language === "zh" ? "工作原理输入声压" : "Working principle input SPL"}
+                max="124"
+                min="54"
+                step="1"
+                type="range"
+                value={inputSpl}
+                onChange={(event) => onInputSplChange(Number(event.target.value))}
+              />
+            </label>
+          </div>
+          <div className="mic-numeric-flow">
+            {numericModel.steps.map((step, index) => (
+              <article className="mic-numeric-step" key={`${step.label}-${index}`}>
+                <strong>{step.label}</strong>
+                <span>{step.value}</span>
+                <small>{step.note}</small>
+              </article>
+            ))}
+          </div>
+        </section>
       </div>
       <div className="mic-principle-copy">
         <div>
@@ -512,6 +727,7 @@ function PrincipleDiagram({
 
 export function MicrophoneLab({ language, onBack }: MicrophoneLabProps) {
   const [principle, setPrinciple] = useState<MicPrinciple>("electret");
+  const [principleSpl, setPrincipleSpl] = useState(94);
   const [pattern, setPattern] = useState<PolarPattern>("cardioid");
   const [angle, setAngle] = useState(0);
   const [distance, setDistance] = useState(1.2);
@@ -667,7 +883,12 @@ export function MicrophoneLab({ language, onBack }: MicrophoneLabProps) {
             </button>
           ))}
         </div>
-        <PrincipleDiagram language={language} principle={principle} />
+        <PrincipleDiagram
+          inputSpl={principleSpl}
+          language={language}
+          principle={principle}
+          onInputSplChange={setPrincipleSpl}
+        />
       </section>
 
       <section className="microphone-lab-workbench" aria-label={language === "zh" ? "麦克风拾音实验台" : "Microphone pickup workbench"}>

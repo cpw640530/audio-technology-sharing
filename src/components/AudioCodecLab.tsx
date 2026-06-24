@@ -203,6 +203,88 @@ const metricCards = [
   { title: { zh: "抗丢包", en: "Packet-loss resilience" }, body: { zh: "实时通信会用冗余、PLC 和自适应码率降低断续感。", en: "Real-time communication uses redundancy, PLC, and adaptive bitrate to reduce dropouts." } }
 ] satisfies Array<{ title: Record<Language, string>; body: Record<Language, string> }>;
 
+const compressionComparisonRows = [
+  {
+    codec: "PCM / WAV",
+    ratio: { zh: "约 1:1", en: "About 1:1" },
+    typical: { zh: "48 kHz / 16-bit / 双声道约 1536 kbps", en: "48 kHz / 16-bit / stereo is about 1536 kbps" },
+    note: { zh: "不压缩，最直观，适合编辑和系统内部处理。", en: "Uncompressed and direct; good for editing and system internals." }
+  },
+  {
+    codec: "FLAC",
+    ratio: { zh: "约 1.4:1 到 2.5:1", en: "About 1.4:1 to 2.5:1" },
+    typical: { zh: "通常为 PCM 的 40%-70%", en: "Often 40%-70% of PCM size" },
+    note: { zh: "无损，解码后每个采样点应和原始 PCM 一致。", en: "Lossless; decoded samples should match the original PCM." }
+  },
+  {
+    codec: "MP3 / AAC",
+    ratio: { zh: "约 6:1 到 16:1", en: "About 6:1 to 16:1" },
+    typical: { zh: "常见 96-320 kbps", en: "Often 96-320 kbps" },
+    note: { zh: "有损，依靠听觉掩蔽分配比特；低码率更容易损失高频细节。", en: "Lossy; uses auditory masking for bit allocation, and low bitrate more easily loses treble detail." }
+  },
+  {
+    codec: "Opus / LC3",
+    ratio: { zh: "约 6:1 到 30:1", en: "About 6:1 to 30:1" },
+    typical: { zh: "语音常见 16-64 kbps，音乐可更高", en: "Speech often 16-64 kbps; music can be higher" },
+    note: { zh: "更适合实时通信、弱网和低功耗场景。", en: "Better suited to real-time communication, weak networks, and low-power devices." }
+  },
+  {
+    codec: "AMR",
+    ratio: { zh: "约 10:1 到 30:1", en: "About 10:1 to 30:1" },
+    typical: { zh: "约 4.75-23.85 kbps", en: "About 4.75-23.85 kbps" },
+    note: { zh: "语音专用，保可懂度，不适合音乐保真。", en: "Speech specific; keeps intelligibility, not music fidelity." }
+  },
+  {
+    codec: "ADPCM",
+    ratio: { zh: "约 4:1", en: "About 4:1" },
+    typical: { zh: "常见于简单设备和低延迟链路", en: "Common in simple devices and low-latency links" },
+    note: { zh: "保存预测差分，实现简单，但压缩效率有限。", en: "Stores prediction differences; simple, but compression efficiency is limited." }
+  }
+] satisfies Array<{
+  codec: string;
+  note: Record<Language, string>;
+  ratio: Record<Language, string>;
+  typical: Record<Language, string>;
+}>;
+
+const sampleRateComparisonRows = [
+  {
+    rate: "8 kHz",
+    bandwidth: { zh: "最高约 4 kHz", en: "Up to about 4 kHz" },
+    quality: { zh: "窄带电话，能听懂但高频缺失明显。", en: "Narrowband telephony; intelligible but clearly missing high frequencies." },
+    use: { zh: "传统电话、极低码率语音", en: "Legacy phone calls, very low-bitrate speech" }
+  },
+  {
+    rate: "16 kHz",
+    bandwidth: { zh: "最高约 8 kHz", en: "Up to about 8 kHz" },
+    quality: { zh: "宽带语音，会议和 ASR 常用，清晰度明显好于 8 kHz。", en: "Wideband speech, common for meetings and ASR, clearly cleaner than 8 kHz." },
+    use: { zh: "会议、语音识别、对讲", en: "Meetings, ASR, intercom" }
+  },
+  {
+    rate: "44.1 kHz",
+    bandwidth: { zh: "最高约 22.05 kHz", en: "Up to about 22.05 kHz" },
+    quality: { zh: "覆盖人耳常见听觉范围，是音乐发行的经典规格。", en: "Covers common hearing range and is the classic music-delivery rate." },
+    use: { zh: "音乐 CD、音乐文件", en: "Audio CDs, music files" }
+  },
+  {
+    rate: "48 kHz",
+    bandwidth: { zh: "最高约 24 kHz", en: "Up to about 24 kHz" },
+    quality: { zh: "视频、直播、系统音频常用，和音视频同步生态更匹配。", en: "Common for video, livestreaming, and system audio; fits AV sync ecosystems." },
+    use: { zh: "视频、直播、系统音频", en: "Video, livestreaming, system audio" }
+  },
+  {
+    rate: "96 kHz",
+    bandwidth: { zh: "最高约 48 kHz", en: "Up to about 48 kHz" },
+    quality: { zh: "更多用于制作、处理余量和某些专业流程；不等于普通听音必然更好。", en: "More for production headroom and professional workflows; not automatically better for normal listening." },
+    use: { zh: "录音制作、后期处理", en: "Recording, post-production" }
+  }
+] satisfies Array<{
+  bandwidth: Record<Language, string>;
+  quality: Record<Language, string>;
+  rate: string;
+  use: Record<Language, string>;
+}>;
+
 function CodecFlowChart({
   label,
   language,
@@ -338,6 +420,54 @@ export function AudioCodecLab({ language, onBack }: AudioCodecLabProps) {
             ))}
           </div>
         </div>
+      </section>
+
+      <section className="audio-codec-reference-tables" aria-label={language === "zh" ? "编码和采样率对比表" : "Codec and sample-rate comparison tables"}>
+        <article className="audio-codec-reference-card">
+          <div className="codec-mode-concepts-header">
+            <h2>{language === "zh" ? "编码压缩率对比" : "Codec compression ratio comparison"}</h2>
+            <span>{language === "zh" ? "典型范围，受内容和编码器影响" : "Typical ranges, content and encoder dependent"}</span>
+          </div>
+          <div className="audio-codec-reference-table">
+            <div className="audio-codec-reference-row header">
+              <span>{language === "zh" ? "格式" : "Format"}</span>
+              <span>{language === "zh" ? "压缩率" : "Ratio"}</span>
+              <span>{language === "zh" ? "典型码率 / 大小" : "Typical bitrate / size"}</span>
+              <span>{language === "zh" ? "说明" : "Note"}</span>
+            </div>
+            {compressionComparisonRows.map((row) => (
+              <div className="audio-codec-reference-row" key={row.codec}>
+                <strong>{row.codec}</strong>
+                <span>{row.ratio[language]}</span>
+                <span>{row.typical[language]}</span>
+                <span>{row.note[language]}</span>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="audio-codec-reference-card">
+          <div className="codec-mode-concepts-header">
+            <h2>{language === "zh" ? "采样率音质差异对比" : "Sample-rate quality comparison"}</h2>
+            <span>{language === "zh" ? "Nyquist 上限约为采样率的一半" : "Nyquist limit is about half the sample rate"}</span>
+          </div>
+          <div className="audio-codec-reference-table sample-rate">
+            <div className="audio-codec-reference-row header">
+              <span>{language === "zh" ? "采样率" : "Sample rate"}</span>
+              <span>{language === "zh" ? "可表示频率" : "Representable band"}</span>
+              <span>{language === "zh" ? "听感差异" : "Listening difference"}</span>
+              <span>{language === "zh" ? "典型用途" : "Typical use"}</span>
+            </div>
+            {sampleRateComparisonRows.map((row) => (
+              <div className="audio-codec-reference-row" key={row.rate}>
+                <strong>{row.rate}</strong>
+                <span>{row.bandwidth[language]}</span>
+                <span>{row.quality[language]}</span>
+                <span>{row.use[language]}</span>
+              </div>
+            ))}
+          </div>
+        </article>
       </section>
 
       <section className="audio-codec-comparison" aria-label={language === "zh" ? "音频编码格式对比" : "Audio codec comparison"}>

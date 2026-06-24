@@ -136,6 +136,21 @@ function createSamplePoints(sampleCount: number, bitDepth: number, frequency: nu
   });
 }
 
+function createQuantizationLevelLines(bitDepth: number) {
+  const levels = 2 ** bitDepth;
+
+  return Array.from({ length: levels }, (_, index) => {
+    const value = levels === 1 ? 0 : (index / (levels - 1)) * 2 - 1;
+
+    return {
+      index,
+      isReference: index === 0 || index === levels - 1 || Math.abs(value) < 0.0001,
+      value,
+      y: 170 - value * 94
+    };
+  });
+}
+
 function createSteppedPath(points: ReturnType<typeof createSamplePoints>) {
   if (!points.length) {
     return "";
@@ -166,17 +181,19 @@ export function DigitalAudioLab({ language, onBack }: DigitalAudioLabProps) {
   const [displayMode, setDisplayMode] = useState<DisplayMode>("quantized");
 
   const analogPath = useMemo(() => createAnalogPath(frequency), [frequency]);
+  const quantizationLevelLines = useMemo(() => createQuantizationLevelLines(bitDepth), [bitDepth]);
   const samplePoints = useMemo(
     () => createSamplePoints(sampleCount, bitDepth, frequency),
     [bitDepth, frequency, sampleCount]
   );
   const steppedPath = useMemo(() => createSteppedPath(samplePoints), [samplePoints]);
   const errorPath = useMemo(() => createErrorPath(samplePoints), [samplePoints]);
-  const quantizationLevels = 2 ** bitDepth;
+  const quantizationLevelCount = 2 ** bitDepth;
   const pcmPreview = samplePoints.slice(0, 5);
   const showSamples = displayMode === "samples" || displayMode === "quantized" || displayMode === "pcm";
   const showQuantized = displayMode === "quantized" || displayMode === "pcm";
   const showError = displayMode === "error";
+  const showBitDepthGuide = displayMode === "samples" || displayMode === "quantized" || displayMode === "pcm" || displayMode === "error";
 
   return (
     <main className="digital-lab-page">
@@ -226,8 +243,32 @@ export function DigitalAudioLab({ language, onBack }: DigitalAudioLabProps) {
             <line className="lab-axis faint" x1="36" x2="724" y1="76" y2="76" />
             <line className="lab-axis faint" x1="36" x2="724" y1="264" y2="264" />
             <text className="lab-label" x="46" y="46">{language === "zh" ? "模拟波形" : "Analog waveform"}</text>
+            {showBitDepthGuide ? (
+              <g
+                aria-label={language === "zh" ? "位深量化等级参考线" : "Bit-depth quantization level guide"}
+                className="digital-bit-depth-guide"
+                data-testid="digital-bit-depth-guide"
+              >
+                {quantizationLevelLines.map((level) => (
+                  <line
+                    className={level.isReference ? "reference" : undefined}
+                    data-testid="digital-bit-depth-level"
+                    key={level.index}
+                    x1="36"
+                    x2="724"
+                    y1={level.y.toFixed(2)}
+                    y2={level.y.toFixed(2)}
+                  />
+                ))}
+                <text className="digital-bit-depth-caption" x="552" y="62">
+                  {language === "zh"
+                    ? `${bitDepth}-bit：${quantizationLevelCount} 个幅度等级`
+                    : `${bitDepth}-bit: ${quantizationLevelCount} amplitude levels`}
+                </text>
+              </g>
+            ) : null}
             <path className="digital-analog-path" d={analogPath} />
-            {showQuantized ? <path className="digital-step-path" d={steppedPath} /> : null}
+            {showQuantized ? <path className="digital-step-path" data-testid="digital-step-path" d={steppedPath} /> : null}
             {showError ? <path className="digital-error-path" d={errorPath} /> : null}
             {showSamples
               ? samplePoints.map((point) => (
@@ -314,13 +355,13 @@ export function DigitalAudioLab({ language, onBack }: DigitalAudioLabProps) {
 
           <div className="digital-lab-metrics">
             <strong>{language === "zh" ? `当前采样点：${sampleCount} 个` : `Current samples: ${sampleCount}`}</strong>
-            <strong>{language === "zh" ? `当前量化等级：${quantizationLevels} 级` : `Quantization levels: ${quantizationLevels}`}</strong>
+            <strong>{language === "zh" ? `当前量化等级：${quantizationLevelCount} 级` : `Quantization levels: ${quantizationLevelCount}`}</strong>
           </div>
 
           <div className="lab-live-note">
             {language === "zh"
-              ? `采样点数量越少，越容易漏掉快速变化；位深为 ${bitDepth}-bit 时只有 ${quantizationLevels} 个幅度等级，量化阶梯会更明显。`
-              : `Fewer samples miss fast changes more easily; at ${bitDepth}-bit there are ${quantizationLevels} amplitude levels, so quantization steps become more visible.`}
+              ? `采样点数量越少，越容易漏掉快速变化；位深决定纵向幅度等级，${bitDepth}-bit 时有 ${quantizationLevelCount} 个幅度等级。输入频率不会改变位深本身，但会改变采样点落在哪些等级上，所以量化阶梯和误差也会随之变化。`
+              : `Fewer samples miss fast changes more easily; bit depth sets vertical amplitude levels, and ${bitDepth}-bit gives ${quantizationLevelCount} levels. Input frequency does not change bit depth itself, but it changes which levels the samples land on, so the steps and error change too.`}
           </div>
         </div>
       </section>
