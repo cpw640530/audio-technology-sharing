@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Language } from "../content/knowledge";
 
@@ -5,6 +6,245 @@ type AudioUnitsLabProps = {
   language: Language;
   onBack: () => void;
 };
+
+type ConversionUnit =
+  | "dBSPL"
+  | "Pa"
+  | "uPa"
+  | "dBu"
+  | "dBV"
+  | "Vrms"
+  | "W"
+  | "dBW"
+  | "dBm"
+  | "dBFS"
+  | "dBAmplitude"
+  | "dBPower";
+
+type ConversionResult = {
+  label: string;
+  value: string;
+};
+
+type ConversionCalculation =
+  | {
+      kind: "valid";
+      domain: Record<Language, string>;
+      results: ConversionResult[];
+      note?: Record<Language, string>;
+    }
+  | {
+      kind: "invalid";
+      message: Record<Language, string>;
+    };
+
+const conversionUnitOptions = [
+  { value: "dBSPL", label: { zh: "dBSPL（声压级）", en: "dBSPL (sound pressure)" } },
+  { value: "Pa", label: { zh: "Pa（声压）", en: "Pa (sound pressure)" } },
+  { value: "uPa", label: { zh: "uPa（声压）", en: "uPa (sound pressure)" } },
+  { value: "dBu", label: { zh: "dBu（模拟电压）", en: "dBu (analog voltage)" } },
+  { value: "dBV", label: { zh: "dBV（模拟电压）", en: "dBV (analog voltage)" } },
+  { value: "Vrms", label: { zh: "Vrms（有效值电压）", en: "Vrms (RMS voltage)" } },
+  { value: "W", label: { zh: "W（功率）", en: "W (power)" } },
+  { value: "dBW", label: { zh: "dBW（参考 1 W）", en: "dBW (ref 1 W)" } },
+  { value: "dBm", label: { zh: "dBm（参考 1 mW）", en: "dBm (ref 1 mW)" } },
+  { value: "dBFS", label: { zh: "dBFS（数字满刻度）", en: "dBFS (digital full scale)" } },
+  { value: "dBAmplitude", label: { zh: "dB（幅度比）", en: "dB (amplitude ratio)" } },
+  { value: "dBPower", label: { zh: "dB（功率比）", en: "dB (power ratio)" } }
+] satisfies Array<{ value: ConversionUnit; label: Record<Language, string> }>;
+
+const conversionBoundaryNote = {
+  zh: "提示：dBSPL 与 dBFS/dBu/dBV 不能无校准直接互转；这里只计算同一参考域内的等效值。",
+  en: "Note: dBSPL cannot be directly converted to dBFS/dBu/dBV without calibration; this tool only calculates equivalents inside the same reference domain."
+};
+
+const invalidNumberMessage = {
+  zh: "请输入有效数字。",
+  en: "Enter a valid number."
+};
+
+const positiveNumberMessage = {
+  zh: "该单位必须输入大于 0 的数值。",
+  en: "This unit requires a value greater than 0."
+};
+
+function parseFiniteNumber(value: string) {
+  if (!value.trim()) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatFixed(value: number, digits: number) {
+  return value.toLocaleString("en-US", {
+    maximumFractionDigits: digits,
+    minimumFractionDigits: digits
+  });
+}
+
+function formatCompact(value: number, digits = 3) {
+  if (Math.abs(value) >= 0.001 && Math.abs(value) < 1_000_000) {
+    return value.toLocaleString("en-US", {
+      maximumFractionDigits: digits,
+      minimumFractionDigits: digits
+    });
+  }
+
+  return value.toExponential(digits);
+}
+
+function formatInteger(value: number) {
+  return value.toLocaleString("en-US", {
+    maximumFractionDigits: 0
+  });
+}
+
+function calculateConversion(rawValue: string, unit: ConversionUnit): ConversionCalculation {
+  const value = parseFiniteNumber(rawValue);
+
+  if (value === null) {
+    return { kind: "invalid", message: invalidNumberMessage };
+  }
+
+  if (unit === "dBSPL" || unit === "Pa" || unit === "uPa") {
+    const pressurePa =
+      unit === "dBSPL"
+        ? 20e-6 * 10 ** (value / 20)
+        : unit === "Pa"
+          ? value
+          : value / 1_000_000;
+
+    if (pressurePa <= 0) {
+      return { kind: "invalid", message: positiveNumberMessage };
+    }
+
+    const dbSpl = 20 * Math.log10(pressurePa / 20e-6);
+
+    return {
+      kind: "valid",
+      domain: { zh: "声压参考域", en: "Acoustic pressure domain" },
+      results: [
+        { label: "dBSPL", value: `${formatFixed(dbSpl, 2)} dBSPL` },
+        { label: "Pa", value: `${formatCompact(pressurePa, 3)} Pa` },
+        { label: "uPa", value: `${formatInteger(pressurePa * 1_000_000)} uPa` }
+      ]
+    };
+  }
+
+  if (unit === "dBu" || unit === "dBV" || unit === "Vrms") {
+    const vrms =
+      unit === "dBu" ? 0.775 * 10 ** (value / 20) : unit === "dBV" ? 10 ** (value / 20) : value;
+
+    if (vrms <= 0) {
+      return { kind: "invalid", message: positiveNumberMessage };
+    }
+
+    return {
+      kind: "valid",
+      domain: { zh: "模拟电压参考域", en: "Analog voltage domain" },
+      results: [
+        { label: "dBu", value: `${formatFixed(20 * Math.log10(vrms / 0.775), 2)} dBu` },
+        { label: "dBV", value: `${formatFixed(20 * Math.log10(vrms), 2)} dBV` },
+        { label: "Vrms", value: `${formatFixed(vrms, 3)} Vrms` },
+        { label: "mVrms", value: `${formatInteger(vrms * 1000)} mVrms` }
+      ]
+    };
+  }
+
+  if (unit === "W" || unit === "dBW" || unit === "dBm") {
+    const watts = unit === "W" ? value : unit === "dBW" ? 10 ** (value / 10) : 0.001 * 10 ** (value / 10);
+
+    if (watts <= 0) {
+      return { kind: "invalid", message: positiveNumberMessage };
+    }
+
+    const dbw = 10 * Math.log10(watts);
+
+    return {
+      kind: "valid",
+      domain: { zh: "功率参考域", en: "Power domain" },
+      results: [
+        { label: "W", value: `${formatCompact(watts, 3)} W` },
+        { label: "mW", value: `${formatCompact(watts * 1000, 3)} mW` },
+        { label: "dBW", value: `${formatFixed(dbw, 2)} dBW` },
+        { label: "dBm", value: `${formatFixed(dbw + 30, 2)} dBm` }
+      ]
+    };
+  }
+
+  if (unit === "dBFS") {
+    const amplitudeRatio = 10 ** (value / 20);
+
+    return {
+      kind: "valid",
+      domain: { zh: "数字满刻度参考域", en: "Digital full-scale domain" },
+      results: [
+        { label: "dBFS", value: `${formatFixed(value, 2)} dBFS` },
+        { label: "幅度比例", value: `${formatCompact(amplitudeRatio, 3)} x FS` },
+        { label: "满刻度百分比", value: `${formatFixed(amplitudeRatio * 100, 2)}% FS` },
+        {
+          label: "余量",
+          value: value <= 0 ? `${formatFixed(Math.abs(value), 2)} dB headroom` : "超过 0 dBFS，可能削波"
+        }
+      ],
+      note: {
+        zh: "dBFS 是数字系统内部参考，只有经过 DAC、增益、扬声器和距离校准后，才能映射到真实声压。",
+        en: "dBFS is an internal digital reference. It maps to real SPL only after DAC, gain, speaker, and distance calibration."
+      }
+    };
+  }
+
+  const dbValue = value;
+  const amplitudeRatio = 10 ** (dbValue / 20);
+  const powerRatio = 10 ** (dbValue / 10);
+
+  return {
+    kind: "valid",
+    domain: { zh: "无量纲比例域", en: "Dimensionless ratio domain" },
+    results: [
+      { label: "dB", value: `${formatFixed(dbValue, 2)} dB` },
+      { label: "幅度比", value: `${formatCompact(amplitudeRatio, 3)} : 1` },
+      { label: "功率比", value: `${formatCompact(powerRatio, 3)} : 1` }
+    ],
+    note: {
+      zh: unit === "dBAmplitude" ? "幅度、电压、声压这类幅度比使用 20 x log10。" : "功率、能量这类功率比使用 10 x log10。",
+      en:
+        unit === "dBAmplitude"
+          ? "Amplitude-like quantities such as voltage or pressure use 20 x log10."
+          : "Power-like quantities use 10 x log10."
+    }
+  };
+}
+
+function calculateDistanceLevels(rawSpl: string, rawDistance: string): ConversionCalculation {
+  const spl = parseFiniteNumber(rawSpl);
+  const distance = parseFiniteNumber(rawDistance);
+
+  if (spl === null || distance === null) {
+    return { kind: "invalid", message: invalidNumberMessage };
+  }
+
+  if (distance <= 0) {
+    return { kind: "invalid", message: positiveNumberMessage };
+  }
+
+  const targetDistances = [1, 2, 4, 8];
+
+  return {
+    kind: "valid",
+    domain: { zh: "理想自由场距离衰减", en: "Ideal free-field distance loss" },
+    results: targetDistances.map((targetDistance) => ({
+      label: `${targetDistance} m`,
+      value: `${formatFixed(spl - 20 * Math.log10(targetDistance / distance), 1)} dBSPL`
+    })),
+    note: {
+      zh: "理想自由场、点声源、无墙面反射和空气吸收时，距离翻倍约 -6 dB，距离减半约 +6 dB。",
+      en: "In an ideal free field with a point source and no reflections or air absorption, doubling distance is about -6 dB and halving distance is about +6 dB."
+    }
+  };
+}
 
 const unitCards = [
   {
@@ -142,6 +382,20 @@ function AudioUnitsDiagram({ language }: { language: Language }) {
 }
 
 export function AudioUnitsLab({ language, onBack }: AudioUnitsLabProps) {
+  const [conversionValue, setConversionValue] = useState("94");
+  const [conversionUnit, setConversionUnit] = useState<ConversionUnit>("dBSPL");
+  const [distanceSpl, setDistanceSpl] = useState("94");
+  const [distanceMeters, setDistanceMeters] = useState("1");
+
+  const conversion = useMemo(
+    () => calculateConversion(conversionValue, conversionUnit),
+    [conversionUnit, conversionValue]
+  );
+  const distanceCalculation = useMemo(
+    () => calculateDistanceLevels(distanceSpl, distanceMeters),
+    [distanceMeters, distanceSpl]
+  );
+
   return (
     <main className="codec-lab-page audio-units-page">
       <section className="sound-lab-hero" aria-labelledby="audio-units-title">
@@ -175,6 +429,111 @@ export function AudioUnitsLab({ language, onBack }: AudioUnitsLabProps) {
             </article>
           ))}
         </div>
+
+        <section className="audio-units-calculator-grid" aria-label={language === "zh" ? "单位自动换算工具" : "Automatic unit conversion tools"}>
+          <section className="audio-units-tool-card" aria-label={language === "zh" ? "自动换算器" : "Automatic converter"}>
+            <div className="codec-mode-concepts-header">
+              <strong>{language === "zh" ? "自动换算器" : "Automatic converter"}</strong>
+              <span>{language === "zh" ? "理想参考条件下，仅在同一参考域内换算" : "Ideal reference conditions, only within the same reference domain"}</span>
+            </div>
+            <div className="audio-units-form-grid">
+              <label>
+                <span>{language === "zh" ? "输入数值" : "Input value"}</span>
+                <input
+                  aria-label={language === "zh" ? "输入数值" : "Input value"}
+                  inputMode="decimal"
+                  type="number"
+                  value={conversionValue}
+                  onChange={(event) => setConversionValue(event.target.value)}
+                />
+              </label>
+              <label>
+                <span>{language === "zh" ? "源单位" : "Source unit"}</span>
+                <select
+                  aria-label={language === "zh" ? "源单位" : "Source unit"}
+                  value={conversionUnit}
+                  onChange={(event) => setConversionUnit(event.target.value as ConversionUnit)}
+                >
+                  {conversionUnitOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label[language]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {conversion.kind === "invalid" ? (
+              <p className="audio-units-error" role="alert">
+                {conversion.message[language]}
+              </p>
+            ) : (
+              <>
+                <div className="audio-units-result-heading">
+                  <strong>{conversion.domain[language]}</strong>
+                  <span>{conversionBoundaryNote[language]}</span>
+                </div>
+                <div className="audio-units-result-grid">
+                  {conversion.results.map((result) => (
+                    <article className="audio-units-result" key={result.label}>
+                      <span>{result.label}</span>
+                      <strong>{`${result.label}：${result.value}`}</strong>
+                    </article>
+                  ))}
+                </div>
+                {conversion.note ? <p className="audio-units-note-text">{conversion.note[language]}</p> : null}
+              </>
+            )}
+          </section>
+
+          <section className="audio-units-tool-card" aria-label={language === "zh" ? "距离声压衰减计算器" : "Distance SPL loss calculator"}>
+            <div className="codec-mode-concepts-header">
+              <strong>{language === "zh" ? "距离声压衰减" : "Distance SPL loss"}</strong>
+              <span>{language === "zh" ? "理想实验室：自由场、点声源、无反射" : "Ideal lab: free field, point source, no reflections"}</span>
+            </div>
+            <div className="audio-units-form-grid">
+              <label>
+                <span>{language === "zh" ? "初始声压级" : "Initial SPL"}</span>
+                <input
+                  aria-label={language === "zh" ? "初始声压级" : "Initial SPL"}
+                  inputMode="decimal"
+                  type="number"
+                  value={distanceSpl}
+                  onChange={(event) => setDistanceSpl(event.target.value)}
+                />
+              </label>
+              <label>
+                <span>{language === "zh" ? "初始距离" : "Initial distance"}</span>
+                <input
+                  aria-label={language === "zh" ? "初始距离" : "Initial distance"}
+                  inputMode="decimal"
+                  type="number"
+                  value={distanceMeters}
+                  onChange={(event) => setDistanceMeters(event.target.value)}
+                />
+              </label>
+            </div>
+            {distanceCalculation.kind === "invalid" ? (
+              <p className="audio-units-error" role="alert">
+                {distanceCalculation.message[language]}
+              </p>
+            ) : (
+              <>
+                <div className="audio-units-result-heading">
+                  <strong>{distanceCalculation.domain[language]}</strong>
+                  <span>{distanceCalculation.note?.[language]}</span>
+                </div>
+                <div className="audio-units-result-grid">
+                  {distanceCalculation.results.map((result) => (
+                    <article className="audio-units-result" key={result.label}>
+                      <span>{result.label}</span>
+                      <strong>{`${result.label}：${result.value}`}</strong>
+                    </article>
+                  ))}
+                </div>
+              </>
+            )}
+          </section>
+        </section>
 
         <section className="audio-units-conversions" aria-label={language === "zh" ? "常用换算关系" : "Common conversion relationships"}>
           <div className="codec-mode-concepts-header">

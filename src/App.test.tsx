@@ -354,6 +354,64 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText(/不能把 -6 dBFS 直接换成 94 dBSPL/)).toBeInTheDocument();
   });
 
+  it("calculates audio unit conversions and distance SPL loss from user input", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
+    await user.click(within(categoriesRegion).getByRole("button", { name: /音频基础/ }));
+    await user.click(screen.getByRole("button", { name: /声音与音频单位/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "打开声音与音频单位实验室"
+      })
+    );
+
+    const converter = screen.getByRole("region", { name: "自动换算器" });
+    const valueInput = within(converter).getByRole("spinbutton", { name: "输入数值" });
+    const unitSelect = within(converter).getByRole("combobox", { name: "源单位" });
+
+    await user.clear(valueInput);
+    await user.type(valueInput, "94");
+    await user.selectOptions(unitSelect, "dBSPL");
+
+    expect(within(converter).getByText("dBSPL：94.00 dBSPL")).toBeInTheDocument();
+    expect(within(converter).getByText("Pa：1.002 Pa")).toBeInTheDocument();
+    expect(within(converter).getByText("uPa：1,002,374 uPa")).toBeInTheDocument();
+    expect(within(converter).getByText(/dBSPL 与 dBFS\/dBu\/dBV 不能无校准直接互转/)).toBeInTheDocument();
+
+    await user.selectOptions(unitSelect, "dBu");
+    await user.clear(valueInput);
+    await user.type(valueInput, "4");
+
+    expect(within(converter).getByText("dBu：4.00 dBu")).toBeInTheDocument();
+    expect(within(converter).getByText("dBV：1.79 dBV")).toBeInTheDocument();
+    expect(within(converter).getByText("Vrms：1.228 Vrms")).toBeInTheDocument();
+    expect(within(converter).getByText("mVrms：1,228 mVrms")).toBeInTheDocument();
+
+    await user.clear(valueInput);
+    await user.type(valueInput, "abc");
+    expect(within(converter).getByText("请输入有效数字。")).toBeInTheDocument();
+
+    const distanceCalculator = screen.getByRole("region", { name: "距离声压衰减计算器" });
+    expect(within(distanceCalculator).getByText("1 m：94.0 dBSPL")).toBeInTheDocument();
+    expect(within(distanceCalculator).getByText("2 m：88.0 dBSPL")).toBeInTheDocument();
+    expect(within(distanceCalculator).getByText("4 m：82.0 dBSPL")).toBeInTheDocument();
+    expect(within(distanceCalculator).getByText(/距离翻倍约 -6 dB/)).toBeInTheDocument();
+    expect(within(distanceCalculator).getByText(/理想自由场、点声源、无墙面反射/)).toBeInTheDocument();
+
+    const startSpl = within(distanceCalculator).getByRole("spinbutton", { name: "初始声压级" });
+    const startDistance = within(distanceCalculator).getByRole("spinbutton", { name: "初始距离" });
+    await user.clear(startSpl);
+    await user.type(startSpl, "100");
+    await user.clear(startDistance);
+    await user.type(startDistance, "2");
+
+    expect(within(distanceCalculator).getByText("1 m：106.0 dBSPL")).toBeInTheDocument();
+    expect(within(distanceCalculator).getByText("2 m：100.0 dBSPL")).toBeInTheDocument();
+    expect(within(distanceCalculator).getByText("4 m：94.0 dBSPL")).toBeInTheDocument();
+  });
+
   it("expands core signal processing knowledge with traditional DSP fundamentals", async () => {
     const user = userEvent.setup();
     render(<App />);

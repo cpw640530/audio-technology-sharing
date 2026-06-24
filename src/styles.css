@@ -2052,6 +2052,121 @@ body.details-open {
   gap: 12px;
 }
 
+.audio-units-calculator-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.audio-units-tool-card {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+}
+
+.audio-units-form-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.86fr);
+}
+
+.audio-units-form-grid label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.audio-units-form-grid label span {
+  color: #aabbb7;
+  font-size: 0.82rem;
+  font-weight: 780;
+}
+
+.audio-units-form-grid input,
+.audio-units-form-grid select {
+  background: rgba(8, 15, 14, 0.72);
+  border: 1px solid rgba(220, 236, 232, 0.16);
+  border-radius: 8px;
+  color: #ffffff;
+  font: inherit;
+  min-height: 42px;
+  min-width: 0;
+  padding: 9px 11px;
+}
+
+.audio-units-form-grid input:focus,
+.audio-units-form-grid select:focus {
+  border-color: rgba(126, 231, 216, 0.62);
+  box-shadow: 0 0 0 3px rgba(126, 231, 216, 0.14);
+  outline: none;
+}
+
+.audio-units-result-heading {
+  background: rgba(126, 231, 216, 0.075);
+  border: 1px solid rgba(126, 231, 216, 0.14);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 11px 12px;
+}
+
+.audio-units-result-heading strong {
+  color: #ffffff;
+  font-size: 0.94rem;
+}
+
+.audio-units-result-heading span,
+.audio-units-note-text {
+  color: #dbe8e4;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.audio-units-result-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.audio-units-result {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 11px 12px;
+}
+
+.audio-units-result span {
+  color: #aabbb7;
+  font-size: 0.78rem;
+  font-weight: 820;
+}
+
+.audio-units-result strong {
+  color: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.audio-units-error {
+  background: rgba(214, 97, 97, 0.12);
+  border: 1px solid rgba(214, 97, 97, 0.28);
+  border-radius: 8px;
+  color: #ffd0d0;
+  font-size: 0.9rem;
+  font-weight: 760;
+  margin: 0;
+  padding: 11px 12px;
+}
+
 .unit-reference-axis line {
   stroke: rgba(220, 236, 232, 0.28);
   stroke-width: 2;
@@ -6316,6 +6431,7 @@ body.details-open {
   .spatial-pipeline,
   .spatial-concept-grid,
   .audio-units-grid,
+  .audio-units-calculator-grid,
   .ai-article-flow,
   .ai-model-grid,
   .ai-article-body,
@@ -6556,6 +6672,9 @@ body.details-open {
   .spatial-pipeline,
   .spatial-concept-grid,
   .audio-units-grid,
+  .audio-units-calculator-grid,
+  .audio-units-form-grid,
+  .audio-units-result-grid,
   .audio-plugin-flow,
   .audio-plugin-concept-grid,
   .codec-table,
