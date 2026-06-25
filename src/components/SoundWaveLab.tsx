@@ -30,7 +30,7 @@ function createLabWavePath(
   const width = 680;
   const midY = 160;
   const drawAmplitude = amplitude * 110;
-  const cycles = frequency / 220;
+  const cycles = Math.max(0.75, frequency / 220);
   const phaseRadians = phase * Math.PI;
   const points = Array.from({ length: 220 }, (_, index) => {
     const ratio = index / 219;
@@ -229,12 +229,12 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
             <line
               className="lab-measure"
               x1="140"
-              x2={(140 + 680 / (frequency / 220)).toFixed(2)}
+              x2={(140 + 680 / Math.max(0.75, frequency / 220)).toFixed(2)}
               y1="300"
               y2="300"
             />
             <text className="lab-label" x="148" y="324">
-              {language === "zh" ? "一个周期 / 波长" : "One cycle / wavelength"}
+              {language === "zh" ? "一个周期 / 周期更短" : "One cycle / shorter period"}
             </text>
             <text className="lab-chip" x="520" y="66">{`f = ${frequency} Hz`}</text>
             <text className="lab-chip" x="520" y="98">{`φ = ${phase.toFixed(2)}π`}</text>

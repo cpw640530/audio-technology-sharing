@@ -40,6 +40,26 @@ function SoundWaveDiagram({
   label: Record<Language, string>;
   caption: Record<Language, string>;
 }) {
+  function accumulatedCycles(progress: number) {
+    return 0.55 * progress + 3.1 * progress * progress;
+  }
+
+  function createRampWavePath(startRatio: number, endRatio: number) {
+    const startX = 40;
+    const width = 640;
+    const centerY = 110;
+
+    return Array.from({ length: 72 }, (_, index) => {
+      const ratio = index / 71;
+      const progress = startRatio + ratio * (endRatio - startRatio);
+      const x = startX + progress * width;
+      const amplitude = 46 + progress * 12;
+      const y = centerY - Math.sin(accumulatedCycles(progress) * Math.PI * 2) * amplitude;
+
+      return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
+    }).join(" ");
+  }
+
   return (
     <figure className="sound-wave-diagram">
       <svg
@@ -61,7 +81,9 @@ function SoundWaveDiagram({
         <line className="diagram-axis" x1="40" x2="680" y1="110" y2="110" />
         <line className="diagram-axis faint" x1="40" x2="680" y1="28" y2="28" />
         <line className="diagram-axis faint" x1="40" x2="680" y1="192" y2="192" />
-        <path className="diagram-wave diagram-wave-high" d="M40 110 C80 28 120 28 160 110 S240 192 280 110 360 28 400 110 480 192 520 110 600 28 680 110" />
+        <path className="diagram-wave diagram-wave-low" data-amplitude="49.8" data-cycles="0.5" data-testid="sound-wave-low" d={createRampWavePath(0, 0.32)} />
+        <path className="diagram-wave diagram-wave-mid" data-amplitude="53.7" data-cycles="1.1" data-testid="sound-wave-mid" d={createRampWavePath(0.32, 0.64)} />
+        <path className="diagram-wave diagram-wave-high" data-amplitude="58" data-cycles="2" data-testid="sound-wave-high" d={createRampWavePath(0.64, 1)} />
         <line
           className="diagram-measure"
           x1="92"
@@ -72,11 +94,14 @@ function SoundWaveDiagram({
         <text className="diagram-label" x="106" y="82">{language === "zh" ? "A 振幅" : "A amplitude"}</text>
         <line className="diagram-arrow" markerEnd="url(#arrow)" markerStart="url(#arrow)" x1="160" x2="280" y1="236" y2="236" />
         <text className="diagram-label" x="48" y="226">{language === "zh" ? "一个周期 / 波长" : "One cycle / wavelength"}</text>
+        <text className="diagram-chip" x="78" y="92">{language === "zh" ? "低频" : "Low frequency"}</text>
+        <text className="diagram-chip" x="320" y="92">{language === "zh" ? "中频" : "Mid frequency"}</text>
+        <text className="diagram-chip" x="560" y="92">{language === "zh" ? "高频" : "High frequency"}</text>
         <text className="diagram-chip" x="456" y="48">{language === "zh" ? "f 频率" : "f frequency"}</text>
         <text className="diagram-chip" x="456" y="78">{language === "zh" ? "φ 相位" : "φ phase"}</text>
         <text className="diagram-chip" x="456" y="108">{language === "zh" ? "A 振幅" : "A amplitude"}</text>
-        <text className="diagram-chip" x="548" y="266">{language === "zh" ? "高频" : "High frequency"}</text>
-        <text className="diagram-chip" x="48" y="266">{language === "zh" ? "低频" : "Low frequency"}</text>
+        <text className="diagram-chip" x="548" y="266">{language === "zh" ? "高频更密" : "Denser high frequency"}</text>
+        <text className="diagram-chip" x="48" y="266">{language === "zh" ? "低频更疏" : "Sparse low frequency"}</text>
       </svg>
       <figcaption>{caption[language]}</figcaption>
     </figure>

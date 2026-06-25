@@ -936,6 +936,11 @@ body.details-open {
   stroke: #8fb7ff;
 }
 
+.diagram-wave-mid {
+  opacity: 0.92;
+  stroke: #7ee7d8;
+}
+
 .diagram-arrow {
   stroke: #dcece8;
   stroke-width: 2;

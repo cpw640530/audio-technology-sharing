@@ -1042,8 +1042,21 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("button", { name: "打开声音波形实验室" })).toBeInTheDocument();
     expect(within(details).getByText(/进入独立界面后，可以调节频率、振幅和相位/)).toBeInTheDocument();
     expect(within(details).getByRole("img", { name: "声波频率、振幅、相位和波长图解" })).toBeInTheDocument();
-    expect(within(details).getByText("高频")).toBeInTheDocument();
-    expect(within(details).getByText("低频")).toBeInTheDocument();
+    const soundDiagram = within(details).getByRole("img", { name: "声波频率、振幅、相位和波长图解" });
+    expect(soundDiagram.querySelector('[data-testid="sound-wave-low"]')).toBeInTheDocument();
+    expect(soundDiagram.querySelector('[data-testid="sound-wave-mid"]')).toBeInTheDocument();
+    expect(soundDiagram.querySelector('[data-testid="sound-wave-high"]')).toBeInTheDocument();
+    expect(within(details).getAllByText("高频").length).toBeGreaterThan(0);
+    expect(within(details).getAllByText("低频").length).toBeGreaterThan(0);
+
+    const lowWave = soundDiagram.querySelector('[data-testid="sound-wave-low"]');
+    const highWave = soundDiagram.querySelector('[data-testid="sound-wave-high"]');
+    expect(Number(highWave?.getAttribute("data-cycles"))).toBeGreaterThan(
+      Number(lowWave?.getAttribute("data-cycles"))
+    );
+    expect(Number(highWave?.getAttribute("data-amplitude"))).toBeGreaterThan(
+      Number(lowWave?.getAttribute("data-amplitude"))
+    );
   });
 
   it("places lab entries directly after detailed explanations in topic details", async () => {
@@ -1214,6 +1227,26 @@ describe("Audio knowledge app", () => {
 
     expect(screen.queryByRole("dialog", { name: "主题详情" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "声音波形实验室" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "当前声音波形图" })).toBeInTheDocument();
+    expect(screen.getByText("一个周期 / 周期更短")).toBeInTheDocument();
+
+    const lowFrequencyPath = screen.getByRole("img", { name: "当前声音波形图" }).querySelector(".lab-wave-path")?.getAttribute("d") ?? "";
+
+    fireEvent.change(screen.getByRole("slider", { name: "频率" }), {
+      target: { value: "880" }
+    });
+
+    const highFrequencyPath = screen.getByRole("img", { name: "当前声音波形图" }).querySelector(".lab-wave-path")?.getAttribute("d") ?? "";
+    expect(highFrequencyPath).not.toEqual(lowFrequencyPath);
+    const countCenterCrossings = (path = "") => {
+      const values = Array.from(path.matchAll(/[ML]\s+[-\d.]+\s+([-\d.]+)/g), (match) => Number(match[1]) - 160);
+
+      return values.slice(1).reduce((crossings, value, index) => {
+        const previous = values[index];
+        return previous * value < 0 ? crossings + 1 : crossings;
+      }, 0);
+    };
+    expect(countCenterCrossings(highFrequencyPath)).toBeGreaterThan(countCenterCrossings(lowFrequencyPath));
 
     await user.click(screen.getByRole("button", { name: "返回知识库" }));
 
