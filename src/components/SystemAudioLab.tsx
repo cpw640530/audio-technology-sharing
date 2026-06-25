@@ -12,6 +12,14 @@ type FlowStep = {
   y: number;
 };
 
+const FLOW_VIEWBOX = "0 0 1240 680";
+const FLOW_WIDTH = 1240;
+const FLOW_HEIGHT = 680;
+const FLOW_NODE_WIDTH = 252;
+const FLOW_NODE_HEIGHT = 152;
+const FLOW_NODE_HALF_WIDTH = FLOW_NODE_WIDTH / 2;
+const FLOW_NODE_HALF_HEIGHT = FLOW_NODE_HEIGHT / 2;
+
 type ArchitectureLayer = {
   kind: "app" | "middleware" | "software" | "driver" | "hardware";
   title: Record<Language, string>;
@@ -32,17 +40,17 @@ const genericArchitectureLayers = [
   {
     kind: "middleware",
     title: { zh: "音频 API / 音频服务", en: "Audio API / audio service" },
-    detail: { zh: "打开音频流、管理会话、权限和音量", en: "opens streams, manages sessions, permission, and volume" }
+    detail: { zh: "接收请求，管理会话、权限和音量", en: "receives requests, manages sessions, permission, and volume" }
   },
   {
     kind: "software",
     title: { zh: "混音 / 路由 / 重采样 / 音量管理", en: "Mixing / routing / resampling / volume" },
-    detail: { zh: "多路声音合成，选择目标设备，统一格式", en: "mixes streams, selects devices, normalizes formats" }
+    detail: { zh: "合并播放流，选择设备，统一格式", en: "combines streams, selects devices, normalizes formats" }
   },
   {
     kind: "driver",
     title: { zh: "驱动接口", en: "Driver interface" },
-    detail: { zh: "PCM 数据、控制命令、DMA 和时钟配置", en: "PCM data, controls, DMA, and clock configuration" }
+    detail: { zh: "承接 PCM 数据、控制命令和设备状态", en: "handles PCM data, controls, and device state" }
   },
   {
     kind: "hardware",
@@ -83,15 +91,15 @@ const linuxScenarioCards = [
   {
     title: { zh: "桌面 Linux", en: "Desktop Linux" },
     body: {
-      zh: "常见链路是 App 先连接 PipeWire 或 PulseAudio，再由服务层把声音路由到 ALSA 设备，例如 USB 声卡、蓝牙耳机或主板 HDA 声卡。",
-      en: "A common path is app to PipeWire or PulseAudio, then the service routes audio to an ALSA device such as USB audio, Bluetooth headset, or motherboard HDA audio."
+      zh: "常见链路是 App 连接 PipeWire 或 PulseAudio，再由服务层把流路由到 ALSA 设备，例如 USB 声卡、蓝牙耳机或主板声卡。",
+      en: "A common path is app to PipeWire or PulseAudio, then the service routes streams to an ALSA device such as USB audio, Bluetooth headset, or motherboard audio."
     }
   },
   {
     title: { zh: "嵌入式 Linux", en: "Embedded Linux" },
     body: {
-      zh: "常见链路更靠近硬件。ASoC 把 CPU DAI、Codec DAI、I2S/TDM/PDM 接口、功放和麦克风阵列描述成一条可配置的声卡链路。",
-      en: "The path is closer to hardware. ASoC describes CPU DAI, Codec DAI, I2S/TDM/PDM interfaces, amplifiers, and microphone arrays as one configurable sound-card path."
+      zh: "常见链路更靠近硬件。ASoC 描述主控、Codec、接口和功放之间的声卡关系，具体接口细节留给数字音频接口主题。",
+      en: "The path is closer to hardware. ASoC describes the sound-card relationship among host, codec, interfaces, and amplifiers; detailed interface timing belongs to the digital-interface topic."
     }
   }
 ] satisfies Array<{ title: Record<Language, string>; body: Record<Language, string> }>;
@@ -104,36 +112,6 @@ const architectureKindLabels = {
   hardware: { zh: "硬件", en: "Hardware" }
 } satisfies Record<ArchitectureLayer["kind"], Record<Language, string>>;
 
-const audioDataFlows = [
-  {
-    label: { zh: "播放数据流", en: "Playback data flow" },
-    direction: "down",
-    steps: [
-      { zh: "App", en: "App" },
-      { zh: "音频 API", en: "Audio API" },
-      { zh: "音频服务 / 混音路由", en: "Audio service / mix routing" },
-      { zh: "ALSA / 驱动", en: "ALSA / driver" },
-      { zh: "DAC / 功放", en: "DAC / amplifier" },
-      { zh: "扬声器 / 耳机", en: "Speaker / headset" }
-    ]
-  },
-  {
-    label: { zh: "采集数据流", en: "Capture data flow" },
-    direction: "up",
-    steps: [
-      { zh: "麦克风 / ADC", en: "Mic / ADC" },
-      { zh: "ALSA / 驱动", en: "ALSA / driver" },
-      { zh: "输入路由 / 预处理", en: "Input routing / preprocess" },
-      { zh: "音频 API", en: "Audio API" },
-      { zh: "App", en: "App" }
-    ]
-  }
-] satisfies Array<{
-  label: Record<Language, string>;
-  direction: "down" | "up";
-  steps: Array<Record<Language, string>>;
-}>;
-
 const flowTabs: Array<{ id: FlowMode; label: Record<Language, string> }> = [
   { id: "playback", label: { zh: "播放链路", en: "Playback path" } },
   { id: "capture", label: { zh: "录音链路", en: "Capture path" } },
@@ -144,63 +122,63 @@ const flowCopy = {
   playback: {
     title: { zh: "播放链路重点", en: "Playback focus" },
     summary: {
-      zh: "播放链路重点：多路声音如何被混音、统一采样率并送到目标设备。",
-      en: "Playback focus: how multiple streams are mixed, converted to a common rate, and sent to the target device."
+      zh: "播放链路重点：系统把应用输出映射到当前可用的输出设备。",
+      en: "Playback focus: the system maps app output to the currently available output device."
     },
     concepts: [
       {
-        zh: "音频焦点决定媒体、通知、通话和提示音谁能继续播放。",
-        en: "Audio focus decides whether media, notifications, calls, and prompts can keep playing."
+        zh: "音频焦点和会话状态决定媒体、通知、通话和提示音之间的优先级。",
+        en: "Audio focus and session state decide priority among media, notifications, calls, and prompts."
       },
       {
-        zh: "混音器把不同 App 的流合成为一个或多个输出流。",
-        en: "The mixer combines streams from different apps into one or more output streams."
+        zh: "混音器和重采样器在系统层统一多路 App 输出，不展开具体 DSP 算法。",
+        en: "The mixer and resampler unify app outputs at the system layer without expanding DSP algorithms."
       },
       {
-        zh: "重采样把不同采样率统一到设备支持的输出格式。",
-        en: "Resampling converts different sample rates into the device output format."
+        zh: "设备路由决定声音最终走扬声器、耳机、蓝牙、USB 声卡或虚拟设备。",
+        en: "Device routing decides whether audio finally goes to speakers, headset, Bluetooth, USB audio, or a virtual device."
       }
     ]
   },
   capture: {
     title: { zh: "录音链路重点", en: "Capture focus" },
     summary: {
-      zh: "录音链路重点：采集权限、输入增益、设备选择和时间戳连续性。",
-      en: "Capture focus: permissions, input gain, device selection, and timestamp continuity."
+      zh: "录音链路重点：系统在应用拿到数据前完成权限、输入选择和格式交付。",
+      en: "Capture focus: the system handles permission, input selection, and format delivery before the app receives data."
     },
     concepts: [
       {
-        zh: "麦克风权限和隐私指示会先于应用拿到音频数据。",
-        en: "Microphone permission and privacy indicators apply before the app receives audio."
+        zh: "麦克风权限和隐私指示属于系统边界，先于应用读取采集流。",
+        en: "Microphone permission and privacy indicators are system boundaries before apps read capture streams."
       },
       {
-        zh: "输入路由决定使用内置麦、耳机麦、USB 麦还是蓝牙麦。",
-        en: "Input routing selects built-in, headset, USB, or Bluetooth microphones."
+        zh: "输入路由决定使用内置麦、耳机麦、USB 麦、蓝牙麦或虚拟输入。",
+        en: "Input routing selects built-in, headset, USB, Bluetooth, or virtual microphones."
       },
       {
-        zh: "时间戳连续性会影响唇同步、语音识别和回声消除。",
-        en: "Timestamp continuity affects lip sync, speech recognition, and echo cancellation."
+        zh: "格式和时间戳交付给应用后，实时处理和算法细节由其它主题继续展开。",
+        en: "After format and timestamps are delivered to the app, real-time and algorithm details continue in other topics."
       }
     ]
   },
   duplex: {
     title: { zh: "全双工重点", en: "Full-duplex focus" },
     summary: {
-      zh: "全双工重点：系统要把采集流、回放流和语音处理模块接成同一条通话链路。",
-      en: "Full-duplex focus: the system connects capture, playback, and voice-processing modules into one call path."
+      zh: "全双工重点：系统只说明回放参考和采集流怎样接入语音链路。",
+      en: "Full-duplex focus: the system only shows how playback reference and capture stream enter the voice path."
     },
     concepts: [
       {
-        zh: "系统负责把回放参考送到语音处理模块，具体回声消除算法留给语音增强主题。",
-        en: "The system routes playback reference into the voice-processing module; echo-cancellation algorithms belong to speech enhancement."
+        zh: "系统负责把回放参考送到语音处理模块；AEC 原理留给语音增强主题。",
+        en: "The system routes playback reference into voice processing; AEC theory belongs to speech enhancement."
       },
       {
-        zh: "NS、AGC、AEC 在这里作为链路中的处理模块出现，不展开参数和算法原理。",
-        en: "NS, AGC, and AEC appear here as processing modules in the path, without expanding algorithm details."
+        zh: "AEC、NS、AGC 在这里只是链路节点，不解释参数和数学过程。",
+        en: "AEC, NS, and AGC are only path nodes here, without parameters or math details."
       },
       {
-        zh: "系统层关注输入设备、输出设备和会话状态是否保持一致。",
-        en: "The system layer focuses on keeping input device, output device, and session state consistent."
+        zh: "系统层关注输入设备、输出设备和通话会话是否保持一致。",
+        en: "The system layer focuses on keeping input device, output device, and call session consistent."
       }
     ]
   }
@@ -211,114 +189,114 @@ const flowSteps = {
     {
       label: { zh: "App 播放请求", en: "App playback request" },
       sub: { zh: "媒体 / 游戏 / 提示音", en: "Media / game / prompt" },
-      x: 108,
-      y: 156
+      x: 178,
+      y: 170
     },
     {
       label: { zh: "Audio API", en: "Audio API" },
       sub: { zh: "格式 / 会话", en: "format / session" },
-      x: 250,
-      y: 156
+      x: 486,
+      y: 170
     },
     {
       label: { zh: "音频服务", en: "Audio service" },
       sub: { zh: "音频焦点 / session", en: "focus / session" },
-      x: 392,
-      y: 156
+      x: 794,
+      y: 170
     },
     {
       label: { zh: "混音 / 重采样", en: "Mix / resample" },
       sub: { zh: "多路流统一输出", en: "streams to output" },
-      x: 534,
-      y: 156
+      x: 794,
+      y: 448
     },
     {
       label: { zh: "HAL / 驱动", en: "HAL / driver" },
       sub: { zh: "DMA / 接口配置", en: "DMA / interface" },
-      x: 676,
-      y: 156
+      x: 486,
+      y: 448
     },
     {
       label: { zh: "扬声器 / 耳机", en: "Speaker / headset" },
       sub: { zh: "Codec / DAC 输出", en: "Codec / DAC out" },
-      x: 818,
-      y: 156
+      x: 178,
+      y: 448
     }
   ],
   capture: [
     {
       label: { zh: "麦克风 / ADC", en: "Mic / ADC" },
       sub: { zh: "声压转数字样本", en: "pressure to samples" },
-      x: 108,
-      y: 156
+      x: 178,
+      y: 170
     },
     {
       label: { zh: "HAL / 驱动", en: "HAL / driver" },
       sub: { zh: "DMA / 时间戳", en: "DMA / timestamp" },
-      x: 250,
-      y: 156
+      x: 486,
+      y: 170
     },
     {
       label: { zh: "输入路由", en: "Input routing" },
       sub: { zh: "内置 / USB / 蓝牙", en: "built-in / USB / BT" },
-      x: 392,
-      y: 156
+      x: 794,
+      y: 170
     },
     {
       label: { zh: "权限 / 隐私指示", en: "Permission / privacy" },
       sub: { zh: "麦克风授权", en: "microphone grant" },
-      x: 534,
-      y: 156
+      x: 794,
+      y: 448
     },
     {
       label: { zh: "预处理", en: "Preprocess" },
       sub: { zh: "增益 / 降噪 / 格式", en: "gain / denoise / format" },
-      x: 676,
-      y: 156
+      x: 486,
+      y: 448
     },
     {
       label: { zh: "App 录音数据", en: "App capture data" },
       sub: { zh: "识别 / 通话 / 录制", en: "ASR / call / record" },
-      x: 818,
-      y: 156
+      x: 178,
+      y: 448
     }
   ],
   duplex: [
     {
       label: { zh: "回放流", en: "Playback stream" },
       sub: { zh: "远端语音 / 提示音", en: "remote voice / prompt" },
-      x: 144,
-      y: 106
+      x: 190,
+      y: 170
     },
     {
       label: { zh: "扬声器输出", en: "Speaker output" },
       sub: { zh: "进入空气和麦克风", en: "into air and mic" },
-      x: 330,
-      y: 106
+      x: 506,
+      y: 170
     },
     {
       label: { zh: "回放参考", en: "Playback reference" },
       sub: { zh: "送入语音处理", en: "to voice processing" },
-      x: 516,
-      y: 106
+      x: 822,
+      y: 170
     },
     {
       label: { zh: "采集流", en: "Capture stream" },
       sub: { zh: "近端语音 + 回声", en: "near voice + echo" },
-      x: 144,
-      y: 242
+      x: 190,
+      y: 462
     },
     {
       label: { zh: "AEC / NS / AGC", en: "AEC / NS / AGC" },
       sub: { zh: "消回声 / 降噪 / 自动增益", en: "echo / noise / gain" },
-      x: 392,
-      y: 242
+      x: 506,
+      y: 462
     },
     {
       label: { zh: "语音 App", en: "Voice app" },
       sub: { zh: "通话 / 会议 / 对讲", en: "call / meeting / intercom" },
-      x: 702,
-      y: 242
+      x: 822,
+      y: 462
     }
   ]
 } satisfies Record<FlowMode, FlowStep[]>;
@@ -331,55 +309,75 @@ function renderFlowDiagram(language: Language, flowMode: FlowMode) {
     capture: { zh: "录音链路流程图", en: "Capture path flowchart" },
     duplex: { zh: "全双工语音流程图", en: "Full-duplex voice flowchart" }
   } satisfies Record<FlowMode, Record<Language, string>>;
+  const renderStepConnector = (step: FlowStep, next: FlowStep, index: number) => {
+    if (step.y === next.y) {
+      return (
+        <path
+          className="system-audio-arrow"
+          d={`M ${Math.min(step.x, next.x) + FLOW_NODE_HALF_WIDTH} ${step.y} H ${Math.max(step.x, next.x) - FLOW_NODE_HALF_WIDTH}`}
+          key={`${step.label.en}-${next.label.en}`}
+        />
+      );
+    }
+
+    return (
+      <path
+        className="system-audio-arrow"
+        d={`M ${step.x} ${step.y + FLOW_NODE_HALF_HEIGHT} V ${(step.y + next.y) / 2} H ${next.x} V ${next.y - FLOW_NODE_HALF_HEIGHT}`}
+        key={`${step.label.en}-${next.label.en}-${index}`}
+      />
+    );
+  };
 
   return (
     <figure className="system-audio-flow">
-      <svg aria-label={label[flowMode][language]} role="img" viewBox="0 0 930 360" xmlns="http://www.w3.org/2000/svg">
+      <svg aria-label={label[flowMode][language]} role="img" viewBox={FLOW_VIEWBOX} xmlns="http://www.w3.org/2000/svg">
         <defs>
           <marker id="systemAudioArrow" markerHeight="10" markerWidth="10" orient="auto" refX="8" refY="5">
             <path d="M 0 0 L 10 5 L 0 10 Z" fill="#f0b46a" />
           </marker>
         </defs>
-        <rect className="lab-diagram-bg" height="360" rx="14" width="930" />
-        <text className="lab-label" x="46" y="42">
+        <rect className="lab-diagram-bg" height={FLOW_HEIGHT} rx="20" width={FLOW_WIDTH} />
+        <text className="lab-label system-audio-flow-title" x="56" y="56">
           {label[flowMode][language]}
         </text>
         {steps.map((step) => (
           <g key={step.label.en}>
-            <rect className="system-audio-node" height="76" rx="12" width="126" x={step.x - 63} y={step.y - 38} />
+            <rect
+              className="system-audio-node"
+              height={FLOW_NODE_HEIGHT}
+              rx="18"
+              width={FLOW_NODE_WIDTH}
+              x={step.x - FLOW_NODE_HALF_WIDTH}
+              y={step.y - FLOW_NODE_HALF_HEIGHT}
+            />
             <text className="interface-node-text" x={step.x} y={step.y - 4}>
               {step.label[language]}
             </text>
-            <text className="interface-node-sub" x={step.x} y={step.y + 22}>
+            <text className="interface-node-sub" x={step.x} y={step.y + 34}>
               {step.sub[language]}
             </text>
           </g>
         ))}
         {isDuplex ? (
           <>
-            <path className="system-audio-arrow" d="M 207 106 H 267" />
-            <path className="system-audio-arrow" d="M 393 106 H 453" />
-            <path className="system-audio-arrow reference" d="M 516 144 C 516 182 466 198 420 218" />
-            <path className="system-audio-arrow" d="M 207 242 H 329" />
-            <path className="system-audio-arrow" d="M 455 242 H 639" />
-            <path className="system-audio-arrow echo" d="M 330 144 C 308 174 246 184 188 214" />
-            <text className="system-audio-note" x="628" y="112">
+            <path className="system-audio-arrow" d="M 316 170 H 380" />
+            <path className="system-audio-arrow" d="M 632 170 H 696" />
+            <path className="system-audio-arrow reference" d="M 822 246 C 822 330 632 354 548 386" />
+            <path className="system-audio-arrow" d="M 316 462 H 380" />
+            <path className="system-audio-arrow" d="M 632 462 H 696" />
+            <path className="system-audio-arrow echo" d="M 506 246 C 416 318 286 342 190 386" />
+            <text className="system-audio-note" x="944" y="176">
               {language === "zh" ? "回放参考不出声，只给算法对齐" : "Reference is for algorithm alignment"}
             </text>
-            <text className="system-audio-note" x="226" y="318">
+            <text className="system-audio-note" x="306" y="628">
               {language === "zh" ? "扬声器声可能被麦克风再次采到" : "Speaker sound may be captured by the mic"}
             </text>
           </>
         ) : (
           steps.slice(0, -1).map((step, index) => {
             const next = steps[index + 1];
-            return (
-              <path
-                className="system-audio-arrow"
-                d={`M ${step.x + 63} ${step.y} H ${next.x - 63}`}
-                key={`${step.label.en}-${next.label.en}`}
-              />
-            );
+            return renderStepConnector(step, next, index);
           })
         )}
       </svg>
@@ -417,35 +415,6 @@ function ArchitectureStack({
   );
 }
 
-function DataFlowDiagram({ language }: { language: Language }) {
-  return (
-    <figure
-      aria-label={language === "zh" ? "播放和采集数据流方向图" : "Playback and capture data-flow direction diagram"}
-      className="system-audio-data-flow"
-      role="img"
-    >
-      {audioDataFlows.map((flow) => (
-        <div className={`system-audio-data-flow-lane ${flow.direction}`} key={flow.label.en}>
-          <h3>{flow.label[language]}</h3>
-          <div className="system-audio-data-flow-steps">
-            {flow.steps.map((step, index) => (
-              <div className="system-audio-data-flow-step" key={`${flow.label.en}-${step.en}`}>
-                <span>{step[language]}</span>
-                {index < flow.steps.length - 1 ? <b aria-hidden="true">→</b> : null}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-      <figcaption>
-        {language === "zh"
-          ? "播放是从 App 向硬件输出；采集是从麦克风硬件向 App 回传。"
-          : "Playback moves from app to output hardware; capture moves from microphone hardware back to the app."}
-      </figcaption>
-    </figure>
-  );
-}
-
 export function SystemAudioLab({ language, onBack }: SystemAudioLabProps) {
   const [flowMode, setFlowMode] = useState<FlowMode>("playback");
   const currentCopy = flowCopy[flowMode];
@@ -464,8 +433,8 @@ export function SystemAudioLab({ language, onBack }: SystemAudioLabProps) {
           </h1>
           <p>
             {language === "zh"
-              ? "从应用、系统服务、策略路由、混音重采样、HAL/驱动到硬件设备，观察播放、录音和全双工语音链路如何流动。"
-              : "Trace playback, capture, and full-duplex voice through apps, services, policy routing, mixing/resampling, HAL/drivers, and hardware."}
+              ? "用系统分层理解应用请求、音频服务、路由策略、驱动和硬件之间的边界。"
+              : "Use system layers to understand the boundaries among app requests, audio services, routing policy, drivers, and hardware."}
           </p>
         </div>
       </section>
@@ -495,8 +464,6 @@ export function SystemAudioLab({ language, onBack }: SystemAudioLabProps) {
             />
           </article>
         </div>
-
-        <DataFlowDiagram language={language} />
 
         <div className="system-audio-linux-notes" aria-label={language === "zh" ? "Linux 音频场景对比" : "Linux audio scenario comparison"}>
           {linuxScenarioCards.map((card) => (

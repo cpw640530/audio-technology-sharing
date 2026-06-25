@@ -2503,121 +2503,6 @@ body.details-open {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.audio-plugin-workbench {
-  background: #17211f;
-  border: 1px solid rgba(23, 33, 31, 0.12);
-  border-radius: 8px;
-  box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
-  display: grid;
-  gap: 18px;
-  justify-self: center;
-  max-width: 1200px;
-  padding: clamp(16px, 3vw, 26px);
-  width: 100%;
-}
-
-.audio-plugin-layout {
-  align-items: start;
-  display: grid;
-  gap: 18px;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
-}
-
-.audio-plugin-visuals {
-  display: grid;
-  gap: 18px;
-  min-width: 0;
-}
-
-.audio-plugin-panel {
-  align-content: start;
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  display: grid;
-  gap: 14px;
-  min-width: 0;
-  padding: 16px;
-}
-
-.audio-plugin-flow {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.audio-plugin-flow li,
-.audio-plugin-concept-grid article {
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-  padding: 14px;
-}
-
-.audio-plugin-flow span {
-  color: #7ee7d8;
-  font-size: 0.78rem;
-  font-weight: 820;
-}
-
-.audio-plugin-flow strong,
-.audio-plugin-concept-grid h2 {
-  color: #ffffff;
-  font-size: 0.98rem;
-  margin: 0;
-}
-
-.audio-plugin-flow p,
-.audio-plugin-concept-grid p {
-  color: #dbe8e4;
-  font-size: 0.92rem;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.audio-plugin-signal {
-  display: block;
-  height: auto;
-  max-width: 100%;
-}
-
-.audio-plugin-wave {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.audio-plugin-wave.raw {
-  stroke: rgba(220, 236, 232, 0.72);
-  stroke-width: 2.5;
-}
-
-.audio-plugin-wave.processed {
-  stroke: #7ee7d8;
-  stroke-width: 3.2;
-}
-
-.audio-plugin-metrics {
-  display: grid;
-  gap: 8px;
-}
-
-.audio-plugin-metrics strong {
-  background: rgba(126, 231, 216, 0.09);
-  border: 1px solid rgba(126, 231, 216, 0.18);
-  border-radius: 8px;
-  color: #ffffff;
-  font-size: 0.92rem;
-  line-height: 1.45;
-  padding: 10px 12px;
-}
-
 .ai-audio-page {
   display: grid;
   gap: 24px;
@@ -3607,12 +3492,6 @@ body.details-open {
   line-height: 1.55;
 }
 
-.audio-plugin-concept-grid {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
 .speech-enhancement-layout {
   display: grid;
   gap: 18px;
@@ -4254,72 +4133,6 @@ body.details-open {
   line-height: 1;
 }
 
-.system-audio-data-flow {
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  display: grid;
-  gap: 14px;
-  margin: 0;
-  min-width: 0;
-  padding: clamp(14px, 2vw, 18px);
-}
-
-.system-audio-data-flow-lane {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-}
-
-.system-audio-data-flow-lane h3 {
-  color: #ffffff;
-  font-size: 1rem;
-  margin: 0;
-}
-
-.system-audio-data-flow-steps {
-  align-items: stretch;
-  display: grid;
-  gap: 8px;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  min-width: 0;
-}
-
-.system-audio-data-flow-step {
-  align-items: center;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(126, 231, 216, 0.18);
-  border-radius: 8px;
-  color: #dbe8e4;
-  display: grid;
-  gap: 6px;
-  grid-template-columns: minmax(0, 1fr) auto;
-  min-height: 58px;
-  min-width: 0;
-  padding: 10px 12px;
-}
-
-.system-audio-data-flow-lane.up .system-audio-data-flow-step {
-  border-color: rgba(240, 180, 106, 0.22);
-}
-
-.system-audio-data-flow-step span {
-  font-size: 0.88rem;
-  font-weight: 760;
-  line-height: 1.35;
-  min-width: 0;
-}
-
-.system-audio-data-flow-step b {
-  color: #f0b46a;
-  font-size: 1rem;
-}
-
-.system-audio-data-flow figcaption {
-  color: #c4d6d1;
-  line-height: 1.55;
-}
-
 .system-audio-linux-notes {
   display: grid;
   gap: 12px;
@@ -4899,6 +4712,7 @@ body.details-open {
 .system-audio-flow svg {
   display: block;
   height: auto;
+  min-height: 520px;
   width: 100%;
 }
 
@@ -5490,6 +5304,12 @@ body.details-open {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.realtime-example-flow-pair {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .realtime-flow-chart {
   min-width: 0;
   width: 100%;
@@ -5527,14 +5347,14 @@ body.details-open {
 
 .realtime-flow-node-title {
   fill: #ffffff;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 820;
   dominant-baseline: middle;
 }
 
 .realtime-flow-node-detail {
   fill: #c9d8d4;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 720;
   dominant-baseline: middle;
 }
@@ -5543,7 +5363,7 @@ body.details-open {
   fill: none;
   stroke: #f0b46a;
   stroke-linecap: round;
-  stroke-width: 2.4;
+  stroke-width: 3.2;
 }
 
 .realtime-soc-aec-arrow {
@@ -5781,7 +5601,15 @@ body.details-open {
 .system-audio-node {
   fill: rgba(255, 255, 255, 0.075);
   stroke: rgba(126, 231, 216, 0.28);
-  stroke-width: 1.8;
+  stroke-width: 2.4;
+}
+
+.system-audio-flow .interface-node-text {
+  font-size: 22px;
+}
+
+.system-audio-flow .interface-node-sub {
+  font-size: 18px;
 }
 
 .system-audio-arrow {
@@ -5789,7 +5617,7 @@ body.details-open {
   marker-end: url("#systemAudioArrow");
   stroke: #f0b46a;
   stroke-linecap: round;
-  stroke-width: 3;
+  stroke-width: 4.2;
 }
 
 .system-audio-arrow.reference {
@@ -5806,7 +5634,7 @@ body.details-open {
 
 .system-audio-note {
   fill: #dbe8e4;
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 720;
 }
 
@@ -6761,8 +6589,7 @@ body.details-open {
     position: static;
   }
 
-  .spatial-audio-layout,
-  .audio-plugin-layout {
+  .spatial-audio-layout {
     grid-template-columns: 1fr;
   }
 
@@ -6778,9 +6605,7 @@ body.details-open {
   .automotive-module-grid,
   .automotive-issue-grid,
   .iot-content-module-grid,
-  .iot-content-issue-grid,
-  .audio-plugin-flow,
-  .audio-plugin-concept-grid {
+  .iot-content-issue-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -6793,6 +6618,10 @@ body.details-open {
   }
 
   .realtime-flow-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .realtime-example-flow-pair {
     grid-template-columns: 1fr;
   }
 
@@ -6856,7 +6685,6 @@ body.details-open {
   .sound-lab-hero,
   .sound-lab-workbench,
   .core-signal-layout,
-  .audio-plugin-layout,
   .speech-enhancement-wave-control-row,
   .audio-codec-workbench,
   .realtime-audio-workbench,
@@ -6968,7 +6796,6 @@ body.details-open {
   .ai-audio-page,
   .core-signal-page,
   .spatial-audio-page,
-  .audio-plugin-page,
   .speech-enhancement-page,
   .digital-lab-page,
   .listening-lab-page,
@@ -7013,8 +6840,6 @@ body.details-open {
   .audio-units-calculator-grid,
   .audio-units-form-grid,
   .audio-units-result-grid,
-  .audio-plugin-flow,
-  .audio-plugin-concept-grid,
   .codec-table,
   .audio-codec-scenario-tabs,
   .audio-codec-table,

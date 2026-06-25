@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { AiAudioLab } from "./components/AiAudioLab";
 import { AmplifierSpeakerLab } from "./components/AmplifierSpeakerLab";
 import { AudioCodecLab } from "./components/AudioCodecLab";
-import { AudioPluginLab } from "./components/AudioPluginLab";
 import { AudioUnitsLab } from "./components/AudioUnitsLab";
 import { AutomotiveAudioLab } from "./components/AutomotiveAudioLab";
 import { CategoryTabs } from "./components/CategoryTabs";
@@ -121,7 +120,6 @@ export default function App() {
     | "amplifierSpeakerLab"
     | "systemAudioLab"
     | "audioCodecLab"
-    | "audioPluginLab"
     | "realtimeAudioLab"
     | "coreSignalProcessingLab"
     | "speechEnhancementLab"
@@ -389,21 +387,6 @@ export default function App() {
     );
   }
 
-  if (activeView === "audioPluginLab") {
-    return (
-      <div className="app-shell">
-        <Header
-          language={language}
-          onToggleLanguage={toggleLanguage}
-        />
-        <AudioPluginLab language={language} onBack={() => setActiveView("knowledge")} />
-        <footer className="site-footer">
-          <span>{interfaceCopy.footer[language]}</span>
-        </footer>
-      </div>
-    );
-  }
-
   if (activeView === "realtimeAudioLab") {
     return (
       <div className="app-shell">
@@ -517,10 +500,6 @@ export default function App() {
               onOpenAudioCodecLab={() => {
                 setSelectedTopic(null);
                 setActiveView("audioCodecLab");
-              }}
-              onOpenAudioPluginLab={() => {
-                setSelectedTopic(null);
-                setActiveView("audioPluginLab");
               }}
               onOpenAudioUnitsLab={() => {
                 setSelectedTopic(null);

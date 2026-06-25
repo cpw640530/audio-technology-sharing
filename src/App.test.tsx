@@ -480,91 +480,15 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("button", { name: "打开语音增强实验室" })).toBeInTheDocument();
   });
 
-  it("expands audio programming with plugin development concepts and a lab", async () => {
+  it("does not show the removed audio programming and plugin topic", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
-    await user.click(screen.getByRole("button", { name: /音频编程与插件开发/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(within(details).getByText(/Host 提供采样率、block 和参数自动化环境/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "Host / DAW" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "processBlock" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "Sample frame" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "Biquad 滤波器" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "参数平滑" })).toBeInTheDocument();
-    expect(within(details).getByText(/不重复推导 FFT\/EQ\/压缩器原理/)).toBeInTheDocument();
-    expect(within(details).getByText(/实时线程中要避免锁等待/)).toBeInTheDocument();
-    expect(within(details).getByText(/插件不是离线脚本/)).toBeInTheDocument();
-    expect(within(details).getByRole("button", { name: "打开音频编程与插件实验室" })).toBeInTheDocument();
-  });
-
-  it("opens the audio programming lab with plugin modules and real-time metrics", async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
-    await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
-    await user.click(screen.getByRole("button", { name: /音频编程与插件开发/ }));
-    await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
-        name: "打开音频编程与插件实验室"
-      })
-    );
-
-    expect(screen.getByRole("heading", { name: "音频编程与插件实验室" })).toBeInTheDocument();
-    const lab = screen.getByRole("region", { name: "音频插件实验台" });
-    expect(within(lab).getByRole("list", { name: "音频插件处理流程" })).toBeInTheDocument();
-    expect(within(lab).getByRole("img", { name: "音频插件信号处理对比图" })).toBeInTheDocument();
-    const processedWave = lab.querySelector(".audio-plugin-wave.processed");
-    const initialWavePath = processedWave?.getAttribute("d");
-    expect(initialWavePath).toBeTruthy();
-    expect(within(lab).getByText(/Zipper noise 风险/)).toBeInTheDocument();
-    expect(within(lab).getByText(/Cutoff：/)).toBeInTheDocument();
-    expect(within(lab).getByText(/Q \/ 共振：/)).toBeInTheDocument();
-    expect(within(lab).getByText("算法延迟：IIR biquad 通常 0 samples")).toBeInTheDocument();
-    expect(within(lab).getByText(/参数自动化风险/)).toBeInTheDocument();
-    expect(within(lab).getByRole("heading", { name: "实时安全" })).toBeInTheDocument();
-
-    fireEvent.change(within(lab).getByRole("slider", { name: "主参数" }), {
-      target: { value: "20" }
-    });
-    expect(within(lab).getByText("Cutoff：593 Hz")).toBeInTheDocument();
-    expect(processedWave?.getAttribute("d")).not.toEqual(initialWavePath);
-
-    await user.click(within(lab).getByRole("button", { name: "Compressor" }));
-    expect(within(lab).getByText(/检测电平包络/)).toBeInTheDocument();
-    expect(within(lab).getByText(/算法延迟：普通压缩器通常 0 samples/)).toBeInTheDocument();
-    expect(within(lab).queryByText(/插件内部延迟/)).not.toBeInTheDocument();
-
-    fireEvent.change(within(lab).getByRole("slider", { name: "参数平滑" }), {
-      target: { value: "10" }
-    });
-    expect(within(lab).getByText("参数平滑：10%")).toBeInTheDocument();
-    expect(within(lab).getAllByText(/zipper noise/).length).toBeGreaterThan(0);
-
-    await user.click(within(lab).getByRole("button", { name: "Delay" }));
-    fireEvent.change(within(lab).getByRole("slider", { name: "模块参数" }), {
-      target: { value: "90" }
-    });
-    expect(within(lab).getByText("Feedback：90%")).toBeInTheDocument();
-    expect(processedWave?.getAttribute("d")).not.toEqual(initialWavePath);
-
-    await user.click(within(lab).getByRole("button", { name: "Gain / Pan" }));
-    expect(within(lab).getByText(/声像偏移：/)).toBeInTheDocument();
-    expect(within(lab).queryByText(/Drive：/)).not.toBeInTheDocument();
-
-    const delayWavePath = processedWave?.getAttribute("d");
-    await user.click(within(lab).getByRole("button", { name: "Waveshaper" }));
-    fireEvent.change(within(lab).getByRole("slider", { name: "Oversampling" }), {
-      target: { value: "4" }
-    });
-    expect(within(lab).getByText("Oversampling：4x")).toBeInTheDocument();
-    expect(within(lab).getByText(/未过采样混叠风险/)).toBeInTheDocument();
-    expect(within(lab).getByText(/过采样后残留混叠风险/)).toBeInTheDocument();
-    expect(processedWave?.getAttribute("d")).not.toEqual(delayWavePath);
+    expect(screen.queryByRole("button", { name: /音频编程与插件开发/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Audio Programming and Plugin Development/)).not.toBeInTheDocument();
   });
 
   it("expands spatial audio with localization cues and rendering concepts", async () => {
@@ -1404,7 +1328,7 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("button", { name: "打开功放与扬声器实验室" })).toBeInTheDocument();
   });
 
-  it("expands system audio architecture knowledge with detailed terms and a lab entry", async () => {
+  it("expands system audio architecture knowledge as a concise system boundary overview", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -1413,13 +1337,14 @@ describe("Audio knowledge app", () => {
     await user.click(screen.getByRole("button", { name: /系统音频架构/ }));
 
     const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(within(details).getByText(/系统音频架构不是单个模块/)).toBeInTheDocument();
+    expect(within(details).getByText(/系统音频架构回答的是/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "应用层 API" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "音频服务" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "音频策略与路由" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "混音器与重采样" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "HAL / 驱动" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "低延迟通路入口" })).toBeInTheDocument();
+    expect(within(details).queryByRole("heading", { name: "低延迟通路入口" })).not.toBeInTheDocument();
+    expect(within(details).getByText(/不展开具体 DSP 算法、接口时序或低延迟调参/)).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开系统音频架构实验室" })).toBeInTheDocument();
   });
 
@@ -1466,10 +1391,24 @@ describe("Audio knowledge app", () => {
     expect(within(lab).getByRole("img", { name: "ALSA 采集 PCM 到编码流程图" })).toBeInTheDocument();
     expect(within(lab).getByRole("img", { name: "MP3 解码到 PCM 播放流程图" })).toBeInTheDocument();
     expect(within(lab).getByRole("img", { name: "典型 SoC AEC 和 3A 处理框图" })).toBeInTheDocument();
+    const basicFlow = within(lab).getByRole("img", { name: "基础音频处理流程图" });
+    expect(basicFlow).toHaveAttribute("data-layout", "horizontal");
+    expect(within(basicFlow).getByText("编码")).toBeInTheDocument();
+    expect(within(basicFlow).getByText("传输 / 缓存")).toBeInTheDocument();
+    expect(within(basicFlow).getByText("解码")).toBeInTheDocument();
+    expect(basicFlow).toHaveTextContent("播放侧 filter / DSP");
+    expect(within(basicFlow).getByText("播放驱动")).toBeInTheDocument();
+    expect(within(basicFlow).getByText("D/A 转换")).toBeInTheDocument();
+    expect(within(basicFlow).getByText("功放")).toBeInTheDocument();
+    expect(within(basicFlow).getByText("声音输出")).toBeInTheDocument();
+    expect(within(basicFlow).queryByText("编码 / 传输 / 播放")).not.toBeInTheDocument();
+    const concreteExamples = lab.querySelector(".realtime-example-flow-pair");
+    expect(concreteExamples).toBeInTheDocument();
     const captureFlow = within(lab).getByRole("img", { name: "ALSA 采集 PCM 到编码流程图" });
     expect(within(captureFlow).getByText("麦克风")).toBeInTheDocument();
-    expect(within(captureFlow).getByText("模拟前端 / Codec ADC")).toBeInTheDocument();
-    expect(within(captureFlow).getByText("I2S / PDM / USB Audio")).toBeInTheDocument();
+    expect(captureFlow).toHaveTextContent("模拟前端 / Codec ADC");
+    expect(captureFlow).toHaveTextContent("I2S / PDM / USB Audio");
+    expect(captureFlow.querySelectorAll(".realtime-flow-node-detail tspan").length).toBeGreaterThan(0);
     expect(screen.getByText("默认格式：16 kHz / mono / 16-bit PCM")).toBeInTheDocument();
     expect(screen.getByText("32 ms 处理帧：512 samples / 1024 bytes")).toBeInTheDocument();
     expect(screen.getByText("采集 period：32.00 ms")).toBeInTheDocument();
@@ -1477,20 +1416,23 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("估算采集到编码延迟：96.00 ms")).toBeInTheDocument();
     expect(screen.getByText("状态：稳定")).toBeInTheDocument();
     expect(screen.getByText("最坏处理耗时：1.80 ms")).toBeInTheDocument();
-    expect(screen.getByText("ALSA ring buffer")).toBeInTheDocument();
-    expect(screen.getByText("copy_to_user / mmap")).toBeInTheDocument();
-    expect(screen.getByText("32ms filter frame")).toBeInTheDocument();
-    expect(screen.getByText("MP3 frame")).toBeInTheDocument();
+    expect(captureFlow).toHaveTextContent("ALSA ring buffer");
+    expect(captureFlow).toHaveTextContent("copy_to_user / mmap");
+    expect(captureFlow).toHaveTextContent("32ms filter frame");
+    expect(captureFlow).toHaveTextContent("MP3 frame");
     const playbackFlow = within(lab).getByRole("img", { name: "MP3 解码到 PCM 播放流程图" });
+    expect(concreteExamples).toContainElement(captureFlow);
+    expect(concreteExamples).toContainElement(playbackFlow);
+    expect(playbackFlow.querySelectorAll(".realtime-flow-node-detail tspan").length).toBeGreaterThan(0);
     expect(within(playbackFlow).getByText("网络包 / 文件码流")).toBeInTheDocument();
-    expect(within(playbackFlow).getByText("接收 buffer / jitter buffer")).toBeInTheDocument();
+    expect(playbackFlow).toHaveTextContent("接收 buffer / jitter buffer");
     expect(within(playbackFlow).getByText("解码器输入 buffer")).toBeInTheDocument();
-    expect(within(playbackFlow).getByText("PCM playback buffer")).toBeInTheDocument();
-    expect(within(playbackFlow).getByText("ALSA playback ring buffer")).toBeInTheDocument();
-    expect(within(playbackFlow).getByText("I2S / TDM / USB Audio")).toBeInTheDocument();
-    expect(within(playbackFlow).getByText("Codec DAC / 模拟处理")).toBeInTheDocument();
+    expect(playbackFlow).toHaveTextContent("PCM playback buffer");
+    expect(playbackFlow).toHaveTextContent("ALSA playback ring buffer");
+    expect(playbackFlow).toHaveTextContent("I2S / TDM / USB Audio");
+    expect(playbackFlow).toHaveTextContent("Codec DAC / 模拟处理");
     expect(within(playbackFlow).getByText("功放")).toBeInTheDocument();
-    expect(within(playbackFlow).getByText("扬声器")).toBeInTheDocument();
+    expect(within(playbackFlow).getAllByText("扬声器").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "jitter buffer" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "解码器输入 buffer" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "PCM playback buffer" })).toBeInTheDocument();
@@ -1500,6 +1442,7 @@ describe("Audio knowledge app", () => {
     expect(within(socAecDiagram).getByText("ADEC")).toBeInTheDocument();
     expect(within(socAecDiagram).getByText("AO / Mixer")).toBeInTheDocument();
     expect(within(socAecDiagram).getByText("AEC reference buffer")).toBeInTheDocument();
+    expect(within(socAecDiagram).getByText("回采信号用于 AEC")).toBeInTheDocument();
     expect(within(socAecDiagram).getByText("AI / DMA")).toBeInTheDocument();
     expect(within(socAecDiagram).getByText("AEC")).toBeInTheDocument();
     expect(within(socAecDiagram).getByText("NS / ANR")).toBeInTheDocument();
@@ -1541,18 +1484,19 @@ describe("Audio knowledge app", () => {
     expect(metrics).toHaveClass("realtime-audio-metrics");
     expect(flowGrid).toBeInTheDocument();
     expect(visual).toContainElement(flowGrid as HTMLElement);
+    expect(flowGrid?.querySelector(".realtime-example-flow-pair")).toBeInTheDocument();
     expect(within(lab).queryByRole("slider")).not.toBeInTheDocument();
     expect(within(visual).getByRole("img", { name: "基础音频处理流程图" })).toHaveAttribute(
       "viewBox",
-      expect.stringMatching(/^0 0 1180 /)
+      expect.stringMatching(/^0 0 1480 /)
     );
     expect(within(visual).getByRole("img", { name: "ALSA 采集 PCM 到编码流程图" })).toHaveAttribute(
       "viewBox",
-      expect.stringMatching(/^0 0 1180 /)
+      expect.stringMatching(/^0 0 1480 /)
     );
     expect(within(visual).getByRole("img", { name: "MP3 解码到 PCM 播放流程图" })).toHaveAttribute(
       "viewBox",
-      expect.stringMatching(/^0 0 1180 /)
+      expect.stringMatching(/^0 0 1480 /)
     );
     expect(within(visual).getByRole("img", { name: "典型 SoC AEC 和 3A 处理框图" })).toHaveAttribute("viewBox", "0 0 1180 620");
   });
@@ -1589,17 +1533,10 @@ describe("Audio knowledge app", () => {
     expect(within(linuxDiagram).getByText("Linux Kernel ALSA 驱动")).toBeInTheDocument();
     expect(within(linuxDiagram).getAllByText("驱动").length).toBeGreaterThan(1);
     expect(within(linuxDiagram).getByText("硬件")).toBeInTheDocument();
-    const dataFlow = within(overview).getByRole("img", { name: "播放和采集数据流方向图" });
-    expect(within(dataFlow).getByText("播放数据流")).toBeInTheDocument();
-    expect(within(dataFlow).getAllByText("App")).toHaveLength(2);
-    expect(within(dataFlow).getByText("DAC / 功放")).toBeInTheDocument();
-    expect(within(dataFlow).getByText("扬声器 / 耳机")).toBeInTheDocument();
-    expect(within(dataFlow).getByText("采集数据流")).toBeInTheDocument();
-    expect(within(dataFlow).getByText("麦克风 / ADC")).toBeInTheDocument();
-    expect(within(dataFlow).getByText("输入路由 / 预处理")).toBeInTheDocument();
+    expect(within(overview).queryByRole("img", { name: "播放和采集数据流方向图" })).not.toBeInTheDocument();
     expect(within(overview).getByRole("heading", { name: "桌面 Linux" })).toBeInTheDocument();
     expect(within(overview).getByRole("heading", { name: "嵌入式 Linux" })).toBeInTheDocument();
-    expect(within(overview).getByText(/ASoC 把 CPU DAI、Codec DAI/)).toBeInTheDocument();
+    expect(within(overview).getByText(/ASoC 描述主控、Codec、接口和功放之间的声卡关系/)).toBeInTheDocument();
   });
 
   it("expands audio codec knowledge with a dedicated compression lab", async () => {
@@ -1679,22 +1616,34 @@ describe("Audio knowledge app", () => {
 
     expect(screen.getByRole("button", { name: "播放链路" })).toHaveAttribute("aria-pressed", "true");
     let flowChart = screen.getByRole("img", { name: "播放链路流程图" });
+    expect(flowChart).toHaveAttribute("viewBox", "0 0 1240 680");
+    const playbackNodes = flowChart.querySelectorAll(".system-audio-node");
+    expect(playbackNodes[0]).toHaveAttribute("width", "252");
+    expect(playbackNodes[0]).toHaveAttribute("height", "152");
+    expect(new Set(Array.from(playbackNodes).map((node) => node.getAttribute("y"))).size).toBeGreaterThan(1);
     expect(within(flowChart).getByText("App 播放请求")).toBeInTheDocument();
     expect(within(flowChart).getByText("混音 / 重采样")).toBeInTheDocument();
-    expect(screen.getAllByText("播放链路重点：多路声音如何被混音、统一采样率并送到目标设备。").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("播放链路重点：系统把应用输出映射到当前可用的输出设备。").length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: "录音链路" }));
     flowChart = screen.getByRole("img", { name: "录音链路流程图" });
+    const captureNodes = flowChart.querySelectorAll(".system-audio-node");
+    expect(captureNodes[0]).toHaveAttribute("width", "252");
+    expect(captureNodes[0]).toHaveAttribute("height", "152");
+    expect(new Set(Array.from(captureNodes).map((node) => node.getAttribute("y"))).size).toBeGreaterThan(1);
     expect(within(flowChart).getByText("麦克风 / ADC")).toBeInTheDocument();
     expect(within(flowChart).getByText("权限 / 隐私指示")).toBeInTheDocument();
-    expect(screen.getAllByText("录音链路重点：采集权限、输入增益、设备选择和时间戳连续性。").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("录音链路重点：系统在应用拿到数据前完成权限、输入选择和格式交付。").length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: "全双工语音" }));
     flowChart = screen.getByRole("img", { name: "全双工语音流程图" });
+    const duplexNodes = flowChart.querySelectorAll(".system-audio-node");
+    expect(duplexNodes[0]).toHaveAttribute("width", "252");
+    expect(duplexNodes[0]).toHaveAttribute("height", "152");
     expect(within(flowChart).getByText("采集流")).toBeInTheDocument();
     expect(within(flowChart).getByText("AEC / NS / AGC")).toBeInTheDocument();
     expect(within(flowChart).getByText("回放参考")).toBeInTheDocument();
-    expect(screen.getAllByText("全双工重点：系统要把采集流、回放流和语音处理模块接成同一条通话链路。").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("全双工重点：系统只说明回放参考和采集流怎样接入语音链路。").length).toBeGreaterThan(0);
   });
 
   it("opens the amplifier speaker lab from the hardware topic", async () => {

@@ -13,6 +13,8 @@ type FlowStep = {
   type?: "hardware" | "driver" | "buffer" | "process" | "codec";
 };
 
+type FlowLayout = "horizontal" | "compact-horizontal";
+
 const bytesPerSample = 2;
 const channels = 1;
 const sampleRate = 16000;
@@ -62,9 +64,44 @@ const basicFlowSteps = [
     type: "buffer"
   },
   {
-    title: { zh: "编码 / 传输 / 播放", en: "Encode / transmit / play" },
-    detail: { zh: "输出码流，或解码回 PCM 播放", en: "outputs bitstream, or decodes back to PCM" },
+    title: { zh: "编码", en: "Encode" },
+    detail: { zh: "PCM 压缩为 MP3 / Opus 等帧", en: "PCM is compressed into MP3 / Opus frames" },
     type: "codec"
+  },
+  {
+    title: { zh: "传输 / 缓存", en: "Transmit / buffer" },
+    detail: { zh: "文件、RTSP/RTP 或 jitter buffer", en: "file, RTSP/RTP, or jitter buffer" },
+    type: "buffer"
+  },
+  {
+    title: { zh: "解码", en: "Decode" },
+    detail: { zh: "压缩帧还原为播放 PCM", en: "compressed frames return to playback PCM" },
+    type: "codec"
+  },
+  {
+    title: { zh: "播放侧 filter / DSP", en: "Playback filter / DSP" },
+    detail: { zh: "音量、EQ、混音或响度处理", en: "volume, EQ, mixing, or loudness processing" },
+    type: "process"
+  },
+  {
+    title: { zh: "播放驱动", en: "Playback driver" },
+    detail: { zh: "写入播放 ring buffer，DMA 读走", en: "writes playback ring buffer, DMA reads out" },
+    type: "driver"
+  },
+  {
+    title: { zh: "D/A 转换", en: "D/A conversion" },
+    detail: { zh: "DAC 把 PCM 变回模拟电压", en: "DAC turns PCM back into analog voltage" },
+    type: "hardware"
+  },
+  {
+    title: { zh: "功放", en: "Amplifier" },
+    detail: { zh: "放大模拟信号推动负载", en: "amplifies analog signal to drive the load" },
+    type: "hardware"
+  },
+  {
+    title: { zh: "声音输出", en: "Sound output" },
+    detail: { zh: "扬声器振膜推动空气", en: "speaker diaphragm moves air" },
+    type: "hardware"
   }
 ] satisfies FlowStep[];
 
@@ -325,32 +362,150 @@ function formatFrameMs(value: number) {
   return Number.isInteger(value) ? `${value} ms` : formatMs(value);
 }
 
+function getFlowTextUnits(text: string) {
+  return Array.from(text).reduce((total, char) => {
+    if (/[\u4e00-\u9fff]/.test(char)) {
+      return total + 1;
+    }
+    if (char === " ") {
+      return total + 0.3;
+    }
+    if (/[/|.,:;()\-]/.test(char)) {
+      return total + 0.35;
+    }
+    if (/[A-Za-z0-9_]/.test(char)) {
+      return total + 0.58;
+    }
+    return total + 0.75;
+  }, 0);
+}
+
+function findFlowTextBreak(text: string, maxUnits: number) {
+  const breakpoints = [" / ", "，", ", ", "、", " "];
+  const breakpointPositions = breakpoints.flatMap((separator) => {
+    const positions: number[] = [];
+    let index = text.indexOf(separator);
+    while (index !== -1) {
+      positions.push(index + separator.length);
+      index = text.indexOf(separator, index + separator.length);
+    }
+    return positions;
+  });
+  const minUsefulBreak = Math.max(2.5, maxUnits * 0.45);
+  const preferredBreakpoint = breakpointPositions
+    .map((position) => ({ position, units: getFlowTextUnits(text.slice(0, position)) }))
+    .filter(({ units }) => units > minUsefulBreak && units <= maxUnits)
+    .sort((a, b) => b.units - a.units)[0]?.position;
+  const fallbackBreakpoint = breakpointPositions
+    .map((position) => ({ position, units: getFlowTextUnits(text.slice(0, position)) }))
+    .filter(({ units }) => units > maxUnits && units <= maxUnits * 1.22)
+    .sort((a, b) => a.units - b.units)[0]?.position;
+
+  if (preferredBreakpoint ?? fallbackBreakpoint) {
+    return preferredBreakpoint ?? fallbackBreakpoint;
+  }
+
+  let units = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    units += getFlowTextUnits(text[index]);
+    if (units >= maxUnits) {
+      return index + 1;
+    }
+  }
+
+  return text.length;
+}
+
+function splitFlowText(text: string, maxUnits: number, maxLines = 2) {
+  const lines: string[] = [];
+  let remaining = text;
+
+  while (getFlowTextUnits(remaining) > maxUnits && lines.length < maxLines - 1) {
+    const splitIndex = findFlowTextBreak(remaining, maxUnits);
+    lines.push(remaining.slice(0, splitIndex).trimEnd());
+    remaining = remaining.slice(splitIndex).trimStart();
+  }
+
+  if (remaining) {
+    lines.push(remaining);
+  }
+
+  return lines;
+}
+
+function renderFlowTextLines(lines: string[], x: number, lineGap: number) {
+  return lines.map((line, index) => (
+    <tspan dy={index === 0 ? 0 : lineGap} key={`${line}-${index}`} x={x}>
+      {index < lines.length - 1 ? `${line} ` : line}
+    </tspan>
+  ));
+}
+
 function FlowChart({
   ariaLabel,
   id,
+  layout = "horizontal",
   language,
   steps,
   title
 }: {
   ariaLabel: Record<Language, string>;
   id: string;
+  layout?: FlowLayout;
   language: Language;
   steps: FlowStep[];
   title: Record<Language, string>;
 }) {
-  const canvasWidth = 1180;
-  const nodeHeight = 58;
-  const gap = 18;
-  const top = 84;
-  const height = top + steps.length * (nodeHeight + gap) + 16;
-  const nodeX = 76;
-  const nodeWidth = 1040;
-  const arrowX = 590;
+  const isCompact = layout === "compact-horizontal";
+  const canvasWidth = isCompact ? 1180 : 1480;
+  const nodeWidth = isCompact ? 270 : 260;
+  const nodeHeight = isCompact ? 126 : 128;
+  const columns = isCompact ? 4 : 5;
+  const gapX = isCompact ? 16 : 20;
+  const gapY = isCompact ? 34 : 40;
+  const top = 88;
+  const left = 44;
+  const rowCount = Math.ceil(steps.length / columns);
+  const height = top + rowCount * nodeHeight + (rowCount - 1) * gapY + 44;
+
+  const getPosition = (index: number) => {
+    const row = Math.floor(index / columns);
+    const column = index % columns;
+    const isReverseRow = row % 2 === 1;
+    const visualColumn = isReverseRow ? columns - 1 - column : column;
+
+    return {
+      column,
+      row,
+      x: left + visualColumn * (nodeWidth + gapX),
+      y: top + row * (nodeHeight + gapY)
+    };
+  };
+
+  const getConnectorPath = (index: number) => {
+    const current = getPosition(index);
+    const next = getPosition(index + 1);
+    const currentCenterY = current.y + nodeHeight / 2;
+    const nextCenterY = next.y + nodeHeight / 2;
+
+    if (current.row === next.row) {
+      const startsRight = next.x > current.x;
+      const startX = startsRight ? current.x + nodeWidth : current.x;
+      const endX = startsRight ? next.x : next.x + nodeWidth;
+      return `M ${startX} ${currentCenterY} H ${endX}`;
+    }
+
+    const startX = current.x + nodeWidth / 2;
+    const endX = next.x + nodeWidth / 2;
+    const midY = current.y + nodeHeight + gapY / 2;
+    return `M ${startX} ${current.y + nodeHeight} V ${midY} H ${endX} V ${next.y}`;
+  };
 
   return (
     <svg
       aria-label={ariaLabel[language]}
       className="realtime-flow-chart"
+      data-layout={layout === "compact-horizontal" ? "horizontal-pair" : "horizontal"}
       role="img"
       viewBox={`0 0 ${canvasWidth} ${height}`}
       xmlns="http://www.w3.org/2000/svg"
@@ -365,7 +520,12 @@ function FlowChart({
         {title[language]}
       </text>
       {steps.map((step, index) => {
-        const y = top + index * (nodeHeight + gap);
+        const { x, y } = getPosition(index);
+        const titleMaxUnits = language === "zh" ? (isCompact ? 10.6 : 10.2) : isCompact ? 12.4 : 11.2;
+        const detailMaxUnits = language === "zh" ? (isCompact ? 14.1 : 12.4) : isCompact ? 15.6 : 14.2;
+        const titleLines = splitFlowText(step.title[language], titleMaxUnits, 2);
+        const detailLines = splitFlowText(step.detail[language], detailMaxUnits, 3);
+        const detailY = detailLines.length > 2 ? 71 : detailLines.length > 1 ? 73 : 84;
 
         return (
           <g key={`${id}-${step.title.en}`}>
@@ -374,19 +534,19 @@ function FlowChart({
               height={nodeHeight}
               rx="9"
               width={nodeWidth}
-              x={nodeX}
+              x={x}
               y={y}
             />
-            <text className="realtime-flow-node-title" x="112" y={y + 29}>
-              {step.title[language]}
+            <text className="realtime-flow-node-title" x={x + 18} y={y + (titleLines.length > 1 ? 25 : 31)}>
+              {renderFlowTextLines(titleLines, x + 18, isCompact ? 23 : 25)}
             </text>
-            <text className="realtime-flow-node-detail" x="520" y={y + 29}>
-              {step.detail[language]}
+            <text className="realtime-flow-node-detail" x={x + 18} y={y + detailY}>
+              {renderFlowTextLines(detailLines, x + 18, isCompact ? 18 : 20)}
             </text>
             {index < steps.length - 1 ? (
               <path
                 className="realtime-flow-arrow"
-                d={`M ${arrowX} ${y + nodeHeight + 5} L ${arrowX} ${y + nodeHeight + gap - 5}`}
+                d={getConnectorPath(index)}
                 markerEnd={`url(#${id}Arrow)`}
               />
             ) : null}
@@ -458,6 +618,9 @@ function SocAecDiagram({ language }: { language: Language }) {
       </text>
       <text className="realtime-soc-note" x="650" y="300">
         {language === "zh" ? "AEC 需要播放参考和麦克风输入时间对齐" : "AEC needs time-aligned playback reference and mic input"}
+      </text>
+      <text className="realtime-soc-note" x="590" y="366">
+        {language === "zh" ? "回采信号用于 AEC" : "Loopback signal feeds AEC"}
       </text>
       {arrows.map((arrow) => (
         <path className="realtime-soc-aec-arrow" d={arrow.d} key={arrow.d} markerEnd="url(#socAecArrow)" />
@@ -531,22 +694,24 @@ export function RealtimeAudioLab({ language, onBack }: RealtimeAudioLabProps) {
               id="basicAudioFlow"
               language={language}
               steps={basicFlowSteps}
-              title={{ zh: "基础流程：输入 PCM 到编码 / 播放", en: "Basic flow: PCM input to encoding / playback" }}
+              title={{ zh: "基础流程：采集 -> 编码 -> 解码 -> 播放输出", en: "Basic flow: capture -> encode -> decode -> playback output" }}
             />
-            <FlowChart
-              ariaLabel={{ zh: "ALSA 采集 PCM 到编码流程图", en: "ALSA PCM capture to encoding flow chart" }}
-              id="alsaCaptureFlow"
-              language={language}
-              steps={alsaFlowSteps}
-              title={{ zh: "具体例子：ALSA 采集 PCM -> filter -> MP3 编码", en: "Example: ALSA PCM capture -> filter -> MP3 encode" }}
-            />
-            <FlowChart
-              ariaLabel={{ zh: "MP3 解码到 PCM 播放流程图", en: "MP3 decode to PCM playback flow chart" }}
-              id="mp3PlaybackFlow"
-              language={language}
-              steps={playbackFlowSteps}
-              title={{ zh: "具体例子：MP3 / RTSP 接收 -> 解码 -> PCM 播放", en: "Example: MP3 / RTSP receive -> decode -> PCM playback" }}
-            />
+            <div className="realtime-example-flow-pair">
+              <FlowChart
+                ariaLabel={{ zh: "ALSA 采集 PCM 到编码流程图", en: "ALSA PCM capture to encoding flow chart" }}
+                id="alsaCaptureFlow"
+                language={language}
+                steps={alsaFlowSteps}
+                title={{ zh: "具体例子：ALSA 采集 PCM -> filter -> MP3 编码", en: "Example: ALSA PCM capture -> filter -> MP3 encode" }}
+              />
+              <FlowChart
+                ariaLabel={{ zh: "MP3 解码到 PCM 播放流程图", en: "MP3 decode to PCM playback flow chart" }}
+                id="mp3PlaybackFlow"
+                language={language}
+                steps={playbackFlowSteps}
+                title={{ zh: "具体例子：MP3 / RTSP 接收 -> 解码 -> PCM 播放", en: "Example: MP3 / RTSP receive -> decode -> PCM playback" }}
+              />
+            </div>
             <SocAecDiagram language={language} />
           </div>
         </section>

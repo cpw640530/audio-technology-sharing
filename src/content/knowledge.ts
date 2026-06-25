@@ -39,7 +39,6 @@ export type TopicLab = {
     | "system-audio"
     | "audio-codec"
     | "realtime-audio"
-    | "audio-plugin"
     | "core-signal-processing"
     | "speech-enhancement"
     | "spatial-audio"
@@ -982,66 +981,59 @@ export const categories: Category[] = [
       {
         title: { zh: "系统音频架构", en: "System Audio Architecture" },
         summary: {
-          zh: "先建立通用系统音频链路，再用 Linux ALSA、PipeWire 和 ASoC 作为具体例子。",
-          en: "Build a generic system audio path first, then use Linux ALSA, PipeWire, and ASoC as concrete examples."
+          zh: "用系统分层看清 App、音频服务、驱动和硬件如何分工。",
+          en: "Use system layers to understand how apps, audio services, drivers, and hardware divide responsibilities."
         },
         bullets: [
-          { zh: "应用层 API、音频服务和策略路由", en: "Application APIs, audio service, and policy routing" },
-          { zh: "采集链路、播放链路和全双工同步", en: "Capture, playback, and full-duplex synchronization" },
-          { zh: "设备管理、混音路径、HAL 和驱动边界", en: "Device management, mixing paths, HAL, and driver boundaries" }
+          { zh: "应用、服务、驱动和硬件边界", en: "App, service, driver, and hardware boundaries" },
+          { zh: "播放、采集和全双工链路", en: "Playback, capture, and full-duplex paths" },
+          { zh: "设备路由、权限、会话和音量", en: "Device routing, permission, session, and volume" }
         ],
         detail: {
           explanation: {
-            zh: "系统音频架构不是单个模块，而是一条从应用、媒体框架、系统音频服务、策略路由、混音路径、HAL/驱动到硬件设备的完整链路。它负责把多个应用的播放请求、麦克风采集、蓝牙/USB/内置声卡切换、权限与隐私、音量和设备状态统一协调起来。",
-            en: "System audio architecture is not a single module; it is the complete path from applications, media frameworks, system audio services, policy routing, mixing paths, HAL/drivers, and hardware devices. It coordinates playback requests, microphone capture, Bluetooth/USB/built-in devices, permissions, privacy, volume, and device state."
+            zh: "系统音频架构回答的是：应用发起播放或录音请求后，系统如何选择设备、管理权限、处理会话和音量，并把 PCM 数据交给驱动和硬件。它是系统层总览，不展开具体 DSP 算法、接口时序或低延迟调参。",
+            en: "System audio architecture answers this question: after an app requests playback or recording, how does the system choose devices, manage permission, handle sessions and volume, then hand PCM data to drivers and hardware? It is a system-level overview, not a deep dive into DSP algorithms, interface timing, or low-latency tuning."
           },
           keyConcepts: [
-            { zh: "播放链路通常从 App 输出音频流，经过系统服务、音量、混音路径和设备路由后进入驱动与硬件。", en: "Playback usually starts from an app stream, then goes through service management, volume, mixing paths, device routing, drivers, and hardware." },
-            { zh: "录音链路从麦克风和 ADC 进入驱动，再经过权限、输入路由、设备选择和时间戳管理后交给应用。", en: "Capture starts at the microphone and ADC, then passes through drivers, permissions, input routing, device selection, and timestamp management before reaching apps." },
-            { zh: "全双工语音同时存在采集和回放，系统层负责把回放参考、采集流和语音处理模块接在正确位置。", en: "Full-duplex voice runs capture and playback together; the system layer connects playback reference, capture stream, and voice-processing modules at the right points." },
-            { zh: "低延迟在系统架构中只表现为可选择的专用路径或设备能力，本卡不展开具体调参。", en: "In system architecture, low latency appears only as selectable paths or device capability; this card does not expand tuning details." }
+            { zh: "应用通常不直接控制扬声器或麦克风，而是通过系统 API 提交播放、录音或通话请求。", en: "Apps usually do not directly control speakers or microphones; they submit playback, recording, or call requests through system APIs." },
+            { zh: "音频服务负责统一管理多个 App 的会话、音频焦点、音量、设备状态和路由策略。", en: "The audio service centrally manages sessions, focus, volume, device state, and routing policy across apps." },
+            { zh: "播放、采集和全双工是三种链路方向；本卡只说明系统如何把模块接起来。", en: "Playback, capture, and full duplex are three path directions; this card only shows how the system connects modules." },
+            { zh: "DSP 算法、接口时序、Codec 芯片和 buffer deadline 分别放在语音增强、数字接口、硬件和实时处理卡片中展开。", en: "DSP algorithms, interface timing, codec chips, and buffer deadlines are covered by the speech enhancement, digital interface, hardware, and real-time processing cards." }
           ],
           termExplanations: [
             {
               name: { zh: "应用层 API", en: "Application API" },
               explanation: {
-                zh: "应用通常通过 AudioTrack、AAudio、OpenSL ES、Core Audio、WASAPI、WebAudio 等 API 提交或获取音频数据。API 会把应用请求交给系统音频栈，并完成基本的格式、设备和会话协商。",
-                en: "Apps usually submit or receive audio through APIs such as AudioTrack, AAudio, OpenSL ES, Core Audio, WASAPI, or WebAudio. The API hands app requests to the system audio stack and negotiates basic format, device, and session properties."
+                zh: "应用通过 AudioTrack、AAudio、Core Audio、WASAPI、WebAudio 等 API 打开播放或录音流。API 负责把格式、会话和设备请求交给系统音频栈。",
+                en: "Apps open playback or capture streams through APIs such as AudioTrack, AAudio, Core Audio, WASAPI, or WebAudio. The API passes format, session, and device requests to the system audio stack."
               }
             },
             {
               name: { zh: "音频服务", en: "Audio service" },
               explanation: {
-                zh: "音频服务是系统里的集中管理层。在 Linux 中常见为 PipeWire、PulseAudio 或 JACK，负责管理多个客户端、混音路径、设备状态和数据搬运。",
-                en: "The audio service is the central manager. On Linux it is commonly PipeWire, PulseAudio, or JACK, managing clients, mixing paths, device state, and data movement."
+                zh: "音频服务是系统的集中管理层。在 Linux 中常见为 PipeWire、PulseAudio 或 JACK，负责连接多个客户端、维护设备状态和安排数据流向。",
+                en: "The audio service is the central manager. On Linux it is commonly PipeWire, PulseAudio, or JACK, connecting clients, maintaining device state, and arranging data flow."
               }
             },
             {
               name: { zh: "音频策略与路由", en: "Audio policy and routing" },
               explanation: {
-                zh: "策略层决定声音应该走扬声器、听筒、耳机、蓝牙、USB 声卡还是虚拟设备，也处理来电、通知、媒体、语音助手之间的优先级和音频焦点。",
-                en: "The policy layer decides whether audio goes to speaker, earpiece, headphones, Bluetooth, USB audio, or virtual devices, and handles priority and focus among calls, notifications, media, and voice assistants."
+                zh: "策略层决定声音走扬声器、听筒、耳机、蓝牙、USB 声卡还是虚拟设备，也处理来电、通知、媒体和语音助手之间的优先级。",
+                en: "The policy layer decides whether audio goes to speakers, earpiece, headphones, Bluetooth, USB audio, or virtual devices, and resolves priority among calls, notifications, media, and assistants."
               }
             },
             {
               name: { zh: "混音器与重采样", en: "Mixer and resampler" },
               explanation: {
-                zh: "当多个应用同时播放，系统会把不同流汇入目标输出路径。混音和重采样在这里作为系统职责出现，本卡只说明它们位于哪一层。",
-                en: "When multiple apps play at once, the system merges streams into the target output path. Mixing and resampling appear here as system responsibilities; this card only shows where they sit."
+                zh: "当多个应用同时播放，系统会把不同流合到目标输出路径，并在需要时统一采样率或通道格式。这里仅说明它们属于系统链路中的软件处理层。",
+                en: "When multiple apps play at once, the system combines streams into the target output path and normalizes sample rate or channel format when needed. Here they are only placed as software responsibilities in the system path."
               }
             },
             {
               name: { zh: "HAL / 驱动", en: "HAL / driver" },
               explanation: {
-                zh: "HAL 和驱动把系统抽象命令转换成具体硬件操作，例如配置 I2S/TDM、Codec 寄存器、DMA 通道、蓝牙音频通道或 USB Audio 端点。",
-                en: "HAL and drivers translate system abstractions into hardware operations, such as configuring I2S/TDM, codec registers, DMA channels, Bluetooth audio paths, or USB Audio endpoints."
-              }
-            },
-            {
-              name: { zh: "低延迟通路入口", en: "Low-latency path entry" },
-              explanation: {
-                zh: "系统架构层只说明低延迟请求会走哪条输出或输入路径，以及哪些设备支持该路径。具体实时调参不在本卡展开。",
-                en: "At the architecture layer, low latency only describes which input or output path is selected and which devices support it. Detailed real-time tuning is outside this card."
+                zh: "HAL 和驱动是系统抽象与硬件实现之间的边界。系统把音频流、控制命令和设备状态交给这一层，再由具体平台适配声卡、蓝牙或 USB 音频设备。",
+                en: "HAL and drivers form the boundary between system abstractions and hardware implementation. The system hands audio streams, controls, and device state to this layer, then the platform adapts sound cards, Bluetooth, or USB audio devices."
               }
             }
           ],
@@ -1049,18 +1041,18 @@ export const categories: Category[] = [
             type: "system-audio",
             title: { zh: "系统音频架构实验室", en: "System Audio Architecture Lab" },
             description: {
-              zh: "进入独立界面切换播放链路、录音链路和全双工语音链路，观察 App、音频服务、策略路由、混音/重采样、HAL/驱动与硬件之间如何协作。",
-              en: "Open an independent lab to switch between playback, capture, and full-duplex voice paths, and inspect how apps, audio services, policy routing, mixing/resampling, HAL/drivers, and hardware work together."
+              zh: "进入独立界面查看通用分层、Linux 示例，并切换播放、录音和全双工三条系统链路。",
+              en: "Open an independent lab to view generic layers, a Linux example, and switch among playback, capture, and full-duplex system paths."
             },
             buttonLabel: { zh: "打开系统音频架构实验室", en: "Open system audio architecture lab" }
           },
           misconception: {
-            zh: "应用通常不是直接把数据写到扬声器，也不是直接从麦克风读到最终数据；系统会在中间做权限、策略、混音、重采样、设备路由和硬件适配。",
-            en: "Applications usually do not write directly to speakers or read final microphone data directly; the system sits in between for permissions, policy, mixing, resampling, device routing, and hardware adaptation."
+            zh: "系统音频架构不是某一个算法模块，也不是硬件接口教程；它主要解释系统如何管理请求、设备和数据流边界。",
+            en: "System audio architecture is not one algorithm module or a hardware-interface tutorial; it mainly explains how the system manages requests, devices, and data-flow boundaries."
           },
           contentDirection: {
-            zh: "适合继续扩展为桌面 Linux 与嵌入式 Linux 的分层对比图，也可以后续再加入 Android AudioFlinger、Windows WASAPI、macOS Core Audio 的系统级对比。",
-            en: "This can expand into desktop Linux versus embedded Linux layered comparisons, and later compare Android AudioFlinger, Windows WASAPI, and macOS Core Audio."
+            zh: "适合后续继续补充 Android AudioFlinger、Windows WASAPI、macOS Core Audio 与 Linux 的系统级对比。",
+            en: "This can later add system-level comparisons among Android AudioFlinger, Windows WASAPI, macOS Core Audio, and Linux."
           }
         }
       },
@@ -1131,86 +1123,6 @@ export const categories: Category[] = [
           contentDirection: {
             zh: "适合做实时回调时间线、不同 buffer 大小的延迟对比，以及卡顿问题排查清单。",
             en: "This fits a real-time callback timeline, latency comparisons for buffer sizes, and a glitch debugging checklist."
-          }
-        }
-      },
-      {
-        title: { zh: "音频编程与插件开发", en: "Audio Programming and Plugin Development" },
-        summary: {
-          zh: "从 host、processBlock、参数自动化和插件 DSP 模块理解声音如何被实时改变。",
-          en: "Understand how sound is changed in real time through the host, processBlock, parameter automation, and plugin DSP modules."
-        },
-        bullets: [
-          { zh: "JUCE、VST、AU、AAX", en: "JUCE, VST, AU, AAX" },
-          { zh: "processBlock、buffer、sample frame", en: "processBlock, buffer, sample frame" },
-          { zh: "Gain、Filter、Delay、Compressor、Waveshaper", en: "Gain, filter, delay, compressor, waveshaper" }
-        ],
-        detail: {
-          explanation: {
-            zh: "音频插件开发把 DSP 算法放进 DAW、宿主 App 或系统音频链路里运行。Host 提供采样率、block 和参数自动化环境，插件则在 processBlock 中读取输入 PCM buffer，逐 sample 或逐 frame 执行 gain、pan、filter、delay、compressor、waveshaper 等模块，再写回输出 buffer。本卡重点不是系统 buffer 调度，而是插件内部处理：参数变化如何平滑、滤波器系数如何更新、delay line 如何读写、非线性失真如何产生谐波，以及这些处理如何影响当前 buffer。",
-            en: "Audio plugin development runs DSP algorithms inside a DAW, host app, or system audio chain. The host provides sample-rate, block, and automation context; the plugin reads input PCM buffers inside processBlock, applies gain, pan, filters, delay, compression, waveshaping, or other DSP sample by sample or frame by frame, then writes output buffers. This card does not focus on system buffer scheduling; it focuses on the plugin internals: smoothing parameter changes, updating filter coefficients, reading/writing delay lines, generating harmonics through nonlinear distortion, and how those choices affect the current buffer."
-          },
-          keyConcepts: [
-            { zh: "插件格式和框架不同：VST/AU/AAX 是宿主加载的插件生态，JUCE 是常用跨平台 C++ 开发框架。", en: "Plugin formats and frameworks differ: VST/AU/AAX are plugin ecosystems loaded by hosts, while JUCE is a common cross-platform C++ framework." },
-            { zh: "processBlock 的输入输出通常是连续 PCM buffer；本卡把它看作插件 DSP 的入口，不展开系统调度 deadline。", en: "processBlock usually receives and writes continuous PCM buffers; this card treats it as the DSP entry point and does not expand system scheduling deadlines." },
-            { zh: "与传统算法里的基础信号处理不同，本卡不重复推导 FFT/EQ/压缩器原理，而是说明这些模块在插件工程里如何接入、自动化和平滑。", en: "Unlike the core signal processing card in Traditional DSP, this card does not re-derive FFT/EQ/compressor theory; it explains how those modules are integrated, automated, and smoothed in plugin engineering." },
-            { zh: "参数自动化不能直接让系数突变，常用 smoothing 或插值避免 zipper noise 和爆音。", en: "Parameter automation should not jump coefficients directly; smoothing or interpolation avoids zipper noise and pops." },
-            { zh: "实时线程中要避免锁等待、磁盘 IO、网络请求、频繁内存分配和大量日志。", en: "Real-time threads should avoid lock waits, disk IO, network requests, frequent allocation, and heavy logging." },
-            { zh: "插件 DSP 模块可以拆成基础积木：增益/声像、滤波/EQ、延迟、混响、动态处理、失真和调制。", en: "Plugin DSP can be understood as building blocks: gain/pan, filtering/EQ, delay, reverb, dynamics, distortion, and modulation." }
-          ],
-          termExplanations: [
-            {
-              name: { zh: "Host / DAW", en: "Host / DAW" },
-              explanation: {
-                zh: "Host 是加载插件的软件，例如 DAW、剪辑软件或独立音频 App。它负责设备配置、采样率、buffer 调度、MIDI/自动化参数和插件生命周期。",
-                en: "A host is the software that loads the plugin, such as a DAW, editor, or standalone audio app. It manages device setup, sample rate, buffer scheduling, MIDI/automation, and plugin lifecycle."
-              }
-            },
-            {
-              name: { zh: "processBlock", en: "processBlock" },
-              explanation: {
-                zh: "processBlock 是很多插件框架中的实时处理入口。每次调用通常传入一块多声道 PCM buffer，插件必须在下一块到来前完成处理。",
-                en: "processBlock is the real-time processing entry in many plugin frameworks. Each call usually receives a multichannel PCM buffer, and the plugin must finish before the next block arrives."
-              }
-            },
-            {
-              name: { zh: "Sample frame", en: "Sample frame" },
-              explanation: {
-                zh: "一个 sample frame 表示同一时刻所有声道的采样值。立体声里 128 frames 等于左声道 128 个 sample 加右声道 128 个 sample。",
-                en: "A sample frame contains the samples for all channels at the same instant. In stereo, 128 frames means 128 left samples plus 128 right samples."
-              }
-            },
-            {
-              name: { zh: "Biquad 滤波器", en: "Biquad filter" },
-              explanation: {
-                zh: "Biquad 是插件里常见的二阶 IIR 滤波器结构，可以实现低通、高通、峰值 EQ、搁架 EQ 和陷波。改变 cutoff、Q 或 gain 时通常需要平滑系数。",
-                en: "A biquad is a common second-order IIR filter structure in plugins. It can implement low-pass, high-pass, peaking EQ, shelving EQ, and notch filters. Cutoff, Q, or gain changes usually need coefficient smoothing."
-              }
-            },
-            {
-              name: { zh: "参数平滑", en: "Parameter smoothing" },
-              explanation: {
-                zh: "参数平滑把用户或自动化的突变变成连续变化。它不改变算法目标，但能减少 zipper noise、爆音和滤波器系数突跳造成的不稳定听感。",
-                en: "Parameter smoothing turns abrupt user or automation changes into continuous ramps. It does not change the intended setting, but reduces zipper noise, pops, and unstable filter-coefficient jumps."
-              }
-            }
-          ],
-          lab: {
-            type: "audio-plugin",
-            title: { zh: "音频编程与插件实验室", en: "Audio Programming and Plugin Lab" },
-            description: {
-              zh: "进入独立界面切换 Gain、Filter、Delay、Compressor 和 Waveshaper，调节各模块自己的关键参数、参数平滑和非线性过采样，观察处理链、buffer 波形和插件指标。",
-              en: "Open an independent lab to switch between Gain, Filter, Delay, Compressor, and Waveshaper, then adjust each module's own key parameters, smoothing, and nonlinear oversampling while inspecting the processing chain, buffer waveform, and plugin metrics."
-            },
-            buttonLabel: { zh: "打开音频编程与插件实验室", en: "Open audio programming and plugin lab" }
-          },
-          misconception: {
-            zh: "插件不是离线脚本，不能在音频回调里随意等待、读文件、联网或分配大量内存；只要某个 block 没按时算完，用户就可能听到爆音或断续。",
-            en: "A plugin is not an offline script. It cannot freely wait, read files, access the network, or allocate lots of memory inside the audio callback. If one block misses its deadline, users may hear pops or dropouts."
-          },
-          contentDirection: {
-            zh: "适合继续扩展为 JUCE 插件最小工程、processBlock 伪代码、biquad 系数图解、参数自动化平滑和实时线程安全清单。",
-            en: "This can expand into a minimal JUCE plugin, processBlock pseudocode, biquad coefficient diagrams, automation smoothing, and a real-time safety checklist."
           }
         }
       },
