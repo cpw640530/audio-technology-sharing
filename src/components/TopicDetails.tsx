@@ -11,6 +11,7 @@ type TopicDetailsProps = {
   topic: DisplayTopic;
   onClose: () => void;
   onOpenAmplifierSpeakerLab: () => void;
+  onOpenAlsaLab: () => void;
   onOpenAiAudioLab: (initialMode?: AiAudioLabId) => void;
   onOpenAudioCodecLab: () => void;
   onOpenAudioUnitsLab: () => void;
@@ -112,6 +113,7 @@ export function TopicDetails({
   topic,
   onClose,
   onOpenAmplifierSpeakerLab,
+  onOpenAlsaLab,
   onOpenAiAudioLab,
   onOpenAudioCodecLab,
   onOpenAudioUnitsLab,
@@ -172,6 +174,11 @@ export function TopicDetails({
 
     if (topic.detail.lab?.type === "system-audio") {
       onOpenSystemAudioLab();
+      return;
+    }
+
+    if (topic.detail.lab?.type === "alsa") {
+      onOpenAlsaLab();
       return;
     }
 

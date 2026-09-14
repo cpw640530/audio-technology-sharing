@@ -1,6 +1,7 @@
-import { Activity, Cpu, Sparkles } from "lucide-react";
+import { Activity, ArrowDown, Cpu, Sparkles } from "lucide-react";
 import type { Language } from "../content/knowledge";
 import { interfaceCopy } from "../content/knowledge";
+import { HeroSignalMap } from "./HeroSignalMap";
 
 type HeroProps = {
   language: Language;
@@ -30,6 +31,10 @@ export function Hero({ language, totalTopics }: HeroProps) {
         </p>
         <h1>{interfaceCopy.title[language]}</h1>
         <p className="hero-subtitle">{interfaceCopy.subtitle[language]}</p>
+        <a className="hero-action" href="#knowledge-content">
+          <span>{language === "zh" ? "开始探索" : "Explore topics"}</span>
+          <ArrowDown size={17} aria-hidden="true" />
+        </a>
         <div className="hero-stats" aria-label="Knowledge base stats">
           {statLabels.map(([value, label]) => (
             <div className="stat" key={label}>
@@ -40,25 +45,19 @@ export function Hero({ language, totalTopics }: HeroProps) {
         </div>
       </div>
       <div className="signal-panel" data-testid="animated-signal-panel" aria-hidden="true">
-        <div className="signal-scanline" data-testid="signal-scanline" />
         <div className="signal-header">
-          <Activity size={18} />
-          <span>audio.signal.map</span>
+          <span className="signal-title">
+            <Activity size={18} />
+            audio.signal.map
+          </span>
+          <span className="signal-live"><i /> LIVE</span>
         </div>
-        <div className="waveform">
-          {Array.from({ length: 32 }, (_, index) => (
-            <span
-              data-testid="animated-wave-bar"
-              key={index}
-              style={
-                {
-                  "--bar-height": `${24 + ((index * 17) % 58)}px`,
-                  "--bar-delay": `${(index % 8) * 0.12}s`
-                } as React.CSSProperties
-              }
-            />
-          ))}
+        <div className="signal-readout">
+          <span><small>INPUT</small><strong>-12.4 dBFS</strong></span>
+          <span><small>RATE</small><strong>48 kHz</strong></span>
+          <span><small>LATENCY</small><strong>8.0 ms</strong></span>
         </div>
+        <HeroSignalMap />
         <div className="pipeline">
           {["Mic", "ADC", "DSP", "AI", "Output"].map((node, index) => (
             <span

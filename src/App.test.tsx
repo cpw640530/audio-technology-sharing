@@ -73,6 +73,23 @@ describe("Audio knowledge app", () => {
     expect(within(topicGrid).queryByText("麦克风")).not.toBeInTheDocument();
   });
 
+  it("jumps from the knowledge outline to the corresponding topic card", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const search = screen.getByRole("searchbox", { name: "搜索知识点" });
+    await user.type(search, "FFT");
+    const outline = screen.getByRole("complementary", { name: "知识分类大纲" });
+    await user.click(within(outline).getByRole("link", { name: "麦克风" }));
+
+    expect(search).toHaveValue("");
+    const topicGrid = screen.getByTestId("topic-grid");
+    const microphoneCard = document.getElementById("topic-hardware-Microphones");
+    expect(microphoneCard).toBeInTheDocument();
+    expect(microphoneCard).toHaveFocus();
+    expect(within(topicGrid).queryByText("什么是声音")).not.toBeInTheDocument();
+  });
+
   it("opens AI topic cards as separate article-style labs", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -99,8 +116,11 @@ describe("Audio knowledge app", () => {
     expect(within(lab).getByText("环境 PCM 片段")).toBeInTheDocument();
     expect(within(lab).getByText("log-mel 频谱图")).toBeInTheDocument();
     expect(within(lab).getByText("分类模型")).toBeInTheDocument();
-    const modelSection = within(lab).getByRole("region", { name: "常用模型与前沿落地模型" });
-    expect(within(modelSection).getByRole("heading", { name: "常用模型与前沿落地模型" })).toBeInTheDocument();
+    expect(within(lab).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
+    expect(within(lab).getByText("LBCE = -Σc[yc log pc + (1-yc)log(1-pc)]")).toBeInTheDocument();
+    expect(within(lab).getAllByText(/每小时误报数/)).toHaveLength(2);
+    const modelSection = within(lab).getByRole("region", { name: "代表模型与工程定位" });
+    expect(within(modelSection).getByRole("heading", { name: "代表模型与工程定位" })).toBeInTheDocument();
     expect(within(modelSection).getByText("YAMNet")).toBeInTheDocument();
     expect(within(modelSection).getByText("PANNs")).toBeInTheDocument();
     expect(within(modelSection).getByText("AST")).toBeInTheDocument();
@@ -143,7 +163,10 @@ describe("Audio knowledge app", () => {
     expect(within(lab).getByText("Encoder 编码器")).toBeInTheDocument();
     expect(within(lab).getByText("CTC / RNNT")).toBeInTheDocument();
     expect(within(lab).getByText("文本后处理")).toBeInTheDocument();
-    const modelSection = within(lab).getByRole("region", { name: "常用模型与前沿落地模型" });
+    expect(within(lab).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
+    expect(within(lab).getByText("WER = (S + D + I) / N")).toBeInTheDocument();
+    expect(within(lab).getByText(/流式系统需要控制 chunk/)).toBeInTheDocument();
+    const modelSection = within(lab).getByRole("region", { name: "代表模型与工程定位" });
     expect(within(modelSection).getByText("Conformer / RNNT")).toBeInTheDocument();
     expect(within(modelSection).getByText("wav2vec 2.0")).toBeInTheDocument();
     expect(within(modelSection).getByText("Whisper")).toBeInTheDocument();
@@ -164,10 +187,10 @@ describe("Audio knowledge app", () => {
 
     const details = screen.getByRole("dialog", { name: "主题详情" });
     expect(within(details).getByText(/先采集得到 PCM 数字音频/)).toBeInTheDocument();
-    expect(within(details).getByText(/PCM 不是含义，只是数字波形/)).toBeInTheDocument();
+    expect(within(details).getByText(/PCM 只是数字波形/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "FFT / STFT / Mel / MFCC" })).toBeInTheDocument();
-    expect(within(details).getByText(/很多声音分类任务会把频谱图当作二维特征图/)).toBeInTheDocument();
-    expect(within(details).getByText(/不同任务不会都走完全相同的模型路径/)).toBeInTheDocument();
+    expect(within(details).getByText(/声音分类常把频谱图作为二维特征/)).toBeInTheDocument();
+    expect(within(details).getByText(/这不是所有 AI 音频的统一前端/)).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开 AI 音频总流程实验室" })).toBeInTheDocument();
 
     await user.click(within(details).getByRole("button", { name: "打开 AI 音频总流程实验室" }));
@@ -177,7 +200,10 @@ describe("Audio knowledge app", () => {
     expect(within(lab).getByText("麦克风 / Codec / ADC")).toBeInTheDocument();
     expect(within(lab).getByText("PCM 数字音频")).toBeInTheDocument();
     expect(within(lab).getByText("任务模型")).toBeInTheDocument();
-    const modelSection = within(lab).getByRole("region", { name: "常用模型与前沿落地模型" });
+    expect(within(lab).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
+    expect(within(lab).getByText("ŷ = fθ(R(x), c)")).toBeInTheDocument();
+    expect(within(lab).getByText(/实时性不是只看模型推理时间/)).toBeInTheDocument();
+    const modelSection = within(lab).getByRole("region", { name: "代表模型与工程定位" });
     expect(within(modelSection).getByText("Whisper")).toBeInTheDocument();
     expect(within(modelSection).getByText("CLAP")).toBeInTheDocument();
     expect(within(modelSection).getByText("EnCodec")).toBeInTheDocument();
@@ -197,12 +223,33 @@ describe("Audio knowledge app", () => {
     await user.click(within(details).getByRole("button", { name: "打开 AI 音频编码实验室" }));
 
     const lab = screen.getByRole("main", { name: "AI 音频编码实验室" });
-    const modelSection = within(lab).getByRole("region", { name: "常用模型与前沿落地模型" });
+    expect(within(lab).getByText("R = Ftoken · Q · log2(K) bit/s")).toBeInTheDocument();
+    expect(within(lab).getByText(/编码端与解码端必须严格匹配/)).toBeInTheDocument();
+    const modelSection = within(lab).getByRole("region", { name: "代表模型与工程定位" });
     expect(within(modelSection).getByText("SoundStream")).toBeInTheDocument();
     expect(within(modelSection).getByText("EnCodec")).toBeInTheDocument();
     expect(within(modelSection).getByText("Lyra")).toBeInTheDocument();
     expect(within(modelSection).getByText("codec token / neural codec language model")).toBeInTheDocument();
     expect(within(modelSection).getByText(/不是 MP3\/AAC 的手工变换编码路线/)).toBeInTheDocument();
+  });
+
+  it.each([
+    ["语音合成 TTS", "打开语音合成 TTS 实验室", "语音合成 TTS 实验室", "Tmel ≈ Σᵢ dᵢ", "MOS/CMOS"],
+    ["音频生成", "打开音频生成实验室", "音频生成实验室", "LAR = -Σₜ log P(zₜ | z<t, c)", "FAD"],
+    ["AI 音频增强", "打开 AI 音频增强实验室", "AI 音频增强实验室", "Ŝ(t,f) = Mθ(t,f) · Y(t,f)", "SI-SDR 提升"]
+  ])("adds task-specific engineering depth to %s", async (topic, openLabel, labName, equation, metric) => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(within(screen.getByRole("region", { name: "知识分类" })).getByRole("button", { name: /AI 音频/ }));
+    await user.click(screen.getByRole("button", { name: new RegExp(topic) }));
+    const details = screen.getByRole("dialog", { name: "主题详情" });
+    await user.click(within(details).getByRole("button", { name: openLabel }));
+
+    const lab = screen.getByRole("main", { name: labName });
+    expect(within(lab).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
+    expect(within(lab).getByText(equation)).toBeInTheDocument();
+    expect(within(lab).getByText(new RegExp(metric))).toBeInTheDocument();
   });
 
   it("switches conferencing and communication between practical scenarios", async () => {
@@ -696,6 +743,74 @@ describe("Audio knowledge app", () => {
 
     expect(screen.queryByRole("button", { name: /音频编程与插件开发/ })).not.toBeInTheDocument();
     expect(screen.queryByText(/Audio Programming and Plugin Development/)).not.toBeInTheDocument();
+  });
+
+  it("opens the ALSA framework lab with live PCM, buffer, and XRUN teaching controls", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
+    await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
+
+    const topicGrid = screen.getByTestId("topic-grid");
+    const cardNames = within(topicGrid).getAllByRole("button").map((button) => button.textContent ?? "");
+    expect(cardNames.findIndex((name) => name.includes("系统音频架构"))).toBeLessThan(
+      cardNames.findIndex((name) => name.includes("ALSA 框架")),
+    );
+    expect(cardNames.findIndex((name) => name.includes("ALSA 框架"))).toBeLessThan(
+      cardNames.findIndex((name) => name.includes("实时音频处理")),
+    );
+
+    await user.click(within(topicGrid).getByRole("button", { name: /ALSA 框架/ }));
+    const details = screen.getByRole("dialog", { name: "主题详情" });
+    expect(within(details).getByRole("heading", { name: "card / device / subdevice" })).toBeInTheDocument();
+    await user.click(within(details).getByRole("button", { name: "打开 ALSA 框架实验室" }));
+
+    const lab = screen.getByRole("main", { name: "ALSA 框架实验室" });
+    expect(within(lab).getByRole("heading", { name: "ALSA 框架实验室" })).toBeInTheDocument();
+    const framework = within(lab).getByRole("img", { name: "Linux ALSA 分层框架图" });
+    expect(framework).toHaveTextContent("alsa-lib");
+    expect(framework).toHaveTextContent("ALSA Core");
+    expect(framework).toHaveTextContent("嵌入式 ASoC");
+    expect(within(lab).getByText(/后者是可选上层服务/)).toBeInTheDocument();
+    const playback = within(lab).getByRole("button", { name: "PCM 播放" });
+    const capture = within(lab).getByRole("button", { name: "PCM 录音" });
+    const command = within(lab).getByTestId("alsa-command");
+    expect(playback).toHaveAttribute("aria-pressed", "true");
+    expect(capture).toHaveAttribute("aria-pressed", "false");
+    expect(command).toHaveTextContent(/^aplay .*S16_LE/);
+
+    await user.click(capture);
+    expect(capture).toHaveAttribute("aria-pressed", "true");
+    expect(playback).toHaveAttribute("aria-pressed", "false");
+    expect(command).toHaveTextContent(/^arecord .*S16_LE/);
+
+    await user.selectOptions(within(lab).getByRole("combobox", { name: "采样率" }), "48000");
+    await user.selectOptions(within(lab).getByRole("combobox", { name: "位深" }), "24");
+    await user.selectOptions(within(lab).getByRole("combobox", { name: "period frames" }), "256");
+    await user.selectOptions(within(lab).getByRole("combobox", { name: "period count" }), "4");
+    expect(command).toHaveTextContent(/S24_3LE/);
+    expect(within(lab).getByText("period 5.33 ms")).toBeInTheDocument();
+    expect(within(lab).getByText("buffer 21.33 ms")).toBeInTheDocument();
+    expect(within(lab).getByText("187.50 次/秒")).toBeInTheDocument();
+    expect(within(lab).getByText("288,000 B/s")).toBeInTheDocument();
+    await user.click(within(lab).getByRole("button", { name: "缓冲与延迟" }));
+    const bufferDiagram = within(lab).getByRole("img", { name: "ALSA 环形 buffer" });
+    expect(bufferDiagram.querySelectorAll("[data-period-index]")).toHaveLength(4);
+
+    await user.click(within(lab).getByRole("button", { name: "XRUN 排查" }));
+    const xrunPanel = within(lab).getByRole("region", { name: "XRUN 排查" });
+    expect(within(xrunPanel).getByRole("heading", { name: "XRUN 排查" })).toBeInTheDocument();
+    expect(within(xrunPanel).getByText(/underrun/)).toBeInTheDocument();
+    expect(within(xrunPanel).getByText(/overrun/)).toBeInTheDocument();
+    expect(within(xrunPanel).getByText(/调用 snd_pcm_prepare/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "English" }));
+    expect(screen.getByRole("main", { name: "ALSA Framework Lab" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Linux ALSA layered framework diagram" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "PCM Playback" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "XRUN Troubleshooting" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "ALSA Framework Lab" })).toBeInTheDocument();
   });
 
   it("expands spatial audio with localization cues and rendering concepts", async () => {
@@ -1196,8 +1311,7 @@ describe("Audio knowledge app", () => {
     render(<App />);
 
     expect(screen.getByTestId("animated-signal-panel")).toBeInTheDocument();
-    expect(screen.getByTestId("signal-scanline")).toBeInTheDocument();
-    expect(screen.getAllByTestId("animated-wave-bar")).toHaveLength(32);
+    expect(screen.getByTestId("hero-signal-map")).toBeInTheDocument();
   });
 
   it("opens and closes topic details from a topic card", async () => {

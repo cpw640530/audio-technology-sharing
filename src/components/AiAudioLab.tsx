@@ -28,12 +28,29 @@ type AiModelCard = {
   caution: LocalizedText;
 };
 
+type AiTechnicalProfile = {
+  input: LocalizedText;
+  representation: LocalizedText;
+  output: LocalizedText;
+  objective: LocalizedText;
+  metrics: LocalizedText;
+  deployment: LocalizedText;
+};
+
+type AiEquation = {
+  expression: string;
+  title: LocalizedText;
+  explanation: LocalizedText;
+};
+
 type AiArticle = {
   title: LocalizedText;
   eyebrow: LocalizedText;
   summary: LocalizedText;
   flowLabel: LocalizedText;
   flow: AiFlowStep[];
+  technical: AiTechnicalProfile;
+  equations: AiEquation[];
   models: AiModelCard[];
   sections: AiArticleSection[];
 };
@@ -52,8 +69,8 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
     title: { zh: "AI 音频总流程实验室", en: "AI Audio Overall Flow Lab" },
     eyebrow: { zh: "AI 音频入口", en: "AI audio entry" },
     summary: {
-      zh: "用一条通用链路解释声音如何从物理声波变成 PCM、特征、模型输入和任务结果。",
-      en: "A general chain explaining how physical sound becomes PCM, features, model input, and task results."
+      zh: "用一条工程链路解释声音如何从 PCM 进入不同表示、任务模型、评价与部署。",
+      en: "An engineering chain from PCM through task-specific representations, models, evaluation, and deployment."
     },
     flowLabel: { zh: "AI 音频总流程图解流程", en: "AI audio overall flow diagram" },
     flow: [
@@ -66,12 +83,12 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
         detail: { zh: "原始波形数据，不直接等于语义", en: "Raw waveform data, not semantic meaning" }
       },
       {
-        title: { zh: "分帧加窗", en: "Frame and window" },
-        detail: { zh: "切成短时稳定片段", en: "Slices audio into short stable frames" }
+        title: { zh: "切片 / 标准化", en: "Segment / normalize" },
+        detail: { zh: "按流式或离线任务组织输入", en: "Organizes input for streaming or offline tasks" }
       },
       {
-        title: { zh: "频谱 / Mel / MFCC", en: "Spectrum / Mel / MFCC" },
-        detail: { zh: "形成时间频率特征或紧凑特征", en: "Forms time-frequency or compact features" }
+        title: { zh: "任务表示", en: "Task representation" },
+        detail: { zh: "按需选波形、频谱、embedding 或 token", en: "Selects waveform, spectra, embeddings, or tokens" }
       },
       {
         title: { zh: "任务模型", en: "Task model" },
@@ -80,6 +97,31 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
       {
         title: { zh: "后处理 / 输出", en: "Post-process / output" },
         detail: { zh: "文字、类别、增强 PCM、token 或新音频", en: "Text, labels, enhanced PCM, tokens, or new audio" }
+      }
+    ],
+    technical: {
+      input: { zh: "PCM 波形 x[n]，以及任务需要的文本、标签或条件信息", en: "PCM waveform x[n], plus task-specific text, labels, or conditioning" },
+      representation: { zh: "按任务选择原始波形、STFT/log-mel、学习型 embedding 或 codec token", en: "Task-dependent raw waveform, STFT/log-mel, learned embeddings, or codec tokens" },
+      output: { zh: "文字、类别与时间戳、增强 PCM、离散码流或生成音频", en: "Text, labels and timestamps, enhanced PCM, discrete streams, or generated audio" },
+      objective: { zh: "监督分类/对齐、自监督表征、重建与感知损失，或生成式建模", en: "Supervised classification/alignment, self-supervision, reconstruction and perceptual losses, or generative modeling" },
+      metrics: { zh: "必须按任务选指标：WER、F1、SI-SDR、MOS、码率等不能混用", en: "Metrics are task-specific: WER, F1, SI-SDR, MOS, and bitrate are not interchangeable" },
+      deployment: { zh: "明确流式或离线、端侧或云端，并核算延迟、RTF、内存、功耗与隐私", en: "Specify streaming or offline and edge or cloud; budget latency, RTF, memory, power, and privacy" }
+    },
+    equations: [
+      {
+        expression: "X(m,k) = Σₙ x[n + mH]w[n]e^(-j2πkn/N)",
+        title: { zh: "短时傅里叶变换 STFT", en: "Short-time Fourier transform" },
+        explanation: { zh: "m 是时间帧，k 是频率 bin，H 是 hop size，N 是窗口长度。它是可选声学表示，不是所有 AI 音频模型的必经步骤。", en: "m is the frame, k the frequency bin, H the hop size, and N the window length. It is an optional representation, not a mandatory stage for every AI audio model." }
+      },
+      {
+        expression: "ŷ = fθ(R(x), c)",
+        title: { zh: "统一任务表达", en: "Unified task expression" },
+        explanation: { zh: "R(x) 表示波形、频谱或 token，c 是文本等条件，模型 fθ 根据任务输出识别、增强、编码或生成结果。", en: "R(x) is a waveform, spectrum, or token representation; c is optional conditioning, and fθ produces task-specific recognition, enhancement, coding, or generation output." }
+      },
+      {
+        expression: "Lend-to-end = Lcapture + Lframe + Lmodel + Ldecode + Loutput",
+        title: { zh: "端到端延迟预算", en: "End-to-end latency budget" },
+        explanation: { zh: "实时性不是只看模型推理时间，还要计算采集缓存、分帧、解码与播放缓存。", en: "Real-time performance includes capture buffering, framing, decoding, and playback buffering, not model inference alone." }
       }
     ],
     models: [
@@ -175,8 +217,8 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
       {
         title: sectionTitles.principle,
         body: {
-          zh: "PCM 只是采样值序列，不包含“文字”“事件类别”或“干净语音”这些含义。AI 模型通常先看短时结构：每 10 ms 或 20 ms 一帧，计算频谱、Mel 频带能量、MFCC，或者由神经网络学习出 embedding，再由任务模型输出结果。",
-          en: "PCM is only a sequence of samples. It does not directly contain words, event labels, or clean speech. AI models usually look at short-time structure: frames of around 10 ms or 20 ms, spectra, Mel-band energy, MFCCs, or learned neural embeddings, before a task model produces outputs."
+          zh: "PCM 只是采样值序列，不包含“文字”“事件类别”或“干净语音”这些含义。ASR 和事件识别常分析短时频谱或 Mel 特征，时域增强可以直接学习波形表示，神经编码与生成还会使用离散 codec token；表示方式由任务目标决定。",
+          en: "PCM is only a sample sequence; it does not directly contain words, event labels, or clean speech. ASR and event detection often analyze short-time spectra or Mel features, time-domain enhancement may learn waveform representations directly, and neural coding or generation may use discrete codec tokens. The task determines the representation."
         }
       },
       {
@@ -241,6 +283,31 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
       {
         title: { zh: "文本后处理", en: "Text post-processing" },
         detail: { zh: "标点、热词、时间戳", en: "Punctuation, hotwords, timestamps" }
+      }
+    ],
+    technical: {
+      input: { zh: "常见为 16 kHz 单声道 PCM 分块，可附语言、热词和说话人上下文", en: "Commonly chunked 16 kHz mono PCM with optional language, hotword, and speaker context" },
+      representation: { zh: "log-mel 特征或从波形学习的声学表示，经 Encoder 形成上下文状态", en: "Log-mel or waveform-learned acoustic features encoded into contextual states" },
+      output: { zh: "字符、音素或 subword token 概率，再解码成文字、时间戳和标点", en: "Character, phoneme, or subword token probabilities decoded into text, timestamps, and punctuation" },
+      objective: { zh: "CTC、RNNT 与注意力交叉熵是不同训练路线，不应视为同一个算法", en: "CTC, RNNT, and attention cross-entropy are distinct training paths, not one algorithm" },
+      metrics: { zh: "WER/CER、首字与句末延迟、RTF、热词召回和流式结果回滚率", en: "WER/CER, first-token and final latency, RTF, hotword recall, and streaming revision rate" },
+      deployment: { zh: "流式系统需要控制 chunk、右侧上下文和状态缓存；离线系统更重视全局上下文", en: "Streaming controls chunks, right context, and state caches; offline systems can exploit full context" }
+    },
+    equations: [
+      {
+        expression: "P(y|x) = Σπ∈B⁻¹(y) ∏ₜ P(πₜ|x)",
+        title: { zh: "CTC 对齐", en: "CTC alignment" },
+        explanation: { zh: "同一句文字 y 可以对应多条含 blank 和重复 token 的帧级路径 π；CTC 把这些合法路径的概率相加。", en: "One transcript y can map to many frame-level paths π containing blanks and repeats; CTC sums the probabilities of all valid paths." }
+      },
+      {
+        expression: "WER = (S + D + I) / N",
+        title: { zh: "词错误率", en: "Word error rate" },
+        explanation: { zh: "S、D、I 分别是替换、删除和插入词数，N 是参考文本词数；中文也常按字计算 CER。", en: "S, D, and I count substitutions, deletions, and insertions; N is the reference word count. Character error rate is often used for Chinese." }
+      },
+      {
+        expression: "RTF = Tprocess / Taudio",
+        title: { zh: "实时因子", en: "Real-time factor" },
+        explanation: { zh: "RTF 小于 1 表示处理速度快于音频时长，但不等于首字延迟一定低。", en: "RTF below 1 means processing is faster than audio duration, but it does not guarantee low first-token latency." }
       }
     ],
     models: [
@@ -400,6 +467,31 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
         detail: { zh: "合成可播放波形", en: "Synthesizes playable waveform" }
       }
     ],
+    technical: {
+      input: { zh: "规范化文本或音素，以及说话人、语言、情绪和韵律条件", en: "Normalized text or phonemes plus speaker, language, emotion, and prosody conditions" },
+      representation: { zh: "音素隐藏状态、时长/音高/能量，以及 Mel 谱或离散 codec token", en: "Phoneme states, duration/pitch/energy, and Mel spectra or discrete codec tokens" },
+      output: { zh: "声码器或神经 codec 解码得到的 PCM 波形", en: "PCM waveform decoded by a vocoder or neural codec" },
+      objective: { zh: "声学重建损失叠加时长、音高、能量损失；端到端模型还可能使用对抗损失", en: "Acoustic reconstruction plus duration, pitch, and energy losses; end-to-end models may add adversarial losses" },
+      metrics: { zh: "MOS/CMOS、可懂度、说话人相似度、发音错误率、RTF 与首段音频延迟", en: "MOS/CMOS, intelligibility, speaker similarity, pronunciation errors, RTF, and time to first audio" },
+      deployment: { zh: "区分整句与流式合成，关注长文本稳定性、声码器算力、授权和滥用防护", en: "Distinguish sentence and streaming synthesis; consider long-form stability, vocoder cost, consent, and misuse controls" }
+    },
+    equations: [
+      {
+        expression: "Tmel ≈ Σᵢ dᵢ",
+        title: { zh: "时长展开", en: "Duration expansion" },
+        explanation: { zh: "每个音素预测 dᵢ 个声学帧，所有时长之和决定生成语音的大致长度和节奏。", en: "Each phoneme predicts dᵢ acoustic frames; their sum controls approximate utterance length and rhythm." }
+      },
+      {
+        expression: "L = ||M - M̂||₁ + λdLduration + λf0Lpitch + λeLenergy",
+        title: { zh: "声学模型训练目标", en: "Acoustic-model objective" },
+        explanation: { zh: "M 是目标 Mel 谱；时长、基频和能量损失共同约束发音节奏、语调和轻重。", en: "M is the target Mel spectrum; duration, pitch, and energy losses constrain timing, intonation, and emphasis." }
+      },
+      {
+        expression: "x̂ = Gθ(M, es, p)",
+        title: { zh: "波形生成", en: "Waveform synthesis" },
+        explanation: { zh: "声码器 Gθ 把声学表示 M、说话人向量 es 和韵律条件 p 转成最终波形。", en: "Vocoder Gθ converts acoustic representation M, speaker embedding es, and prosody p into waveform audio." }
+      }
+    ],
     models: [
       {
         name: "FastSpeech 2",
@@ -557,6 +649,26 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
         detail: { zh: "水印、响度、格式", en: "Watermarking, loudness, format" }
       }
     ],
+    technical: {
+      input: { zh: "文本、旋律、参考音频、视频、节拍或局部编辑掩码", en: "Text, melody, reference audio, video, tempo, or local edit masks" },
+      representation: { zh: "连续潜变量、Mel 谱或神经 codec 离散 token", en: "Continuous latents, Mel spectra, or discrete neural-codec tokens" },
+      output: { zh: "音乐、环境声、音效或编辑后的 PCM 音频", en: "Music, ambience, sound effects, or edited PCM audio" },
+      objective: { zh: "自回归 token 似然或扩散噪声预测，并用条件对齐约束提示词一致性", en: "Autoregressive token likelihood or diffusion noise prediction with conditioning alignment" },
+      metrics: { zh: "主观偏好、FAD、文本-音频对齐、生成多样性、结构一致性和生成速度", en: "Human preference, FAD, text-audio alignment, diversity, structural consistency, and generation speed" },
+      deployment: { zh: "区分离线创作与交互生成，并处理时长、显存、来源标记、版权和安全过滤", en: "Separate offline creation from interactive generation; handle duration, memory, provenance, licensing, and safety filters" }
+    },
+    equations: [
+      {
+        expression: "LAR = -Σₜ log P(zₜ | z<t, c)",
+        title: { zh: "自回归 token 建模", en: "Autoregressive token modeling" },
+        explanation: { zh: "zₜ 是当前 codec token，模型根据过去 token 和条件 c 预测下一个 token；序列越长，生成成本越高。", en: "zₜ is the current codec token; the model predicts it from prior tokens and condition c. Longer sequences cost more to generate." }
+      },
+      {
+        expression: "Ldiff = E[||ε - εθ(zt, t, c)||²]",
+        title: { zh: "扩散模型训练", en: "Diffusion training" },
+        explanation: { zh: "模型学习估计第 t 步加入的噪声 ε，再通过多步去噪从随机变量生成音频表示。", en: "The model estimates noise ε added at step t, then iteratively denoises random variables into an audio representation." }
+      }
+    ],
     models: [
       {
         name: "MusicGen",
@@ -712,6 +824,31 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
       {
         title: { zh: "阈值与告警", en: "Threshold and alert" },
         detail: { zh: "输出类别、时间和置信度", en: "Outputs label, time, and confidence" }
+      }
+    ],
+    technical: {
+      input: { zh: "连续环境 PCM，按重叠窗口切片并保留时间位置", en: "Continuous scene PCM segmented into overlapping windows with timing retained" },
+      representation: { zh: "log-mel patch 或预训练音频 embedding", en: "Log-mel patches or pretrained audio embeddings" },
+      output: { zh: "每类独立概率，以及事件起止时间和告警状态", en: "Independent class probabilities plus event onset, offset, and alert state" },
+      objective: { zh: "多标签 sigmoid + BCE；类别极不均衡时可用加权 BCE 或 focal loss", en: "Multi-label sigmoid plus BCE; weighted BCE or focal loss for severe class imbalance" },
+      metrics: { zh: "Precision、Recall、F1、mAP、事件错误率、每小时误报数和检测延迟", en: "Precision, recall, F1, mAP, event error rate, false alarms per hour, and detection latency" },
+      deployment: { zh: "连续监听需设置阈值、迟滞、去抖和设备域校准，同时控制功耗与隐私", en: "Continuous listening needs thresholds, hysteresis, debounce, and device-domain calibration under power and privacy constraints" }
+    },
+    equations: [
+      {
+        expression: "pc = sigmoid(zc)",
+        title: { zh: "多标签概率", en: "Multi-label probability" },
+        explanation: { zh: "每个类别独立输出概率，因此哭声和警报声可以同时成立，不需要强制只选一个类别。", en: "Each class has an independent probability, so a cry and alarm may both be present rather than forcing one class." }
+      },
+      {
+        expression: "LBCE = -Σc[yc log pc + (1-yc)log(1-pc)]",
+        title: { zh: "二元交叉熵", en: "Binary cross-entropy" },
+        explanation: { zh: "yc 是类别真实标签，pc 是预测概率；正负样本不平衡时需要类别权重或重采样。", en: "yc is the target and pc the predicted probability; imbalanced classes need weighting or resampling." }
+      },
+      {
+        expression: "F1 = 2PR / (P + R)",
+        title: { zh: "告警效果平衡", en: "Alert tradeoff" },
+        explanation: { zh: "P 是精确率、R 是召回率。安全告警还必须单独检查每小时误报数，不能只看 F1。", en: "P is precision and R recall. Safety alerts must also track false alarms per hour rather than relying on F1 alone." }
       }
     ],
     models: [
@@ -876,6 +1013,31 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
         detail: { zh: "输出给通话、播放或 ASR", en: "Outputs to calls, playback, or ASR" }
       }
     ],
+    technical: {
+      input: { zh: "混合信号 y，可包含目标语音 s、噪声 n、混响 r 或其他说话人", en: "Mixture y containing target speech s, noise n, reverberation r, or competing speakers" },
+      representation: { zh: "复数 STFT、时频 mask/滤波器，或学习型时域潜变量", en: "Complex STFT with time-frequency masks/filters, or learned time-domain latents" },
+      output: { zh: "目标语音估计或增强 PCM，送往通话、录音或 ASR", en: "Target-speech estimate or enhanced PCM for calls, recording, or ASR" },
+      objective: { zh: "SI-SDR、波形与多分辨率 STFT 损失；不同模型再加入感知或对抗目标", en: "SI-SDR, waveform, and multi-resolution STFT losses, with model-specific perceptual or adversarial terms" },
+      metrics: { zh: "SI-SDR 提升、STOI、PESQ/DNSMOS、下游 WER，以及延迟、RTF 和 MACs", en: "SI-SDR improvement, STOI, PESQ/DNSMOS, downstream WER, latency, RTF, and MACs" },
+      deployment: { zh: "实时模型必须因果或限制前视，维护跨帧状态，并评估陌生噪声与处理伪影", en: "Real-time models must be causal or limit lookahead, retain frame state, and handle unseen noise and artifacts" }
+    },
+    equations: [
+      {
+        expression: "Y(t,f) = S(t,f) + N(t,f)",
+        title: { zh: "时频混合模型", en: "Time-frequency mixture" },
+        explanation: { zh: "简化情况下，观测频谱 Y 是目标语音 S 与噪声 N 的叠加；回声、混响和非线性失真需要更完整模型。", en: "In a simplified case, observed spectrum Y is target speech S plus noise N; echo, reverb, and nonlinear distortion require richer models." }
+      },
+      {
+        expression: "Ŝ(t,f) = Mθ(t,f) · Y(t,f)",
+        title: { zh: "学习型 mask", en: "Learned mask" },
+        explanation: { zh: "模型预测 mask Mθ 来保留更像语音的时频单元；复数 mask 还能同时修正幅度和相位。", en: "The model predicts mask Mθ to retain speech-like time-frequency bins; a complex mask can alter magnitude and phase." }
+      },
+      {
+        expression: "SI-SDR = 10log10(||starget||² / ||e||²)",
+        title: { zh: "尺度不变失真比", en: "Scale-invariant SDR" },
+        explanation: { zh: "它比较目标投影能量与残差能量，适合训练和评价分离/增强，但不能代替主观听感测试。", en: "It compares target-projection energy with residual energy for separation/enhancement, but does not replace listening tests." }
+      }
+    ],
     models: [
       {
         name: "RNNoise",
@@ -1031,6 +1193,31 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
       {
         title: { zh: "神经解码器", en: "Neural decoder" },
         detail: { zh: "重建可播放 PCM", en: "Reconstructs playable PCM" }
+      }
+    ],
+    technical: {
+      input: { zh: "按帧输入 PCM，可包含语音、音乐或一般声音", en: "Framed PCM containing speech, music, or general audio" },
+      representation: { zh: "编码器连续潜变量，经 VQ/RVQ 转成一个或多个离散码本索引", en: "Continuous encoder latents quantized by VQ/RVQ into one or more discrete codebook indices" },
+      output: { zh: "带必要边信息的低码率索引流，以及解码重建 PCM", en: "Low-bitrate index stream with side information and reconstructed PCM" },
+      objective: { zh: "波形/多分辨率 STFT 重建、量化承诺损失，并可加入感知或对抗损失", en: "Waveform/multi-resolution STFT reconstruction, quantizer commitment, and optional perceptual or adversarial losses" },
+      metrics: { zh: "kbps、主观 MOS/MUSHRA、内容适配质量、算法延迟、RTF 和丢包鲁棒性", en: "kbps, subjective MOS/MUSHRA, content quality, algorithmic delay, RTF, and packet-loss robustness" },
+      deployment: { zh: "编码端与解码端必须严格匹配模型、码本和版本；还需定义帧长、前视、封包和 PLC", en: "Encoder and decoder must match model, codebooks, and version; frame size, lookahead, packetization, and PLC must be defined" }
+    },
+    equations: [
+      {
+        expression: "q(z) = arg minₖ ||z - eₖ||²",
+        title: { zh: "矢量量化", en: "Vector quantization" },
+        explanation: { zh: "连续向量 z 被替换为最近码本向量 eₖ，并只传输索引 k；RVQ 会逐级量化前一级残差。", en: "Continuous vector z is replaced by nearest codebook vector eₖ and only index k is sent; RVQ quantizes residuals stage by stage." }
+      },
+      {
+        expression: "R = Ftoken · Q · log2(K) bit/s",
+        title: { zh: "原始 token 码率", en: "Raw token bitrate" },
+        explanation: { zh: "Ftoken 是每秒帧数，Q 是码本级数，K 是每个码本大小；熵编码和边信息会改变实际传输码率。", en: "Ftoken is frames per second, Q codebook stages, and K entries per codebook; entropy coding and side information change actual transport rate." }
+      },
+      {
+        expression: "L = λtLwave + λfLSTFT + λqLVQ + λaLadv",
+        title: { zh: "联合训练目标", en: "Joint training objective" },
+        explanation: { zh: "时域、频域、量化和对抗损失共同约束保真度与自然度；不同 codec 的具体组合并不相同。", en: "Waveform, spectral, quantization, and adversarial terms jointly constrain fidelity and naturalness; exact combinations differ by codec." }
       }
     ],
     models: [
@@ -1201,7 +1388,7 @@ function AiModelCards({
     <section className="ai-model-section" aria-labelledby={headingId}>
       <div className="ai-article-section-heading ai-model-heading">
         <span>{language === "zh" ? "模型参考" : "Model references"}</span>
-        <h2 id={headingId}>{language === "zh" ? "常用模型与前沿落地模型" : "Common and Frontier Deployed Models"}</h2>
+        <h2 id={headingId}>{language === "zh" ? "代表模型与工程定位" : "Representative Models and Engineering Roles"}</h2>
       </div>
       <div className="ai-model-grid">
         {article.models.map((model) => (
@@ -1225,6 +1412,50 @@ function AiModelCards({
                 <dd>{model.caution[language]}</dd>
               </div>
             </dl>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AiTechnicalSection({
+  article,
+  language
+}: {
+  article: AiArticle;
+  language: Language;
+}) {
+  const fields = [
+    [language === "zh" ? "输入" : "Input", article.technical.input[language]],
+    [language === "zh" ? "模型表示" : "Representation", article.technical.representation[language]],
+    [language === "zh" ? "输出" : "Output", article.technical.output[language]],
+    [language === "zh" ? "训练目标" : "Training objective", article.technical.objective[language]],
+    [language === "zh" ? "评价指标" : "Evaluation metrics", article.technical.metrics[language]],
+    [language === "zh" ? "部署约束" : "Deployment constraints", article.technical.deployment[language]]
+  ];
+  const heading = language === "zh" ? "工程技术剖面" : "Engineering Technical Profile";
+
+  return (
+    <section className="ai-technical-section" aria-labelledby="ai-technical-title">
+      <div className="ai-article-section-heading ai-model-heading">
+        <span>{language === "zh" ? "从模型到产品" : "From model to product"}</span>
+        <h2 id="ai-technical-title">{heading}</h2>
+      </div>
+      <dl className="ai-technical-grid">
+        {fields.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="ai-equation-grid" aria-label={language === "zh" ? "核心公式" : "Core equations"}>
+        {article.equations.map((equation) => (
+          <article key={equation.expression}>
+            <h3>{equation.title[language]}</h3>
+            <code>{equation.expression}</code>
+            <p>{equation.explanation[language]}</p>
           </article>
         ))}
       </div>
@@ -1276,6 +1507,7 @@ export function AiAudioLab({ labId = "event", language, onBack }: AiAudioLabProp
       </section>
 
       <AiArticleFlow article={article} language={language} />
+      <AiTechnicalSection article={article} language={language} />
       <AiModelCards article={article} language={language} />
       <AiArticleSections article={article} language={language} />
     </main>

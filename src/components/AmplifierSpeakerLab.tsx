@@ -142,7 +142,7 @@ function renderAmplifierDiagram(language: Language, ampClass: AmpClass) {
           </marker>
         </defs>
         <rect className="lab-diagram-bg" height="410" rx="14" width="760" />
-        <text className="lab-label" x="48" y="42">
+        <text className="lab-label amp-diagram-title" x="48" y="42">
           {language === "zh"
             ? "从左到右：输入小信号 → 功放工作方式 → 功率输出 → 扬声器负载"
             : "Left to right: small input signal -> amplifier method -> power output -> speaker load"}
@@ -222,7 +222,7 @@ function renderSpeakerDiagram(language: Language) {
           </marker>
         </defs>
         <rect className="lab-diagram-bg" height="410" rx="14" width="760" />
-        <text className="lab-label" x="48" y="42">
+        <text className="lab-label amp-diagram-title" x="48" y="42">
           {language === "zh"
             ? "从左到右：电流输入 → 音圈受力 → 振膜运动 → 空气声波"
             : "Left to right: current input -> coil force -> diaphragm motion -> air pressure wave"}
@@ -268,7 +268,7 @@ function renderSpeakerDiagram(language: Language) {
         <path className="amp-motion-line" d="M 434 118 L 466 118" />
         <path className="amp-motion-line reverse" d="M 434 318 L 466 318" />
         <text className="interface-node-sub" x="466" y="354">
-          {language === "zh" ? "振膜前后运动，压缩/稀疏空气" : "Diaphragm moves forward/backward and moves air"}
+          {language === "zh" ? "振膜前后运动，压缩/稀疏空气" : "Diaphragm pushes and pulls air"}
         </text>
 
         <text className="lab-label" x="654" y="118">
@@ -277,7 +277,7 @@ function renderSpeakerDiagram(language: Language) {
         <path className="amp-air-wave" d="M 614 132 C 650 162 650 230 614 260" />
         <path className="amp-air-wave" d="M 650 106 C 706 154 706 238 650 288" />
         <text className="interface-node-sub" x="654" y="354">
-          {language === "zh" ? "空气压力变化被耳朵听到" : "Air pressure variation reaches the ear"}
+          {language === "zh" ? "空气压力变化被耳朵听到" : "Pressure wave reaches the ear"}
         </text>
       </svg>
       <figcaption>
@@ -304,7 +304,7 @@ function renderEnclosureDiagram(language: Language) {
           </marker>
         </defs>
         <rect className="lab-diagram-bg" height="410" rx="14" width="760" />
-        <text className="lab-label" x="48" y="42">
+        <text className="lab-label amp-diagram-title" x="48" y="42">
           {language === "zh"
             ? "从左到右：全频信号 → 分频器 → 低音/高音单元 → 箱体声学"
             : "Left to right: full-range signal -> crossover -> woofer/tweeter -> enclosure acoustics"}
@@ -320,7 +320,7 @@ function renderEnclosureDiagram(language: Language) {
         </text>
         <path className="amp-wave-input" d="M 54 198 C 72 168 90 168 108 198 S 144 228 162 198" />
         <text className="interface-node-sub" x="96" y="256">
-          {language === "zh" ? "功放输出含低频和高频" : "Amplifier output contains lows and highs"}
+          {language === "zh" ? "功放输出含低频和高频" : "Lows and highs from amplifier"}
         </text>
 
         <path className="amp-enclosure-arrow" d="M 176 198 L 220 198" />
@@ -390,7 +390,7 @@ function renderTsDiagram(language: Language) {
           </marker>
         </defs>
         <rect className="lab-diagram-bg" height="430" rx="14" width="760" />
-        <text className="lab-label" x="48" y="42">
+        <text className="lab-label amp-diagram-title" x="48" y="42">
           {language === "zh" ? "T/S 参数不是音色玄学，而是低频箱体设计的输入条件" : "T/S parameters are input data for low-frequency box design"}
         </text>
         <text className="interface-node-sub amp-flow-note" x="48" y="66">
@@ -454,7 +454,7 @@ function renderCrossoverOrderDiagram(language: Language) {
         xmlns="http://www.w3.org/2000/svg"
       >
         <rect className="lab-diagram-bg" height="430" rx="14" width="760" />
-        <text className="lab-label" x="48" y="42">
+        <text className="lab-label amp-diagram-title" x="48" y="42">
           {language === "zh" ? "分频阶数决定斜率，分频点附近还要看相位叠加" : "Crossover order sets slope; phase summing near crossover also matters"}
         </text>
         <line className="spatial-response-axis" x1="84" x2="430" y1="352" y2="352" />
@@ -469,10 +469,10 @@ function renderCrossoverOrderDiagram(language: Language) {
             <text className="interface-node-sub" x="468" y={150 + index * 80}>{row.phase}</text>
           </g>
         ))}
-        <rect className="amp-block muted" height="142" rx="14" width="210" x="500" y="248" />
-        <text className="interface-node-text" x="605" y="284">{language === "zh" ? "相位对齐" : "Phase alignment"}</text>
-        <text className="interface-node-sub" x="605" y="312">{language === "zh" ? "低音 + 高音在分频点相加" : "woofer + tweeter sum at crossover"}</text>
-        <text className="interface-node-sub" x="605" y="338">{language === "zh" ? "不对齐会凹陷、隆起或声像漂移" : "misalignment causes dips, peaks, or image shift"}</text>
+        <rect className="amp-block muted" height="88" rx="14" width="210" x="500" y="326" />
+        <text className="interface-node-text" x="605" y="348">{language === "zh" ? "相位对齐" : "Phase alignment"}</text>
+        <text className="interface-node-sub" x="605" y="372">{language === "zh" ? "低音 + 高音在分频点相加" : "woofer + tweeter sum at crossover"}</text>
+        <text className="interface-node-sub" x="605" y="396">{language === "zh" ? "不对齐会凹陷、隆起或声像漂移" : "misalignment causes dips, peaks, or image shift"}</text>
       </svg>
       <figcaption>
         {language === "zh"
@@ -498,7 +498,7 @@ function renderActivePassiveDiagram(language: Language) {
           </marker>
         </defs>
         <rect className="lab-diagram-bg" height="430" rx="14" width="760" />
-        <text className="lab-label" x="48" y="42">{language === "zh" ? "主动分频：先分频，再分别功放" : "Active crossover: split first, then amplify each band"}</text>
+        <text className="lab-label amp-diagram-title" x="48" y="42">{language === "zh" ? "主动分频：先分频，再分别功放" : "Active crossover: split first, then amplify each band"}</text>
         <rect className="amp-block" height="58" rx="10" width="112" x="54" y="84" />
         <text className="interface-node-text" x="110" y="120">DSP</text>
         <path className="amp-enclosure-arrow" d="M 170 112 H 220" />
@@ -514,7 +514,7 @@ function renderActivePassiveDiagram(language: Language) {
         <text className="interface-node-sub" x="596" y="122">{language === "zh" ? "代价：需要多路 DAC/功放" : "Cost: needs more DAC/amp channels"}</text>
 
         <line className="amp-match-divider" x1="48" x2="712" y1="228" y2="228" />
-        <text className="lab-label" x="48" y="270">{language === "zh" ? "被动分频：先功放，再用 L/C/R 分给单元" : "Passive crossover: amplify first, then split with L/C/R"}</text>
+        <text className="lab-label amp-diagram-title" x="48" y="270">{language === "zh" ? "被动分频：先功放，再用 L/C/R 分给单元" : "Passive crossover: amplify first, then split with L/C/R"}</text>
         <rect className="amp-block" height="58" rx="10" width="112" x="54" y="306" />
         <text className="interface-node-text" x="110" y="342">{language === "zh" ? "功放" : "Amp"}</text>
         <path className="amp-enclosure-arrow" d="M 170 334 H 220" />
@@ -549,7 +549,7 @@ function renderLineArrayDiagram(language: Language) {
         xmlns="http://www.w3.org/2000/svg"
       >
         <rect className="lab-diagram-bg" height="430" rx="14" width="760" />
-        <text className="lab-label" x="48" y="42">
+        <text className="lab-label amp-diagram-title" x="48" y="42">
           {language === "zh" ? "线阵列通过多个单元的叠加控制垂直覆盖" : "A line array controls vertical coverage by combining many drivers"}
         </text>
         <rect className="amp-block muted" height="300" rx="16" width="96" x="86" y="72" />
@@ -569,7 +569,7 @@ function renderLineArrayDiagram(language: Language) {
         <text className="interface-node-text" x="581" y="186">{language === "zh" ? "延迟 / 电平 / 角度" : "Delay / level / splay"}</text>
         <text className="interface-node-sub" x="581" y="214">{language === "zh" ? "让远近听众声压更均匀" : "more even SPL for near/far listeners"}</text>
         <text className="interface-node-sub" x="581" y="238">{language === "zh" ? "阵列越长，低频指向控制越强" : "longer arrays control lower frequencies better"}</text>
-        <text className="interface-node-sub" x="92" y="402">
+        <text className="interface-node-sub amp-diagram-long-note" x="48" y="402">
           {language === "zh" ? "注意：线阵列不是简单堆喇叭，单元间距过大会产生梳状滤波和旁瓣。" : "Note: a line array is not just stacked speakers; excessive spacing causes comb filtering and side lobes."}
         </text>
       </svg>
@@ -618,7 +618,7 @@ function renderMatchingDiagram(language: Language) {
           </marker>
         </defs>
         <rect className="lab-diagram-bg" height="410" rx="14" width="760" />
-        <text className="lab-label" x="48" y="42">
+        <text className="lab-label amp-diagram-title" x="48" y="42">
           {language === "zh"
             ? "不是信号流，而是三个参数共同决定结果"
             : "This is not a signal flow: three parameters jointly decide the result"}

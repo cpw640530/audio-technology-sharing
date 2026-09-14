@@ -37,6 +37,7 @@ export type TopicLab = {
     | "digital-interface"
     | "amplifier-speaker"
     | "system-audio"
+    | "alsa"
     | "audio-codec"
     | "realtime-audio"
     | "core-signal-processing"
@@ -1057,6 +1058,105 @@ export const categories: Category[] = [
         }
       },
       {
+        title: { zh: "ALSA 框架", en: "ALSA Framework" },
+        summary: {
+          zh: "从 alsa-lib 到内核 PCM、DMA 和 Codec，理解 Linux 音频设备、参数和 XRUN。",
+          en: "Trace Linux audio from alsa-lib through kernel PCM, DMA, and codecs, including device parameters and XRUNs."
+        },
+        bullets: [
+          { zh: "card / device / subdevice / PCM stream 设备模型", en: "The card / device / subdevice / PCM stream device model" },
+          { zh: "hw、plughw、default 与 hw_params / sw_params", en: "hw, plughw, default, and hw_params / sw_params" },
+          { zh: "read/write、mmap、buffer / period 与 XRUN 排查", en: "read/write, mmap, buffer / period, and XRUN troubleshooting" }
+        ],
+        detail: {
+          explanation: {
+            zh: "ALSA（Advanced Linux Sound Architecture）是 Linux 内核的声音架构，同时通过 alsa-lib 向用户态提供 PCM、Control 等 API。一次 PCM 播放通常从应用和 alsa-lib 出发，经过 PCM 插件与内核 ALSA PCM，把样本放进由 DMA 消费的环形 buffer，最后沿 I2S 等接口到达 Codec DAC；录音方向相反。ALSA 负责设备与流的接口、参数协商和时序状态，但不会替你解决所有调度抖动或设备时钟问题。",
+            en: "ALSA (Advanced Linux Sound Architecture) is Linux's kernel sound architecture, with alsa-lib exposing user-space APIs such as PCM and Control. A PCM playback stream usually starts in the app and alsa-lib, passes through PCM plugins and the kernel ALSA PCM layer, places samples in a DMA-consumed ring buffer, and reaches a Codec DAC over interfaces such as I2S; capture reverses the path. ALSA provides device, parameter, and stream-state interfaces, but it cannot remove every scheduling or clocking problem."
+          },
+          keyConcepts: [
+            { zh: "card 是声卡容器，PCM device 是音频流端点，subdevice 是端点下可并行使用的逻辑实例；PCM stream 再区分 playback 和 capture。Control 是声卡级的独立控制接口。", en: "A card is a sound-card container, a PCM device is an audio-stream endpoint, and a subdevice is a logical instance that may be used in parallel; a PCM stream is playback or capture. Control is a separate card-level interface." },
+            { zh: "hw 追求设备原生能力，plughw 可做格式、采样率或通道转换，default 交给系统默认路由；名称背后的实际插件和策略依发行版配置而变。", en: "hw requests native device behavior, plughw can convert format, rate, or channels, and default follows the system route; the actual plugins and policy depend on distro configuration." },
+            { zh: "hw_params 协商硬件流参数，sw_params 设置可用帧、启动和停止阈值等软件策略；两者不是同一层。", en: "hw_params negotiates hardware stream parameters, while sw_params sets software policy such as available-frame, start, and stop thresholds; they are different layers." },
+            { zh: "播放 underrun 是硬件追上了应用尚未填满的区域；录音 overrun 是硬件覆盖了应用尚未读取的数据。", en: "A playback underrun means hardware caught up with an area the app had not filled; a capture overrun means hardware overwrote data the app had not read." }
+          ],
+          termExplanations: [
+            {
+              name: { zh: "card / device / subdevice", en: "card / device / subdevice" },
+              explanation: {
+                zh: "card 表示一张物理或虚拟声卡，例如 card 0；PCM device 是卡上的音频流端点，例如 device 0；subdevice 是 PCM 端点提供的逻辑子流。PCM stream 还必须声明 playback 或 capture 方向。Control 则是声卡级控制接口，不应与 PCM device 编号混为一谈。",
+                en: "A card is a physical or virtual sound card such as card 0. A PCM device is an audio-stream endpoint on that card, such as device 0, and a subdevice is a logical PCM substream. The PCM stream must also declare playback or capture direction. Control is a separate card-level interface and should not be confused with PCM device numbering."
+              }
+            },
+            {
+              name: { zh: "hw / plughw / default", en: "hw / plughw / default" },
+              explanation: {
+                zh: "hw:0,0 直接请求 card 0 的 PCM device 0，通常不替你转换格式；plughw:0,0 允许 alsa-lib 的 plug 层在设备支持范围内做格式、采样率和通道适配；default 是系统配置的默认 PCM，可能经过 dmix、重采样或其它路由。它们不是三个固定硬件。",
+                en: "hw:0,0 requests card 0, PCM device 0 with little automatic conversion. plughw:0,0 allows alsa-lib's plug layer to adapt format, rate, and channels within device limits. default is the configured default PCM and may use dmix, resampling, or other routing. They are not three fixed pieces of hardware."
+              }
+            },
+            {
+              name: { zh: "hw_params / sw_params", en: "hw_params / sw_params" },
+              explanation: {
+                zh: "hw_params 描述 access、format、rate、channels、period size 和 buffer size 等硬件约束，通常在 prepare 前完成协商。sw_params 描述 avail_min、start_threshold、stop_threshold 等软件可见阈值，影响何时唤醒和何时启动或停止流。",
+                en: "hw_params describes hardware constraints such as access, format, rate, channels, period size, and buffer size, normally negotiated before prepare. sw_params describes software-visible thresholds such as avail_min, start_threshold, and stop_threshold, affecting wakeups and stream start or stop behavior."
+              }
+            },
+            {
+              name: { zh: "PCM vs Control / Mixer", en: "PCM vs Control / Mixer" },
+              explanation: {
+                zh: "PCM API 搬运有时间顺序的音频帧，例如 snd_pcm_writei 或 snd_pcm_readi。Control/Mixer API 不搬运音频帧，而是读写音量、静音、输入选择、路由和开关等控件；alsamixer 主要展示后者。",
+                en: "The PCM API moves time-ordered audio frames through calls such as snd_pcm_writei or snd_pcm_readi. Control/Mixer APIs do not move audio frames; they read and write controls such as volume, mute, input selection, routing, and switches. alsamixer mainly exposes the latter."
+              }
+            },
+            {
+              name: { zh: "read/write vs mmap", en: "read/write vs mmap" },
+              explanation: {
+                zh: "read/write 模式通过 snd_pcm_readi、snd_pcm_writei 等接口交付帧，库或内核会完成必要的数据拷贝。mmap 模式通过 snd_pcm_mmap_begin / commit 直接访问映射的环形区域，可减少显式拷贝，但需要驱动和访问模式支持，并不自动降低端到端延迟。",
+                en: "read/write mode delivers frames through calls such as snd_pcm_readi and snd_pcm_writei, with required copying handled by the library or kernel. mmap uses snd_pcm_mmap_begin / commit to access a mapped ring directly, which can reduce explicit copies but needs driver and access-mode support and does not automatically lower end-to-end latency."
+              }
+            },
+            {
+              name: { zh: "buffer / period", en: "buffer / period" },
+              explanation: {
+                zh: "buffer 是环形队列的总帧数，period 是一次硬件推进、DMA 通知或应用唤醒的帧数；period count 近似表示 bufferFrames / periodFrames。period 越小，唤醒频率越高、理论等待更短，但调度和处理余量也更紧。",
+                en: "The buffer is the total frame capacity of the ring, while a period is the frame block for one hardware advance, DMA notification, or application wakeup. Period count is approximately bufferFrames / periodFrames. Smaller periods can shorten waiting time but increase wakeups and reduce scheduling headroom."
+              }
+            },
+            {
+              name: { zh: "XRUN", en: "XRUN" },
+              explanation: {
+                zh: "XRUN 是流无法按时供给或消费数据的统称。播放 underrun 发生在硬件/DMA 消费速度超过应用填充速度；录音 overrun 发生在硬件写入速度超过应用读取速度。snd_pcm_state 可以确认状态，snd_pcm_prepare 可以让流回到可运行状态，但只恢复流，不修复调度、处理或参数根因。",
+                en: "XRUN is the shared term for a stream failing to supply or consume data on time. Playback underrun occurs when hardware/DMA consumes faster than the app fills; capture overrun occurs when hardware writes faster than the app reads. snd_pcm_state confirms the state and snd_pcm_prepare returns the stream to a runnable state, but it only recovers the stream and does not fix scheduling, processing, or parameter root causes."
+              }
+            },
+            {
+              name: { zh: "ASoC / DAI / I2S / Codec", en: "ASoC / DAI / I2S / Codec" },
+              explanation: {
+                zh: "在嵌入式 Linux 中，ASoC 常把 SoC 音频控制器、DAI、I2S 等 CPU 端和 Codec DAI、Codec、功放组合成声卡链路。DAI 是数字音频接口抽象，I2S 是常见物理协议，Codec 负责 ADC/DAC 和模拟路径；这只是嵌入式常见链路，不是所有 PC 声卡的固定结构。",
+                en: "On embedded Linux, ASoC often combines a SoC audio controller, CPU-side DAI and I2S with a codec DAI, codec, and amplifier. DAI is the digital-audio-interface abstraction, I2S is a common protocol, and the codec handles ADC/DAC and analog paths. This is common in embedded Linux, not a fixed structure for every PC sound card."
+              }
+            }
+          ],
+          lab: {
+            type: "alsa",
+            title: { zh: "ALSA 框架实验室", en: "ALSA Framework Lab" },
+            description: {
+              zh: "在浏览器教学模拟中切换 PCM 播放、PCM 录音、缓冲与延迟和 XRUN 排查，实时观察参数、链路、环形 buffer 与命令变化。",
+              en: "In a browser-only teaching simulation, switch among PCM playback, PCM capture, buffer and latency, and XRUN troubleshooting while observing live parameters, paths, ring-buffer state, and commands."
+            },
+            buttonLabel: { zh: "打开 ALSA 框架实验室", en: "Open ALSA framework lab" }
+          },
+          misconception: {
+            zh: "ALSA 不是只负责播放文件的命令行工具，也不是所有 Linux 音频都必须直接使用 hw 设备；它提供的是内核音频架构和用户态接口，默认路由、插件和上层音频服务仍可能参与。",
+            en: "ALSA is not merely a command-line file player, and every Linux audio path does not have to open a hw device directly. It provides the kernel audio architecture and user-space interfaces; default routing, plugins, and higher-level audio services may still participate."
+          },
+          contentDirection: {
+            zh: "后续可继续补充 snd_pcm_* 状态机、asound.conf 路由、aplay -l / arecord -l 输出解读，以及 ASoC machine driver 与 DAPM 图。",
+            en: "Further work could add the snd_pcm_* state machine, asound.conf routing, aplay -l / arecord -l output reading, and ASoC machine-driver and DAPM graphs."
+          }
+        }
+      },
+      {
         title: { zh: "实时音频处理", en: "Real-Time Audio Processing" },
         summary: {
           zh: "关注 buffer、延迟、回调线程、卡顿、爆音和丢帧。",
@@ -1491,25 +1591,25 @@ export const categories: Category[] = [
     accent: "#b44c6d",
     title: { zh: "AI 音频", en: "AI Audio" },
     description: {
-      zh: "把语音识别、合成、生成、事件识别、AI 增强和 AI 编码放进统一视角。",
-      en: "Unify speech recognition, synthesis, generation, event detection, AI enhancement, and AI coding."
+      zh: "从信号表示、训练目标、评价指标与部署约束理解识别、合成、生成、增强和神经编码。",
+      en: "Understand recognition, synthesis, generation, enhancement, and neural coding through representations, objectives, metrics, and deployment constraints."
     },
     topics: [
       {
         title: { zh: "AI 音频总流程", en: "AI Audio Overall Flow" },
         summary: {
-          zh: "先理解一段声音如何从麦克风采集成 PCM，再变成特征并送入 AI 模型。",
-          en: "First understand how sound is captured as PCM, converted into features, and sent into AI models."
+          zh: "先建立从 PCM、任务表示、模型目标到评价与部署的统一工程框架。",
+          en: "Build one engineering framework from PCM and task representations to objectives, evaluation, and deployment."
         },
         bullets: [
-          { zh: "采集得到 PCM", en: "Capture PCM" },
-          { zh: "FFT / STFT / Mel / MFCC", en: "FFT / STFT / Mel / MFCC" },
-          { zh: "不同 AI 音频任务的输出", en: "Outputs of different AI audio tasks" }
+          { zh: "波形、频谱、embedding 与 token", en: "Waveforms, spectra, embeddings, and tokens" },
+          { zh: "训练目标与核心公式", en: "Training objectives and core equations" },
+          { zh: "任务指标与实时部署预算", en: "Task metrics and real-time deployment budgets" }
         ],
         detail: {
           explanation: {
-            zh: "AI 音频可以先按一条通用链路理解：真实声音经过麦克风、Codec/ADC 采集后得到 PCM 数字音频；PCM 不是含义，只是数字波形。模型通常不会直接理解每个采样点，而是先分帧加窗，再通过 FFT、STFT、Mel 滤波、MFCC 或 learned embedding，把连续波形变成频谱、时间频率能量图或模型内部表示。很多声音分类任务会把频谱图当作二维特征图，再用 CNN、Transformer 等模型识别哭声、玻璃破碎、狗叫声等模式；但不同任务不会都走完全相同的模型路径，ASR、AI 降噪、AI 编码和生成式音频的输出目标不同。",
-            en: "AI audio can first be understood as a general chain: real sound is captured by a microphone and Codec/ADC into PCM digital audio; PCM is not meaning, only a numeric waveform. A model usually does not understand each sample directly. It first frames and windows the signal, then uses FFT, STFT, Mel filters, MFCCs, or learned embeddings to turn the waveform into spectra, time-frequency energy maps, or internal representations. Many sound-classification tasks treat spectrograms as two-dimensional feature maps and use CNNs, Transformers, or related models to recognize patterns such as baby cries, glass breaks, or dog barks. But not every task follows exactly the same path; ASR, AI denoising, AI coding, and generative audio have different output goals."
+            zh: "真实声音经过麦克风、Codec/ADC 采集后得到 PCM 数字音频；PCM 只是数字波形，不直接包含语义。不同任务会按需使用原始波形、FFT/STFT、Mel/MFCC、学习型 embedding 或神经 codec token，再由专用模型完成识别、生成、增强或编码。声音分类常把频谱图作为二维特征，但这不是所有 AI 音频的统一前端；专业系统还必须明确训练目标、任务指标，以及流式/离线、端侧/云端的延迟和算力预算。",
+            en: "Microphones and Codec/ADC hardware capture real sound as PCM, which is waveform data rather than semantics. Each task may use raw waveform, FFT/STFT, Mel/MFCC, learned embeddings, or neural-codec tokens before a specialized model performs recognition, generation, enhancement, or coding. Sound classification often uses spectrograms as 2D features, but that is not a universal AI-audio front end. A production system must also define its training objective, task metrics, and latency/compute budget for streaming or offline, edge or cloud deployment."
           },
           termExplanations: [
             {
@@ -1543,7 +1643,7 @@ export const categories: Category[] = [
           ],
           keyConcepts: [
             { zh: "先采集得到 PCM 数字音频；PCM 是波形数字，不是语义。", en: "Capture first produces PCM digital audio; PCM is waveform data, not semantic meaning." },
-            { zh: "FFT/STFT/Mel/MFCC 是把波形变成模型更容易分析的时间频率特征。", en: "FFT/STFT/Mel/MFCC turn waveforms into time-frequency features that models can analyze more easily." },
+            { zh: "表示方式取决于任务：可使用波形、频谱/Mel/MFCC、学习型 embedding 或 codec token。", en: "Representations depend on the task: waveform, spectrum/Mel/MFCC, learned embeddings, or codec tokens may be used." },
             { zh: "把频谱图当图像识别是声音事件识别的一种常见解释方式，但不是所有 AI 音频任务都等同于图像识别。", en: "Treating spectrograms like images is a common way to explain sound event detection, but not every AI audio task is simply image recognition." },
             { zh: "AI 音频的关键问题是：输入是什么、特征如何表示、模型输出什么、后处理如何变成用户可理解结果。", en: "The key AI audio questions are: what is the input, how are features represented, what does the model output, and how does post-processing turn it into a user-understandable result." }
           ],

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AiAudioLab } from "./components/AiAudioLab";
+import { AlsaLab } from "./components/AlsaLab";
 import { AmplifierSpeakerLab } from "./components/AmplifierSpeakerLab";
 import { AudioCodecLab } from "./components/AudioCodecLab";
 import { AudioUnitsLab } from "./components/AudioUnitsLab";
@@ -23,7 +24,7 @@ import { SoundWaveLab } from "./components/SoundWaveLab";
 import { SpatialAudioLab } from "./components/SpatialAudioLab";
 import { SystemAudioLab } from "./components/SystemAudioLab";
 import { TopicDetails } from "./components/TopicDetails";
-import { TopicGrid } from "./components/TopicGrid";
+import { getTopicElementId, TopicGrid } from "./components/TopicGrid";
 import {
   categories,
   interfaceCopy,
@@ -119,6 +120,7 @@ export default function App() {
     | "digitalInterfaceLab"
     | "amplifierSpeakerLab"
     | "systemAudioLab"
+    | "alsaLab"
     | "audioCodecLab"
     | "realtimeAudioLab"
     | "coreSignalProcessingLab"
@@ -128,6 +130,7 @@ export default function App() {
   >("knowledge");
   const [aiAudioLabId, setAiAudioLabId] = useState<AiAudioLabId>("event");
   const [query, setQuery] = useState("");
+  const [outlineTargetId, setOutlineTargetId] = useState<string | null>(null);
 
   const [selectedTopic, setSelectedTopic] = useState<DisplayTopic | null>(null);
 
@@ -191,6 +194,24 @@ export default function App() {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     }
   }, [activeView]);
+
+  useEffect(() => {
+    if (!outlineTargetId) {
+      return;
+    }
+
+    const target = document.getElementById(outlineTargetId);
+
+    if (!target) {
+      return;
+    }
+
+    if (!window.navigator.userAgent.toLowerCase().includes("jsdom")) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    target.focus({ preventScroll: true });
+    setOutlineTargetId(null);
+  }, [outlineTargetId]);
 
   if (activeView === "soundLab") {
     return (
@@ -372,6 +393,21 @@ export default function App() {
     );
   }
 
+  if (activeView === "alsaLab") {
+    return (
+      <div className="app-shell">
+        <Header
+          language={language}
+          onToggleLanguage={toggleLanguage}
+        />
+        <AlsaLab language={language} onBack={() => setActiveView("knowledge")} />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+        </footer>
+      </div>
+    );
+  }
+
   if (activeView === "audioCodecLab") {
     return (
       <div className="app-shell">
@@ -474,8 +510,16 @@ export default function App() {
       />
       <main>
         <Hero language={language} totalTopics={allTopics.length} />
-        <div className="content-layout">
-          <KnowledgeOutline categories={categories} language={language} />
+        <div className="content-layout" id="knowledge-content">
+          <KnowledgeOutline
+            categories={categories}
+            language={language}
+            onSelectTopic={(category, topic) => {
+              setActiveCategory(category.id);
+              setQuery("");
+              setOutlineTargetId(getTopicElementId(category.id, topic.title.en));
+            }}
+          />
           <SearchBar language={language} value={query} onChange={setQuery} />
           <CategoryTabs
             activeCategory={activeCategory}
@@ -496,6 +540,10 @@ export default function App() {
               onOpenAmplifierSpeakerLab={() => {
                 setSelectedTopic(null);
                 setActiveView("amplifierSpeakerLab");
+              }}
+              onOpenAlsaLab={() => {
+                setSelectedTopic(null);
+                setActiveView("alsaLab");
               }}
               onOpenAudioCodecLab={() => {
                 setSelectedTopic(null);

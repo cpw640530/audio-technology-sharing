@@ -1,3 +1,4 @@
+import { ArrowUpRight } from "lucide-react";
 import type { Category, Language, Topic } from "../content/knowledge";
 import { interfaceCopy } from "../content/knowledge";
 
@@ -11,6 +12,10 @@ type TopicGridProps = {
   selectedTopicKey?: string;
   onSelectTopic: (topic: DisplayTopic) => void;
 };
+
+export function getTopicElementId(categoryId: string, title: string) {
+  return `topic-${categoryId}-${encodeURIComponent(title)}`;
+}
 
 export function TopicGrid({ language, topics, selectedTopicKey, onSelectTopic }: TopicGridProps) {
   return (
@@ -30,12 +35,16 @@ export function TopicGrid({ language, topics, selectedTopicKey, onSelectTopic }:
             <button
               aria-pressed={selectedTopicKey === `${topic.category.id}-${topic.title.en}`}
               className="topic-card"
+              id={getTopicElementId(topic.category.id, topic.title.en)}
               key={`${topic.category.id}-${topic.title.en}`}
               onClick={() => onSelectTopic(topic)}
               style={{ "--accent": topic.category.accent } as React.CSSProperties}
               type="button"
             >
-              <div className="topic-meta">{topic.category.title[language]}</div>
+              <div className="topic-card-topline">
+                <div className="topic-meta">{topic.category.title[language]}</div>
+                <ArrowUpRight size={18} aria-hidden="true" />
+              </div>
               <h3>{topic.title[language]}</h3>
               <p>{topic.summary[language]}</p>
               <ul>

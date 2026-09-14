@@ -1,11 +1,12 @@
-import type { Category, Language } from "../content/knowledge";
+import type { Category, Language, Topic } from "../content/knowledge";
 
 type KnowledgeOutlineProps = {
   categories: Category[];
   language: Language;
+  onSelectTopic: (category: Category, topic: Topic) => void;
 };
 
-export function KnowledgeOutline({ categories, language }: KnowledgeOutlineProps) {
+export function KnowledgeOutline({ categories, language, onSelectTopic }: KnowledgeOutlineProps) {
   return (
     <aside
       aria-label={language === "zh" ? "知识分类大纲" : "Knowledge Outline"}
@@ -31,7 +32,14 @@ export function KnowledgeOutline({ categories, language }: KnowledgeOutlineProps
               </h3>
               <ul>
                 {category.topics.map((topic) => (
-                  <li key={topic.title.en}>{topic.title[language]}</li>
+                  <li key={topic.title.en}>
+                    <a
+                      href={`#topic-${category.id}-${encodeURIComponent(topic.title.en)}`}
+                      onClick={() => onSelectTopic(category, topic)}
+                    >
+                      {topic.title[language]}
+                    </a>
+                  </li>
                 ))}
               </ul>
             </section>
