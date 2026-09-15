@@ -21,6 +21,31 @@ describe("Audio knowledge app", () => {
     expect(screen.queryByRole("heading", { name: "音频技术分享" })).not.toBeInTheDocument();
   });
 
+  it("opens robot anatomy and updates scene geometry without implying single-mic localization", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(within(screen.getByRole("region", { name: "知识分类" })).getByRole("button", { name: /应用场景/ }));
+    await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /机器人音频/ }));
+    await user.click(screen.getByRole("button", { name: "打开机器人音频实验室" }));
+    const lab = screen.getByRole("main", { name: "机器人音频实验室" });
+    expect(within(lab).getByRole("img", { name: "机器人音频部件结构图" })).toBeInTheDocument();
+    await user.click(within(lab).getByRole("button", { name: "关节与电机" }));
+    expect(within(lab).getByText(/隔振、麦克风布局/)).toBeInTheDocument();
+    await user.click(within(lab).getByRole("button", { name: "工作场景" }));
+    expect(within(lab).getByTestId("robot-bearing")).toHaveTextContent("-45°");
+    fireEvent.change(within(lab).getByRole("slider", { name: "机器人朝向" }), { target: { value: "90" } });
+    expect(within(lab).getByTestId("robot-bearing")).toHaveTextContent("-135°");
+    await user.selectOptions(within(lab).getByRole("combobox", { name: "麦克风数量" }), "1");
+    expect(within(lab).getByTestId("robot-bearing")).toHaveTextContent("单麦：不提供阵列定位");
+    await user.click(within(lab).getByRole("checkbox", { name: "播报状态（示意）" }));
+    await user.click(within(lab).getByRole("button", { name: /2 AEC/ }));
+    expect(within(lab).getByText(/播报已开启/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "English" }));
+    expect(screen.getByRole("main", { name: "Robot Audio Lab" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Back to knowledge base" }));
+    expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
+  });
+
   it("switches between Chinese and English interface copy", async () => {
     const user = userEvent.setup();
     const { container } = render(<App />);
@@ -156,6 +181,9 @@ describe("Audio knowledge app", () => {
 
     await user.click(within(details).getByRole("button", { name: "打开语音识别 ASR 实验室" }));
     const lab = screen.getByRole("main", { name: "语音识别 ASR 实验室" });
+    expect(within(lab).getByRole("region", { name: "ASR 逐步可视化" })).toBeInTheDocument();
+    await user.click(within(lab).getByRole("button", { name: "5. 注意力 Encoder–Decoder" }));
+    expect(within(lab).getByRole("region", { name: "注意力 ASR 图解" })).toBeInTheDocument();
     expect(within(lab).getByRole("list", { name: "语音识别 ASR 图解流程" })).toBeInTheDocument();
     expect(within(lab).getByText("PCM 输入")).toBeInTheDocument();
     expect(within(lab).getByText("分帧加窗")).toBeInTheDocument();
@@ -178,6 +206,7 @@ describe("Audio knowledge app", () => {
   });
 
   it("introduces the overall AI audio technical flow before specific AI tasks", async () => {
+    const scroll = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
     const user = userEvent.setup();
     render(<App />);
 
@@ -196,10 +225,14 @@ describe("Audio knowledge app", () => {
     await user.click(within(details).getByRole("button", { name: "打开 AI 音频总流程实验室" }));
     const lab = screen.getByRole("main", { name: "AI 音频总流程实验室" });
     expect(within(lab).getByRole("heading", { name: "AI 音频总流程实验室" })).toBeInTheDocument();
-    expect(within(lab).getByRole("list", { name: "AI 音频总流程图解流程" })).toBeInTheDocument();
-    expect(within(lab).getByText("麦克风 / Codec / ADC")).toBeInTheDocument();
-    expect(within(lab).getByText("PCM 数字音频")).toBeInTheDocument();
-    expect(within(lab).getByText("任务模型")).toBeInTheDocument();
+    expect(within(lab).getByRole("list", { name: "任务总览流程" })).toHaveTextContent("文字、事件标签");
+    await user.click(within(lab).getByRole("button", { name: "生成声音" }));
+    expect(within(lab).getByRole("list", { name: "任务总览流程" })).toHaveTextContent("文字、音色或音乐条件");
+    await user.click(within(lab).getByRole("button", { name: "压缩声音" }));
+    expect(within(lab).getByRole("list", { name: "任务总览流程" })).toHaveTextContent("量化为离散索引并封装");
+    await user.click(within(lab).getByRole("button", { name: "改善声音" }));
+    expect(within(lab).getByRole("list", { name: "任务总览流程" })).toHaveTextContent("重建增强 PCM");
+    await user.click(within(lab).getByText("延伸阅读：工程指标与代表模型"));
     expect(within(lab).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
     expect(within(lab).getByText("ŷ = fθ(R(x), c)")).toBeInTheDocument();
     expect(within(lab).getByText(/实时性不是只看模型推理时间/)).toBeInTheDocument();
@@ -208,7 +241,11 @@ describe("Audio knowledge app", () => {
     expect(within(modelSection).getByText("CLAP")).toBeInTheDocument();
     expect(within(modelSection).getByText("EnCodec")).toBeInTheDocument();
     expect(within(modelSection).getByText("SoundStream")).toBeInTheDocument();
-    expect(within(lab).getByText(/AI 音频不是单一算法/)).toBeInTheDocument();
+    await user.click(within(lab).getByRole("button", { name: "识别内容" }));
+    await user.click(within(lab).getByRole("button", { name: "进入 ASR" }));
+    expect(screen.getByRole("main", { name: "语音识别 ASR 实验室" })).toBeInTheDocument();
+    expect(scroll).toHaveBeenCalledWith({ top: 0, behavior: "instant" });
+    scroll.mockRestore();
   });
 
   it("explains neural audio coding models separately from traditional codecs", async () => {

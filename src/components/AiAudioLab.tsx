@@ -1,10 +1,14 @@
 import { ArrowLeft } from "lucide-react";
+import { AiDenoiseWalkthrough } from "./AiDenoiseWalkthrough";
+import { AsrWalkthrough } from "./AsrWalkthrough";
+import { AiAudioOverview } from "./AiAudioOverview";
 import type { AiAudioLabId, Language } from "../content/knowledge";
 
 type AiAudioLabProps = {
   labId?: AiAudioLabId;
   language: Language;
   onBack: () => void;
+  onOpen?: (id: AiAudioLabId) => void;
 };
 
 type LocalizedText = Record<Language, string>;
@@ -1489,7 +1493,7 @@ function AiArticleSections({
   );
 }
 
-export function AiAudioLab({ labId = "event", language, onBack }: AiAudioLabProps) {
+export function AiAudioLab({ labId = "event", language, onBack, onOpen }: AiAudioLabProps) {
   const article = aiArticles[labId] ?? aiArticles.event;
 
   return (
@@ -1506,10 +1510,12 @@ export function AiAudioLab({ labId = "event", language, onBack }: AiAudioLabProp
         </div>
       </section>
 
-      <AiArticleFlow article={article} language={language} />
-      <AiTechnicalSection article={article} language={language} />
+      {labId === "overview" ? <AiAudioOverview language={language} onOpen={onOpen} /> : <AiArticleFlow article={article} language={language} />}
+      {labId === "enhancement" && <AiDenoiseWalkthrough language={language} />}
+      {labId === "asr" && <AsrWalkthrough language={language} />}
+      {labId === "overview" ? <details><summary>{language === "zh" ? "延伸阅读：工程指标与代表模型" : "Further reading: engineering metrics and models"}</summary><AiTechnicalSection article={article} language={language} /><AiModelCards article={article} language={language} /></details> : <><AiTechnicalSection article={article} language={language} />
       <AiModelCards article={article} language={language} />
-      <AiArticleSections article={article} language={language} />
+      <AiArticleSections article={article} language={language} /></>}
     </main>
   );
 }

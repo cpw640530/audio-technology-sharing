@@ -5,6 +5,7 @@ import { AmplifierSpeakerLab } from "./components/AmplifierSpeakerLab";
 import { AudioCodecLab } from "./components/AudioCodecLab";
 import { AudioUnitsLab } from "./components/AudioUnitsLab";
 import { AutomotiveAudioLab } from "./components/AutomotiveAudioLab";
+import { RobotAudioLab } from "./components/RobotAudioLab";
 import { CategoryTabs } from "./components/CategoryTabs";
 import { CodecHardwareLab } from "./components/CodecHardwareLab";
 import { CoreSignalProcessingLab } from "./components/CoreSignalProcessingLab";
@@ -114,6 +115,7 @@ export default function App() {
     | "listeningLab"
     | "meetingCommunicationLab"
     | "automotiveAudioLab"
+    | "robotAudioLab"
     | "iotContentLab"
     | "microphoneLab"
     | "codecLab"
@@ -318,6 +320,14 @@ export default function App() {
     );
   }
 
+  if (activeView === "robotAudioLab") {
+    return <div className="app-shell">
+      <Header language={language} onToggleLanguage={toggleLanguage} />
+      <RobotAudioLab language={language} onBack={() => setActiveView("knowledge")} />
+      <footer className="site-footer"><span>{interfaceCopy.footer[language]}</span></footer>
+    </div>;
+  }
+
   if (activeView === "iotContentLab") {
     return (
       <div className="app-shell">
@@ -492,6 +502,7 @@ export default function App() {
         />
         <AiAudioLab
           labId={aiAudioLabId}
+          onOpen={(id) => { setAiAudioLabId(id); window.scrollTo({ top: 0, behavior: "instant" }); }}
           language={language}
           onBack={() => setActiveView("knowledge")}
         />
@@ -556,6 +567,10 @@ export default function App() {
               onOpenAutomotiveAudioLab={() => {
                 setSelectedTopic(null);
                 setActiveView("automotiveAudioLab");
+              }}
+              onOpenRobotAudioLab={() => {
+                setSelectedTopic(null);
+                setActiveView("robotAudioLab");
               }}
               onOpenIotContentLab={() => {
                 setSelectedTopic(null);

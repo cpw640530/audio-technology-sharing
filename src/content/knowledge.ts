@@ -45,6 +45,7 @@ export type TopicLab = {
     | "spatial-audio"
     | "meeting-communication"
     | "automotive-audio"
+    | "robot-audio"
     | "iot-content"
     | "ai-audio";
   initialMode?: AiAudioLabId;
@@ -2146,6 +2147,26 @@ export const categories: Category[] = [
             zh: "重点用端到端链路图和问题诊断说明“回声大、听不清、字幕慢”分别该看哪些模块，而不是把所有算法孤立介绍。",
             en: "Focus on an end-to-end chain diagram and troubleshooting flow for echo, poor intelligibility, and delayed captions, rather than explaining every algorithm in isolation."
           }
+        }
+      },
+      {
+        title: { zh: "机器人音频", en: "Robot Audio" },
+        summary: { zh: "从身体部件到工作场景，理解机器人如何听、定位、交流与执行任务。", en: "Connect robot anatomy with real scenes: hearing, localization, conversation, and action." },
+        bullets: [
+          { zh: "阵列定位与定向拾音", en: "Array localization and beamforming" },
+          { zh: "运动自噪声与播放回声", en: "Motion self-noise and playback echo" },
+          { zh: "语音交互与多模态协同", en: "Voice interaction and multimodal coordination" }
+        ],
+        detail: {
+          explanation: { zh: "机器人音频连接听觉感知与任务执行。麦克风采集人声和环境声，多麦系统可利用通道间到达时间差估计方向，再定向增强目标语音；电机和风扇产生自噪声，扬声器播报则通过声学路径重新进入麦克风。增强后的语音送入唤醒、ASR 和意图理解，结合视觉与姿态信息确认对象，由任务规划和控制系统决定动作；TTS 提供语音反馈。服务机器人侧重对话，巡检机器人还可通过声音事件检测发现异常，但不能仅凭一次声音分类就判定设备故障。", en: "Robot audio connects auditory perception to action. Microphones capture speech and environmental sound; arrays can estimate direction from interchannel arrival-time differences and enhance target speech. Motors and fans create self-noise, while playback returns to microphones through acoustic paths. Enhanced speech feeds wake-word detection, ASR, and intent understanding; vision and pose help establish context, and planning and control decide actions. TTS provides spoken feedback. Service robots emphasize conversation; inspection robots can detect unusual sounds, but a single sound classification cannot establish a machine fault." },
+          lab: { type: "robot-audio", title: { zh: "机器人音频实验室", en: "Robot Audio Lab" }, description: { zh: "切换结构与工作场景，对照部件、空间关系和处理链路。", en: "Explore anatomy and working scenes alongside the processing chain." }, buttonLabel: { zh: "打开机器人音频实验室", en: "Open robot audio lab" } },
+          keyConcepts: [
+            { zh: "单麦不能使用阵列时间差定位；方向也不等于准确距离或三维位置。", en: "A single microphone cannot perform array TDOA localization; direction is not exact distance or 3D position." },
+            { zh: "AEC 需要同步的播放参考，降噪处理电机等干扰；两者不能互相替代。", en: "AEC needs a synchronized playback reference; noise suppression handles interference such as motors. Neither replaces the other." },
+            { zh: "坐标随机器人姿态变化，声源跟踪需要时间同步和坐标转换。", en: "Robot pose changes relative coordinates; source tracking requires synchronization and coordinate transforms." }
+          ],
+          misconception: { zh: "听懂指令不等于可以安全执行；动作还要经过权限、环境和控制系统检查。", en: "Understanding a command does not make it safe to execute; permissions, environment, and control constraints still apply." },
+          contentDirection: { zh: "结合静止交互、边走边听和播报打断，观察自噪声、定位与回声路径。", en: "Compare stationary interaction, listening in motion, and playback interruption through noise, direction, and echo paths." }
         }
       },
       {
