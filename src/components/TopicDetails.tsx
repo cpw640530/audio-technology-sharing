@@ -92,15 +92,14 @@ function SoundWaveDiagram({
           y1="60"
           y2="110"
         />
-        <text className="diagram-label" x="106" y="82">{language === "zh" ? "A 振幅" : "A amplitude"}</text>
+        <text className="diagram-label" x="70" y="48">{language === "zh" ? "A 振幅" : "A amplitude"}</text>
         <line className="diagram-arrow" markerEnd="url(#arrow)" markerStart="url(#arrow)" x1="160" x2="280" y1="236" y2="236" />
         <text className="diagram-label" x="48" y="226">{language === "zh" ? "一个周期 / 波长" : "One cycle / wavelength"}</text>
         <text className="diagram-chip" x="78" y="92">{language === "zh" ? "低频" : "Low frequency"}</text>
         <text className="diagram-chip" x="320" y="92">{language === "zh" ? "中频" : "Mid frequency"}</text>
         <text className="diagram-chip" x="560" y="92">{language === "zh" ? "高频" : "High frequency"}</text>
-        <text className="diagram-chip" x="456" y="48">{language === "zh" ? "f 频率" : "f frequency"}</text>
-        <text className="diagram-chip" x="456" y="78">{language === "zh" ? "φ 相位" : "φ phase"}</text>
-        <text className="diagram-chip" x="456" y="108">{language === "zh" ? "A 振幅" : "A amplitude"}</text>
+        <text className="diagram-chip" x="340" y="22">{language === "zh" ? "f 频率" : "f frequency"}</text>
+        <text className="diagram-chip" x="480" y="22">{language === "zh" ? "φ 相位" : "φ phase"}</text>
         <text className="diagram-chip" x="548" y="266">{language === "zh" ? "高频更密" : "Denser high frequency"}</text>
         <text className="diagram-chip" x="48" y="266">{language === "zh" ? "低频更疏" : "Sparse low frequency"}</text>
       </svg>

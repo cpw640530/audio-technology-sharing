@@ -1344,11 +1344,16 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("Threshold 改变超出量；ratio 改变超出阈值部分保留多少，二者共同决定增益衰减。")).toBeInTheDocument();
   });
 
-  it("renders the animated signal visualization on the homepage", () => {
+  it("renders the compact animated signal map without a screenshot preview", async () => {
+    const user = userEvent.setup();
     render(<App />);
-
-    expect(screen.getByTestId("animated-signal-panel")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "开始探索" })).toHaveAttribute("href", "#knowledge-content");
+    expect(screen.getByTestId("animated-signal-panel")).toHaveAttribute("aria-hidden", "true");
     expect(screen.getByTestId("hero-signal-map")).toBeInTheDocument();
+    expect(screen.queryByText("声音波形实验室预览")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "English" }));
+    expect(screen.queryByText("Sound Wave Lab preview")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Explore topics" })).toBeInTheDocument();
   });
 
   it("opens and closes topic details from a topic card", async () => {
@@ -2283,7 +2288,7 @@ describe("Audio knowledge app", () => {
 
     const topicGrid = screen.getByTestId("topic-grid");
     expect(within(topicGrid).getByText("数字音频接口 / 传输协议")).toBeInTheDocument();
-    expect(within(topicGrid).getByText(/I2S \/ IIS \/ I²S、TDM、PDM、SPDIF、USB Audio/)).toBeInTheDocument();
+    expect(within(topicGrid).getByRole("button", { name: /数字音频接口 \/ 传输协议/ })).toHaveTextContent("阅读与探索");
 
     await user.click(within(topicGrid).getByRole("button", { name: /数字音频接口 \/ 传输协议/ }));
 

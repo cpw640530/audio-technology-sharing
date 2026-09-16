@@ -102,8 +102,8 @@ export const interfaceCopy = {
   },
   topicsTitle: { zh: "主题卡片", en: "Topic Cards" },
   topicsSubtitle: {
-    zh: "每张卡片后续都可以扩展为独立文章、图解或交互页面。",
-    en: "Each card can later become an article, diagram, or interactive page."
+    zh: "声音原理、工程实践与 AI 算法的图解和交互实验。",
+    en: "Explanations and interactive experiments in sound, audio engineering and AI."
   },
   noResults: { zh: "没有找到匹配主题。", en: "No matching topics found." },
   detailsLabel: { zh: "主题详情", en: "Topic details" },

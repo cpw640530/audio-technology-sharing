@@ -47,11 +47,7 @@ export function TopicGrid({ language, topics, selectedTopicKey, onSelectTopic }:
               </div>
               <h3>{topic.title[language]}</h3>
               <p>{topic.summary[language]}</p>
-              <ul>
-                {topic.bullets.map((bullet) => (
-                  <li key={bullet.en}>{bullet[language]}</li>
-                ))}
-              </ul>
+              <span className="topic-card-entry">{language === "zh" ? "阅读与探索" : "Read and explore"}<ArrowUpRight size={16} aria-hidden="true" /></span>
             </button>
           ))}
         </div>

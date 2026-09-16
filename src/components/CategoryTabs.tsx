@@ -1,3 +1,4 @@
+import { Layers } from "lucide-react";
 import type { Category, Language } from "../content/knowledge";
 import { interfaceCopy } from "../content/knowledge";
 
@@ -28,7 +29,7 @@ export function CategoryTabs({
           type="button"
           onClick={() => onSelectCategory("all")}
         >
-          <span className="tab-icon all">All</span>
+          <span className="tab-icon all"><Layers size={18} aria-hidden="true" /></span>
           <span>{interfaceCopy.allCategories[language]}</span>
         </button>
         {categories.map((category) => {
