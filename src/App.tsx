@@ -6,6 +6,7 @@ import { AudioCodecLab } from "./components/AudioCodecLab";
 import { AudioUnitsLab } from "./components/AudioUnitsLab";
 import { AutomotiveAudioLab } from "./components/AutomotiveAudioLab";
 import { RobotAudioLab } from "./components/RobotAudioLab";
+import { BluetoothAudioLab } from "./components/BluetoothAudioLab";
 import { CategoryTabs } from "./components/CategoryTabs";
 import { CodecHardwareLab } from "./components/CodecHardwareLab";
 import { CoreSignalProcessingLab } from "./components/CoreSignalProcessingLab";
@@ -22,6 +23,7 @@ import { RealtimeAudioLab } from "./components/RealtimeAudioLab";
 import { SearchBar } from "./components/SearchBar";
 import { SpeechEnhancementLab } from "./components/SpeechEnhancementLab";
 import { SoundWaveLab } from "./components/SoundWaveLab";
+import { SoundTopicPage } from "./components/SoundTopicPage";
 import { SpatialAudioLab } from "./components/SpatialAudioLab";
 import { SystemAudioLab } from "./components/SystemAudioLab";
 import { TopicDetails } from "./components/TopicDetails";
@@ -109,6 +111,7 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeView, setActiveView] = useState<
     | "knowledge"
+    | "soundTopicPage"
     | "soundLab"
     | "audioUnitsLab"
     | "digitalLab"
@@ -116,6 +119,7 @@ export default function App() {
     | "meetingCommunicationLab"
     | "automotiveAudioLab"
     | "robotAudioLab"
+    | "bluetoothAudioLab"
     | "iotContentLab"
     | "microphoneLab"
     | "codecLab"
@@ -230,6 +234,25 @@ export default function App() {
     );
   }
 
+  if (activeView === "soundTopicPage") {
+    return (
+      <div className="app-shell">
+        <Header
+          language={language}
+          onToggleLanguage={toggleLanguage}
+        />
+        <SoundTopicPage
+          language={language}
+          onBack={() => setActiveView("knowledge")}
+          onOpenLab={() => setActiveView("soundLab")}
+        />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+        </footer>
+      </div>
+    );
+  }
+
   if (activeView === "audioUnitsLab") {
     return (
       <div className="app-shell">
@@ -324,6 +347,14 @@ export default function App() {
     return <div className="app-shell">
       <Header language={language} onToggleLanguage={toggleLanguage} />
       <RobotAudioLab language={language} onBack={() => setActiveView("knowledge")} />
+      <footer className="site-footer"><span>{interfaceCopy.footer[language]}</span></footer>
+    </div>;
+  }
+
+  if (activeView === "bluetoothAudioLab") {
+    return <div className="app-shell">
+      <Header language={language} onToggleLanguage={toggleLanguage} />
+      <BluetoothAudioLab language={language} onBack={() => setActiveView("knowledge")} />
       <footer className="site-footer"><span>{interfaceCopy.footer[language]}</span></footer>
     </div>;
   }
@@ -572,6 +603,10 @@ export default function App() {
                 setSelectedTopic(null);
                 setActiveView("robotAudioLab");
               }}
+              onOpenBluetoothAudioLab={() => {
+                setSelectedTopic(null);
+                setActiveView("bluetoothAudioLab");
+              }}
               onOpenIotContentLab={() => {
                 setSelectedTopic(null);
                 setActiveView("iotContentLab");
@@ -584,6 +619,10 @@ export default function App() {
               onOpenSoundLab={() => {
                 setSelectedTopic(null);
                 setActiveView("soundLab");
+              }}
+              onOpenSoundTopicPage={() => {
+                setSelectedTopic(null);
+                setActiveView("soundTopicPage");
               }}
               onOpenDigitalLab={() => {
                 setSelectedTopic(null);

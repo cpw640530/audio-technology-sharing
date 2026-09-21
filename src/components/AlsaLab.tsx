@@ -319,15 +319,19 @@ function AlsaBufferDiagram({
   language: Language;
   usedFrames: number;
 }) {
+  const [dragFrame, setDragFrame] = useState<number | null>(null);
   const bufferFrames = config.periodFrames * config.periodCount;
-  const trackX = 64;
-  const trackY = 102;
-  const trackWidth = 792;
-  const trackHeight = 86;
-  const periodWidth = trackWidth / config.periodCount;
-  const appPointer = direction === "playback" ? usedFrames : 0;
-  const dmaPointer = direction === "playback" ? 0 : usedFrames;
-  const pointerX = (frame: number) => trackX + (frame / bufferFrames) * trackWidth;
+  const center = 310;
+  const radius = 128;
+  const circumference = 2 * Math.PI * radius;
+  const frameAngle = (frame: number) => -90 + (frame / bufferFrames) * 360;
+  const point = (frame: number, distance: number) => {
+    const angle = (frameAngle(frame) * Math.PI) / 180;
+    return { x: center + Math.cos(angle) * distance, y: 210 + Math.sin(angle) * distance };
+  };
+  const displayedFrames = dragFrame ?? usedFrames;
+  const appPointer = direction === "playback" ? displayedFrames : 0;
+  const dmaPointer = direction === "playback" ? 0 : displayedFrames;
   const title = language === "zh" ? "ALSA 环形 buffer" : "ALSA ring buffer";
   const description = direction === "playback"
     ? {
@@ -347,31 +351,45 @@ function AlsaBufferDiagram({
         role="region"
         tabIndex={0}
       >
-        <svg aria-label={title} className="alsa-buffer-svg" role="img" viewBox="0 0 920 286" xmlns="http://www.w3.org/2000/svg">
+        <svg aria-label={title} className="alsa-buffer-svg" role="img" viewBox="0 0 620 430" xmlns="http://www.w3.org/2000/svg"
+          onPointerMove={(event) => {
+            if (dragFrame === null) return;
+            const rect = event.currentTarget.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width) * 620;
+            const y = ((event.clientY - rect.top) / rect.height) * 430;
+            const angle = (Math.atan2(y - 210, x - center) * 180) / Math.PI + 90;
+            setDragFrame(Math.round((((angle + 360) % 360) / 360) * bufferFrames));
+          }}
+          onPointerUp={() => setDragFrame(null)}
+          onPointerLeave={() => setDragFrame(null)}>
           <title>{title}</title>
           <desc>{description[language]}</desc>
-          <rect className="alsa-buffer-background" height="286" rx="16" width="920" />
-          <text className="alsa-buffer-heading" x="64" y="48">{language === "zh" ? "period 分区" : "Period partitions"}</text>
-          <text className="alsa-buffer-heading" textAnchor="end" x="856" y="48">{bufferFrames} frames</text>
-          <rect className="alsa-buffer-track" height={trackHeight} rx="10" width={trackWidth} x={trackX} y={trackY} />
+          <rect className="alsa-buffer-background" height="430" rx="16" width="620" />
+          <text className="alsa-buffer-heading" x="310" y="405" textAnchor="middle">{bufferFrames} frames · {language === "zh" ? "顺时针推进" : "clockwise progress"}</text>
+          <circle className="alsa-buffer-track" cx={center} cy="210" r={radius} />
+          <circle className="alsa-buffer-period-used" cx={center} cy="210" r={radius} transform="rotate(-90 310 210)" strokeDasharray={`${(displayedFrames / bufferFrames) * circumference} ${circumference}`} />
+          <text className="alsa-buffer-heading" textAnchor="middle" x="310" y="203">{language === "zh" ? "着色：未读数据" : "Color: unread data"}</text>
+          <text className="alsa-buffer-heading" textAnchor="middle" x="310" y="230">{displayedFrames} frames</text>
           {Array.from({ length: config.periodCount }, (_, index) => {
-            const x = trackX + index * periodWidth;
-            const usedWidth = Math.min(periodWidth, Math.max(0, usedFrames - index * config.periodFrames) / config.periodFrames * periodWidth);
+            const inner = point(index * config.periodFrames, radius - 18);
+            const boundary = point(index * config.periodFrames, radius + 18);
+            const label = point((index + 0.5) * config.periodFrames, radius + 32);
             return (
               <g key={index}>
-                <rect className="alsa-buffer-period" data-period-index={index} height={trackHeight} width={periodWidth} x={x} y={trackY} />
-                <rect className="alsa-buffer-period-used" height={trackHeight} width={usedWidth} x={x} y={trackY} />
-                <text className="alsa-buffer-period-label" textAnchor="middle" x={x + periodWidth / 2} y={trackY + 52}>{index + 1}</text>
+                <line className="alsa-buffer-period" data-period-index={index} x1={inner.x} x2={boundary.x} y1={inner.y} y2={boundary.y} />
+                <text className="alsa-buffer-period-label" textAnchor="middle" x={label.x} y={label.y + 4}>{index + 1}</text>
               </g>
             );
           })}
-          <line className="alsa-buffer-pointer alsa-buffer-pointer-app" x1={pointerX(appPointer)} x2={pointerX(appPointer)} y1="76" y2="210" />
-          <line className="alsa-buffer-pointer alsa-buffer-pointer-dma" x1={pointerX(dmaPointer)} x2={pointerX(dmaPointer)} y1="76" y2="210" />
-          <text className="alsa-buffer-pointer-label" textAnchor="middle" x={pointerX(appPointer)} y="238">{direction === "playback" ? (language === "zh" ? "应用写" : "App write") : (language === "zh" ? "应用读" : "App read")}</text>
-          <text className="alsa-buffer-pointer-label" textAnchor="middle" x={pointerX(dmaPointer)} y="264">{direction === "playback" ? (language === "zh" ? "硬件/DMA 读" : "HW/DMA read") : (language === "zh" ? "硬件/DMA 写" : "HW/DMA write")}</text>
+          {[{ frame: appPointer, className: "alsa-buffer-pointer-app", label: direction === "playback" ? (language === "zh" ? "应用写" : "App write") : (language === "zh" ? "应用读" : "App read") }, { frame: dmaPointer, className: "alsa-buffer-pointer-dma", label: direction === "playback" ? (language === "zh" ? "硬件/DMA 读" : "HW/DMA read") : (language === "zh" ? "硬件/DMA 写" : "HW/DMA write") }].map(({ frame, className, label }) => {
+            const inner = point(frame, radius - 10);
+            const outer = point(frame, radius + 28);
+            const text = point(frame, radius + 58);
+            return <g key={className} onPointerDown={() => setDragFrame(frame)}><line className={`alsa-buffer-pointer ${className}`} x1={inner.x} x2={outer.x} y1={inner.y} y2={outer.y} /><text className="alsa-buffer-pointer-label" textAnchor="middle" x={text.x} y={text.y + 4}>{label}</text></g>;
+          })}
         </svg>
       </div>
-      <figcaption className="alsa-buffer-caption">{description[language]}</figcaption>
+      <figcaption className="alsa-buffer-caption">{description[language]} {language === "zh" ? "数字代表 period 分区，位置按 buffer 容量取模后回绕；这是静态快照，不代表指针停止。实际 ALSA 使用逻辑指针跟踪进度，仅靠环上位置不能区分空和满。" : "Numbers identify periods; positions wrap modulo buffer capacity. This is a static snapshot, not stopped pointers. ALSA tracks progress using logical pointers: ring positions alone cannot distinguish empty from full."}</figcaption>
     </figure>
   );
 }

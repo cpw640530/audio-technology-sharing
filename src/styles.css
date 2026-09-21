@@ -1032,6 +1032,33 @@ body.details-open {
   margin-top: 10px;
 }
 
+.sound-signal-chain {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(5, minmax(110px, 1fr));
+  list-style: none;
+  margin: 2px 0 0;
+  min-width: 640px;
+  padding: 0;
+}
+
+.sound-signal-chain li {
+  border-bottom: 2px solid color-mix(in srgb, var(--accent, #1f9d8a) 62%, transparent);
+  color: #dbe8e4;
+  font-size: 0.84rem;
+  font-weight: 720;
+  padding: 8px 4px 10px;
+  position: relative;
+  text-align: center;
+}
+
+.sound-signal-chain li:not(:last-child)::after {
+  color: #7ee7d8;
+  content: "→";
+  position: absolute;
+  right: -18px;
+}
+
 .diagram-bg {
   fill: rgba(255, 255, 255, 0.055);
 }
@@ -1205,6 +1232,13 @@ body.details-open {
   font-size: clamp(0.82rem, 1.5vw, 1rem);
   overflow-wrap: anywhere;
   padding: 10px 12px;
+}
+
+.sound-lab-derived {
+  color: #adc5bf;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.82rem;
+  grid-column: 2;
 }
 
 .sound-lab-visual svg {
@@ -1936,6 +1970,7 @@ body.details-open {
   width: 100%;
 }
 
+.bluetooth-lab-page,
 .listening-lab-page {
   display: grid;
   gap: 24px;
@@ -1943,6 +1978,59 @@ body.details-open {
   max-width: 1180px;
   padding: 34px clamp(18px, 4vw, 56px) 42px;
   width: 100%;
+}
+
+.bluetooth-section {
+  min-width: 0;
+  padding: 24px 0;
+  border-top: 1px solid #b4c4bd;
+}
+
+.bluetooth-section h2 { margin: 0 0 16px; font-size: 24px; }
+.bluetooth-section h3 { font-size: 18px; }
+.bluetooth-section p { line-height: 1.8; color: #364b43; }
+.bluetooth-section a { text-decoration: underline; text-underline-offset: 3px; }
+.bluetooth-endpoints { display: flex; align-items: center; gap: 22px; color: #236b60; margin-bottom: 20px; flex-wrap: wrap; }
+.bluetooth-flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; list-style: none; padding: 0; }
+.bluetooth-flow li { position: relative; display: flex; align-items: center; gap: 12px; min-height: 92px; padding: 14px; background: #e2eee8; border: 1px solid #99b7a9; border-radius: 6px; overflow-wrap: anywhere; }
+.bluetooth-flow li:not(:last-child)::after { content: "→"; position: absolute; right: -15px; top: 32px; color: #236b60; }
+.bluetooth-flow li:nth-child(3)::after { content: "↓"; right: 12px; top: auto; bottom: -21px; }
+.bluetooth-flow li:nth-child(4) { grid-column: 3; grid-row: 2; }
+.bluetooth-flow li:nth-child(5) { grid-column: 2; grid-row: 2; }
+.bluetooth-flow li:nth-child(6) { grid-column: 1; grid-row: 2; }
+.bluetooth-flow li:nth-child(4)::after, .bluetooth-flow li:nth-child(5)::after { content: "←"; right: auto; left: -15px; }
+.bluetooth-flow small { color: #236b60; font-weight: 700; }
+.bluetooth-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 28px; }
+.bluetooth-controls label { display: grid; gap: 8px; min-width: 0; }
+.bluetooth-controls label span { display: flex; justify-content: space-between; gap: 12px; }
+.bluetooth-controls input { width: 100%; accent-color: var(--accent); }
+.bluetooth-controls select { font: inherit; width: 100%; min-height: 42px; color: #17211f; background: #f7faf8; border: 1px solid #839e90; border-radius: 6px; padding: 8px; }
+.bluetooth-results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin: 28px 0; }
+.bluetooth-results dt { color: #46594f; }
+.bluetooth-results dd { margin: 6px 0 0; font-size: 22px; font-weight: 700; overflow-wrap: anywhere; }
+.bluetooth-packets { display: grid; grid-template-columns: repeat(20, minmax(0, 1fr)); gap: 4px; }
+.bluetooth-packets span { display: grid; place-items: center; height: 24px; border-radius: 3px; color: #fff; font-weight: 700; }
+.bluetooth-packets .ready { background: #287866; }
+.bluetooth-packets .late { background: #b88b25; color: #231c0c; }
+.bluetooth-packets .lost { background: #a64354; }
+.bluetooth-delay { display: flex; height: 28px; gap: 2px; }
+.bluetooth-delay .part-0 { background: #5277a2; }
+.bluetooth-delay .part-1 { background: #b88b25; }
+.bluetooth-delay .part-2 { background: #287866; }
+.bluetooth-delay .part-3 { background: #a64354; }
+.bluetooth-delay-labels { display: flex; gap: 12px 24px; flex-wrap: wrap; padding-left: 20px; }
+.bluetooth-knowledge-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; }
+.bluetooth-knowledge-grid article { border-bottom: 1px solid #c4cfc8; }
+.bluetooth-table-wrap { overflow-x: auto; }
+.bluetooth-table-wrap table { width: 100%; border-collapse: collapse; }
+.bluetooth-table-wrap td, .bluetooth-table-wrap th { text-align: left; vertical-align: top; padding: 14px; border-bottom: 1px solid #b4c4bd; min-width: 130px; }
+
+@media (max-width: 640px) {
+  .bluetooth-flow, .bluetooth-controls, .bluetooth-results, .bluetooth-knowledge-grid { grid-template-columns: 1fr; }
+  .bluetooth-flow li:not(:last-child)::after { content: "↓"; right: 16px; top: auto; bottom: -21px; }
+  .bluetooth-flow li:nth-child(n) { grid-column: auto; grid-row: auto; }
+  .bluetooth-flow li:nth-child(n)::after { left: auto; }
+  .bluetooth-packets { grid-template-columns: repeat(10, minmax(0, 1fr)); }
 }
 
 .microphone-lab-page {
@@ -6618,6 +6706,12 @@ body.details-open {
   stroke-width: 3;
 }
 
+.mic-pickup-dot {
+  fill: #7ee7d8;
+  stroke: #10231f;
+  stroke-width: 2.5;
+}
+
 .mic-meter rect {
   fill: rgba(255, 255, 255, 0.1);
 }
@@ -7246,6 +7340,10 @@ body.details-open {
     grid-template-columns: 1fr;
   }
 
+  .sound-lab-derived {
+    grid-column: 1;
+  }
+
   .lab-concepts,
   .mic-knowledge-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -7673,8 +7771,22 @@ body:has(.home-intro) {
 .topic-details-modal .sound-wave-diagram stop:first-child { stop-color: #226d60; }
 .topic-details-modal .sound-wave-diagram stop:last-child { stop-color: #97531e; }
 .topic-details-modal .sound-wave-diagram figcaption { color: #53645e; line-height: 1.75; }
+.topic-details-modal .sound-signal-chain li { color: #2c443a; }
+.topic-details-modal .sound-signal-chain li:not(:last-child)::after { color: #226d60; }
 .topic-details-modal .details-formats { border-top: 1px solid #d7e0dc; color: #53645e; flex-wrap: wrap; gap: 10px; }
 .topic-details-modal .details-formats :is(span, strong) { color: #53645e; }
+.topic-details-modal .sound-lab-entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.topic-details-modal .diagram-open-button-secondary {
+  background: #ffffff;
+  border-color: #9bb9b0;
+  color: #226d60;
+}
+.topic-details-modal .diagram-open-button-secondary:hover { background: #edf5f1; }
 @media (max-width: 600px) {
   .topic-details-modal { max-height: calc(100dvh - 28px); }
   .topic-details-modal .details-header { padding: 16px; gap: 12px; }
@@ -7682,6 +7794,264 @@ body:has(.home-intro) {
   .topic-details-modal .details-scroll { padding: 20px 16px 28px; gap: 20px; }
   .topic-details-modal .details-lab-block { padding: 16px; }
   .topic-details-modal .diagram-open-button { width: 100%; }
+  .topic-details-modal .sound-lab-entry-actions { width: 100%; }
+}
+
+.sound-topic-page {
+  background: #f7faf7;
+  color: #1c2c28;
+  margin: 0 auto;
+  max-width: 1240px;
+  min-height: calc(100vh - 120px);
+  padding: 48px clamp(18px, 5vw, 72px) 72px;
+}
+.sound-topic-hero {
+  border-bottom: 1px solid #d7e3dc;
+  padding-bottom: 34px;
+}
+.sound-topic-back {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #226d60;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 700;
+  gap: 8px;
+  padding: 0;
+}
+.sound-topic-kicker {
+  align-items: center;
+  color: #a35e25;
+  display: flex;
+  font-size: .82rem;
+  font-weight: 800;
+  gap: 7px;
+  letter-spacing: .04em;
+  margin-top: 48px;
+  text-transform: uppercase;
+}
+.sound-topic-hero h1 {
+  color: #17211f;
+  font-size: clamp(2.4rem, 6vw, 5.5rem);
+  letter-spacing: 0;
+  line-height: 1.02;
+  margin: 14px 0 18px;
+  max-width: 10ch;
+}
+.sound-topic-lede {
+  color: #53645e;
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  line-height: 1.75;
+  margin: 0;
+  max-width: 780px;
+}
+.sound-topic-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+}
+.sound-topic-meta span {
+  background: #e8f1ec;
+  border: 1px solid #cbdcd3;
+  border-radius: 999px;
+  color: #2e5b4e;
+  font-size: .82rem;
+  font-weight: 720;
+  padding: 7px 11px;
+}
+.sound-topic-content {
+  display: grid;
+  gap: 0;
+}
+.sound-topic-section {
+  border-bottom: 1px solid #d7e3dc;
+  display: grid;
+  gap: 26px;
+  padding: 58px 0;
+}
+.sound-topic-intro {
+  align-items: start;
+  grid-template-columns: 76px minmax(0, 720px);
+}
+.sound-topic-section-heading {
+  align-items: start;
+  display: grid;
+  gap: 28px;
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+.sound-topic-index {
+  color: #a35e25;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: .82rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  padding-top: 7px;
+}
+.sound-topic-section h2 {
+  color: #1c2c28;
+  font-size: clamp(1.45rem, 2.8vw, 2.4rem);
+  letter-spacing: 0;
+  line-height: 1.25;
+  margin: 0 0 12px;
+}
+.sound-topic-section p {
+  color: #53645e;
+  line-height: 1.85;
+  margin: 0;
+  max-width: 78ch;
+}
+.sound-topic-flow {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  list-style: none;
+  margin: 4px 0 0 104px;
+  padding: 0;
+}
+.sound-topic-flow li {
+  background: #e8f1ec;
+  border-top: 3px solid #226d60;
+  display: grid;
+  gap: 18px;
+  min-height: 136px;
+  padding: 16px;
+  position: relative;
+}
+.sound-topic-flow li:not(:last-child)::after {
+  color: #a35e25;
+  content: "→";
+  font-size: 1.2rem;
+  font-weight: 800;
+  position: absolute;
+  right: -13px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+.sound-topic-flow li > span {
+  color: #a35e25;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: .76rem;
+  font-weight: 800;
+}
+.sound-topic-flow strong {
+  color: #24483d;
+  line-height: 1.45;
+}
+.sound-topic-note {
+  border-left: 3px solid #f0b46a;
+  margin-left: 104px !important;
+  padding-left: 16px;
+}
+.sound-topic-model-grid {
+  align-items: start;
+  display: grid;
+  gap: 34px;
+  grid-template-columns: minmax(260px, .8fr) minmax(0, 1.2fr);
+  margin-left: 104px;
+}
+.sound-topic-formula-block {
+  background: #17211f;
+  border-radius: 8px;
+  color: #dff9f5;
+  padding: 22px;
+}
+.sound-topic-formula-block code {
+  display: block;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: clamp(.82rem, 1.5vw, 1.05rem);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.sound-topic-formula-block dl {
+  display: grid;
+  gap: 14px;
+  margin: 26px 0 20px;
+}
+.sound-topic-formula-block dl div {
+  border-top: 1px solid rgba(255,255,255,.13);
+  display: grid;
+  gap: 5px;
+  padding-top: 12px;
+}
+.sound-topic-formula-block dt {
+  color: #f0b46a;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-weight: 800;
+}
+.sound-topic-formula-block dd {
+  color: #c9d8d4;
+  line-height: 1.6;
+  margin: 0;
+}
+.sound-topic-formula-block p { color: #c9d8d4; font-size: .9rem; }
+.sound-topic-model-section .sound-wave-diagram { min-width: 0; }
+.sound-topic-model-section .sound-wave-diagram svg { width: 100%; }
+.sound-topic-model-section .sound-wave-diagram .diagram-bg { fill: #edf2ef; }
+.sound-topic-model-section .sound-wave-diagram :is(.diagram-label, .diagram-chip) { fill: #243c33; }
+.sound-topic-model-section .sound-wave-diagram :is(.diagram-axis, .diagram-measure, .diagram-arrow) { stroke: #657a70; }
+.sound-topic-model-section .sound-wave-diagram marker path { fill: #657a70; }
+.sound-topic-model-section .sound-wave-diagram figcaption { color: #53645e; }
+.sound-topic-model-section .sound-signal-chain { display: none; }
+.sound-topic-glossary {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-left: 104px;
+}
+.sound-topic-glossary article {
+  background: #edf3ef;
+  border-left: 3px solid #9bb9b0;
+  padding: 20px;
+}
+.sound-topic-glossary h3 {
+  color: #234c43;
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
+.sound-topic-glossary p { font-size: .92rem; }
+.sound-topic-bottom-grid {
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, .7fr);
+}
+.sound-topic-bottom-grid > div:first-child { padding-left: 104px; }
+.sound-topic-cta {
+  background: #e8f1ec;
+  border-top: 3px solid #226d60;
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+}
+.sound-topic-cta > svg { color: #226d60; }
+.sound-topic-cta h2 { font-size: 1.4rem; margin: 0; }
+.sound-topic-cta .diagram-open-button { justify-self: start; margin-top: 6px; }
+.sound-topic-page :is(button, a):focus-visible { outline: 2px solid #226d60; outline-offset: 3px; }
+@media (max-width: 900px) {
+  .sound-topic-flow,
+  .sound-topic-model-grid,
+  .sound-topic-glossary,
+  .sound-topic-bottom-grid { margin-left: 0; }
+  .sound-topic-flow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sound-topic-model-grid { grid-template-columns: 1fr; }
+  .sound-topic-bottom-grid > div:first-child { padding-left: 0; }
+}
+@media (max-width: 600px) {
+  .sound-topic-page { padding: 28px 16px 48px; }
+  .sound-topic-kicker { margin-top: 32px; }
+  .sound-topic-hero h1 { font-size: 2.65rem; }
+  .sound-topic-section { padding: 38px 0; }
+  .sound-topic-intro,
+  .sound-topic-section-heading { gap: 14px; grid-template-columns: 42px minmax(0, 1fr); }
+  .sound-topic-section h2 { font-size: 1.45rem; }
+  .sound-topic-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sound-topic-flow li { min-height: 116px; padding: 13px; }
+  .sound-topic-flow li:not(:last-child)::after { display: none; }
+  .sound-topic-note { margin-left: 0 !important; }
+  .sound-topic-glossary { grid-template-columns: 1fr; }
+  .sound-topic-bottom-grid { grid-template-columns: 1fr; }
 }
 
 .robot-lab {
@@ -8300,6 +8670,7 @@ body:has(.home-intro) {
   display: block;
   height: auto;
   min-width: 760px;
+  touch-action: none;
   width: 100%;
 }
 
@@ -8310,7 +8681,9 @@ body:has(.home-intro) {
 }
 
 .alsa-buffer-track {
-  fill: rgba(255, 255, 255, 0.08);
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 36;
 }
 
 .alsa-buffer-period {
@@ -8320,7 +8693,9 @@ body:has(.home-intro) {
 }
 
 .alsa-buffer-period-used {
-  fill: #7ee7d8;
+  fill: none;
+  stroke: #7ee7d8;
+  stroke-width: 36;
   opacity: 0.68;
 }
 
@@ -8332,6 +8707,7 @@ body:has(.home-intro) {
 }
 
 .alsa-buffer-pointer {
+  cursor: grab;
   stroke-width: 3;
 }
 

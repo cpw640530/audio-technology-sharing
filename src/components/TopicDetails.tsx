@@ -17,6 +17,7 @@ type TopicDetailsProps = {
   onOpenAudioUnitsLab: () => void;
   onOpenAutomotiveAudioLab: () => void;
   onOpenRobotAudioLab: () => void;
+  onOpenBluetoothAudioLab: () => void;
   onOpenCodecLab: () => void;
   onOpenCoreSignalProcessingLab: () => void;
   onOpenDigitalLab: () => void;
@@ -28,11 +29,12 @@ type TopicDetailsProps = {
   onOpenRealtimeAudioLab: () => void;
   onOpenSpeechEnhancementLab: () => void;
   onOpenSoundLab: () => void;
+  onOpenSoundTopicPage: () => void;
   onOpenSpatialAudioLab: () => void;
   onOpenSystemAudioLab: () => void;
 };
 
-function SoundWaveDiagram({
+export function SoundWaveDiagram({
   language,
   label,
   caption
@@ -41,21 +43,17 @@ function SoundWaveDiagram({
   label: Record<Language, string>;
   caption: Record<Language, string>;
 }) {
-  function accumulatedCycles(progress: number) {
-    return 0.55 * progress + 3.1 * progress * progress;
-  }
-
-  function createRampWavePath(startRatio: number, endRatio: number) {
+  function createWavePath(startRatio: number, endRatio: number, cycles: number) {
     const startX = 40;
     const width = 640;
     const centerY = 110;
+    const amplitude = 52;
 
     return Array.from({ length: 72 }, (_, index) => {
       const ratio = index / 71;
       const progress = startRatio + ratio * (endRatio - startRatio);
       const x = startX + progress * width;
-      const amplitude = 46 + progress * 12;
-      const y = centerY - Math.sin(accumulatedCycles(progress) * Math.PI * 2) * amplitude;
+      const y = centerY - Math.sin(ratio * Math.PI * 2 * cycles) * amplitude;
 
       return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
     }).join(" ");
@@ -82,9 +80,9 @@ function SoundWaveDiagram({
         <line className="diagram-axis" x1="40" x2="680" y1="110" y2="110" />
         <line className="diagram-axis faint" x1="40" x2="680" y1="28" y2="28" />
         <line className="diagram-axis faint" x1="40" x2="680" y1="192" y2="192" />
-        <path className="diagram-wave diagram-wave-low" data-amplitude="49.8" data-cycles="0.5" data-testid="sound-wave-low" d={createRampWavePath(0, 0.32)} />
-        <path className="diagram-wave diagram-wave-mid" data-amplitude="53.7" data-cycles="1.1" data-testid="sound-wave-mid" d={createRampWavePath(0.32, 0.64)} />
-        <path className="diagram-wave diagram-wave-high" data-amplitude="58" data-cycles="2" data-testid="sound-wave-high" d={createRampWavePath(0.64, 1)} />
+        <path className="diagram-wave diagram-wave-low" data-amplitude="52" data-cycles="1" data-testid="sound-wave-low" d={createWavePath(0, 0.3, 1)} />
+        <path className="diagram-wave diagram-wave-mid" data-amplitude="52" data-cycles="2" data-testid="sound-wave-mid" d={createWavePath(0.35, 0.65, 2)} />
+        <path className="diagram-wave diagram-wave-high" data-amplitude="52" data-cycles="4" data-testid="sound-wave-high" d={createWavePath(0.7, 1, 4)} />
         <line
           className="diagram-measure"
           x1="92"
@@ -93,16 +91,21 @@ function SoundWaveDiagram({
           y2="110"
         />
         <text className="diagram-label" x="70" y="48">{language === "zh" ? "A 振幅" : "A amplitude"}</text>
-        <line className="diagram-arrow" markerEnd="url(#arrow)" markerStart="url(#arrow)" x1="160" x2="280" y1="236" y2="236" />
-        <text className="diagram-label" x="48" y="226">{language === "zh" ? "一个周期 / 波长" : "One cycle / wavelength"}</text>
-        <text className="diagram-chip" x="78" y="92">{language === "zh" ? "低频" : "Low frequency"}</text>
-        <text className="diagram-chip" x="320" y="92">{language === "zh" ? "中频" : "Mid frequency"}</text>
-        <text className="diagram-chip" x="560" y="92">{language === "zh" ? "高频" : "High frequency"}</text>
-        <text className="diagram-chip" x="340" y="22">{language === "zh" ? "f 频率" : "f frequency"}</text>
-        <text className="diagram-chip" x="480" y="22">{language === "zh" ? "φ 相位" : "φ phase"}</text>
-        <text className="diagram-chip" x="548" y="266">{language === "zh" ? "高频更密" : "Denser high frequency"}</text>
-        <text className="diagram-chip" x="48" y="266">{language === "zh" ? "低频更疏" : "Sparse low frequency"}</text>
+        <line className="diagram-arrow" markerEnd="url(#arrow)" markerStart="url(#arrow)" x1="40" x2="232" y1="236" y2="236" />
+        <text className="diagram-label" textAnchor="middle" x="136" y="264">{language === "zh" ? "周期 T（时间）" : "Period T (time)"}</text>
+        <text className="diagram-chip" textAnchor="middle" x="136" y="92">{language === "zh" ? "低频：1 周期" : "Low: 1 cycle"}</text>
+        <text className="diagram-chip" textAnchor="middle" x="360" y="92">{language === "zh" ? "中频：2 周期" : "Mid: 2 cycles"}</text>
+        <text className="diagram-chip" textAnchor="middle" x="584" y="92">{language === "zh" ? "高频：4 周期" : "High: 4 cycles"}</text>
+        <text className="diagram-label" x="46" y="22">{language === "zh" ? "Δp 声压变化" : "Δp pressure"}</text>
+        <text className="diagram-label" textAnchor="end" x="680" y="216">{language === "zh" ? "t 时间" : "t time"}</text>
+        <text className="diagram-chip" textAnchor="middle" x="520" y="266">{language === "zh" ? "频率改变，振幅保持相同" : "Frequency changes; amplitude stays equal"}</text>
       </svg>
+      <ol className="sound-signal-chain" aria-label={language === "zh" ? "声音转为 PCM 的流程" : "Sound-to-PCM flow"}>
+        {(language === "zh"
+          ? ["声源振动", "空气声压 Δp", "麦克风电压", "ADC 采样量化", "PCM 样本"]
+          : ["Source vibration", "Air pressure Δp", "Microphone voltage", "ADC sampling", "PCM samples"]
+        ).map((step) => <li key={step}>{step}</li>)}
+      </ol>
       <figcaption>{caption[language]}</figcaption>
     </figure>
   );
@@ -119,6 +122,7 @@ export function TopicDetails({
   onOpenAudioUnitsLab,
   onOpenAutomotiveAudioLab,
   onOpenRobotAudioLab,
+  onOpenBluetoothAudioLab,
   onOpenCodecLab,
   onOpenCoreSignalProcessingLab,
   onOpenDigitalLab,
@@ -130,9 +134,12 @@ export function TopicDetails({
   onOpenRealtimeAudioLab,
   onOpenSpeechEnhancementLab,
   onOpenSoundLab,
+  onOpenSoundTopicPage,
   onOpenSpatialAudioLab,
   onOpenSystemAudioLab
 }: TopicDetailsProps) {
+  const isSoundTopic = topic.detail.lab?.type === "sound-wave";
+
   function closeDetails() {
     onClose();
   }
@@ -228,6 +235,11 @@ export function TopicDetails({
       return;
     }
 
+    if (topic.detail.lab?.type === "bluetooth-audio") {
+      onOpenBluetoothAudioLab();
+      return;
+    }
+
     if (topic.detail.lab?.type === "iot-content") {
       onOpenIotContentLab();
       return;
@@ -268,10 +280,10 @@ export function TopicDetails({
         </div>
         <div className="details-scroll">
           <p className="details-summary">{topic.summary[language]}</p>
-          <div className="details-block details-block-emphasis">
+          {!isSoundTopic ? <div className="details-block details-block-emphasis">
             <h3>{interfaceCopy.detailsExplanationTitle[language]}</h3>
             <p>{topic.detail.explanation[language]}</p>
-          </div>
+          </div> : null}
           {topic.detail.lab ? (
             <div className="details-block details-lab-block">
               <div className="sound-lab-entry">
@@ -279,9 +291,16 @@ export function TopicDetails({
                   <strong>{topic.detail.lab.title[language]}</strong>
                   <p>{topic.detail.lab.description[language]}</p>
                 </div>
-                <button className="diagram-open-button" type="button" onClick={openTopicLab}>
-                  {topic.detail.lab.buttonLabel[language]}
-                </button>
+                <div className="sound-lab-entry-actions">
+                  {isSoundTopic ? (
+                    <button className="diagram-open-button diagram-open-button-secondary" type="button" onClick={onOpenSoundTopicPage}>
+                      {language === "zh" ? "阅读详细内容" : "Read detailed content"}
+                    </button>
+                  ) : null}
+                  <button className="diagram-open-button" type="button" onClick={openTopicLab}>
+                    {topic.detail.lab.buttonLabel[language]}
+                  </button>
+                </div>
               </div>
             </div>
           ) : null}
@@ -293,11 +312,11 @@ export function TopicDetails({
               ))}
             </ul>
           </div>
-          {topic.detail.termExplanations ? (
+          {!isSoundTopic && topic.detail.termExplanations ? (
             <div className="details-block">
               <h3>{interfaceCopy.detailsRelatedTermsTitle[language]}</h3>
               <div className="term-grid">
-                {topic.detail.termExplanations.map((term) => (
+                {(isSoundTopic ? topic.detail.termExplanations.slice(0, 4) : topic.detail.termExplanations).map((term) => (
                   <article className="term-card" key={term.name.en}>
                     <h4>{term.name[language]}</h4>
                     <p>{term.explanation[language]}</p>
@@ -306,15 +325,15 @@ export function TopicDetails({
               </div>
             </div>
           ) : null}
-          <div className="details-block">
+          {!isSoundTopic ? <div className="details-block">
             <h3>{interfaceCopy.detailsConceptsTitle[language]}</h3>
             <ul>
               {topic.detail.keyConcepts.map((concept) => (
                 <li key={concept.en}>{concept[language]}</li>
               ))}
             </ul>
-          </div>
-          {topic.detail.diagram ? (
+          </div> : null}
+          {!isSoundTopic && topic.detail.diagram ? (
             <div className="details-block details-diagram-block">
               <h3>{interfaceCopy.detailsDiagramTitle[language]}</h3>
               {topic.detail.diagram.type === "sound-wave" ? (
@@ -326,18 +345,18 @@ export function TopicDetails({
               ) : null}
             </div>
           ) : null}
-          <div className="details-block">
+          {!isSoundTopic ? <div className="details-block">
             <h3>{interfaceCopy.detailsMisconceptionTitle[language]}</h3>
             <p>{topic.detail.misconception[language]}</p>
-          </div>
-          <div className="details-block">
+          </div> : null}
+          {!isSoundTopic ? <div className="details-block">
             <h3>{interfaceCopy.detailsContentDirectionTitle[language]}</h3>
             <p>{topic.detail.contentDirection[language]}</p>
-          </div>
-          <div className="details-formats">
+          </div> : null}
+          {!isSoundTopic ? <div className="details-formats">
             <span>{interfaceCopy.detailsFormatTitle[language]}</span>
             <strong>{interfaceCopy.detailsFormats[language]}</strong>
-          </div>
+          </div> : null}
         </div>
       </section>
     </div>

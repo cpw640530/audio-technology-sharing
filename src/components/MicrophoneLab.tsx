@@ -402,9 +402,15 @@ function createPolarPath(pattern: PolarPattern, angleDegrees: number) {
     x: centerX + Math.cos(sourceRadians) * sourceRadius,
     y: centerY + Math.sin(sourceRadians) * sourceRadius
   };
+  const pickupRadius = getPolarGain(pattern, angleDegrees) * radiusScale;
+  const pickup = {
+    x: centerX + Math.cos(sourceRadians) * pickupRadius,
+    y: centerY + Math.sin(sourceRadians) * pickupRadius
+  };
 
   return {
     path: `${points.join(" ")} Z`,
+    pickup,
     source
   };
 }
@@ -922,11 +928,16 @@ export function MicrophoneLab({ language, onBack }: MicrophoneLabProps) {
               <text className="lab-label" x="-12" y="-170">0°</text>
               <text className="lab-label" x="148" y="6">90°</text>
               <text className="lab-label" x="-28" y="184">180°</text>
+              <text className="lab-label" x="-170" y="6">-90°</text>
             </g>
             <path className="mic-polar-path" d={polar.path} />
             <circle className="mic-capsule" cx="190" cy="190" r="14" />
             <line className="mic-source-line" markerEnd="url(#micArrow)" x1="190" x2={polar.source.x.toFixed(2)} y1="190" y2={polar.source.y.toFixed(2)} />
             <circle className="mic-source-dot" cx={polar.source.x.toFixed(2)} cy={polar.source.y.toFixed(2)} r="10" />
+            <circle className="mic-pickup-dot" cx={polar.pickup.x.toFixed(2)} cy={polar.pickup.y.toFixed(2)} r="6" />
+            <text className="lab-chip" x="392" y="42">
+              {language === "zh" ? "外点：声源；内点：有效拾音" : "Outer: source; inner: effective pickup"}
+            </text>
             <text className="lab-chip" x="392" y="78">{language === "zh" ? `角度 ${angle}°` : `Angle ${angle}°`}</text>
             <text className="lab-chip" x="392" y="114">{language === "zh" ? `距离 ${distance.toFixed(1)} m` : `Distance ${distance.toFixed(1)} m`}</text>
             <text className="lab-chip" x="392" y="150">{language === "zh" ? `前级增益 ${gain}%` : `Preamp gain ${gain}%`}</text>

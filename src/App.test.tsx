@@ -46,6 +46,31 @@ describe("Audio knowledge app", () => {
     expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
   });
 
+  it("opens the Bluetooth application lab and separates permanent loss from late arrival", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: "应用场景" }));
+    await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /蓝牙音频/ }));
+    await user.click(screen.getByRole("button", { name: "打开蓝牙音频实验室" }));
+    expect(screen.getByRole("heading", { name: "蓝牙音频链路实验室" })).toBeInTheDocument();
+    expect(screen.getByTestId("bluetooth-payload")).toHaveTextContent("200.0 B");
+    expect(screen.getByTestId("bluetooth-latency")).toHaveTextContent("80 ms");
+    fireEvent.change(screen.getByRole("slider", { name: "最大额外到达延迟" }), { target: { value: "120" } });
+    expect(screen.getByRole("img", { name: /按时.*迟到.*丢失 5/ })).toBeInTheDocument();
+    expect(screen.getByTestId("bluetooth-packet-summary")).not.toHaveTextContent("迟到 0");
+    fireEvent.change(screen.getByRole("slider", { name: "接收缓冲等待" }), { target: { value: "160" } });
+    expect(screen.getByTestId("bluetooth-packet-summary")).toHaveTextContent("迟到 0");
+    expect(screen.getByTestId("bluetooth-packet-summary")).toHaveTextContent("永久丢失 5");
+    expect(screen.getByTestId("bluetooth-latency")).toHaveTextContent("200 ms");
+    await user.selectOptions(screen.getByRole("combobox", { name: "蓝牙编码器" }), "LDAC");
+    expect(screen.getByTestId("bluetooth-payload")).toHaveTextContent("825.0 B");
+    await user.click(screen.getByRole("button", { name: "English" }));
+    expect(screen.getByRole("heading", { name: "Bluetooth Audio Link Lab" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Bluetooth codec" })).toHaveValue("LDAC");
+    await user.click(screen.getByRole("button", { name: "Back to knowledge base" }));
+    expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
+  });
+
   it("switches between Chinese and English interface copy", async () => {
     const user = userEvent.setup();
     const { container } = render(<App />);
@@ -1407,31 +1432,35 @@ describe("Audio knowledge app", () => {
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
 
     const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(within(details).getByRole("heading", { name: "相关知识点逐条解释" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "频率" })).toBeInTheDocument();
-    expect(within(details).getByText(/频率表示声波每秒振动的次数/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "振幅" })).toBeInTheDocument();
-    expect(within(details).getByText(/振幅表示压力变化的幅度/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "相位" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "波长" })).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开声音波形实验室" })).toBeInTheDocument();
-    expect(within(details).getByText(/进入独立界面后，可以调节频率、振幅和相位/)).toBeInTheDocument();
-    expect(within(details).getByRole("img", { name: "声波频率、振幅、相位和波长图解" })).toBeInTheDocument();
-    const soundDiagram = within(details).getByRole("img", { name: "声波频率、振幅、相位和波长图解" });
-    expect(soundDiagram.querySelector('[data-testid="sound-wave-low"]')).toBeInTheDocument();
-    expect(soundDiagram.querySelector('[data-testid="sound-wave-mid"]')).toBeInTheDocument();
-    expect(soundDiagram.querySelector('[data-testid="sound-wave-high"]')).toBeInTheDocument();
-    expect(within(details).getAllByText("高频").length).toBeGreaterThan(0);
-    expect(within(details).getAllByText("低频").length).toBeGreaterThan(0);
+    expect(within(details).getByText(/调节频率、振幅和相位，观察周期与波形变化/)).toBeInTheDocument();
+    expect(within(details).queryByRole("heading", { name: "详细解释" })).not.toBeInTheDocument();
+    expect(within(details).queryByRole("heading", { name: "相关知识点逐条解释" })).not.toBeInTheDocument();
+    expect(within(details).queryByRole("heading", { name: "声压级 dBSPL" })).not.toBeInTheDocument();
+    expect(within(details).getByRole("button", { name: "阅读详细内容" })).toBeInTheDocument();
+    expect(within(details).queryByRole("img", { name: "声波频率、振幅、相位和波长图解" })).not.toBeInTheDocument();
+  });
 
-    const lowWave = soundDiagram.querySelector('[data-testid="sound-wave-low"]');
-    const highWave = soundDiagram.querySelector('[data-testid="sound-wave-high"]');
-    expect(Number(highWave?.getAttribute("data-cycles"))).toBeGreaterThan(
-      Number(lowWave?.getAttribute("data-cycles"))
+  it("opens a dedicated professional sound guide from the compact sound details", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /什么是声音/ }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+        name: "阅读详细内容"
+      })
     );
-    expect(Number(highWave?.getAttribute("data-amplitude"))).toBeGreaterThan(
-      Number(lowWave?.getAttribute("data-amplitude"))
-    );
+
+    const page = screen.getByRole("main", { name: "什么是声音" });
+    expect(within(page).getByRole("heading", { name: "从振动到 PCM：一条工程链路" })).toBeInTheDocument();
+    expect(within(page).getByRole("list", { name: "声音采集工程链路" })).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "核心概念词典" })).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "声压级 dBSPL" })).toBeInTheDocument();
+    expect(within(page).getByRole("button", { name: "打开声音波形实验室" })).toBeInTheDocument();
+
+    await user.click(within(page).getByRole("button", { name: "打开声音波形实验室" }));
+    expect(screen.getByRole("heading", { name: "声音波形实验室" })).toBeInTheDocument();
   });
 
   it("places lab entries directly after detailed explanations in topic details", async () => {
@@ -1440,16 +1469,14 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
     let details = screen.getByRole("dialog", { name: "主题详情" });
-    let explanationHeading = within(details).getByRole("heading", { name: "详细解释" });
     let keyPointsHeading = within(details).getByRole("heading", { name: "关键知识点" });
     let labButton = within(details).getByRole("button", { name: "打开声音波形实验室" });
-    expect(explanationHeading.compareDocumentPosition(labButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(labButton.compareDocumentPosition(keyPointsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     await user.click(within(details).getByRole("button", { name: "关闭详情" }));
     await user.click(screen.getByRole("button", { name: /数字音频基础/ }));
     details = screen.getByRole("dialog", { name: "主题详情" });
-    explanationHeading = within(details).getByRole("heading", { name: "详细解释" });
+    let explanationHeading = within(details).getByRole("heading", { name: "详细解释" });
     keyPointsHeading = within(details).getByRole("heading", { name: "关键知识点" });
     labButton = within(details).getByRole("button", { name: "打开采样、量化与编码实验室" });
     expect(explanationHeading.compareDocumentPosition(labButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -1477,7 +1504,8 @@ describe("Audio knowledge app", () => {
     );
 
     expect(screen.getByRole("img", { name: "当前声音波形图" })).toBeInTheDocument();
-    expect(screen.getByText(/y\(t\) = 0.60 · sin\(2π · 440t \+ 0.00π\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Δp\(t\) = 0.60 · sin\(2π · 440t \+ 0.00π\)/)).toBeInTheDocument();
+    expect(screen.getByText(/T = 2.27 ms · λ ≈ 0.780 m/)).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole("slider", { name: "频率" }), {
       target: { value: "880" }
@@ -1489,7 +1517,7 @@ describe("Audio knowledge app", () => {
       target: { value: "0.5" }
     });
 
-    expect(screen.getByText(/y\(t\) = 0.80 · sin\(2π · 880t \+ 0.50π\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Δp\(t\) = 0.80 · sin\(2π · 880t \+ 0.50π\)/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "三角波" }));
 
@@ -1603,7 +1631,7 @@ describe("Audio knowledge app", () => {
     expect(screen.queryByRole("dialog", { name: "主题详情" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "声音波形实验室" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "当前声音波形图" })).toBeInTheDocument();
-    expect(screen.getByText("一个周期 / 周期更短")).toBeInTheDocument();
+    expect(screen.getByText("周期 T（时间）")).toBeInTheDocument();
 
     const lowFrequencyPath = screen.getByRole("img", { name: "当前声音波形图" }).querySelector(".lab-wave-path")?.getAttribute("d") ?? "";
 
@@ -1796,6 +1824,7 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("heading", { name: "HAL / 驱动" })).toBeInTheDocument();
     expect(within(details).queryByRole("heading", { name: "低延迟通路入口" })).not.toBeInTheDocument();
     expect(within(details).getByText(/不展开具体 DSP 算法、接口时序或低延迟调参/)).toBeInTheDocument();
+    expect(within(details).getByText(/ALSA 是系统音频栈靠近驱动的一层实现/)).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开系统音频架构实验室" })).toBeInTheDocument();
   });
 
@@ -2640,6 +2669,8 @@ describe("Audio knowledge app", () => {
 
     expect(screen.getByRole("heading", { name: "麦克风指向性与拾音实验室" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "麦克风指向性极坐标图" })).toBeInTheDocument();
+    expect(screen.getByText("外点：声源；内点：有效拾音")).toBeInTheDocument();
+    expect(screen.getByText("-90°")).toBeInTheDocument();
     expect(screen.getByText("指向性：心形")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "8 字形" }));
@@ -2905,10 +2936,10 @@ describe("Audio knowledge app", () => {
     });
 
     await user.click(screen.getByRole("button", { name: "动态压缩" }));
-    expect(screen.getByText("Input waveform")).toBeInTheDocument();
-    expect(screen.getByText("Compressed waveform")).toBeInTheDocument();
-    expect(screen.getByText("Threshold")).toBeInTheDocument();
-    expect(screen.getByText("Gain reduction")).toBeInTheDocument();
+    expect(screen.getByText("输入波形")).toBeInTheDocument();
+    expect(screen.getByText("压缩后波形")).toBeInTheDocument();
+    expect(screen.getByText("阈值")).toBeInTheDocument();
+    expect(screen.getByText("增益衰减")).toBeInTheDocument();
     expect(screen.getByTestId("listening-compression-threshold-positive")).toBeInTheDocument();
     expect(screen.getByTestId("listening-compression-threshold-negative")).toBeInTheDocument();
     const compressedEnvelopeBefore = screen.getByTestId("listening-compressed-envelope").getAttribute("d");

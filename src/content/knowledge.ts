@@ -47,6 +47,7 @@ export type TopicLab = {
     | "automotive-audio"
     | "robot-audio"
     | "iot-content"
+    | "bluetooth-audio"
     | "ai-audio";
   initialMode?: AiAudioLabId;
   title: LocalizedText;
@@ -111,7 +112,7 @@ export const interfaceCopy = {
   detailsExplanationTitle: { zh: "详细解释", en: "Detailed explanation" },
   detailsRelatedTermsTitle: { zh: "相关知识点逐条解释", en: "Related knowledge explained" },
   detailsConceptsTitle: { zh: "关键概念", en: "Key concepts" },
-  detailsDiagramTitle: { zh: "交互式正弦波图解", en: "Interactive sine wave diagram" },
+  detailsDiagramTitle: { zh: "声音模型图解", en: "Sound model diagram" },
   detailsMisconceptionTitle: { zh: "常见误区", en: "Common misconception" },
   detailsContentDirectionTitle: { zh: "内容扩展建议", en: "Content expansion idea" },
   detailsFormatTitle: { zh: "适合内容形式", en: "Best content formats" },
@@ -139,51 +140,52 @@ export const categories: Category[] = [
       {
         title: { zh: "什么是声音", en: "What Sound Is" },
         summary: {
-          zh: "从振动、声波、传播介质和人耳感知建立第一层认知。",
-          en: "Build first principles from vibration, waves, medium propagation, and human hearing."
+          zh: "声音是介质中传播的压力扰动；从物理振动、数学模型一路理解到麦克风和 PCM。",
+          en: "Sound is a pressure disturbance traveling through a medium; connect physical vibration and mathematical models to microphones and PCM."
         },
         bullets: [
-          { zh: "频率、振幅、相位、波长", en: "Frequency, amplitude, phase, wavelength" },
-          { zh: "人耳听觉范围", en: "Human hearing range" },
-          { zh: "声音产生、传播和感知", en: "Generation, propagation, and perception" }
+          { zh: "介质中的压力扰动与能量传播", en: "Pressure disturbances and energy propagation in a medium" },
+          { zh: "频率、振幅、相位、周期和波长", en: "Frequency, amplitude, phase, period, and wavelength" },
+          { zh: "声压经过麦克风和 ADC 变成 PCM", en: "Sound pressure becomes PCM through a microphone and ADC" }
         ],
         detail: {
           explanation: {
-            zh: "声音本质上是物体振动引起的压力变化。振动通过空气、水或固体传播到耳朵，耳膜和内耳把这些压力变化转换成神经信号，大脑再把它们理解成音高、响度、音色和方向。",
-            en: "Sound is a pressure variation caused by vibration. The vibration travels through air, water, or solids to the ear, where the eardrum and inner ear convert it into neural signals that the brain interprets as pitch, loudness, timbre, and direction."
+            zh: "声音来自声源振动造成的局部压力和密度变化。介质粒子只在平衡位置附近往复运动，传播出去的是扰动和能量，而不是一团空气从声源跑到耳朵。单频纯音可近似写成 Δp(t) = Â·sin(2πft + φ)：Â 是峰值声压，f 是频率，φ 是初相位；真实语音和音乐则是许多频率、谐波与瞬态的叠加。",
+            en: "Sound begins when a vibrating source creates local pressure and density changes. Particles oscillate around equilibrium while the disturbance and energy travel; a parcel of air does not move all the way from source to listener. A pure tone can be approximated by Δp(t) = Â·sin(2πft + φ), where Â is peak sound pressure, f is frequency, and φ is initial phase. Speech and music combine many frequencies, harmonics, and transients."
           },
           keyConcepts: [
-            { zh: "频率决定音高，振幅通常影响响度。", en: "Frequency shapes pitch, while amplitude usually affects loudness." },
-            { zh: "相位描述波形在周期中的位置，多个声音叠加时会影响抵消或增强。", en: "Phase describes position within a waveform cycle and affects cancellation or reinforcement when sounds combine." },
-            { zh: "波长和传播速度相关，同一频率在不同介质中的波长不同。", en: "Wavelength depends on propagation speed, so the same frequency has different wavelengths in different media." }
+            { zh: "周期 T = 1/f；空气中的波长 λ = c/f。频率升高会让周期变短、波长变短，但不会自动增大振幅。", en: "Period T = 1/f, and wavelength in air is λ = c/f. Higher frequency shortens period and wavelength but does not automatically increase amplitude." },
+            { zh: "幅度描述物理变化大小；听感响度还受频率、持续时间、距离和人耳敏感度影响。", en: "Amplitude describes the size of a physical variation; perceived loudness also depends on frequency, duration, distance, and hearing sensitivity." },
+            { zh: "相位描述周期中的起始位置。单独持续纯音的绝对相位通常不明显，但多路声音叠加时会产生增强、抵消和定位差异。", en: "Phase describes the starting position within a cycle. Absolute phase of one sustained tone is usually subtle, but relative phase between signals changes reinforcement, cancellation, and localization." },
+            { zh: "工程链路是：声源振动 → 声压变化 → 麦克风电压 → ADC 采样量化 → PCM 样本。", en: "The engineering chain is: source vibration → pressure variation → microphone voltage → ADC sampling and quantization → PCM samples." }
           ],
           termExplanations: [
             {
               name: { zh: "频率", en: "Frequency" },
               explanation: {
-                zh: "频率表示声波每秒振动的次数，单位是赫兹 Hz。频率越高，通常听起来音调越高；频率越低，通常听起来越低沉。",
-                en: "Frequency is the number of waveform cycles per second, measured in hertz. Higher frequency usually sounds like a higher pitch, while lower frequency usually sounds deeper."
+                zh: "频率 f 表示每秒完成的周期数，单位是赫兹 Hz，周期 T = 1/f。1 kHz 纯音每毫秒完成一个周期。频率主要对应音高，但音高还会受到谐波结构和听觉机制影响。",
+                en: "Frequency f is the number of cycles completed each second, measured in hertz, with period T = 1/f. A 1 kHz tone completes one cycle per millisecond. Frequency is the main cue for pitch, although harmonics and hearing mechanisms also contribute."
               }
             },
             {
               name: { zh: "振幅", en: "Amplitude" },
               explanation: {
-                zh: "振幅表示压力变化的幅度，反映声波偏离平衡位置的大小。振幅越大，通常能量越强，听起来也更响，但实际响度还受频率和人耳敏感度影响。",
-                en: "Amplitude is the size of the pressure change, showing how far the wave moves away from its resting level. Larger amplitude usually means more energy and louder sound, though perceived loudness also depends on frequency and hearing sensitivity."
+                zh: "振幅表示压力偏离平衡值的大小。正弦波峰值为 Â，有效值 pᵣₘₛ = Â/√2；声压级计算使用有效值。提高频率不会自动提高振幅，两者必须分别控制。",
+                en: "Amplitude is the pressure deviation from equilibrium. For a sine wave with peak Â, pᵣₘₛ = Â/√2, and sound-pressure level uses the RMS value. Raising frequency does not automatically raise amplitude; they are independent controls."
               }
             },
             {
               name: { zh: "相位", en: "Phase" },
               explanation: {
-                zh: "相位描述声波在一个周期中走到哪里。两个相同频率的声音相位接近时会增强，相位相反时可能互相抵消，这也是降噪和阵列处理的重要基础。",
-                en: "Phase describes where a wave is within its cycle. Two sounds with similar frequency can reinforce each other when aligned, or cancel when opposite, which is important for noise cancellation and array processing."
+                zh: "相位 φ 描述波形在周期中的起始位置。单独播放一个持续纯音时，改变绝对相位通常不明显；两个同频信号叠加时，相对相位为 0° 会增强，接近 180° 会削弱或抵消。",
+                en: "Phase φ describes a waveform's starting position within its cycle. Changing the absolute phase of one sustained pure tone is usually subtle; for two equal-frequency signals, 0° relative phase reinforces while nearly 180° weakens or cancels."
               }
             },
             {
               name: { zh: "波长", en: "Wavelength" },
               explanation: {
-                zh: "波长是声波完成一个周期所占的空间距离。低频声音波长更长，更容易绕过障碍物；高频声音波长更短，更容易被遮挡或吸收。",
-                en: "Wavelength is the physical distance of one full cycle. Low-frequency sound has longer wavelengths and bends around obstacles more easily; high-frequency sound has shorter wavelengths and is blocked or absorbed more easily."
+                zh: "波长 λ 是一个周期在空间中的长度，λ = c/f。在约 20°C 空气中取 c ≈ 343 m/s，100 Hz、1 kHz 和 10 kHz 的波长分别约为 3.43 m、0.343 m 和 0.0343 m。",
+                en: "Wavelength λ is the spatial length of one cycle, λ = c/f. In air near 20°C, c ≈ 343 m/s, so 100 Hz, 1 kHz, and 10 kHz have wavelengths of about 3.43 m, 0.343 m, and 0.0343 m."
               }
             },
             {
@@ -199,6 +201,20 @@ export const categories: Category[] = [
                 zh: "声音需要介质传递压力变化。空气中的声速约为 343 m/s，水和固体中的速度通常更快，因此同样频率在不同介质中的波长也不同。",
                 en: "Sound needs a medium to carry pressure changes. In air the speed of sound is about 343 m/s, while it is usually faster in water and solids, so the same frequency has different wavelengths in different media."
               }
+            },
+            {
+              name: { zh: "声压级 dBSPL", en: "Sound pressure level (dBSPL)" },
+              explanation: {
+                zh: "空气声压级 Lₚ = 20·log₁₀(pᵣₘₛ / 20 μPa)。20 μPa 是空气中的参考声压；声压有效值加倍约增加 6 dB。dBSPL 是物理量，不等同于主观响度，也不能直接换算成 dBFS。",
+                en: "Airborne sound-pressure level is Lₚ = 20·log₁₀(pᵣₘₛ / 20 μPa). The 20 μPa value is the reference pressure; doubling RMS pressure adds about 6 dB. dBSPL is a physical measure, not perceived loudness, and it cannot be directly converted to dBFS."
+              }
+            },
+            {
+              name: { zh: "从声压到 PCM", en: "From pressure to PCM" },
+              explanation: {
+                zh: "麦克风把声压变化转换成模拟电压，前置放大器调整电平，ADC 按固定采样率取样并量化成整数，得到 PCM。PCM 数值表示采样时刻的相对幅度，不再是 Pa；必须经过麦克风灵敏度和增益校准才能反推声压。",
+                en: "A microphone converts pressure variation into analog voltage, a preamp sets the level, and an ADC samples and quantizes it into integer PCM values. PCM represents relative amplitude at each sample, not pressure in pascals; microphone sensitivity and gain calibration are required to recover sound pressure."
+              }
             }
           ],
           diagram: {
@@ -213,14 +229,14 @@ export const categories: Category[] = [
             type: "sound-wave",
             title: { zh: "声音波形实验室", en: "Sound Wave Lab" },
             description: {
-              zh: "进入独立界面后，可以调节频率、振幅和相位，观察波形和听感如何变化。",
-              en: "Open the lab to adjust frequency, amplitude, and phase while watching the waveform and sound change."
+              zh: "调节频率、振幅和相位，观察周期与波形变化；频率和振幅会改变听感，相位主要用于理解多信号叠加。",
+              en: "Adjust frequency, amplitude, and phase to observe period and waveform changes; frequency and amplitude affect hearing, while phase mainly explains signal combination."
             },
             buttonLabel: { zh: "打开声音波形实验室", en: "Open sound wave lab" }
           },
           misconception: {
-            zh: "声音不是只存在于空气中的东西，它需要介质传播，但介质可以是气体、液体或固体；真空中没有普通声波传播。",
-            en: "Sound is not limited to air. It needs a medium, which can be gas, liquid, or solid; ordinary sound waves do not propagate through a vacuum."
+            zh: "声音传播不是空气整体向前流动；频率更高也不代表振幅更大。声音需要气体、液体或固体等介质传递机械扰动，普通声波不能在真空中传播。",
+            en: "Sound propagation is not bulk forward motion of air, and higher frequency does not mean larger amplitude. Sound needs a gas, liquid, or solid to carry mechanical disturbance; ordinary sound waves do not travel through a vacuum."
           },
           contentDirection: {
             zh: "上方交互实验已经把频率、振幅、相位和播放音高连接起来；后续可以继续补充谐波、噪声和真实乐器波形对比。",
@@ -1000,6 +1016,7 @@ export const categories: Category[] = [
             { zh: "应用通常不直接控制扬声器或麦克风，而是通过系统 API 提交播放、录音或通话请求。", en: "Apps usually do not directly control speakers or microphones; they submit playback, recording, or call requests through system APIs." },
             { zh: "音频服务负责统一管理多个 App 的会话、音频焦点、音量、设备状态和路由策略。", en: "The audio service centrally manages sessions, focus, volume, device state, and routing policy across apps." },
             { zh: "播放、采集和全双工是三种链路方向；本卡只说明系统如何把模块接起来。", en: "Playback, capture, and full duplex are three path directions; this card only shows how the system connects modules." },
+            { zh: "在 Linux 中，ALSA 是系统音频栈靠近驱动的一层实现；PCM、period、DMA 环形 buffer 和 XRUN 的细节请看 ALSA 框架卡片。", en: "On Linux, ALSA is the implementation layer close to the driver; see the ALSA Framework card for PCM, periods, DMA ring buffers, and XRUN details." },
             { zh: "DSP 算法、接口时序、Codec 芯片和 buffer deadline 分别放在语音增强、数字接口、硬件和实时处理卡片中展开。", en: "DSP algorithms, interface timing, codec chips, and buffer deadlines are covered by the speech enhancement, digital interface, hardware, and real-time processing cards." }
           ],
           termExplanations: [
@@ -1071,8 +1088,8 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "ALSA（Advanced Linux Sound Architecture）是 Linux 内核的声音架构，同时通过 alsa-lib 向用户态提供 PCM、Control 等 API。一次 PCM 播放通常从应用和 alsa-lib 出发，经过 PCM 插件与内核 ALSA PCM，把样本放进由 DMA 消费的环形 buffer，最后沿 I2S 等接口到达 Codec DAC；录音方向相反。ALSA 负责设备与流的接口、参数协商和时序状态，但不会替你解决所有调度抖动或设备时钟问题。",
-            en: "ALSA (Advanced Linux Sound Architecture) is Linux's kernel sound architecture, with alsa-lib exposing user-space APIs such as PCM and Control. A PCM playback stream usually starts in the app and alsa-lib, passes through PCM plugins and the kernel ALSA PCM layer, places samples in a DMA-consumed ring buffer, and reaches a Codec DAC over interfaces such as I2S; capture reverses the path. ALSA provides device, parameter, and stream-state interfaces, but it cannot remove every scheduling or clocking problem."
+            zh: "ALSA（Advanced Linux Sound Architecture）是 Linux 的音频实现专题，不等于完整的系统音频架构。它通过 alsa-lib 向用户态提供 PCM、Control 等 API，并把流连接到内核 PCM、DMA 环形 buffer 和声卡；系统级的权限、音频焦点、应用会话和跨设备路由仍由上层音频服务负责。一次 PCM 播放通常从应用和 alsa-lib 出发，经过 PCM 插件与内核 ALSA PCM，把样本放进由 DMA 消费的环形 buffer，最后沿 I2S 等接口到达 Codec DAC；录音方向相反。ALSA 负责设备与流的接口、参数协商和时序状态，但不会替你解决所有调度抖动或设备时钟问题。",
+            en: "ALSA (Advanced Linux Sound Architecture) is a Linux implementation topic, not the whole system audio architecture. It exposes PCM and Control APIs through alsa-lib and connects streams to kernel PCM, DMA ring buffers, and sound cards; system-level permission, focus, app sessions, and cross-device routing remain the responsibility of higher audio services. A PCM playback stream usually starts in the app and alsa-lib, passes through PCM plugins and the kernel ALSA PCM layer, places samples in a DMA-consumed ring buffer, and reaches a Codec DAC over interfaces such as I2S; capture reverses the path. ALSA provides device, parameter, and stream-state interfaces, but it cannot remove every scheduling or clocking problem."
           },
           keyConcepts: [
             { zh: "card 是声卡容器，PCM device 是音频流端点，subdevice 是端点下可并行使用的逻辑实例；PCM stream 再区分 playback 和 capture。Control 是声卡级的独立控制接口。", en: "A card is a sound-card container, a PCM device is an audio-stream endpoint, and a subdevice is a logical instance that may be used in parallel; a PCM stream is playback or capture. Control is a separate card-level interface." },
@@ -1148,8 +1165,8 @@ export const categories: Category[] = [
             buttonLabel: { zh: "打开 ALSA 框架实验室", en: "Open ALSA framework lab" }
           },
           misconception: {
-            zh: "ALSA 不是只负责播放文件的命令行工具，也不是所有 Linux 音频都必须直接使用 hw 设备；它提供的是内核音频架构和用户态接口，默认路由、插件和上层音频服务仍可能参与。",
-            en: "ALSA is not merely a command-line file player, and every Linux audio path does not have to open a hw device directly. It provides the kernel audio architecture and user-space interfaces; default routing, plugins, and higher-level audio services may still participate."
+            zh: "ALSA 不是只负责播放文件的命令行工具，也不是完整的系统音频策略层；它提供的是 Linux 内核音频架构和用户态接口，默认路由、插件和上层音频服务仍可能参与。",
+            en: "ALSA is not merely a command-line file player or the complete system audio policy layer; it provides Linux kernel audio architecture and user-space interfaces, while default routing, plugins, and higher-level audio services may still participate."
           },
           contentDirection: {
             zh: "后续可继续补充 snd_pcm_* 状态机、asound.conf 路由、aplay -l / arecord -l 输出解读，以及 ASoC machine driver 与 DAPM 图。",
@@ -2107,6 +2124,31 @@ export const categories: Category[] = [
       en: "Understand audio technology through products, devices, and industry scenarios."
     },
     topics: [
+      {
+        title: { zh: "蓝牙音频：无线传输、编码与延迟", en: "Bluetooth Audio: Wireless Transport, Coding, and Latency" },
+        summary: { zh: "从手机到耳机，理解音乐、通话、LE Audio、编解码协商和播放缓冲。", en: "Follow audio from phone to headphones through music, calls, LE Audio, codec negotiation, and playout buffers." },
+        bullets: [
+          { zh: "A2DP / HFP / LE Audio", en: "A2DP / HFP / LE Audio" },
+          { zh: "码率、延迟与丢包补偿", en: "Bitrate, latency, and loss concealment" },
+          { zh: "TWS 同步与广播音频", en: "TWS synchronization and broadcast audio" }
+        ],
+        detail: {
+          explanation: { zh: "手机先解码音乐文件得到 PCM，经系统混音后按连接双方协商的蓝牙 Codec 重新编码，再通过协议栈和无线控制器发送。耳机按播放时限缓存、解码，经 DAC 和功放发声。经典蓝牙通常用 A2DP 播放音乐、HFP 进行双向通话；LE Audio 使用低功耗蓝牙等时传输，可支持多流同步和广播音频。", en: "A phone decodes a music file to PCM, mixes it, then encodes it with a Bluetooth codec negotiated with the receiver. The protocol stack and radio controller transport it to the headphones, which buffer to a playout deadline, decode, and drive the DAC and amplifier. Classic Bluetooth commonly uses A2DP for music and HFP for calls; LE Audio uses LE isochronous transport for features including synchronized streams and broadcast audio." },
+          keyConcepts: [
+            { zh: "Codec 是压缩方法，Profile 是设备如何协作的规范，蓝牙版本号不能代替具体功能支持。", en: "A codec compresses audio; a profile defines device interoperability. A Bluetooth version number alone does not establish feature support." },
+            { zh: "缓冲可接纳播放时限内的迟到数据，但不能恢复永久丢包；PLC 只能估计缺失音频。", en: "Buffers accept late data before its deadline, but cannot recover permanently lost packets. PLC estimates missing audio." },
+            { zh: "总延迟包含编码帧积累、处理、排队、无线调度、接收缓冲和播放，不由 Codec 名称单独决定。", en: "Total latency includes frame collection, processing, queuing, radio scheduling, receive buffering, and playout, not just the codec." }
+          ],
+          termExplanations: [
+            { name: { zh: "音乐与通话", en: "Music and calls" }, explanation: { zh: "A2DP 面向高质量媒体播放，常见 SBC、AAC 和厂商扩展 Codec；HFP 提供麦克风上行和通话下行。启用耳机麦克风可能触发路径切换，音质变化不一定是耳机故障。", en: "A2DP carries high-quality media using codecs such as SBC, AAC, and vendor extensions. HFP provides microphone uplink and call downlink. Activating a headset microphone may switch paths and change quality without a hardware fault." } },
+            { name: { zh: "LE Audio 与 LC3", en: "LE Audio and LC3" }, explanation: { zh: "LC3 是 LE Audio 的基础 Codec，支持 7.5 ms / 10 ms 帧间隔；帧间隔不是端到端延迟。发送端、接收端和操作系统都必须支持对应功能。", en: "LC3 is the foundational LE Audio codec and supports 7.5 ms / 10 ms frame intervals. A frame interval is not end-to-end latency. Sender, receiver, and operating system must support the relevant features." } },
+            { name: { zh: "TWS 与广播", en: "TWS and broadcast" }, explanation: { zh: "TWS 左右耳需要共同的播放时间和时钟漂移补偿，不只是同时收到包。LE Audio 多流便于同步分发；Auracast 广播可让多个兼容接收端收听同一节目。", en: "TWS earbuds need a shared playout time and clock-drift compensation, not merely simultaneous packet arrival. LE Audio supports synchronized streams; Auracast broadcast lets compatible receivers listen to a shared program." } }
+          ],
+          lab: { type: "bluetooth-audio", title: { zh: "蓝牙音频链路实验室", en: "Bluetooth Audio Link Lab" }, description: { zh: "切换编码配置并调整缓冲和传输条件，观察负载大小、播放时限和延迟预算。", en: "Switch coding configurations and adjust buffering and transport conditions to explore payload size, deadlines, and latency budgets." }, buttonLabel: { zh: "打开蓝牙音频实验室", en: "Open Bluetooth audio lab" } },
+          misconception: { zh: "高码率不等于必然更好听，LC3 也不等于固定低延迟；设备实现、内容、链路和播放策略都需一起评估。", en: "Higher bitrate does not automatically sound better, and LC3 does not guarantee a fixed low latency. Implementation, content, link conditions, and playout policy all matter." },
+          contentDirection: { zh: "用音乐耳机、车载通话、游戏、TWS 和公共广播比较需求；编码原理参见音频编解码卡片。", en: "Compare music headphones, car calls, gaming, TWS, and public broadcasts. See Audio Codecs for compression internals." }
+        }
+      },
       {
         title: { zh: "会议与通信", en: "Conferencing and Communication" },
         summary: {

@@ -69,7 +69,14 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
     () => createLabWavePath(waveform, amplitude, frequency, phase),
     [amplitude, frequency, phase, waveform]
   );
-  const formula = `y(t) = ${amplitude.toFixed(2)} · sin(2π · ${frequency}t + ${phase.toFixed(2)}π)`;
+  const phaseTerm = `${phase.toFixed(2)}π`;
+  const formula = waveform === "sine"
+    ? `Δp(t) = ${amplitude.toFixed(2)} · sin(2π · ${frequency}t + ${phaseTerm})`
+    : waveform === "square"
+      ? `Δp(t) = ${amplitude.toFixed(2)} · sgn(sin(2π · ${frequency}t + ${phaseTerm}))`
+      : `Δp(t) = ${amplitude.toFixed(2)} · (2/π)asin(sin(2π · ${frequency}t + ${phaseTerm}))`;
+  const periodMs = 1000 / frequency;
+  const wavelengthM = 343 / frequency;
   const currentWaveLabel = waveformLabels[waveform][language];
 
   function stopAudio(updateState = true) {
@@ -181,8 +188,8 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
           </h1>
           <p>
             {language === "zh"
-              ? "调节频率、振幅和相位，观察公式、图形和听感如何一起变化。"
-              : "Adjust frequency, amplitude, and phase to see how formula, shape, and hearing change together."}
+              ? "调节频率、振幅和相位：频率与振幅会改变听感，相位主要改变波形起点，并在多信号叠加时发挥作用。"
+              : "Adjust frequency, amplitude, and phase: frequency and amplitude affect hearing, while phase shifts the waveform start and matters mainly when signals combine."}
           </p>
         </div>
       </section>
@@ -198,6 +205,7 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
               {currentWaveLabel}
             </strong>
             <code>{formula}</code>
+            <span className="sound-lab-derived">T = {periodMs.toFixed(2)} ms · λ ≈ {wavelengthM.toFixed(3)} m</span>
           </div>
           <svg
             aria-label={language === "zh" ? "当前声音波形图" : "Current sound waveform"}
@@ -234,7 +242,7 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
               y2="300"
             />
             <text className="lab-label" x="148" y="324">
-              {language === "zh" ? "一个周期 / 周期更短" : "One cycle / shorter period"}
+              {language === "zh" ? "周期 T（时间）" : "Period T (time)"}
             </text>
             <text className="lab-chip" x="520" y="66">{`f = ${frequency} Hz`}</text>
             <text className="lab-chip" x="520" y="98">{`φ = ${phase.toFixed(2)}π`}</text>
@@ -324,8 +332,8 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
 
           <div className="lab-live-note">
             {language === "zh"
-              ? `频率越高，单位时间内周期越多，听起来音调越高。振幅为 ${amplitude.toFixed(2)}，图中的波峰和波谷距离中心线更明显。`
-              : `Higher frequency creates more cycles per second and sounds higher. Amplitude is ${amplitude.toFixed(2)}, which changes the distance from the center line.`}
+              ? `当前周期 ${periodMs.toFixed(2)} ms，空气中波长约 ${wavelengthM.toFixed(3)} m。频率与振幅彼此独立；相位滑块只移动图中的起点，单独持续纯音通常听不出绝对相位变化。`
+              : `The current period is ${periodMs.toFixed(2)} ms and the wavelength in air is about ${wavelengthM.toFixed(3)} m. Frequency and amplitude are independent; the phase slider shifts the plotted start, while absolute phase is usually inaudible for one sustained tone.`}
           </div>
         </div>
       </section>

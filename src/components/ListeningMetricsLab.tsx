@@ -631,12 +631,13 @@ function getCompressionGainMarker(intensity: number) {
 
 function createStereoChannelPath(intensity: number, channel: "left" | "right") {
   const amount = intensity / 100;
-  const pan = amount * 0.85;
-  const channelGain = channel === "left" ? 1 - pan * 0.58 : 1 + pan * 0.34;
+  // Constant-power pan: keep perceived loudness stable while moving from center to right.
+  const panAngle = Math.PI / 4 + amount * (Math.PI / 4);
+  const channelGain = channel === "left" ? Math.cos(panAngle) : Math.sin(panAngle);
   const centerY = channel === "left" ? 100 : 184;
 
   return createListeningWavePath({
-    amplitude: 28 * channelGain,
+    amplitude: 28 * Math.SQRT2 * channelGain,
     centerY,
     cycles: 6.2,
     phase: 0
@@ -698,9 +699,9 @@ function ListeningEffectChart({
           data-testid="listening-noisy-signal"
           d={createNoisySignalPath(intensity)}
         />
-        <text className="lab-chip" x="92" y="92">Clean signal</text>
-        <text className="lab-chip" x="428" y="92">Signal + noise</text>
-        <text className="lab-chip" data-testid="listening-noise-floor-label" x="560" y="286">Noise floor</text>
+        <text className="lab-chip" x="92" y="92">{language === "zh" ? "纯净信号" : "Clean signal"}</text>
+        <text className="lab-chip" x="428" y="92">{language === "zh" ? "信号 + 噪声" : "Signal + noise"}</text>
+        <text className="lab-chip" data-testid="listening-noise-floor-label" x="560" y="286">{language === "zh" ? "噪声底" : "Noise floor"}</text>
       </>
     );
   }
@@ -748,11 +749,11 @@ function ListeningEffectChart({
           y1={gainMarker.inputY.toFixed(2)}
           y2={gainMarker.outputY.toFixed(2)}
         />
-        <text className="lab-chip" x="76" y="62">Input waveform</text>
-        <text className="lab-chip" x="248" y="62">Compressed waveform</text>
-        <text className="lab-chip" x="570" y={Math.max(72, positiveThresholdY - 10).toFixed(2)}>Threshold</text>
+        <text className="lab-chip" x="76" y="62">{language === "zh" ? "输入波形" : "Input waveform"}</text>
+        <text className="lab-chip" x="248" y="62">{language === "zh" ? "压缩后波形" : "Compressed waveform"}</text>
+        <text className="lab-chip" x="570" y={Math.max(72, positiveThresholdY - 10).toFixed(2)}>{language === "zh" ? "阈值" : "Threshold"}</text>
         <text className="lab-chip" x={Math.min(548, gainMarker.x + 16).toFixed(2)} y={((gainMarker.inputY + gainMarker.outputY) / 2).toFixed(2)}>
-          Gain reduction
+          {language === "zh" ? "增益衰减" : "Gain reduction"}
         </text>
       </>
     );
@@ -773,7 +774,9 @@ function ListeningEffectChart({
         />
         <text className="lab-chip" x="70" y="74">L</text>
         <text className="lab-chip" x="70" y="158">R</text>
-        <text className="lab-chip" data-testid="listening-stereo-pan-label" x="528" y="284">Pan: center → right</text>
+        <text className="lab-chip" data-testid="listening-stereo-pan-label" x="528" y="284">
+          {language === "zh" ? "声像：中心 → 右侧" : "Pan: center → right"}
+        </text>
       </>
     );
   }
@@ -853,9 +856,11 @@ function ListeningEffectChart({
           data-testid="listening-processed-wave"
           d={createToneComparisonPath(effect, intensity, true)}
         />
-        <text className="lab-chip" x="78" y="274">Clean wave</text>
+        <text className="lab-chip" x="78" y="274">{language === "zh" ? "原始波形" : "Clean wave"}</text>
         <text className="lab-chip" x="410" y="274">
-          {effect === "brightness" ? "Treble boosted" : "Low-mid buildup"}
+          {effect === "brightness"
+            ? language === "zh" ? "高频提升后" : "Treble boosted"
+            : language === "zh" ? "低中频堆积后" : "Low-mid buildup"}
         </text>
         <text className="lab-chip" x={effect === "brightness" ? "526" : "188"} y={effect === "brightness" ? "56" : "64"}>
           {effect === "brightness"
@@ -959,15 +964,19 @@ export function ListeningMetricsLab({ language, onBack }: ListeningMetricsLabPro
   const chartAxisLabel =
     activeEffect === "distortion"
       ? language === "zh"
-        ? "时间 / 谐波分量"
-        : "Time / harmonic components"
+        ? "时间 / 幅度（下方为谐波阶次）"
+        : "Time / amplitude (harmonic order below)"
       : activeEffect === "brightness" || activeEffect === "muddy"
       ? language === "zh"
         ? "低频 → 高频"
         : "Low → high"
+      : activeEffect === "stereo"
+      ? language === "zh"
+        ? "时间 / 左右声道"
+        : "Time / left-right channels"
       : language === "zh"
-        ? "时间 / 声道示意"
-        : "Time / channel view";
+        ? "时间 / 幅度"
+        : "Time / amplitude";
   const chartAxisLabelY = activeEffect === "brightness" || activeEffect === "muddy" ? 292 : activeEffect === "distortion" ? 288 : 256;
   const showAxisGuideLabel = activeEffect !== "brightness" && activeEffect !== "muddy";
   const showGenericChartGuides = activeEffect !== "brightness" && activeEffect !== "muddy";
