@@ -5,6 +5,7 @@ import type { Language } from "../content/knowledge";
 type MicrophoneLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type PolarPattern = "omni" | "cardioid" | "figure8";
@@ -731,7 +732,7 @@ function PrincipleDiagram({
   );
 }
 
-export function MicrophoneLab({ language, onBack }: MicrophoneLabProps) {
+export function MicrophoneLab({ language, onBack, onBackToDetails }: MicrophoneLabProps) {
   const [principle, setPrinciple] = useState<MicPrinciple>("electret");
   const [principleSpl, setPrincipleSpl] = useState(94);
   const [pattern, setPattern] = useState<PolarPattern>("cardioid");
@@ -851,10 +852,16 @@ export function MicrophoneLab({ language, onBack }: MicrophoneLabProps) {
   return (
     <main className="microphone-lab-page">
       <section className="sound-lab-hero" aria-labelledby="microphone-lab-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
+        <div className="sound-lab-back-actions">
+        <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
           <ArrowLeft size={18} aria-hidden="true" />
           {language === "zh" ? "返回知识库" : "Back to knowledge base"}
         </button>
+        {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+          <ArrowLeft size={18} aria-hidden="true" />
+          {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+        </button>}
+        </div>
         <div>
           <span className="section-kicker">{language === "zh" ? "硬件实验" : "Hardware lab"}</span>
           <h1 id="microphone-lab-title">{language === "zh" ? "麦克风指向性与拾音实验室" : "Microphone Pickup Lab"}</h1>

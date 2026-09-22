@@ -5,6 +5,7 @@ import type { Language } from "../content/knowledge";
 type DigitalInterfaceLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type InterfaceProtocol = "i2s" | "tdm" | "pdm" | "spdif" | "usb";
@@ -610,7 +611,7 @@ function renderProtocolDiagram(protocol: InterfaceProtocol, language: Language, 
   return renderI2sDiagram(language, bitDepth, channels);
 }
 
-export function DigitalInterfaceLab({ language, onBack }: DigitalInterfaceLabProps) {
+export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: DigitalInterfaceLabProps) {
   const [protocol, setProtocol] = useState<InterfaceProtocol>("i2s");
   const [sampleRate, setSampleRate] = useState(48);
   const [bitDepth, setBitDepth] = useState(24);
@@ -627,10 +628,16 @@ export function DigitalInterfaceLab({ language, onBack }: DigitalInterfaceLabPro
   return (
     <main className="digital-interface-page">
       <section className="sound-lab-hero" aria-labelledby="digital-interface-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
+        <div className="sound-lab-back-actions">
+        <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
           <ArrowLeft size={18} aria-hidden="true" />
           {language === "zh" ? "返回知识库" : "Back to knowledge base"}
         </button>
+        {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+          <ArrowLeft size={18} aria-hidden="true" />
+          {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+        </button>}
+        </div>
         <div>
           <span className="section-kicker">{language === "zh" ? "硬件实验" : "Hardware lab"}</span>
           <h1 id="digital-interface-title">{language === "zh" ? "数字音频接口实验室" : "Digital Audio Interface Lab"}</h1>

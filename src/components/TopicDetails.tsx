@@ -15,15 +15,18 @@ type TopicDetailsProps = {
   onOpenAiAudioLab: (initialMode?: AiAudioLabId) => void;
   onOpenAudioCodecLab: () => void;
   onOpenAudioUnitsLab: () => void;
+  onOpenAudioUnitsPage: () => void;
   onOpenAutomotiveAudioLab: () => void;
   onOpenRobotAudioLab: () => void;
   onOpenBluetoothAudioLab: () => void;
   onOpenCodecLab: () => void;
   onOpenCoreSignalProcessingLab: () => void;
   onOpenDigitalLab: () => void;
+  onOpenDigitalPage: () => void;
   onOpenDigitalInterfaceLab: () => void;
   onOpenIotContentLab: () => void;
   onOpenListeningMetricsLab: () => void;
+  onOpenListeningMetricsPage: () => void;
   onOpenMeetingCommunicationLab: () => void;
   onOpenMicrophoneLab: () => void;
   onOpenRealtimeAudioLab: () => void;
@@ -120,15 +123,18 @@ export function TopicDetails({
   onOpenAiAudioLab,
   onOpenAudioCodecLab,
   onOpenAudioUnitsLab,
+  onOpenAudioUnitsPage,
   onOpenAutomotiveAudioLab,
   onOpenRobotAudioLab,
   onOpenBluetoothAudioLab,
   onOpenCodecLab,
   onOpenCoreSignalProcessingLab,
   onOpenDigitalLab,
+  onOpenDigitalPage,
   onOpenDigitalInterfaceLab,
   onOpenIotContentLab,
   onOpenListeningMetricsLab,
+  onOpenListeningMetricsPage,
   onOpenMeetingCommunicationLab,
   onOpenMicrophoneLab,
   onOpenRealtimeAudioLab,
@@ -139,6 +145,10 @@ export function TopicDetails({
   onOpenSystemAudioLab
 }: TopicDetailsProps) {
   const isSoundTopic = topic.detail.lab?.type === "sound-wave";
+  const isAudioUnitsTopic = topic.detail.lab?.type === "audio-units";
+  const isDigitalTopic = topic.detail.lab?.type === "sampling-quantization";
+  const isListeningTopic = topic.detail.lab?.type === "listening-metrics";
+  const isCompactTopic = isSoundTopic || isAudioUnitsTopic || isDigitalTopic || isListeningTopic;
 
   function closeDetails() {
     onClose();
@@ -280,7 +290,7 @@ export function TopicDetails({
         </div>
         <div className="details-scroll">
           <p className="details-summary">{topic.summary[language]}</p>
-          {!isSoundTopic ? <div className="details-block details-block-emphasis">
+          {!isCompactTopic ? <div className="details-block details-block-emphasis">
             <h3>{interfaceCopy.detailsExplanationTitle[language]}</h3>
             <p>{topic.detail.explanation[language]}</p>
           </div> : null}
@@ -292,8 +302,18 @@ export function TopicDetails({
                   <p>{topic.detail.lab.description[language]}</p>
                 </div>
                 <div className="sound-lab-entry-actions">
-                  {isSoundTopic ? (
-                    <button className="diagram-open-button diagram-open-button-secondary" type="button" onClick={onOpenSoundTopicPage}>
+                  {isCompactTopic ? (
+                    <button
+                      className="diagram-open-button diagram-open-button-secondary"
+                      type="button"
+                      onClick={isSoundTopic
+                        ? onOpenSoundTopicPage
+                        : isAudioUnitsTopic
+                          ? onOpenAudioUnitsPage
+                          : isDigitalTopic
+                            ? onOpenDigitalPage
+                            : onOpenListeningMetricsPage}
+                    >
                       {language === "zh" ? "阅读详细内容" : "Read detailed content"}
                     </button>
                   ) : null}
@@ -312,11 +332,11 @@ export function TopicDetails({
               ))}
             </ul>
           </div>
-          {!isSoundTopic && topic.detail.termExplanations ? (
+          {!isCompactTopic && topic.detail.termExplanations ? (
             <div className="details-block">
               <h3>{interfaceCopy.detailsRelatedTermsTitle[language]}</h3>
               <div className="term-grid">
-                {(isSoundTopic ? topic.detail.termExplanations.slice(0, 4) : topic.detail.termExplanations).map((term) => (
+                {topic.detail.termExplanations.map((term) => (
                   <article className="term-card" key={term.name.en}>
                     <h4>{term.name[language]}</h4>
                     <p>{term.explanation[language]}</p>
@@ -325,7 +345,7 @@ export function TopicDetails({
               </div>
             </div>
           ) : null}
-          {!isSoundTopic ? <div className="details-block">
+          {!isCompactTopic ? <div className="details-block">
             <h3>{interfaceCopy.detailsConceptsTitle[language]}</h3>
             <ul>
               {topic.detail.keyConcepts.map((concept) => (
@@ -333,7 +353,7 @@ export function TopicDetails({
               ))}
             </ul>
           </div> : null}
-          {!isSoundTopic && topic.detail.diagram ? (
+          {!isCompactTopic && topic.detail.diagram ? (
             <div className="details-block details-diagram-block">
               <h3>{interfaceCopy.detailsDiagramTitle[language]}</h3>
               {topic.detail.diagram.type === "sound-wave" ? (
@@ -345,15 +365,15 @@ export function TopicDetails({
               ) : null}
             </div>
           ) : null}
-          {!isSoundTopic ? <div className="details-block">
+          {!isCompactTopic ? <div className="details-block">
             <h3>{interfaceCopy.detailsMisconceptionTitle[language]}</h3>
             <p>{topic.detail.misconception[language]}</p>
           </div> : null}
-          {!isSoundTopic ? <div className="details-block">
+          {!isCompactTopic ? <div className="details-block">
             <h3>{interfaceCopy.detailsContentDirectionTitle[language]}</h3>
             <p>{topic.detail.contentDirection[language]}</p>
           </div> : null}
-          {!isSoundTopic ? <div className="details-formats">
+          {!isCompactTopic ? <div className="details-formats">
             <span>{interfaceCopy.detailsFormatTitle[language]}</span>
             <strong>{interfaceCopy.detailsFormats[language]}</strong>
           </div> : null}

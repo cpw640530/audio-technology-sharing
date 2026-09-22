@@ -21,6 +21,52 @@ describe("Audio knowledge app", () => {
     expect(screen.queryByRole("heading", { name: "音频技术分享" })).not.toBeInTheDocument();
   });
 
+  it("navigates the fundamental guides without crossing category boundaries", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /什么是声音/ }));
+    expect(screen.getByRole("button", { name: "上一张卡片" })).toBeDisabled();
+    for (const title of ["声音与音频单位", "数字音频基础", "听感与指标"]) {
+      await user.click(screen.getByRole("button", { name: "下一张卡片" }));
+      expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
+    }
+    expect(screen.getByRole("button", { name: "下一张卡片" })).toBeDisabled();
+    for (const title of ["数字音频基础", "声音与音频单位", "什么是声音"]) {
+      await user.click(screen.getByRole("button", { name: "上一张卡片" }));
+      expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
+    }
+    await user.click(screen.getByRole("button", { name: "English" }));
+    expect(screen.getByRole("button", { name: "Previous topic" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Back to topics" }));
+    expect(screen.getByRole("region", { name: "Topic Cards" })).toBeInTheDocument();
+  });
+
+  it("navigates hardware guides and returns from each lab in both languages", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    for (const zh of [true, false]) {
+      if (!zh) await user.click(screen.getByRole("button", { name: "English" }));
+      await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: zh ? /^音频硬件 麦克风/ : /Microphones/ }));
+      const titles = zh
+        ? ["麦克风", "ADC / DAC / Codec", "数字音频接口 / 传输协议", "功放与扬声器"]
+        : ["Microphones", "ADC / DAC / Codec", "Digital Audio Interfaces / Transport Protocols", "Amplifiers and Speakers"];
+      expect(screen.getByRole("button", { name: zh ? "上一张卡片" : "Previous topic" })).toBeDisabled();
+      for (const [index, title] of titles.entries()) {
+        const page = screen.getByRole("main", { name: title });
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+        await user.click(within(page).getByRole("button", { name: zh ? /^打开/ : /^Open/ }));
+        await user.click(screen.getByRole("button", { name: zh ? "返回详细内容" : "Back to detailed content" }));
+        expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
+        if (index < titles.length - 1) await user.click(screen.getByRole("button", { name: zh ? "下一张卡片" : "Next topic" }));
+      }
+      expect(screen.getByRole("button", { name: zh ? "下一张卡片" : "Next topic" })).toBeDisabled();
+      await user.click(screen.getByRole("button", { name: zh ? "上一张卡片" : "Previous topic" }));
+      expect(screen.getByRole("main", { name: titles[2] })).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: zh ? "返回知识库" : "Back to knowledge base" }));
+      expect(within(screen.getByTestId("topic-grid")).getAllByRole("button")).toHaveLength(4);
+    }
+  });
+
   it("opens robot anatomy and updates scene geometry without implying single-mic localization", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -637,7 +683,7 @@ describe("Audio knowledge app", () => {
     expect(within(topicGrid).queryByText("语音识别 ASR")).not.toBeInTheDocument();
   });
 
-  it("adds sound and audio units as a fundamentals card with a lab entry", async () => {
+  it("opens the audio units guide directly from its card", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -650,15 +696,16 @@ describe("Audio knowledge app", () => {
 
     await user.click(within(topicGrid).getByRole("button", { name: /声音与音频单位/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(within(details).getByText(/dB 本身只是两个量之间的对数比例/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "dBSPL" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "dBFS" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "dBu / dBV" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "LUFS" })).toBeInTheDocument();
+    const details = screen.getByRole("main", { name: "声音与音频单位" });
     expect(
       within(details).getByRole("button", { name: "打开声音与音频单位实验室" })
     ).toBeInTheDocument();
+
+
+    expect(screen.getByRole("main", { name: "声音与音频单位" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "同一个 dB，不同的参考点" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "常见单位词典" })).toBeInTheDocument();
+    expect(screen.getByText(/不能把 -6 dBFS 直接换成 94 dBSPL/)).toBeInTheDocument();
   });
 
   it("opens the sound and audio units lab with reference points and conversions", async () => {
@@ -669,18 +716,19 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频基础/ }));
     await user.click(screen.getByRole("button", { name: /声音与音频单位/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      within(screen.getByRole("main", { name: "声音与音频单位" })).getByRole("button", {
         name: "打开声音与音频单位实验室"
       })
     );
 
     expect(screen.getByRole("heading", { name: "声音与音频单位实验室" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
     const diagram = screen.getByRole("img", { name: "声音与音频单位参考关系图" });
     expect(within(diagram).getAllByText("dBSPL").length).toBeGreaterThan(0);
     expect(within(diagram).getByText("20 uPa")).toBeInTheDocument();
     expect(within(diagram).getAllByText("dBFS").length).toBeGreaterThan(0);
     expect(within(diagram).getByText("0 dBFS 满刻度")).toBeInTheDocument();
-    expect(screen.getByText("参考：20 uPa 声压")).toBeInTheDocument();
     expect(screen.getByText("+4 dBu 约等于 1.228 Vrms")).toBeInTheDocument();
     expect(screen.getByText("48 kHz 下 480 samples = 10 ms")).toBeInTheDocument();
     expect(screen.getByText(/不能把 -6 dBFS 直接换成 94 dBSPL/)).toBeInTheDocument();
@@ -694,7 +742,7 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频基础/ }));
     await user.click(screen.getByRole("button", { name: /声音与音频单位/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      within(screen.getByRole("main", { name: "声音与音频单位" })).getByRole("button", {
         name: "打开声音与音频单位实验室"
       })
     );
@@ -1425,32 +1473,24 @@ describe("Audio knowledge app", () => {
     expect(within(englishDetails).getByRole("heading", { name: "Common misconception" })).toBeInTheDocument();
   });
 
-  it("explains sound topic bullets one by one with a diagram", async () => {
+  it("opens sound content directly without an intermediate dialog", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(within(details).getByRole("button", { name: "打开声音波形实验室" })).toBeInTheDocument();
-    expect(within(details).getByText(/调节频率、振幅和相位，观察周期与波形变化/)).toBeInTheDocument();
-    expect(within(details).queryByRole("heading", { name: "详细解释" })).not.toBeInTheDocument();
-    expect(within(details).queryByRole("heading", { name: "相关知识点逐条解释" })).not.toBeInTheDocument();
-    expect(within(details).queryByRole("heading", { name: "声压级 dBSPL" })).not.toBeInTheDocument();
-    expect(within(details).getByRole("button", { name: "阅读详细内容" })).toBeInTheDocument();
-    expect(within(details).queryByRole("img", { name: "声波频率、振幅、相位和波长图解" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "什么是声音" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "打开声音波形实验室" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "阅读详细内容" })).not.toBeInTheDocument();
+    expect(document.body).not.toHaveClass("details-open");
   });
 
-  it("opens a dedicated professional sound guide from the compact sound details", async () => {
+  it("opens the sound guide and its lab directly from the card", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
-    await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
-        name: "阅读详细内容"
-      })
-    );
 
     const page = screen.getByRole("main", { name: "什么是声音" });
     expect(within(page).getByRole("heading", { name: "从振动到 PCM：一条工程链路" })).toBeInTheDocument();
@@ -1461,35 +1501,26 @@ describe("Audio knowledge app", () => {
 
     await user.click(within(page).getByRole("button", { name: "打开声音波形实验室" }));
     expect(screen.getByRole("heading", { name: "声音波形实验室" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
   });
 
-  it("places lab entries directly after detailed explanations in topic details", async () => {
+  it("opens all four fundamental guides directly in both languages", async () => {
     const user = userEvent.setup();
     render(<App />);
-
-    await user.click(screen.getByRole("button", { name: /什么是声音/ }));
-    let details = screen.getByRole("dialog", { name: "主题详情" });
-    let keyPointsHeading = within(details).getByRole("heading", { name: "关键知识点" });
-    let labButton = within(details).getByRole("button", { name: "打开声音波形实验室" });
-    expect(labButton.compareDocumentPosition(keyPointsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-
-    await user.click(within(details).getByRole("button", { name: "关闭详情" }));
-    await user.click(screen.getByRole("button", { name: /数字音频基础/ }));
-    details = screen.getByRole("dialog", { name: "主题详情" });
-    let explanationHeading = within(details).getByRole("heading", { name: "详细解释" });
-    keyPointsHeading = within(details).getByRole("heading", { name: "关键知识点" });
-    labButton = within(details).getByRole("button", { name: "打开采样、量化与编码实验室" });
-    expect(explanationHeading.compareDocumentPosition(labButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(labButton.compareDocumentPosition(keyPointsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-
-    await user.click(within(details).getByRole("button", { name: "关闭详情" }));
-    await user.click(screen.getByRole("button", { name: /听感与指标/ }));
-    details = screen.getByRole("dialog", { name: "主题详情" });
-    explanationHeading = within(details).getByRole("heading", { name: "详细解释" });
-    keyPointsHeading = within(details).getByRole("heading", { name: "关键知识点" });
-    labButton = within(details).getByRole("button", { name: "打开听感与指标实验室" });
-    expect(explanationHeading.compareDocumentPosition(labButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(labButton.compareDocumentPosition(keyPointsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    for (const titles of [
+      ["什么是声音", "声音与音频单位", "数字音频基础", "听感与指标"],
+      ["What Sound Is", "Sound and Audio Units", "Digital Audio Basics", "Listening Perception and Metrics"]
+    ]) {
+      const chinese = titles[0] === "什么是声音";
+      if (!chinese) await user.click(screen.getByRole("button", { name: "English" }));
+      for (const title of titles) {
+        await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: new RegExp(title) }));
+        expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: chinese ? "返回知识库" : "Back to knowledge base" }));
+      }
+    }
   });
 
   it("lets readers adjust parameters in the independent sound wave lab", async () => {
@@ -1498,7 +1529,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      within(screen.getByRole("main", { name: "什么是声音" })).getByRole("button", {
         name: "打开声音波形实验室"
       })
     );
@@ -1591,7 +1622,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      within(screen.getByRole("main", { name: "什么是声音" })).getByRole("button", {
         name: "打开声音波形实验室"
       })
     );
@@ -1624,7 +1655,7 @@ describe("Audio knowledge app", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "什么是声音" });
 
     await user.click(within(details).getByRole("button", { name: "打开声音波形实验室" }));
 
@@ -1656,20 +1687,20 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("heading", { name: "音频技术分享" })).toBeInTheDocument();
   });
 
-  it("explains digital audio basics and links to the sampling lab", async () => {
+  it("opens the digital audio guide directly from its card", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: /数字音频基础/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "数字音频基础" });
     expect(within(details).getByRole("heading", { name: "采样" })).toBeInTheDocument();
-    expect(within(details).getByText(/采样把连续时间中的模拟波形/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "量化" })).toBeInTheDocument();
-    expect(within(details).getByText(/量化把连续幅度映射到有限个数字等级/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "编码" })).toBeInTheDocument();
-    expect(within(details).getByText(/编码决定这些采样值如何组织/)).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开采样、量化与编码实验室" })).toBeInTheDocument();
+
+    expect(screen.getByRole("main", { name: "数字音频基础" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "采样率决定时间轴的分辨率" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "位深决定幅度能分多细" })).toBeInTheDocument();
+    expect(screen.getByText("DR ≈ 6.02n + 1.76 dB")).toBeInTheDocument();
   });
 
   it("lets readers compare sampling rate and bit depth in the digital audio lab", async () => {
@@ -1678,12 +1709,14 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /数字音频基础/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      within(screen.getByRole("main", { name: "数字音频基础" })).getByRole("button", {
         name: "打开采样、量化与编码实验室"
       })
     );
 
     expect(screen.getByRole("heading", { name: "采样、量化与编码实验室" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "采样与量化可视化图" })).toBeInTheDocument();
     expect(screen.getByText("当前采样点：24 个")).toBeInTheDocument();
     expect(screen.getByText("当前量化等级：16 级")).toBeInTheDocument();
@@ -1725,8 +1758,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /数字音频基础/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(within(details).getByText(/PCM 不是压缩算法/)).toBeInTheDocument();
+    const details = screen.getByRole("main", { name: "数字音频基础" });
 
     await user.click(within(details).getByRole("button", { name: "打开采样、量化与编码实验室" }));
     await user.click(screen.getByRole("button", { name: "PCM 编码" }));
@@ -1745,7 +1777,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /数字音频基础/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      within(screen.getByRole("main", { name: "数字音频基础" })).getByRole("button", {
         name: "打开采样、量化与编码实验室"
       })
     );
@@ -1755,8 +1787,8 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("PCM 码率 = 采样率 × 位深 × 声道数")).toBeInTheDocument();
     expect(screen.getByText(/采样 #1/)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "PCM 如何变成 WAV" })).toBeInTheDocument();
-    expect(screen.getAllByText(/给 PCM 加上 RIFF\/WAVE 文件头/).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "编码格式原理速览" })).toBeInTheDocument();
+    expect(screen.getByText("这里关注封装关系：文件头描述参数，PCM Data 保存样本。")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "编码格式快速对比" })).toBeInTheDocument();
     expect(screen.getByText("MP3")).toBeInTheDocument();
     expect(screen.getByText("约 6:1 到 12:1")).toBeInTheDocument();
     expect(screen.getByText("AAC")).toBeInTheDocument();
@@ -1765,7 +1797,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("约 10:1 到 30:1")).toBeInTheDocument();
     expect(screen.getByText("Opus")).toBeInTheDocument();
     expect(screen.getByText("ADPCM")).toBeInTheDocument();
-    expect(screen.getByText(/保存当前采样与预测值之间的差分/)).toBeInTheDocument();
+    expect(screen.getByText("预测差分编码")).toBeInTheDocument();
   });
 
   it("expands ADC DAC Codec hardware knowledge with detailed terms and a lab entry", async () => {
@@ -1774,7 +1806,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /ADC \/ DAC \/ Codec/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "ADC / DAC / Codec" });
     expect(within(details).getByText(/ADC 把麦克风、线路输入等模拟电压/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "ADC" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "DAC" })).toBeInTheDocument();
@@ -1790,7 +1822,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /功放与扬声器/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "功放与扬声器" });
     expect(within(details).getByText(/功放负责把 DAC、Codec 或前级输出的小信号/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "功放是什么" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "Class A / AB / D" })).toBeInTheDocument();
@@ -1859,7 +1891,7 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
     await user.click(screen.getByRole("button", { name: /实时音频处理/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      screen.getByRole("button", {
         name: "打开实时音频处理实验室"
       })
     );
@@ -1950,7 +1982,7 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
     await user.click(screen.getByRole("button", { name: /实时音频处理/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      screen.getByRole("button", {
         name: "打开实时音频处理实验室"
       })
     );
@@ -1987,7 +2019,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /系统音频架构/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      screen.getByRole("button", {
         name: "打开系统音频架构实验室"
       })
     );
@@ -2089,7 +2121,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /系统音频架构/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      screen.getByRole("button", {
         name: "打开系统音频架构实验室"
       })
     );
@@ -2132,7 +2164,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /功放与扬声器/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      screen.getByRole("button", {
         name: "打开功放与扬声器实验室"
       })
     );
@@ -2154,7 +2186,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /功放与扬声器/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      screen.getByRole("button", {
         name: "打开功放与扬声器实验室"
       })
     );
@@ -2293,7 +2325,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /功放与扬声器/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      screen.getByRole("button", {
         name: "打开功放与扬声器实验室"
       })
     );
@@ -2321,7 +2353,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(within(topicGrid).getByRole("button", { name: /数字音频接口 \/ 传输协议/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "数字音频接口 / 传输协议" });
     expect(within(details).getByText(/接口协议关注的是芯片和设备之间如何搬运音频样本/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "I2S / IIS / I²S" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "TDM" })).toBeInTheDocument();
@@ -2337,7 +2369,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /数字音频接口 \/ 传输协议/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      screen.getByRole("button", {
         name: "打开数字音频接口实验室"
       })
     );
@@ -2468,7 +2500,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /ADC \/ DAC \/ Codec/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      screen.getByRole("button", {
         name: "打开 ADC / DAC / Codec 实验室"
       })
     );
@@ -2558,7 +2590,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /^音频硬件 麦克风/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "麦克风" });
     expect(within(details).getByText(/声波推动振膜振动/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "动圈麦克风" })).toBeInTheDocument();
     expect(within(details).getByText(/不需要幻象电源/)).toBeInTheDocument();
@@ -2662,7 +2694,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /^音频硬件 麦克风/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      screen.getByRole("button", {
         name: "打开麦克风实验室"
       })
     );
@@ -2720,7 +2752,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /^音频硬件 麦克风/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      screen.getByRole("button", {
         name: "打开麦克风实验室"
       })
     );
@@ -2782,12 +2814,16 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /听感与指标/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(within(details).getByRole("heading", { name: "响度" })).toBeInTheDocument();
-    expect(within(details).getAllByText(/LUFS 更适合描述节目整体响度/).length).toBeGreaterThan(0);
-    expect(within(details).getByRole("heading", { name: "频响曲线" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "THD / THD+N" })).toBeInTheDocument();
+    const details = screen.getByRole("main", { name: "听感与指标" });
+    expect(within(details).queryByRole("heading", { name: "响度" })).not.toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开听感与指标实验室" })).toBeInTheDocument();
+
+    const page = screen.getByRole("main", { name: "听感与指标" });
+    expect(within(page).getByRole("heading", { name: "从听到的问题，找到测量入口" })).toBeInTheDocument();
+    expect(within(page).getByText("SNR = 20 log10(Srms / Nrms) dB")).toBeInTheDocument();
+    expect(within(page).getByText("THD = √(V2² + … + Vn²) / V1 × 100%")).toBeInTheDocument();
+    expect(within(page).getByRole("list", { name: "听感评价流程" })).toBeInTheDocument();
+    expect(within(page).getByRole("button", { name: /打开听感与指标实验室/ })).toBeInTheDocument();
   });
 
   it("lets readers compare listening effects with generated audio examples", async () => {
@@ -2836,7 +2872,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /听感与指标/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      within(screen.getByRole("main", { name: "听感与指标" })).getByRole("button", {
         name: "打开听感与指标实验室"
       })
     );
@@ -2972,27 +3008,23 @@ describe("Audio knowledge app", () => {
     );
   });
 
-  it("opens metric detail modals from the listening metrics cards", async () => {
+  it("keeps metric definitions in the guide instead of duplicating them in the lab", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: /听感与指标/ }));
-    await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
-        name: "打开听感与指标实验室"
-      })
-    );
+    const details = screen.getByRole("main", { name: "听感与指标" });
+    await user.click(within(details).getByRole("button", { name: "打开听感与指标实验室" }));
 
-    await user.click(screen.getByRole("button", { name: /LUFS/ }));
+    expect(screen.getByRole("heading", { name: "听感与指标实验室" })).toBeInTheDocument();
+    expect(screen.getByText(/教学示意，不是仪器测量结果/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /LUFS/ })).not.toBeInTheDocument();
 
-    const modal = screen.getByRole("dialog", { name: "LUFS 详细介绍" });
-    expect(within(modal).getByRole("heading", { name: "LUFS 详细介绍" })).toBeInTheDocument();
-    expect(within(modal).getByText(/面向人耳感知的节目响度指标/)).toBeInTheDocument();
-    expect(within(modal).getByText(/不是瞬时峰值/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "返回详细内容" }));
+    expect(screen.getByRole("main", { name: "听感与指标" })).toBeInTheDocument();
 
-    await user.click(within(modal).getByRole("button", { name: "关闭指标详情" }));
-
-    expect(screen.queryByRole("dialog", { name: "LUFS 详细介绍" })).not.toBeInTheDocument();
+    await user.click(within(screen.getByRole("main", { name: "听感与指标" })).getByRole("button", { name: "返回知识库" }));
+    expect(screen.getByRole("region", { name: "主题卡片" })).toBeInTheDocument();
   });
 
   it("configures distinct audio processing for every listening effect", async () => {
@@ -3123,7 +3155,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /听感与指标/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      within(screen.getByRole("main", { name: "听感与指标" })).getByRole("button", {
         name: "打开听感与指标实验室"
       })
     );
@@ -3254,7 +3286,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /听感与指标/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      within(screen.getByRole("main", { name: "听感与指标" })).getByRole("button", {
         name: "打开听感与指标实验室"
       })
     );

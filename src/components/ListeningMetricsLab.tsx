@@ -5,6 +5,7 @@ import type { Language } from "../content/knowledge";
 type ListeningMetricsLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type ListeningEffect = "brightness" | "muddy" | "noise" | "distortion" | "compression" | "stereo";
@@ -14,15 +15,6 @@ type EffectCopy = {
   metric: string;
   description: Record<Language, string>;
   hearing: Record<Language, string>;
-};
-
-type MetricDetail = {
-  title: string;
-  summary: Record<Language, string>;
-  measures: Record<Language, string>;
-  listening: Record<Language, string>;
-  scenes: Record<Language, string>;
-  misconception: Record<Language, string>;
 };
 
 type ActiveAudioGraph = {
@@ -89,8 +81,8 @@ const effectCopy: Record<ListeningEffect, EffectCopy> = {
     label: { zh: "谐波失真", en: "Harmonic distortion" },
     metric: "THD / THD+N",
     description: {
-      zh: "失真：非线性会在基波外生成 2f、3f、5f 等谐波；强度越高，高阶谐波越多，波形越偏离正弦。",
-      en: "Distortion: nonlinearity adds 2f, 3f, 5f, and higher harmonics; stronger drive adds more high-order content and bends the waveform away from a sine."
+      zh: "失真：非线性会在基波外生成谐波；本演示随驱动逐步加入高阶分量，实际分布取决于具体非线性。",
+      en: "Distortion: nonlinearity creates harmonics beyond the fundamental. This demo adds higher orders with drive; real distributions depend on the nonlinearity."
     },
     hearing: {
       zh: "听感重点：温暖感、毛刺、破音、边缘变粗。",
@@ -101,8 +93,8 @@ const effectCopy: Record<ListeningEffect, EffectCopy> = {
     label: { zh: "动态压缩", en: "Dynamic compression" },
     metric: "动态范围 / LUFS",
     description: {
-      zh: "动态压缩：缩小强弱差距，让声音更稳定、更大声，但冲击力会下降。",
-      en: "Compression: reducing level contrast makes sound steadier and louder, but less punchy."
+      zh: "动态压缩：降低超过阈值的电平；本演示再加入补偿增益，听起来更稳定，但瞬态和强弱对比会减少。",
+      en: "Compression reduces levels above a threshold. This demo then adds makeup gain, sounding steadier while reducing transient and level contrast."
     },
     hearing: {
       zh: "听感重点：声音更贴脸，起伏和瞬态减少。",
@@ -122,101 +114,6 @@ const effectCopy: Record<ListeningEffect, EffectCopy> = {
     }
   }
 };
-
-const metricDetails: MetricDetail[] = [
-  {
-    title: "LUFS",
-    summary: {
-      zh: "LUFS 是面向人耳感知的节目响度指标，用来描述一段内容整体听起来有多响。",
-      en: "LUFS is a perceptual program-loudness metric that describes how loud a full piece of content feels."
-    },
-    measures: {
-      zh: "它关注整体响度、一段时间内的平均响度和响度一致性，常和 True Peak 一起用于交付规范。",
-      en: "It focuses on overall loudness, time-averaged loudness, and consistency, often paired with True Peak in delivery specs."
-    },
-    listening: {
-      zh: "LUFS 更接近听众对音量一致性的感受，适合判断视频、播客、直播和音乐节目是否忽大忽小。",
-      en: "LUFS maps better to perceived loudness consistency, useful for videos, podcasts, livestreams, and music programs."
-    },
-    scenes: {
-      zh: "常见于流媒体响度归一、视频平台交付、播客制作、广播电视和直播混音。",
-      en: "Common in streaming normalization, video delivery, podcast production, broadcast, and livestream mixing."
-    },
-    misconception: {
-      zh: "LUFS 不是瞬时峰值，也不等于 SPL；它不能单独说明音质，只说明响度管理是否合理。",
-      en: "LUFS is not instantaneous peak level and is not SPL; it does not define quality by itself, only loudness management."
-    }
-  },
-  {
-    title: "SNR",
-    summary: {
-      zh: "SNR 是信噪比，描述有效信号和噪声底之间相差多少。",
-      en: "SNR is signal-to-noise ratio, describing the gap between useful signal and the noise floor."
-    },
-    measures: {
-      zh: "它衡量目标声音相对底噪、嘶声、电源噪声或环境噪声的优势，通常用 dB 表示。",
-      en: "It measures how much the target sound rises above hiss, power noise, or environmental noise, usually in dB."
-    },
-    listening: {
-      zh: "SNR 低时，安静段更容易听到底噪，人声清晰度下降，录音会显得不干净。",
-      en: "Low SNR makes hiss obvious in quiet parts, reduces speech clarity, and makes recordings feel dirty."
-    },
-    scenes: {
-      zh: "常见于麦克风、ADC、录音环境、耳放底噪、远场语音和会议拾音评估。",
-      en: "Common for microphones, ADCs, recording rooms, headphone-amp hiss, far-field voice, and conferencing capture."
-    },
-    misconception: {
-      zh: "SNR 高不代表整体音质一定好；频响、失真、动态和空间声学仍然会影响最终听感。",
-      en: "High SNR does not guarantee overall quality; frequency response, distortion, dynamics, and acoustics still matter."
-    }
-  },
-  {
-    title: "THD+N",
-    summary: {
-      zh: "THD+N 表示总谐波失真加噪声，用来观察系统是否产生额外谐波和杂散噪声。",
-      en: "THD+N means total harmonic distortion plus noise, showing added harmonics and stray noise."
-    },
-    measures: {
-      zh: "它把非线性失真产生的谐波和噪声一起统计，常用于功放、扬声器、DAC 和麦克风链路。",
-      en: "It combines nonlinear harmonic distortion and noise, often used for amplifiers, speakers, DACs, and microphone chains."
-    },
-    listening: {
-      zh: "过高时可能听到破音、毛刺、粗糙感和刺耳边缘，低频大音量时尤其明显。",
-      en: "When too high, it can sound clipped, gritty, rough, or harsh, especially at loud bass levels."
-    },
-    scenes: {
-      zh: "常见于小音箱极限响度、功放过载、数字削波、麦克风前级过载和扬声器保护评估。",
-      en: "Common in small-speaker loudness limits, amplifier overload, digital clipping, mic preamp overload, and speaker protection."
-    },
-    misconception: {
-      zh: "THD+N 数字越低通常越干净，但少量谐波不一定总是坏事；音乐制作里有时会主动加入饱和感。",
-      en: "Lower THD+N is usually cleaner, but a little harmonic content is not always bad; music production may add saturation intentionally."
-    }
-  },
-  {
-    title: "RT60",
-    summary: {
-      zh: "RT60 是混响衰减 60 dB 所需时间，用来描述空间声音拖尾长短。",
-      en: "RT60 is the time reverberation takes to decay by 60 dB, describing the length of a room's sound tail."
-    },
-    measures: {
-      zh: "它衡量房间反射能量消失速度，和空间大小、墙面吸收、家具、人群和材料有关。",
-      en: "It measures how fast reflected energy fades, depending on room size, absorption, furniture, people, and materials."
-    },
-    listening: {
-      zh: "RT60 过长会让语音含糊、音乐糊成一团；过短则可能显得干、近、缺少空间感。",
-      en: "Too long makes speech blurry and music smeared; too short can feel dry, close, and lacking space."
-    },
-    scenes: {
-      zh: "常见于会议室、录音棚、教室、车舱、智能音箱远场拾音和家庭影院调校。",
-      en: "Common for meeting rooms, studios, classrooms, car cabins, smart-speaker far-field pickup, and home theater tuning."
-    },
-    misconception: {
-      zh: "RT60 不是越短越好；语音、音乐和沉浸式内容需要的空间感目标不同。",
-      en: "Shorter RT60 is not always better; speech, music, and immersive content need different spatial goals."
-    }
-  }
-];
 
 function createMetricPath(effect: ListeningEffect, intensity: number) {
   const x = 76;
@@ -567,8 +464,8 @@ function getCompressionVisualSettings(intensity: number) {
   return {
     amplitude: 72,
     centerY: 130,
-    ratio: 1 + amount * 11,
-    threshold: 0.34 + (1 - amount) * 0.34
+    ratio: 1 + amount * 9,
+    thresholdDb: -6 - amount * 18
   };
 }
 
@@ -585,10 +482,12 @@ function getCompressionSourceSample(ratio: number) {
   return carrier * Math.min(1, envelope);
 }
 
-function compressNormalizedSample(sample: number, threshold: number, ratio: number) {
+function compressNormalizedSample(sample: number, thresholdDb: number, ratio: number) {
   const sign = Math.sign(sample);
   const magnitude = Math.abs(sample);
-  const compressedMagnitude = magnitude <= threshold ? magnitude : threshold + (magnitude - threshold) / ratio;
+  const inputDb = 20 * Math.log10(Math.max(magnitude, 0.0001));
+  const outputDb = inputDb <= thresholdDb ? inputDb : thresholdDb + (inputDb - thresholdDb) / ratio;
+  const compressedMagnitude = 10 ** (outputDb / 20);
 
   return sign * compressedMagnitude;
 }
@@ -600,7 +499,7 @@ function createCompressionEnvelopePath(intensity: number, compressed: boolean) {
     const ratio = index / 159;
     const x = 50 + ratio * 660;
     const input = getCompressionSourceSample(ratio);
-    const output = compressed ? compressNormalizedSample(input, settings.threshold, settings.ratio) : input;
+    const output = compressed ? compressNormalizedSample(input, settings.thresholdDb, settings.ratio) : input;
     const y = settings.centerY - output * settings.amplitude;
 
     return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
@@ -620,7 +519,7 @@ function getCompressionGainMarker(intensity: number) {
     }
   }
 
-  const compressed = compressNormalizedSample(peak.sample, settings.threshold, settings.ratio);
+  const compressed = compressNormalizedSample(peak.sample, settings.thresholdDb, settings.ratio);
 
   return {
     inputY: settings.centerY - peak.sample * settings.amplitude,
@@ -649,10 +548,11 @@ function createDistortionCurve(amount: number) {
   const curve = new Float32Array(samples);
   const drive = 1 + amount * 34;
   const wet = amount;
+  const asymmetry = amount * 0.18;
 
   for (let index = 0; index < samples; index += 1) {
     const x = (index * 2) / (samples - 1) - 1;
-    const shaped = Math.tanh(x * drive);
+    const shaped = (Math.tanh(x * drive) + asymmetry * x * x) / (1 + asymmetry);
     curve[index] = x * (1 - wet) + shaped * wet;
   }
 
@@ -708,7 +608,7 @@ function ListeningEffectChart({
 
   if (effect === "compression") {
     const settings = getCompressionVisualSettings(intensity);
-    const thresholdOffset = settings.threshold * settings.amplitude;
+    const thresholdOffset = 10 ** (settings.thresholdDb / 20) * settings.amplitude;
     const positiveThresholdY = settings.centerY - thresholdOffset;
     const negativeThresholdY = settings.centerY + thresholdOffset;
     const gainMarker = getCompressionGainMarker(intensity);
@@ -954,11 +854,10 @@ function applyLiveIntensity(graph: ActiveAudioGraph, amount: number) {
   }
 }
 
-export function ListeningMetricsLab({ language, onBack }: ListeningMetricsLabProps) {
+export function ListeningMetricsLab({ language, onBack, onBackToDetails }: ListeningMetricsLabProps) {
   const [activeEffect, setActiveEffect] = useState<ListeningEffect>("brightness");
   const [intensity, setIntensity] = useState(55);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [selectedMetric, setSelectedMetric] = useState<MetricDetail | null>(null);
   const audioRef = useRef<ActiveAudioGraph | null>(null);
   const activeCopy = effectCopy[activeEffect];
   const chartAxisLabel =
@@ -1108,10 +1007,15 @@ export function ListeningMetricsLab({ language, onBack }: ListeningMetricsLabPro
   return (
     <main className="listening-lab-page">
       <section className="sound-lab-hero" aria-labelledby="listening-lab-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails ? <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed guide"}
+          </button> : null}
+        </div>
         <div>
           <span className="section-kicker">{language === "zh" ? "听感实验" : "Listening lab"}</span>
           <h1 id="listening-lab-title">{language === "zh" ? "听感与指标实验室" : "Listening Metrics Lab"}</h1>
@@ -1207,70 +1111,10 @@ export function ListeningMetricsLab({ language, onBack }: ListeningMetricsLabPro
           <div className="lab-live-note">
             <strong>{activeCopy.description[language]}</strong>
             <span>{activeCopy.hearing[language]}</span>
+            <span>{language === "zh" ? "图形是参数关联的教学示意，不是仪器测量结果。" : "Charts are parameter-linked teaching diagrams, not instrument measurements."}</span>
           </div>
         </div>
       </section>
-
-      <section className="listening-metric-cards" aria-label={language === "zh" ? "指标速查" : "Metric cheat sheet"}>
-        {metricDetails.map((metric) => (
-          <button
-            className="metric-card-button"
-            key={metric.title}
-            type="button"
-            onClick={() => setSelectedMetric(metric)}
-          >
-            <h2>{metric.title}</h2>
-            <p>{metric.summary[language]}</p>
-          </button>
-        ))}
-      </section>
-
-      {selectedMetric ? (
-        <div className="metric-modal-layer">
-          <button
-            aria-label={language === "zh" ? "关闭指标详情" : "Close metric details"}
-            className="metric-modal-backdrop"
-            type="button"
-            onClick={() => setSelectedMetric(null)}
-          />
-          <section
-            aria-label={language === "zh" ? `${selectedMetric.title} 详细介绍` : `${selectedMetric.title} details`}
-            aria-modal="true"
-            className="metric-modal"
-            role="dialog"
-          >
-            <div className="metric-modal-header">
-              <span className="section-kicker">{language === "zh" ? "指标详情" : "Metric details"}</span>
-              <h2>{language === "zh" ? `${selectedMetric.title} 详细介绍` : `${selectedMetric.title} details`}</h2>
-            </div>
-            <div className="metric-modal-grid">
-              <article>
-                <h3>{language === "zh" ? "是什么" : "What it is"}</h3>
-                <p>{selectedMetric.summary[language]}</p>
-              </article>
-              <article>
-                <h3>{language === "zh" ? "测量什么" : "What it measures"}</h3>
-                <p>{selectedMetric.measures[language]}</p>
-              </article>
-              <article>
-                <h3>{language === "zh" ? "听感表现" : "Listening cue"}</h3>
-                <p>{selectedMetric.listening[language]}</p>
-              </article>
-              <article>
-                <h3>{language === "zh" ? "应用场景" : "Where used"}</h3>
-                <p>{selectedMetric.scenes[language]}</p>
-              </article>
-            </div>
-            <div className="metric-modal-warning">
-              <h3>{language === "zh" ? "常见误区" : "Common misconception"}</h3>
-              <p>{selectedMetric.misconception[language]}</p>
-            </div>
-            <button className="diagram-open-button" type="button" onClick={() => setSelectedMetric(null)}>
-              {language === "zh" ? "关闭指标详情" : "Close metric details"}
-            </button>
-          </section>
-        </div>
-      ) : null}
     </main>
   );
 }

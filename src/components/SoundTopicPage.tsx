@@ -1,11 +1,13 @@
 import { ArrowLeft, BookOpen, Waves } from "lucide-react";
 import { categories, type Language } from "../content/knowledge";
 import { SoundWaveDiagram } from "./TopicDetails";
+import { TopicPager } from "./TopicPager";
 
 type SoundTopicPageProps = {
   language: Language;
   onBack: () => void;
   onOpenLab: () => void;
+  onOpenNext: () => void;
 };
 
 const soundTopic = categories
@@ -16,7 +18,7 @@ if (!soundTopic) {
   throw new Error("The sound topic is required for the professional sound guide.");
 }
 
-export function SoundTopicPage({ language, onBack, onOpenLab }: SoundTopicPageProps) {
+export function SoundTopicPage({ language, onBack, onOpenLab, onOpenNext }: SoundTopicPageProps) {
   const detail = soundTopic.detail;
   const terms = detail.termExplanations ?? [];
   const flow = language === "zh"
@@ -45,7 +47,7 @@ export function SoundTopicPage({ language, onBack, onOpenLab }: SoundTopicPagePr
 
       <div className="sound-topic-content">
         <section className="sound-topic-section sound-topic-intro">
-          <span className="sound-topic-index">01</span>
+
           <div>
             <h2>{language === "zh" ? "先建立一个准确的直觉" : "Start with the right intuition"}</h2>
             <p>{detail.explanation[language]}</p>
@@ -54,7 +56,7 @@ export function SoundTopicPage({ language, onBack, onOpenLab }: SoundTopicPagePr
 
         <section className="sound-topic-section">
           <div className="sound-topic-section-heading">
-            <span className="sound-topic-index">02</span>
+
             <div>
               <h2>{language === "zh" ? "从振动到 PCM：一条工程链路" : "From vibration to PCM: the engineering chain"}</h2>
               <p>{language === "zh" ? "每一步都改变信号的表达方式，但物理量和数字量不能混为一谈。" : "Each step changes the representation, but physical and digital quantities must not be conflated."}</p>
@@ -73,7 +75,7 @@ export function SoundTopicPage({ language, onBack, onOpenLab }: SoundTopicPagePr
 
         <section className="sound-topic-section sound-topic-model-section">
           <div className="sound-topic-section-heading">
-            <span className="sound-topic-index">03</span>
+
             <div>
               <h2>{language === "zh" ? "用一个正弦模型读懂声音" : "Read sound through a sine model"}</h2>
               <p>{language === "zh" ? "正弦波不是所有声音，但它是理解频率、振幅和相位最清晰的起点。" : "A sine wave is not every sound, but it is the clearest starting point for frequency, amplitude, and phase."}</p>
@@ -97,7 +99,7 @@ export function SoundTopicPage({ language, onBack, onOpenLab }: SoundTopicPagePr
 
         <section className="sound-topic-section">
           <div className="sound-topic-section-heading">
-            <span className="sound-topic-index">04</span>
+
             <div>
               <h2>{language === "zh" ? "核心概念词典" : "Core concept glossary"}</h2>
               <p>{language === "zh" ? "把物理量、听感和工程单位放在同一张地图上。" : "Put physical quantities, perception, and engineering units on one map."}</p>
@@ -115,7 +117,7 @@ export function SoundTopicPage({ language, onBack, onOpenLab }: SoundTopicPagePr
 
         <section className="sound-topic-section sound-topic-bottom-grid">
           <div>
-            <span className="sound-topic-index">05</span>
+
             <h2>{language === "zh" ? "两个必须记住的边界" : "Two boundaries to remember"}</h2>
             <p>{detail.misconception[language]}</p>
           </div>
@@ -129,6 +131,7 @@ export function SoundTopicPage({ language, onBack, onOpenLab }: SoundTopicPagePr
           </div>
         </section>
       </div>
+      <TopicPager language={language} onBack={onBack} onNext={onOpenNext} />
     </main>
   );
 }

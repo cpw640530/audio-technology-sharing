@@ -5,6 +5,7 @@ import type { Language } from "../content/knowledge";
 type DigitalAudioLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type DisplayMode = "waveform" | "samples" | "quantized" | "error" | "pcm";
@@ -17,7 +18,7 @@ const modeLabels: Record<DisplayMode, Record<Language, string>> = {
   pcm: { zh: "PCM 编码", en: "PCM encoding" }
 };
 
-const codecPrinciples = [
+export const codecPrinciples = [
   {
     format: "PCM",
     ratio: { zh: "1:1", en: "1:1" },
@@ -174,7 +175,7 @@ function createErrorPath(points: ReturnType<typeof createSamplePoints>) {
     .join(" ");
 }
 
-export function DigitalAudioLab({ language, onBack }: DigitalAudioLabProps) {
+export function DigitalAudioLab({ language, onBack, onBackToDetails }: DigitalAudioLabProps) {
   const [sampleCount, setSampleCount] = useState(24);
   const [bitDepth, setBitDepth] = useState(4);
   const [frequency, setFrequency] = useState(2);
@@ -198,10 +199,15 @@ export function DigitalAudioLab({ language, onBack }: DigitalAudioLabProps) {
   return (
     <main className="digital-lab-page">
       <section className="sound-lab-hero" aria-labelledby="digital-lab-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails ? <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed guide"}
+          </button> : null}
+        </div>
         <div>
           <span className="section-kicker">
             {language === "zh" ? "数字音频实验" : "Digital audio lab"}
@@ -211,8 +217,8 @@ export function DigitalAudioLab({ language, onBack }: DigitalAudioLabProps) {
           </h1>
           <p>
             {language === "zh"
-              ? "把连续波形转换成采样点和量化等级，再观察 PCM 与常见压缩格式如何承接这些数字。"
-              : "Turn a continuous waveform into samples and quantized levels, then see how PCM and common compressed formats carry those numbers."}
+              ? "调节采样点、位深和输入频率，观察采样位置、量化阶梯、误差和 PCM 样本实时变化。"
+              : "Adjust samples, bit depth, and input frequency to observe sample positions, quantization steps, error, and PCM words in real time."}
           </p>
         </div>
       </section>
@@ -391,11 +397,6 @@ export function DigitalAudioLab({ language, onBack }: DigitalAudioLabProps) {
         <div className="pcm-formula-card">
           <strong>{language === "zh" ? "PCM 码率 = 采样率 × 位深 × 声道数" : "PCM bitrate = sample rate × bit depth × channels"}</strong>
           <span>{language === "zh" ? "48 kHz × 16-bit × 2 声道 = 1536 kbps" : "48 kHz × 16-bit × 2 channels = 1536 kbps"}</span>
-          <p>
-            {language === "zh"
-              ? "PCM 按固定节奏保存样本：采样率决定每秒多少个样本，位深决定每个样本多少 bit，声道数决定单声道、双声道或多声道样本如何排列。"
-              : "PCM stores samples at a fixed cadence: sample rate sets samples per second, bit depth sets bits per sample, and channel count defines how mono, stereo, or multichannel samples are arranged."}
-          </p>
         </div>
       </section>
 
@@ -418,9 +419,7 @@ export function DigitalAudioLab({ language, onBack }: DigitalAudioLabProps) {
           </div>
         </div>
         <p className="codec-note">
-          {language === "zh"
-            ? "给 PCM 加上 RIFF/WAVE 文件头，写明采样率、位深、声道数、数据长度等信息，播放器就知道如何解释后面的裸 PCM 数据。"
-            : "Add a RIFF/WAVE header to PCM with sample rate, bit depth, channel count, and data length, and a player knows how to interpret the following raw PCM data."}
+          {language === "zh" ? "这里关注封装关系：文件头描述参数，PCM Data 保存样本。" : "This view focuses on the container relationship: the header describes parameters and PCM Data stores samples."}
         </p>
       </section>
 
@@ -428,7 +427,7 @@ export function DigitalAudioLab({ language, onBack }: DigitalAudioLabProps) {
         <div className="section-heading">
           <div>
             <span className="section-kicker">{language === "zh" ? "编码" : "Encoding"}</span>
-            <h2>{language === "zh" ? "编码格式原理速览" : "Codec principles at a glance"}</h2>
+            <h2>{language === "zh" ? "编码格式快速对比" : "Codec comparison"}</h2>
           </div>
         </div>
         <div className="codec-table">
@@ -437,7 +436,6 @@ export function DigitalAudioLab({ language, onBack }: DigitalAudioLabProps) {
               <h3>{row.format}</h3>
               <strong>{row.ratio[language]}</strong>
               <p>{row.relation[language]}</p>
-              <p>{row.principle[language]}</p>
             </article>
           ))}
         </div>

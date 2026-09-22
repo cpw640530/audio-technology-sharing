@@ -5,6 +5,7 @@ import type { Language } from "../content/knowledge";
 type AudioUnitsLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type ConversionUnit =
@@ -246,38 +247,6 @@ function calculateDistanceLevels(rawSpl: string, rawDistance: string): Conversio
   };
 }
 
-const unitCards = [
-  {
-    unit: "dBSPL",
-    reference: { zh: "参考：20 uPa 声压", en: "Reference: 20 uPa sound pressure" },
-    range: { zh: "常见：30 dB 安静房间，94 dB = 1 Pa，120 dB 接近痛感", en: "Typical: 30 dB quiet room, 94 dB = 1 Pa, 120 dB near pain" },
-    use: { zh: "用于声学测量、扬声器最大声压、噪声和听力安全。", en: "Used for acoustic measurement, speaker SPL, noise, and hearing safety." }
-  },
-  {
-    unit: "dBFS",
-    reference: { zh: "参考：数字满刻度 0 dBFS", en: "Reference: digital full scale, 0 dBFS" },
-    range: { zh: "常见：峰值 -12 到 -1 dBFS；超过 0 dBFS 通常削波", en: "Typical: peaks -12 to -1 dBFS; above 0 dBFS usually clips" },
-    use: { zh: "用于 PCM、DAW、录音电平、混音 headroom 和数字峰值。", en: "Used for PCM, DAWs, recording level, mix headroom, and digital peaks." }
-  },
-  {
-    unit: "dBu / dBV",
-    reference: { zh: "参考：0 dBu = 0.775 Vrms；0 dBV = 1 Vrms", en: "Reference: 0 dBu = 0.775 Vrms; 0 dBV = 1 Vrms" },
-    range: { zh: "常见：专业 +4 dBu，消费 -10 dBV", en: "Typical: pro +4 dBu, consumer -10 dBV" },
-    use: { zh: "用于模拟线路电平、声卡输入输出和设备接口匹配。", en: "Used for analog line level, audio-interface I/O, and device matching." }
-  },
-  {
-    unit: "LUFS",
-    reference: { zh: "参考：K-weighting + 时间积分", en: "Reference: K-weighting plus time integration" },
-    range: { zh: "常见：流媒体约 -14 LUFS，广播常见 -23/-24 LUFS", en: "Typical: streaming around -14 LUFS, broadcast often -23/-24 LUFS" },
-    use: { zh: "用于节目响度、视频平台、播客、直播和响度标准化。", en: "Used for program loudness, video platforms, podcasts, streams, and normalization." }
-  }
-] satisfies Array<{
-  unit: string;
-  reference: Record<Language, string>;
-  range: Record<Language, string>;
-  use: Record<Language, string>;
-}>;
-
 const conversionRows = [
   {
     label: { zh: "幅度比", en: "Amplitude ratio" },
@@ -381,7 +350,7 @@ function AudioUnitsDiagram({ language }: { language: Language }) {
   );
 }
 
-export function AudioUnitsLab({ language, onBack }: AudioUnitsLabProps) {
+export function AudioUnitsLab({ language, onBack, onBackToDetails }: AudioUnitsLabProps) {
   const [conversionValue, setConversionValue] = useState("94");
   const [conversionUnit, setConversionUnit] = useState<ConversionUnit>("dBSPL");
   const [distanceSpl, setDistanceSpl] = useState("94");
@@ -399,17 +368,20 @@ export function AudioUnitsLab({ language, onBack }: AudioUnitsLabProps) {
   return (
     <main className="codec-lab-page audio-units-page">
       <section className="sound-lab-hero" aria-labelledby="audio-units-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails ? <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed guide"}
+          </button> : null}
+        </div>
         <div>
           <span className="section-kicker">{language === "zh" ? "基础实验" : "Fundamentals lab"}</span>
           <h1 id="audio-units-title">{language === "zh" ? "声音与音频单位实验室" : "Sound and Audio Units Lab"}</h1>
           <p>
-            {language === "zh"
-              ? "把 dBSPL、dBFS、dBu、dBV、LUFS、Hz、bit、sample 和 ms 放在同一张参考图里，先分清参考点再谈换算。"
-              : "Place dBSPL, dBFS, dBu, dBV, LUFS, Hz, bit, sample, and ms on one reference map so conversions start from the right reference."}
+            {language === "zh" ? "输入数值和单位，观察同一参考域内的换算结果与理想距离衰减。" : "Enter a value and unit to inspect same-domain conversion and ideal distance loss."}
           </p>
         </div>
       </section>
@@ -417,17 +389,6 @@ export function AudioUnitsLab({ language, onBack }: AudioUnitsLabProps) {
       <section className="audio-units-workbench" aria-label={language === "zh" ? "声音与音频单位实验台" : "Sound and audio units workbench"}>
         <div className="audio-units-visual">
           <AudioUnitsDiagram language={language} />
-        </div>
-
-        <div className="audio-units-grid">
-          {unitCards.map((card) => (
-            <article className="audio-unit-card" key={card.unit}>
-              <h2>{card.unit}</h2>
-              <strong>{card.reference[language]}</strong>
-              <p>{card.range[language]}</p>
-              <span>{card.use[language]}</span>
-            </article>
-          ))}
         </div>
 
         <section className="audio-units-calculator-grid" aria-label={language === "zh" ? "单位自动换算工具" : "Automatic unit conversion tools"}>

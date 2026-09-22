@@ -448,7 +448,7 @@ export const categories: Category[] = [
           keyConcepts: [
             { zh: "响度和声压级不同，LUFS 更适合描述节目整体响度。", en: "Loudness and sound pressure level are different; LUFS is better for program loudness." },
             { zh: "频响曲线描述不同频率的能量变化，但不能单独决定音质。", en: "Frequency response describes energy variation by frequency, but it does not determine quality alone." },
-            { zh: "THD、SNR、延迟、串扰等指标分别反映失真、噪声、同步和通道隔离问题。", en: "THD, SNR, latency, and crosstalk describe distortion, noise, synchronization, and channel separation issues." }
+            { zh: "THD、SNR、延迟、串扰分别描述失真、噪声、时间延后和通道隔离，测量条件必须同时说明。", en: "THD, SNR, latency, and crosstalk describe distortion, noise, time delay, and channel isolation; measurement conditions must also be stated." }
           ],
           termExplanations: [
             {
@@ -468,8 +468,8 @@ export const categories: Category[] = [
             {
               name: { zh: "动态范围", en: "Dynamic range" },
               explanation: {
-                zh: "动态范围描述最小可听细节和最大声音之间的跨度。压缩器会缩小动态范围，让声音更稳定、更靠前，但过度压缩会让音乐失去起伏和冲击力。",
-                en: "Dynamic range is the span between quiet details and loud peaks. Compression reduces that range, making sound steadier and more forward, but too much compression removes contrast and impact."
+                zh: "动态范围描述信号或系统中最低可用电平与最大不失真电平之间的跨度。压缩器会缩小超过阈值部分的强弱差；若再加入补偿增益，整体听感可能更靠前。",
+                en: "Dynamic range is the span between a signal or system's lowest usable level and highest undistorted level. Compression narrows level differences above a threshold; makeup gain can then make the result feel more forward."
               }
             },
             {
@@ -482,15 +482,15 @@ export const categories: Category[] = [
             {
               name: { zh: "THD / THD+N", en: "THD / THD+N" },
               explanation: {
-                zh: "THD 描述非线性失真产生的谐波成分，THD+N 还把噪声一起算入。少量谐波可能带来温暖感，过多会变成破音、毛刺或刺耳感。",
-                en: "THD describes harmonic components caused by nonlinear distortion, while THD+N also includes noise. A little harmonic content may feel warm; too much becomes clipping, grit, or harshness."
+                zh: "THD 描述非线性产生的谐波总量，THD+N 还把测量带宽内的噪声算入。相同数值也可能因谐波阶次、频率和电平不同而听起来不同。",
+                en: "THD describes total harmonics created by nonlinearity, while THD+N also includes noise inside the measurement bandwidth. The same value can sound different with different harmonic orders, frequencies, and levels."
               }
             },
             {
               name: { zh: "声像与空间感", en: "Stereo image and space" },
               explanation: {
-                zh: "声像来自左右声道的电平差、时间差和频率差，空间感还受混响和早期反射影响。串扰、相位问题或过强混响都会让定位变糊。",
-                en: "Stereo image comes from level, timing, and frequency differences between channels; space also depends on reverberation and early reflections. Crosstalk, phase issues, or too much reverb can blur localization."
+                zh: "水平声像主要依赖左右耳或声道间的电平差与到达时间差，空间感还受频谱线索、早期反射和混响影响。串扰、极性或相位问题会让定位变糊。",
+                en: "Horizontal imaging mainly relies on interaural or interchannel level and arrival-time differences; spectral cues, early reflections, and reverberation also shape space. Crosstalk, polarity, or phase problems can blur localization."
               }
             }
           ],

@@ -7,6 +7,7 @@ type WaveformType = "sine" | "square" | "triangle";
 type SoundWaveLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 declare global {
@@ -53,7 +54,7 @@ function createLabWavePath(
   return points.join(" ");
 }
 
-export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
+export function SoundWaveLab({ language, onBack, onBackToDetails }: SoundWaveLabProps) {
   const [waveform, setWaveform] = useState<WaveformType>("sine");
   const [amplitude, setAmplitude] = useState(0.6);
   const [frequency, setFrequency] = useState(440);
@@ -175,10 +176,15 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
   return (
     <main className="sound-lab-page">
       <section className="sound-lab-hero" aria-labelledby="sound-lab-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails ? <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed guide"}
+          </button> : null}
+        </div>
         <div>
           <span className="section-kicker">
             {language === "zh" ? "交互实验" : "Interactive lab"}
@@ -338,43 +344,6 @@ export function SoundWaveLab({ language, onBack }: SoundWaveLabProps) {
         </div>
       </section>
 
-      <section
-        aria-label={language === "zh" ? "关键概念" : "Key concepts"}
-        className="lab-concepts"
-      >
-        <article>
-          <h2>{language === "zh" ? "频率" : "Frequency"}</h2>
-          <p>
-            {language === "zh"
-              ? "每秒振动次数，单位是 Hz，主要决定音高。"
-              : "Vibrations per second in Hz, mainly perceived as pitch."}
-          </p>
-        </article>
-        <article>
-          <h2>{language === "zh" ? "振幅" : "Amplitude"}</h2>
-          <p>
-            {language === "zh"
-              ? "声压变化幅度，主要影响响度。"
-              : "The strength of pressure change, mainly perceived as loudness."}
-          </p>
-        </article>
-        <article>
-          <h2>{language === "zh" ? "相位" : "Phase"}</h2>
-          <p>
-            {language === "zh"
-              ? "波形在时间轴上的起始位置，影响多个波叠加时的结果。"
-              : "The starting offset on the time axis, important when waves combine."}
-          </p>
-        </article>
-        <article>
-          <h2>{language === "zh" ? "波长" : "Wavelength"}</h2>
-          <p>
-            {language === "zh"
-              ? "一个完整周期对应的空间长度，同一介质中频率越高波长越短。"
-              : "The spatial length of one cycle; in the same medium, higher frequency means shorter wavelength."}
-          </p>
-        </article>
-      </section>
     </main>
   );
 }

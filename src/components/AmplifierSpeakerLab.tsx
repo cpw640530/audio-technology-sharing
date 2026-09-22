@@ -15,6 +15,7 @@ type AmpPrincipleDetail = {
 type AmplifierSpeakerLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 const chainLabels = {
@@ -755,17 +756,23 @@ function renderAmpPrinciple(language: Language, ampClass: AmpClass) {
   );
 }
 
-export function AmplifierSpeakerLab({ language, onBack }: AmplifierSpeakerLabProps) {
+export function AmplifierSpeakerLab({ language, onBack, onBackToDetails }: AmplifierSpeakerLabProps) {
   const [diagramMode, setDiagramMode] = useState<DiagramMode>("amplifier");
   const [ampClass, setAmpClass] = useState<AmpClass>("class-d");
 
   return (
     <main className="codec-lab-page amp-lab">
       <section className="sound-lab-hero" aria-labelledby="amplifier-speaker-lab-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
+        <div className="sound-lab-back-actions">
+        <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
           <ArrowLeft size={18} aria-hidden="true" />
           {language === "zh" ? "返回知识库" : "Back to knowledge base"}
         </button>
+        {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+          <ArrowLeft size={18} aria-hidden="true" />
+          {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+        </button>}
+        </div>
         <div>
           <span className="section-kicker">{language === "zh" ? "硬件实验" : "Hardware lab"}</span>
           <h1 id="amplifier-speaker-lab-title">

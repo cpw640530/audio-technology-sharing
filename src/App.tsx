@@ -4,6 +4,7 @@ import { AlsaLab } from "./components/AlsaLab";
 import { AmplifierSpeakerLab } from "./components/AmplifierSpeakerLab";
 import { AudioCodecLab } from "./components/AudioCodecLab";
 import { AudioUnitsLab } from "./components/AudioUnitsLab";
+import { AudioUnitsPage } from "./components/AudioUnitsPage";
 import { AutomotiveAudioLab } from "./components/AutomotiveAudioLab";
 import { RobotAudioLab } from "./components/RobotAudioLab";
 import { BluetoothAudioLab } from "./components/BluetoothAudioLab";
@@ -11,12 +12,15 @@ import { CategoryTabs } from "./components/CategoryTabs";
 import { CodecHardwareLab } from "./components/CodecHardwareLab";
 import { CoreSignalProcessingLab } from "./components/CoreSignalProcessingLab";
 import { DigitalAudioLab } from "./components/DigitalAudioLab";
+import { DigitalAudioPage } from "./components/DigitalAudioPage";
 import { DigitalInterfaceLab } from "./components/DigitalInterfaceLab";
 import { Header } from "./components/Header";
+import { HardwareTopicPage } from "./components/HardwareTopicPage";
 import { Hero } from "./components/Hero";
 import { IotContentLab } from "./components/IotContentLab";
 import { KnowledgeOutline } from "./components/KnowledgeOutline";
 import { ListeningMetricsLab } from "./components/ListeningMetricsLab";
+import { ListeningMetricsPage } from "./components/ListeningMetricsPage";
 import { MeetingCommunicationLab } from "./components/MeetingCommunicationLab";
 import { MicrophoneLab } from "./components/MicrophoneLab";
 import { RealtimeAudioLab } from "./components/RealtimeAudioLab";
@@ -111,7 +115,11 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeView, setActiveView] = useState<
     | "knowledge"
+    | "hardwareTopicPage"
     | "soundTopicPage"
+    | "audioUnitsPage"
+    | "digitalTopicPage"
+    | "listeningTopicPage"
     | "soundLab"
     | "audioUnitsLab"
     | "digitalLab"
@@ -139,6 +147,7 @@ export default function App() {
   const [outlineTargetId, setOutlineTargetId] = useState<string | null>(null);
 
   const [selectedTopic, setSelectedTopic] = useState<DisplayTopic | null>(null);
+  const [activeHardwareTopic, setActiveHardwareTopic] = useState<DisplayTopic | null>(null);
 
   const allTopics = useMemo<DisplayTopic[]>(
     () =>
@@ -160,6 +169,11 @@ export default function App() {
     [activeCategory, allTopics, query]
   );
 
+  const hardwareTopics = useMemo(
+    () => allTopics.filter((topic) => topic.category.id === "hardware"),
+    [allTopics]
+  );
+
   const selectedTopicKey = selectedTopic
     ? `${selectedTopic.category.id}-${selectedTopic.title.en}`
     : undefined;
@@ -170,6 +184,54 @@ export default function App() {
       window.localStorage.setItem(languageStorageKey, nextLanguage);
       return nextLanguage;
     });
+  }
+
+  function returnToFundamentals() {
+    setQuery("");
+    setActiveCategory("fundamentals");
+    setSelectedTopic(null);
+    setActiveView("knowledge");
+  }
+
+  function returnToHardware() {
+    setQuery("");
+    setActiveCategory("hardware");
+    setSelectedTopic(null);
+    setActiveHardwareTopic(null);
+    setActiveView("knowledge");
+  }
+
+  function openTopic(topic: DisplayTopic) {
+    setSelectedTopic(null);
+    if (topic.category.id === "hardware") {
+      setActiveHardwareTopic(topic);
+      setActiveView("hardwareTopicPage");
+      return;
+    }
+    switch (topic.detail.lab?.type) {
+      case "sound-wave": setActiveView("soundTopicPage"); break;
+      case "audio-units": setActiveView("audioUnitsPage"); break;
+      case "sampling-quantization": setActiveView("digitalTopicPage"); break;
+      case "listening-metrics": setActiveView("listeningTopicPage"); break;
+      default: setSelectedTopic(topic);
+    }
+  }
+
+  function openHardwareLab() {
+    switch (activeHardwareTopic?.detail.lab?.type) {
+      case "microphone": setActiveView("microphoneLab"); break;
+      case "codec-hardware": setActiveView("codecLab"); break;
+      case "digital-interface": setActiveView("digitalInterfaceLab"); break;
+      case "amplifier-speaker": setActiveView("amplifierSpeakerLab"); break;
+      default: returnToHardware();
+    }
+  }
+
+  function openAdjacentHardwareTopic(direction: -1 | 1) {
+    if (!activeHardwareTopic) return;
+    const currentIndex = hardwareTopics.findIndex((topic) => topic.title.en === activeHardwareTopic.title.en);
+    const nextTopic = hardwareTopics[currentIndex + direction];
+    if (nextTopic) setActiveHardwareTopic(nextTopic);
   }
 
   useEffect(() => {
@@ -199,7 +261,7 @@ export default function App() {
     if (!window.navigator.userAgent.toLowerCase().includes("jsdom")) {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     }
-  }, [activeView]);
+  }, [activeView, activeHardwareTopic]);
 
   useEffect(() => {
     if (!outlineTargetId) {
@@ -226,7 +288,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <SoundWaveLab language={language} onBack={() => setActiveView("knowledge")} />
+        <SoundWaveLab language={language} onBack={() => setActiveView("knowledge")} onBackToDetails={() => setActiveView("soundTopicPage")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -243,8 +305,48 @@ export default function App() {
         />
         <SoundTopicPage
           language={language}
-          onBack={() => setActiveView("knowledge")}
+          onBack={returnToFundamentals}
           onOpenLab={() => setActiveView("soundLab")}
+          onOpenNext={() => setActiveView("audioUnitsPage")}
+        />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+        </footer>
+      </div>
+    );
+  }
+
+  if (activeView === "hardwareTopicPage" && activeHardwareTopic) {
+    const hardwareIndex = hardwareTopics.findIndex((topic) => topic.title.en === activeHardwareTopic.title.en);
+
+    return (
+      <div className="app-shell">
+        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <HardwareTopicPage
+          language={language}
+          topic={activeHardwareTopic}
+          onBack={returnToHardware}
+          onOpenLab={openHardwareLab}
+          onOpenPrevious={hardwareIndex > 0 ? () => openAdjacentHardwareTopic(-1) : undefined}
+          onOpenNext={hardwareIndex < hardwareTopics.length - 1 ? () => openAdjacentHardwareTopic(1) : undefined}
+        />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+        </footer>
+      </div>
+    );
+  }
+
+  if (activeView === "audioUnitsPage") {
+    return (
+      <div className="app-shell">
+        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <AudioUnitsPage
+          language={language}
+          onBack={returnToFundamentals}
+          onOpenLab={() => setActiveView("audioUnitsLab")}
+          onOpenPrevious={() => setActiveView("soundTopicPage")}
+          onOpenNext={() => setActiveView("digitalTopicPage")}
         />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
@@ -260,7 +362,25 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <AudioUnitsLab language={language} onBack={() => setActiveView("knowledge")} />
+        <AudioUnitsLab language={language} onBack={() => setActiveView("knowledge")} onBackToDetails={() => setActiveView("audioUnitsPage")} />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+        </footer>
+      </div>
+    );
+  }
+
+  if (activeView === "digitalTopicPage") {
+    return (
+      <div className="app-shell">
+        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <DigitalAudioPage
+          language={language}
+          onBack={returnToFundamentals}
+          onOpenLab={() => setActiveView("digitalLab")}
+          onOpenPrevious={() => setActiveView("audioUnitsPage")}
+          onOpenNext={() => setActiveView("listeningTopicPage")}
+        />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -275,7 +395,24 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <DigitalAudioLab language={language} onBack={() => setActiveView("knowledge")} />
+        <DigitalAudioLab language={language} onBack={() => setActiveView("knowledge")} onBackToDetails={() => setActiveView("digitalTopicPage")} />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+        </footer>
+      </div>
+    );
+  }
+
+  if (activeView === "listeningTopicPage") {
+    return (
+      <div className="app-shell">
+        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <ListeningMetricsPage
+          language={language}
+          onBack={returnToFundamentals}
+          onOpenLab={() => setActiveView("listeningLab")}
+          onOpenPrevious={() => setActiveView("digitalTopicPage")}
+        />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -290,7 +427,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <ListeningMetricsLab language={language} onBack={() => setActiveView("knowledge")} />
+        <ListeningMetricsLab language={language} onBack={() => setActiveView("knowledge")} onBackToDetails={() => setActiveView("listeningTopicPage")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -305,7 +442,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <MicrophoneLab language={language} onBack={() => setActiveView("knowledge")} />
+        <MicrophoneLab language={language} onBack={returnToHardware} onBackToDetails={activeHardwareTopic ? () => setActiveView("hardwareTopicPage") : undefined} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -381,7 +518,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <CodecHardwareLab language={language} onBack={() => setActiveView("knowledge")} />
+        <CodecHardwareLab language={language} onBack={returnToHardware} onBackToDetails={activeHardwareTopic ? () => setActiveView("hardwareTopicPage") : undefined} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -396,7 +533,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <DigitalInterfaceLab language={language} onBack={() => setActiveView("knowledge")} />
+        <DigitalInterfaceLab language={language} onBack={returnToHardware} onBackToDetails={activeHardwareTopic ? () => setActiveView("hardwareTopicPage") : undefined} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -411,7 +548,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <AmplifierSpeakerLab language={language} onBack={() => setActiveView("knowledge")} />
+        <AmplifierSpeakerLab language={language} onBack={returnToHardware} onBackToDetails={activeHardwareTopic ? () => setActiveView("hardwareTopicPage") : undefined} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -571,7 +708,7 @@ export default function App() {
           />
           <TopicGrid
             language={language}
-            onSelectTopic={setSelectedTopic}
+            onSelectTopic={openTopic}
             selectedTopicKey={selectedTopicKey}
             topics={visibleTopics}
           />
@@ -594,6 +731,10 @@ export default function App() {
               onOpenAudioUnitsLab={() => {
                 setSelectedTopic(null);
                 setActiveView("audioUnitsLab");
+              }}
+              onOpenAudioUnitsPage={() => {
+                setSelectedTopic(null);
+                setActiveView("audioUnitsPage");
               }}
               onOpenAutomotiveAudioLab={() => {
                 setSelectedTopic(null);
@@ -628,6 +769,10 @@ export default function App() {
                 setSelectedTopic(null);
                 setActiveView("digitalLab");
               }}
+              onOpenDigitalPage={() => {
+                setSelectedTopic(null);
+                setActiveView("digitalTopicPage");
+              }}
               onOpenDigitalInterfaceLab={() => {
                 setSelectedTopic(null);
                 setActiveView("digitalInterfaceLab");
@@ -635,6 +780,10 @@ export default function App() {
               onOpenListeningMetricsLab={() => {
                 setSelectedTopic(null);
                 setActiveView("listeningLab");
+              }}
+              onOpenListeningMetricsPage={() => {
+                setSelectedTopic(null);
+                setActiveView("listeningTopicPage");
               }}
               onOpenMeetingCommunicationLab={() => {
                 setSelectedTopic(null);

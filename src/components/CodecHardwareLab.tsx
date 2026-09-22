@@ -5,6 +5,7 @@ import type { Language } from "../content/knowledge";
 type CodecHardwareLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type CodecMode = "adc" | "dac" | "codec";
@@ -389,7 +390,7 @@ function renderCodecMetricChips({
   );
 }
 
-export function CodecHardwareLab({ language, onBack }: CodecHardwareLabProps) {
+export function CodecHardwareLab({ language, onBack, onBackToDetails }: CodecHardwareLabProps) {
   const [mode, setMode] = useState<CodecMode>("adc");
   const [inputLevel, setInputLevel] = useState(fixedConverterSettings.inputLevel);
   const [sampleRate, setSampleRate] = useState(fixedConverterSettings.sampleRate);
@@ -406,10 +407,16 @@ export function CodecHardwareLab({ language, onBack }: CodecHardwareLabProps) {
   return (
     <main className="codec-lab-page">
       <section className="sound-lab-hero" aria-labelledby="codec-lab-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
+        <div className="sound-lab-back-actions">
+        <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
           <ArrowLeft size={18} aria-hidden="true" />
           {language === "zh" ? "返回知识库" : "Back to knowledge base"}
         </button>
+        {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+          <ArrowLeft size={18} aria-hidden="true" />
+          {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+        </button>}
+        </div>
         <div>
           <span className="section-kicker">{language === "zh" ? "硬件实验" : "Hardware lab"}</span>
           <h1 id="codec-lab-title">{language === "zh" ? "ADC / DAC / Codec 实验室" : "ADC / DAC / Codec Lab"}</h1>
