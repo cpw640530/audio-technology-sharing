@@ -72,7 +72,7 @@ function createConverterData({
 
   const samples = Array.from({ length: sampleRate }, (_, index) => {
     const baseRatio = sampleRate === 1 ? 0 : index / (sampleRate - 1);
-    const jitterOffset = Math.sin(index * 1.9) * (jitter / 100) * 0.018;
+    const jitterOffset = Math.sin(index * 1.9) * (jitter / 400) / (sampleRate - 1);
     const ratio = Math.max(0, Math.min(1, baseRatio + jitterOffset));
     const value = Math.sin(ratio * Math.PI * 4.6) * (inputLevel / 100);
     const clipped = Math.max(-1, Math.min(1, value));
@@ -81,6 +81,8 @@ function createConverterData({
       x: 50 + ratio * width,
       y: midY - clipped * amplitude,
       quantizedY: midY - quantized * amplitude,
+      ratio,
+      clipped: Math.abs(value) > 1,
       value: clipped,
       quantized
     };
@@ -97,40 +99,33 @@ function createConverterData({
         return `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${y.toFixed(2)}`;
       })
       .join(" ");
-  const buildSamplePath = (
-    getValue: (sample: (typeof samples)[number], index: number) => number,
-    centerY = midY,
-    pathAmplitude = amplitude
-  ) =>
-    samples
-      .map((sample, index) => {
-        const y = centerY - getValue(sample, index) * pathAmplitude;
-        return `${index === 0 ? "M" : "L"} ${sample.x.toFixed(2)} ${y.toFixed(2)}`;
-      })
-      .join(" ");
   const analogPath = buildAnalogPath((point) => point.value);
-  const stepPath = buildSamplePath((sample) => sample.quantized);
-  const reconstructionPath = analogPoints
-    .map((point, index) => {
-      const smoothedValue = point.value * 0.86 + Math.sin((index / 139) * Math.PI * 9.2) * 0.025;
-      const y = midY - smoothedValue * amplitude;
-      return `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${y.toFixed(2)}`;
-    })
-    .join(" ");
-  const dacHoldPath = buildSamplePath((sample) => sample.quantized, 112, 52);
-  const dacReconstructionPath = buildAnalogPath((point, index) => {
-    const smoothedValue = point.value * 0.82 + Math.sin((index / 139) * Math.PI * 9.2) * 0.02;
-    return smoothedValue;
-  }, 232, 52);
-  const codecCapturePath = buildAnalogPath((point) => point.value * 0.72, 108, 52);
-  const codecPlaybackPath = buildAnalogPath((point, index) => {
-    const ratio = index / 139;
-    return point.value * 0.48 + Math.sin(ratio * Math.PI * 2.2) * 0.08;
-  }, 232, 52);
+  const dacHoldPath = samples.map((sample, index) =>
+    `${index === 0 ? `M ${sample.x.toFixed(2)}` : `H ${sample.x.toFixed(2)} V`} ${(112 - sample.quantized * 52).toFixed(2)}`
+  ).join(" ") + " H 710";
+  // Exact RC response over each held sample; normalized display window is 1 ms.
+  const tau = 0.025;
+  let heldIndex = 0;
+  let state = 0;
+  let previousTime = 0;
+  const dacReconstructionPath = Array.from({ length: 661 }, (_, index) => {
+    const time = index / 660;
+    while (heldIndex + 1 < samples.length && samples[heldIndex + 1].ratio <= time) {
+      const nextTime = samples[heldIndex + 1].ratio;
+      const input = samples[heldIndex].quantized;
+      state = input + (state - input) * Math.exp(-(nextTime - previousTime) / tau);
+      previousTime = nextTime;
+      heldIndex += 1;
+    }
+    const input = samples[heldIndex].quantized;
+    state = input + (state - input) * Math.exp(-(time - previousTime) / tau);
+    previousTime = time;
+    return `${index === 0 ? "M" : "L"} ${50 + index} ${(232 - state * 52).toFixed(2)}`;
+  }).join(" ");
   const quantizationError =
     samples.reduce((total, sample) => total + Math.abs(sample.value - sample.quantized), 0) / samples.length;
-  const clippingRisk = Math.max(0, Math.round((inputLevel - 100) * 1.8));
-  const jitterRisk = Math.round(jitter * 0.85);
+  const clippingRisk = Math.round(100 * samples.filter(sample => sample.clipped).length / samples.length);
+  const jitterRisk = jitter / 4;
   const visibleQuantizationLineCount = Math.min(33, levels);
   const visibleQuantizationLines = Array.from({ length: visibleQuantizationLineCount }, (_, index) => {
     const ratio = visibleQuantizationLineCount <= 1 ? 0 : index / (visibleQuantizationLineCount - 1);
@@ -141,15 +136,11 @@ function createConverterData({
   return {
     analogPath,
     clippingRisk,
-    codecCapturePath,
-    codecPlaybackPath,
     dacHoldPath,
     dacReconstructionPath,
     jitterRisk,
     quantizationError,
-    reconstructionPath,
     samples,
-    stepPath,
     visibleQuantizationLines
   };
 }
@@ -212,8 +203,8 @@ function getModeCopy(mode: CodecMode, language: Language): ModeCopy {
       title: language === "zh" ? "DAC：数字样本重建成模拟输出" : "DAC: digital samples to analog output",
       body:
         language === "zh"
-          ? "数字样本进入 DAC 后经过插值、噪声整形和保持输出，再由模拟低通滤波器去除采样镜像，最后通过缓冲或耳放驱动负载。"
-          : "Digital samples enter interpolation, noise shaping, and hold output; an analog low-pass filter removes sampling images, then buffers or headphone amps drive the load.",
+          ? "本图使用量化样本、零阶保持和一阶 RC 低通（时间常数 25 μs，初始输出为 0），展示滤波的平滑、衰减和延迟。实际 Σ-Δ DAC 还包含插值与噪声整形，不能等同于这里的简化模型。"
+          : "This model uses quantized samples, zero-order hold and a first-order RC low-pass (25 μs time constant, zero initial output) to show smoothing, attenuation and delay. Real sigma-delta DACs also use interpolation and noise shaping; this is not a chip simulation.",
       chain:
         language === "zh"
           ? ["I2S PCM", "插值", "DAC 核心", "重建滤波", "模拟输出"]
@@ -227,11 +218,11 @@ function getModeCopy(mode: CodecMode, language: Language): ModeCopy {
               },
               {
                 title: "保持输出",
-                body: "数字样本会先变成阶梯状电压，阶梯边沿包含采样镜像和高频成分。"
+                body: "本实验采用零阶保持：每个量化值保持到下次更新，形成阶梯。这是教学模型，不代表所有 DAC 的内部结构。"
               },
               {
                 title: "重建滤波",
-                body: "低通重建滤波把阶梯和镜像成分抹平，输出更接近连续模拟波形。"
+                body: "本实验的一阶低通由实际阶梯输入计算，保留幅度衰减、相位延迟和启动过程；它不能完全消除镜像，也不是理想重建。"
               },
               {
                 title: "输出驱动",
@@ -245,11 +236,11 @@ function getModeCopy(mode: CodecMode, language: Language): ModeCopy {
               },
               {
                 title: "Hold output",
-                body: "Digital samples first become stepped voltage. Step edges contain sampling images and high-frequency content."
+                body: "This lab uses zero-order hold: each quantized value stays constant until the next update. This teaching model does not represent every DAC architecture."
               },
               {
                 title: "Reconstruction filter",
-                body: "A low-pass reconstruction filter smooths the steps and images into a more continuous analog waveform."
+                body: "The first-order filter is computed from the held samples and includes attenuation, phase lag and startup. It cannot remove all images and is not ideal reconstruction."
               },
               {
                 title: "Output driver",
@@ -380,13 +371,11 @@ function renderCodecMetricChips({
   quantizationError: number;
 }) {
   return (
-    <>
-      <text className="lab-chip" x="518" y="54">{language === "zh" ? `削波风险 ${clippingRisk}%` : `Clipping risk ${clippingRisk}%`}</text>
-      <text className="lab-chip" x="518" y="88">{language === "zh" ? `抖动风险 ${jitterRisk}%` : `Jitter risk ${jitterRisk}%`}</text>
-      <text className="lab-chip" x="518" y="122">
-        {language === "zh" ? `量化误差 ${quantizationError.toFixed(3)}` : `Quantization error ${quantizationError.toFixed(3)}`}
-      </text>
-    </>
+    <div className="codec-model-metrics">
+      <span>{language === "zh" ? `削波样本占比 ${clippingRisk}%` : `Clipped samples ${clippingRisk}%`}</span>
+      <span>{language === "zh" ? `时间偏移上限 ${jitterRisk}% Ts` : `Timing offset limit ${jitterRisk}% Ts`}</span>
+      <span>{language === "zh" ? `平均绝对量化误差 ${quantizationError.toFixed(3)} FS` : `Mean absolute quantization error ${quantizationError.toFixed(3)} FS`}</span>
+    </div>
   );
 }
 
@@ -456,7 +445,6 @@ export function CodecHardwareLab({ language, onBack, onBackToDetails }: CodecHar
                 ))}
                 <text className="lab-label" x="54" y="40">{language === "zh" ? "ADC 输入模拟波形" : "ADC analog input"}</text>
                 <text className="lab-label" x="54" y="270">{language === "zh" ? "采样点与量化等级" : "Samples and quantization levels"}</text>
-              {renderCodecMetricChips({ ...data, language })}
             </svg>
           ) : null}
           {mode === "dac" ? (
@@ -476,10 +464,15 @@ export function CodecHardwareLab({ language, onBack, onBackToDetails }: CodecHar
                   <circle className="digital-quantized-dot" cx={sample.x.toFixed(2)} cy={(112 - sample.quantized * 52).toFixed(2)} key={`${index}-${sample.x.toFixed(2)}`} r="4.5" />
                 ))}
                 <text className="lab-label" x="54" y="42">{language === "zh" ? "保持输出：阶梯状电压" : "Hold output: stepped voltage"}</text>
-                <text className="lab-label" x="54" y="192">{language === "zh" ? "重建滤波后：平滑模拟波形" : "After reconstruction filter: smooth analog wave"}</text>
-              {renderCodecMetricChips({ ...data, language })}
+                <text className="lab-label" x="54" y="177">{language === "zh" ? "一阶低通输出（含延迟与衰减）" : "First-order low-pass output (lag + attenuation)"}</text>
+                {[0, 0.5, 1].map(t => <text key={t} className="lab-label" x={50 + t * 660} y="319" textAnchor="middle">{t} ms</text>)}
+                {[112, 232].map(center => <g key={center}>{[-1, 0, 1].map(value => <text key={value} className="lab-label" x="40" y={center - value * 52 + 5} textAnchor="end">{value}</text>)}</g>)}
             </svg>
           ) : null}
+          {mode !== "codec" && <>
+            {renderCodecMetricChips({ ...data, language })}
+            <p className="codec-model-note">{language === "zh" ? "横轴：0–1 ms；纵轴：归一化幅度（±1 FS）。Ts 为名义采样间隔，时间偏移为夸大的周期性演示。DAC 模式先在这些时刻取得量化样本，再以相同时刻更新保持输出；不是独立的 DAC 时钟误差仿真。" : "X: 0–1 ms; Y: normalized amplitude (±1 FS). Ts is the nominal sample interval; timing error is exaggerated and periodic. DAC mode acquires samples at these times and holds them on the same schedule; it does not simulate independent DAC clock error."}</p>
+          </>}
           {mode === "codec" ? (
             <svg
               aria-label={language === "zh" ? "Codec 芯片链路图" : "Codec chip path chart"}
@@ -601,7 +594,7 @@ export function CodecHardwareLab({ language, onBack, onBackToDetails }: CodecHar
               <label>
                 <span>
                   {language === "zh" ? "时钟抖动" : "Clock jitter"}
-                  <strong>{jitter}%</strong>
+                  <strong>{jitter / 4}% Ts</strong>
                 </span>
                 <input
                   aria-label={language === "zh" ? "时钟抖动" : "Clock jitter"}

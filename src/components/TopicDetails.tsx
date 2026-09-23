@@ -290,6 +290,19 @@ export function TopicDetails({
         </div>
         <div className="details-scroll">
           <p className="details-summary">{topic.summary[language]}</p>
+          {topic.detail.chainContext ? (
+            <section className="details-chain-context" aria-label={language === "zh" ? "当前模块在音频链路中的位置" : "Current module in the audio chain"}>
+              <div className="details-chain-heading">
+                <strong>{language === "zh" ? "它在整条音频链路中的位置" : "Where this module fits"}</strong>
+                <span>{topic.detail.chainContext.stage[language]}</span>
+              </div>
+              <div className="details-chain-grid">
+                <div><small>{language === "zh" ? "输入" : "Input"}</small><p>{topic.detail.chainContext.input[language]}</p></div>
+                <div><small>{language === "zh" ? "本模块输出" : "Module output"}</small><p>{topic.detail.chainContext.output[language]}</p></div>
+                <div><small>{language === "zh" ? "下一站" : "Next"}</small><p>{topic.detail.chainContext.next[language]}</p></div>
+              </div>
+            </section>
+          ) : null}
           {!isCompactTopic ? <div className="details-block details-block-emphasis">
             <h3>{interfaceCopy.detailsExplanationTitle[language]}</h3>
             <p>{topic.detail.explanation[language]}</p>

@@ -33,7 +33,7 @@ const protocolCopy: Record<
       en: "I2S uses BCLK to shift each data bit, LRCLK to mark left/right half-frames on each SD line, and SD to carry PCM words with fixed alignment. MCLK is often the reference for a codec or DAC PLL."
     },
     keyPoints: [
-      { zh: "BCLK = 采样率(Hz) × 位深 × 声道数；如果采样率用 kHz 显示，要先乘 1000 再换算成 MHz。", en: "BCLK = sample rate in Hz x bit depth x channel count; if the UI shows kHz, multiply by 1000 before converting to MHz." },
+      { zh: "单条 SD 的 BCLK = 采样率(Hz) × 每声道位深 × 2；多通道 I2S 增加的是并行 SD 线，不会放大单条 SD 的 BCLK。", en: "Per-SD BCLK = sample rate in Hz x bits per channel x 2; multichannel I2S adds parallel SD lines without multiplying each line's BCLK." },
       { zh: "LRCLK 的频率就是音频采样率；在多条 SD 并行的多通道 I2S 中，LRCLK 仍只区分每条 SD 的 L / R 半帧。", en: "LRCLK frequency equals the audio sample rate; in multichannel I2S with parallel SD lines, LRCLK still only separates L/R half-frames on each SD line." },
       { zh: "多通道 I2S 用多条 SD 线并行扩展声道；TDM 则用一条 SD 线按 slot 时分复用，两者不要混为一谈。", en: "Multichannel I2S expands channels with parallel SD lines; TDM time-multiplexes slots on one SD line, so keep the two concepts separate." }
     ]
@@ -327,16 +327,16 @@ function renderI2sDiagram(language: Language, bitDepth: number, channels: number
           </g>
           <text className="interface-channel-label" x="216" y="238">{language === "zh" ? `L: bit${bitDepth - 1} → bit0` : `L: bit${bitDepth - 1} to bit0`}</text>
           <text className="interface-channel-label" x="506" y="238">{language === "zh" ? `R: bit${bitDepth - 1} → bit0` : `R: bit${bitDepth - 1} to bit0`}</text>
-          <text className="lab-chip" x="474" y="324">{language === "zh" ? "LRCLK 每翻转一次切换声道" : "LRCLK toggles between channels"}</text>
+          <text className="lab-chip" x="390" y="324">{language === "zh" ? "LRCLK 每翻转一次切换声道" : "LRCLK toggles between channels"}</text>
         </>
       )}
     </svg>
   );
 }
 
-function renderTdmDiagram(language: Language, channels: number, bitDepth: number) {
+function renderTdmDiagram(language: Language, channels: number, slotWidth: number) {
   const slots = Array.from({ length: channels }, (_, index) => index + 1);
-  const slotWidth = 620 / channels;
+  const slotVisualWidth = 620 / channels;
   const channelBoxWidth = 548 / channels;
 
   return (
@@ -369,14 +369,14 @@ function renderTdmDiagram(language: Language, channels: number, bitDepth: number
       <text className="lab-label" x="48" y="184">SD</text>
       <g>
         {slots.map((slot, index) => {
-          const x = 70 + index * slotWidth;
+          const x = 70 + index * slotVisualWidth;
           return (
             <g key={slot}>
-              <rect className="interface-slot" height="82" width={slotWidth - 5} x={x} y="202" />
-              <text className="interface-slot-label" x={x + slotWidth / 2 - 2.5} y="224">{`Slot ${slot}`}</text>
-              <text className="interface-slot-sub" x={x + slotWidth / 2 - 2.5} y="246">{language === "zh" ? `CH${slot}` : `CH${slot}`}</text>
-              <text className="interface-slot-sub" x={x + slotWidth / 2 - 2.5} y="268">
-                {slotWidth > 100 ? `bit${bitDepth - 1} → bit0` : "MSB→LSB"}
+              <rect className="interface-slot" height="82" width={slotVisualWidth - 5} x={x} y="202" />
+              <text className="interface-slot-label" x={x + slotVisualWidth / 2 - 2.5} y="224">{`Slot ${slot}`}</text>
+              <text className="interface-slot-sub" x={x + slotVisualWidth / 2 - 2.5} y="246">{language === "zh" ? `CH${slot}` : `CH${slot}`}</text>
+              <text className="interface-slot-sub" x={x + slotVisualWidth / 2 - 2.5} y="268">
+                {slotWidth > 24 ? `bit${slotWidth - 1} → bit0` : "MSB→LSB"}
               </text>
             </g>
           );
@@ -591,9 +591,9 @@ function renderUsbDiagram(language: Language) {
   );
 }
 
-function renderProtocolDiagram(protocol: InterfaceProtocol, language: Language, bitDepth: number, channels: number) {
+function renderProtocolDiagram(protocol: InterfaceProtocol, language: Language, bitDepth: number, channels: number, slotWidth: number) {
   if (protocol === "tdm") {
-    return renderTdmDiagram(language, channels, bitDepth);
+    return renderTdmDiagram(language, channels, slotWidth);
   }
 
   if (protocol === "pdm") {
@@ -616,12 +616,16 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
   const [sampleRate, setSampleRate] = useState(48);
   const [bitDepth, setBitDepth] = useState(24);
   const [channels, setChannels] = useState(2);
+  const [slotWidth, setSlotWidth] = useState(32);
+  const [mclkMultiple, setMclkMultiple] = useState(256);
 
   const sampleRateHz = sampleRate * 1000;
-  const bclkMhz = useMemo(() => formatMhz((sampleRateHz * bitDepth * channels) / 1_000_000), [bitDepth, channels, sampleRateHz]);
-  const mclkMhz = useMemo(() => formatMhz((sampleRateHz * 256) / 1_000_000), [sampleRateHz]);
-  const bclkFormula = `${sampleRate} kHz × 1000 × ${bitDepth} bit × ${channels} ch ÷ 1,000,000 = ${bclkMhz} MHz`;
-  const mclkFormula = `${sampleRate} kHz × 1000 × 256 ÷ 1,000,000 = ${mclkMhz} MHz`;
+  const bclkMhz = useMemo(() => formatMhz((sampleRateHz * (protocol === "tdm" ? channels * slotWidth : bitDepth * 2)) / 1_000_000), [bitDepth, channels, protocol, sampleRateHz, slotWidth]);
+  const mclkMhz = useMemo(() => formatMhz((sampleRateHz * mclkMultiple) / 1_000_000), [mclkMultiple, sampleRateHz]);
+  const bclkFormula = protocol === "tdm"
+    ? `${sampleRate} kHz × 1000 × ${channels} slots × ${slotWidth} bit ÷ 1,000,000 = ${bclkMhz} MHz`
+    : `${sampleRate} kHz × 1000 × ${bitDepth} bit × 2 ch ÷ 1,000,000 = ${bclkMhz} MHz / SD`;
+  const mclkFormula = `${sampleRate} kHz × 1000 × ${mclkMultiple} ÷ 1,000,000 = ${mclkMhz} MHz`;
   const activeCopy = protocolCopy[protocol];
   const usesClockControls = protocol === "i2s" || protocol === "tdm";
 
@@ -677,7 +681,7 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
               </span>
             ) : null}
           </div>
-          {renderProtocolDiagram(protocol, language, bitDepth, channels)}
+          {renderProtocolDiagram(protocol, language, bitDepth, channels, slotWidth)}
         </div>
 
         <div className="digital-interface-panel">
@@ -697,6 +701,15 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
           {usesClockControls ? (
             <>
               <div className="lab-sliders">
+                {protocol === "tdm" && <label>
+                  <span>
+                    {language === "zh" ? "Slot 宽度" : "Slot width"}
+                    <strong>{slotWidth} bit</strong>
+                  </span>
+                  <select aria-label={language === "zh" ? "Slot 宽度" : "Slot width"} value={slotWidth} onChange={(event) => setSlotWidth(Number(event.target.value))}>
+                    {[16, 24, 32].map((value) => <option key={value} value={value}>{value} bit</option>)}
+                  </select>
+                </label>}
                 <label>
                   <span>
                     {language === "zh" ? "采样率" : "Sample rate"}
@@ -729,8 +742,8 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
                 </label>
                 <label>
                   <span>
-                    {language === "zh" ? "通道数" : "Channels"}
-                    <strong>{channels} ch</strong>
+                    {protocol === "tdm" ? (language === "zh" ? "Slot 数" : "Slots") : (language === "zh" ? "总通道数" : "Total channels")}
+                    <strong>{channels} {protocol === "tdm" ? "slots" : "ch"}</strong>
                   </span>
                   <input
                     aria-label={language === "zh" ? "通道数" : "Channels"}
@@ -744,16 +757,23 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
                 </label>
               </div>
 
+              <label className="interface-select-label">
+                <span>{language === "zh" ? "MCLK 倍频" : "MCLK multiple"}<strong>{mclkMultiple}fs</strong></span>
+                <select aria-label={language === "zh" ? "MCLK 倍频" : "MCLK multiple"} value={mclkMultiple} onChange={(event) => setMclkMultiple(Number(event.target.value))}>
+                  {[128, 256, 384, 512].map((value) => <option key={value} value={value}>{value}fs</option>)}
+                </select>
+              </label>
+
               <div className="digital-lab-metrics">
                 <strong>
                   {language === "zh"
-                    ? `BCLK：${sampleRateHz.toLocaleString("en-US")} Hz × ${bitDepth} bit × ${channels} ch = ${bclkMhz} MHz`
-                    : `BCLK: ${sampleRateHz.toLocaleString("en-US")} Hz x ${bitDepth} bit x ${channels} ch = ${bclkMhz} MHz`}
+                    ? `BCLK：${bclkFormula}`
+                    : `BCLK: ${bclkFormula}`}
                 </strong>
                 <strong>
                   {language === "zh"
-                    ? `MCLK 常见 256fs：${mclkFormula}`
-                    : `Common MCLK 256fs: ${mclkFormula}`}
+                    ? `MCLK 配置 ${mclkMultiple}fs：${mclkFormula}`
+                    : `MCLK setting ${mclkMultiple}fs: ${mclkFormula}`}
                 </strong>
               </div>
             </>
@@ -764,6 +784,21 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
             <span>{activeCopy.body[language]}</span>
           </div>
         </div>
+
+        <section className="interface-comparison" aria-label={language === "zh" ? "I2S 多通道与 TDM 对比" : "Multichannel I2S and TDM comparison"}>
+          <div className="codec-mode-concepts-header"><strong>{language === "zh" ? "多声道方式对比" : "Multichannel comparison"}</strong><span>{language === "zh" ? "不要混淆数据线与 slot" : "Separate data lines from slots"}</span></div>
+          <div className="interface-comparison-grid">
+            {(language === "zh" ? [
+              ["双声道 I2S", "1 条 SD", "LRCLK 切换 L / R"],
+              ["多通道 I2S", "多条 SD 并行", "每条 SD 各传一对 L / R"],
+              ["TDM", "1 条 SD", "多个 slot 按时间复用"]
+            ] : [
+              ["Stereo I2S", "1 SD line", "LRCLK switches L / R"],
+              ["Multichannel I2S", "Parallel SD lines", "Each SD carries one L / R pair"],
+              ["TDM", "1 SD line", "Multiple time-multiplexed slots"]
+            ]).map(([title, wires, method]) => <article key={title}><h2>{title}</h2><strong>{wires}</strong><p>{method}</p></article>)}
+          </div>
+        </section>
 
         <section className="codec-mode-concepts" aria-label={language === "zh" ? "接口关键知识点" : "Interface key concepts"}>
           <div className="codec-mode-concepts-header">

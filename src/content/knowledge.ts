@@ -57,6 +57,12 @@ export type TopicLab = {
 
 export type TopicDetail = {
   explanation: LocalizedText;
+  chainContext?: {
+    stage: LocalizedText;
+    input: LocalizedText;
+    output: LocalizedText;
+    next: LocalizedText;
+  };
   keyConcepts: LocalizedText[];
   termExplanations?: TopicTerm[];
   diagram?: TopicDiagram;
@@ -152,6 +158,12 @@ export const categories: Category[] = [
           explanation: {
             zh: "声音来自声源振动造成的局部压力和密度变化。介质粒子只在平衡位置附近往复运动，传播出去的是扰动和能量，而不是一团空气从声源跑到耳朵。单频纯音可近似写成 Δp(t) = Â·sin(2πft + φ)：Â 是峰值声压，f 是频率，φ 是初相位；真实语音和音乐则是许多频率、谐波与瞬态的叠加。",
             en: "Sound begins when a vibrating source creates local pressure and density changes. Particles oscillate around equilibrium while the disturbance and energy travel; a parcel of air does not move all the way from source to listener. A pure tone can be approximated by Δp(t) = Â·sin(2πft + φ), where Â is peak sound pressure, f is frequency, and φ is initial phase. Speech and music combine many frequencies, harmonics, and transients."
+          },
+          chainContext: {
+            stage: { zh: "链路起点：物理声学", en: "Chain position: physical acoustics" },
+            input: { zh: "声源的机械振动", en: "Mechanical vibration from a source" },
+            output: { zh: "空气中的声压变化 Δp", en: "Sound-pressure variation Δp in air" },
+            next: { zh: "进入麦克风换能", en: "Next: microphone transduction" }
           },
           keyConcepts: [
             { zh: "周期 T = 1/f；空气中的波长 λ = c/f。频率升高会让周期变短、波长变短，但不会自动增大振幅。", en: "Period T = 1/f, and wavelength in air is λ = c/f. Higher frequency shortens period and wavelength but does not automatically increase amplitude." },
@@ -353,6 +365,12 @@ export const categories: Category[] = [
             zh: "数字音频把连续的声波转换成一串离散数字。采样率决定每秒记录多少个点，位深决定每个点能表达多细的幅度变化，编码格式则决定这些数字如何保存、压缩和传输。",
             en: "Digital audio turns a continuous waveform into discrete numbers. Sample rate controls how many points are captured per second, bit depth controls amplitude precision, and the encoding format defines how those numbers are stored, compressed, and transmitted."
           },
+          chainContext: {
+            stage: { zh: "采集后的数字化阶段", en: "Chain position: digitization after capture" },
+            input: { zh: "麦克风或线路输入的连续模拟电压", en: "Continuous analog voltage from a microphone or line input" },
+            output: { zh: "带采样率、位深和格式的 PCM / 音频码流", en: "PCM samples or an audio stream with sample rate, bit depth, and format" },
+            next: { zh: "进入 DSP、编码、存储或传输", en: "Next: DSP, encoding, storage, or transport" }
+          },
           keyConcepts: [
             { zh: "采样率决定时间轴上的记录密度，常见音乐和视频音频会使用 44.1 kHz 或 48 kHz。", en: "Sample rate determines density along the time axis; music and video commonly use 44.1 kHz or 48 kHz." },
             { zh: "奈奎斯特采样定理说明采样率至少要高于最高有效频率的两倍，采样前通常需要抗混叠滤波。", en: "The Nyquist theorem says the sample rate must be more than twice the highest useful frequency, so anti-alias filtering is usually needed before sampling." },
@@ -541,6 +559,12 @@ export const categories: Category[] = [
             zh: "麦克风是把空气中的声压变化转换成电信号的换能器。声波推动振膜振动，振膜运动再通过线圈、电容变化、驻极体材料或 MEMS 结构变成电压或数字脉冲流，随后经过前置放大、滤波和 ADC 进入数字音频系统。",
             en: "A microphone is a transducer that converts air-pressure variation into an electrical signal. Sound moves a diaphragm; that motion is converted by a coil, capacitance change, electret material, or MEMS structure into voltage or a digital pulse stream, then passes through preamp, filtering, and ADC stages."
           },
+          chainContext: {
+            stage: { zh: "采集入口：声学到电信号", en: "Chain position: capture entry from acoustics to electricity" },
+            input: { zh: "声压变化 Δp 与声源方向", en: "Sound-pressure variation Δp and source direction" },
+            output: { zh: "模拟电压，或经过前端后的 PDM / I2S 数据", en: "Analog voltage, or PDM / I2S data after the front end" },
+            next: { zh: "进入 ADC、Codec 或数字麦克风接口", en: "Next: ADC, codec, or digital-microphone interface" }
+          },
           keyConcepts: [
             { zh: "动圈麦耐用、抗大声压，适合舞台和近讲；电容麦灵敏、细节多，常用于录音棚和播客。", en: "Dynamic microphones are durable and tolerate high SPL, useful on stage and close speech; condenser microphones are sensitive and detailed, common in studios and podcasts." },
             { zh: "驻极体和 MEMS 麦克风体积小、成本低，广泛用于手机、耳机、会议设备、IoT 和车载语音。", en: "Electret and MEMS microphones are compact and low-cost, widely used in phones, earbuds, conferencing devices, IoT, and vehicle voice systems." },
@@ -661,6 +685,12 @@ export const categories: Category[] = [
             zh: "ADC 把麦克风、线路输入等模拟电压按固定时钟采样并量化成数字样本；DAC 把数字样本转换成阶梯状或调制后的模拟信号，再经过重建滤波和输出级驱动耳机、功放或线路输出。音频 Codec 芯片通常把 ADC、DAC、PGA、耳机放大、混音、数字滤波、时钟和 I2S/PDM/TDM 接口集成在一起，是嵌入式音频链路的核心器件。",
             en: "An ADC samples and quantizes analog voltage from microphones or line inputs into digital samples. A DAC converts digital samples into stepped or modulated analog signals, then uses reconstruction filtering and output stages to drive headphones, amplifiers, or line outputs. An audio codec chip often integrates ADCs, DACs, PGA, headphone amps, mixers, digital filters, clocks, and I2S/PDM/TDM interfaces."
           },
+          chainContext: {
+            stage: { zh: "转换与模拟边界", en: "Chain position: analog/digital boundary" },
+            input: { zh: "模拟电压，或待播放的 PCM 样本", en: "Analog voltage, or PCM samples ready for playback" },
+            output: { zh: "PCM，或经过重建滤波的模拟输出", en: "PCM, or an analog output after reconstruction filtering" },
+            next: { zh: "采集侧进入接口 / DSP；播放侧进入功放与扬声器", en: "Capture goes to interfaces / DSP; playback goes to the amplifier and speaker" }
+          },
           keyConcepts: [
             { zh: "ADC 之前的模拟前端决定输入电平、增益和抗混叠；输入过大会削波，输入太小会让底噪占比变高。", en: "The analog front end before an ADC sets input level, gain, and anti-aliasing; too much level clips, while too little level exposes noise." },
             { zh: "DAC 之后的重建滤波、输出阻抗、负载能力和耳机/功放匹配决定实际播放质量。", en: "After a DAC, reconstruction filtering, output impedance, load drive, and headphone/amplifier matching shape playback quality." },
@@ -773,6 +803,12 @@ export const categories: Category[] = [
           explanation: {
             zh: "接口协议关注的是芯片和设备之间如何搬运音频样本，而不是声音如何被采样或压缩。ADC、DAC、Codec、数字 MEMS 麦克风、DSP、蓝牙芯片和主控之间通常要约定数据线、时钟线、帧同步、位宽、声道顺序和主从关系，任何一项不匹配都可能导致无声、变调、左右声道错位、噪声或爆音。",
             en: "Interface protocols are about moving audio samples between chips and devices, not about how sound is sampled or compressed. ADCs, DACs, codecs, digital MEMS microphones, DSPs, Bluetooth chips, and hosts must agree on data lines, clocks, frame sync, word length, channel order, and master/slave roles; mismatches can cause silence, pitch errors, swapped channels, noise, or pops."
+          },
+          chainContext: {
+            stage: { zh: "芯片之间的数字搬运层", en: "Chain position: digital transport between chips" },
+            input: { zh: "PCM、PDM 或设备音频包，以及时钟配置", en: "PCM, PDM, or device audio packets plus clock configuration" },
+            output: { zh: "按约定时序送达下一颗芯片或外设", en: "Samples delivered to the next chip or peripheral with agreed timing" },
+            next: { zh: "进入 DSP、Codec、DAC、功放或主机协议栈", en: "Next: DSP, codec, DAC, amplifier, or host protocol stack" }
           },
           keyConcepts: [
             { zh: "I2S/IIS/I²S 主要用于传输已经采样量化后的 PCM 数据，常见于主控和 Codec、DAC、功放之间。", en: "I2S/IIS/I²S carries already sampled and quantized PCM data, commonly between a host and codec, DAC, or amplifier." },
@@ -1012,47 +1048,37 @@ export const categories: Category[] = [
             zh: "系统音频架构回答的是：应用发起播放或录音请求后，系统如何选择设备、管理权限、处理会话和音量，并把 PCM 数据交给驱动和硬件。它是系统层总览，不展开具体 DSP 算法、接口时序或低延迟调参。",
             en: "System audio architecture answers this question: after an app requests playback or recording, how does the system choose devices, manage permission, handle sessions and volume, then hand PCM data to drivers and hardware? It is a system-level overview, not a deep dive into DSP algorithms, interface timing, or low-latency tuning."
           },
+          chainContext: {
+            stage: { zh: "系统调度层：请求到设备", en: "System orchestration: request to device" },
+            input: { zh: "应用的播放、采集或通话请求", en: "Playback, capture, or call request from an app" },
+            output: { zh: "路由后的 PCM 数据与控制状态", en: "Routed PCM data and control state" },
+            next: { zh: "进入 ALSA / HAL、驱动和硬件链路", en: "Next: ALSA / HAL, drivers, and hardware path" }
+          },
           keyConcepts: [
-            { zh: "应用通常不直接控制扬声器或麦克风，而是通过系统 API 提交播放、录音或通话请求。", en: "Apps usually do not directly control speakers or microphones; they submit playback, recording, or call requests through system APIs." },
-            { zh: "音频服务负责统一管理多个 App 的会话、音频焦点、音量、设备状态和路由策略。", en: "The audio service centrally manages sessions, focus, volume, device state, and routing policy across apps." },
-            { zh: "播放、采集和全双工是三种链路方向；本卡只说明系统如何把模块接起来。", en: "Playback, capture, and full duplex are three path directions; this card only shows how the system connects modules." },
-            { zh: "在 Linux 中，ALSA 是系统音频栈靠近驱动的一层实现；PCM、period、DMA 环形 buffer 和 XRUN 的细节请看 ALSA 框架卡片。", en: "On Linux, ALSA is the implementation layer close to the driver; see the ALSA Framework card for PCM, periods, DMA ring buffers, and XRUN details." },
-            { zh: "DSP 算法、接口时序、Codec 芯片和 buffer deadline 分别放在语音增强、数字接口、硬件和实时处理卡片中展开。", en: "DSP algorithms, interface timing, codec chips, and buffer deadlines are covered by the speech enhancement, digital interface, hardware, and real-time processing cards." }
+            { zh: "系统音频先处理请求和策略，再把数据交给具体设备；应用通常不直接控制物理麦克风或扬声器。", en: "System audio handles requests and policy before handing data to a device; apps usually do not control physical microphones or speakers directly." },
+            { zh: "播放、采集和全双工共用系统管理，但数据方向和设备占用关系不同。", en: "Playback, capture, and full duplex share system management, but differ in data direction and device ownership." },
+            { zh: "系统层定义模块边界：ALSA 负责 Linux 设备接口，实时卡片负责 deadline，算法卡片负责信号处理。", en: "The system layer defines boundaries: ALSA owns Linux device interfaces, the real-time card owns deadlines, and algorithm cards own signal processing." }
           ],
           termExplanations: [
             {
-              name: { zh: "应用层 API", en: "Application API" },
+              name: { zh: "请求生命周期", en: "Request lifecycle" },
               explanation: {
-                zh: "应用通过 AudioTrack、AAudio、Core Audio、WASAPI、WebAudio 等 API 打开播放或录音流。API 负责把格式、会话和设备请求交给系统音频栈。",
-                en: "Apps open playback or capture streams through APIs such as AudioTrack, AAudio, Core Audio, WASAPI, or WebAudio. The API passes format, session, and device requests to the system audio stack."
+                zh: "应用先提出播放、采集或通话请求，系统再完成权限检查、设备选择、格式协商和流启动。应用拿到的是系统提供的音频流，不必知道每个硬件寄存器。",
+                en: "An app first requests playback, capture, or a call. The system then checks permission, selects a device, negotiates format, and starts the stream. The app receives a system audio stream without knowing each hardware register."
               }
             },
             {
-              name: { zh: "音频服务", en: "Audio service" },
+              name: { zh: "策略与数据流分离", en: "Policy versus data flow" },
               explanation: {
-                zh: "音频服务是系统的集中管理层。在 Linux 中常见为 PipeWire、PulseAudio 或 JACK，负责连接多个客户端、维护设备状态和安排数据流向。",
-                en: "The audio service is the central manager. On Linux it is commonly PipeWire, PulseAudio, or JACK, connecting clients, maintaining device state, and arranging data flow."
+                zh: "路由、音量、音频焦点和权限回答‘允许谁使用哪台设备’；PCM 数据流回答‘样本如何按时间顺序传递’。两者相关，但不是同一个模块。",
+                en: "Routing, volume, audio focus, and permission answer who may use which device; the PCM data flow answers how samples move over time. They interact but are not the same module."
               }
             },
             {
-              name: { zh: "音频策略与路由", en: "Audio policy and routing" },
+              name: { zh: "平台边界", en: "Platform boundary" },
               explanation: {
-                zh: "策略层决定声音走扬声器、听筒、耳机、蓝牙、USB 声卡还是虚拟设备，也处理来电、通知、媒体和语音助手之间的优先级。",
-                en: "The policy layer decides whether audio goes to speakers, earpiece, headphones, Bluetooth, USB audio, or virtual devices, and resolves priority among calls, notifications, media, and assistants."
-              }
-            },
-            {
-              name: { zh: "混音器与重采样", en: "Mixer and resampler" },
-              explanation: {
-                zh: "当多个应用同时播放，系统会把不同流合到目标输出路径，并在需要时统一采样率或通道格式。这里仅说明它们属于系统链路中的软件处理层。",
-                en: "When multiple apps play at once, the system combines streams into the target output path and normalizes sample rate or channel format when needed. Here they are only placed as software responsibilities in the system path."
-              }
-            },
-            {
-              name: { zh: "HAL / 驱动", en: "HAL / driver" },
-              explanation: {
-                zh: "HAL 和驱动是系统抽象与硬件实现之间的边界。系统把音频流、控制命令和设备状态交给这一层，再由具体平台适配声卡、蓝牙或 USB 音频设备。",
-                en: "HAL and drivers form the boundary between system abstractions and hardware implementation. The system hands audio streams, controls, and device state to this layer, then the platform adapts sound cards, Bluetooth, or USB audio devices."
+                zh: "Android AudioFlinger、Linux PipeWire/ALSA、Windows WASAPI 和 macOS Core Audio 的名称不同，但都要完成请求管理、路由和设备适配。具体 API 与驱动细节放在平台专题中。",
+                en: "Android AudioFlinger, Linux PipeWire/ALSA, Windows WASAPI, and macOS Core Audio use different names but all manage requests, routing, and device adaptation. Platform-specific APIs and drivers belong in dedicated topics."
               }
             }
           ],

@@ -1,6 +1,8 @@
 import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
 import type { Category, Language, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
+import { MicrophoneAnatomy } from "./MicrophoneAnatomy";
+import { ConverterGuide } from "./ConverterGuide";
 
 type DisplayTopic = Topic & { category: Category };
 
@@ -34,19 +36,26 @@ const flowByType: Record<string, Record<Language, string[]>> = {
 
 const microphoneSections = [
   {
-    title: { zh: "换能原理与麦克风类型", en: "Transduction and microphone types" },
-    description: { zh: "先理解声音如何变成电信号，再区分器件结构与供电方式。", en: "Start with sound-to-signal conversion, then compare construction and power requirements." },
-    terms: ["Transduction", "Dynamic microphone", "Condenser microphone", "Electret / MEMS", "48V phantom power"]
+    title: { zh: "先判断采集任务", en: "Start with the capture task" },
+    description: {
+      zh: "专业内容页只建立选型框架：先看声源、距离和空间环境，再决定需要的灵敏度、指向性和耐受声压。",
+      en: "This page establishes the selection frame: check the source, distance, and room first, then choose sensitivity, directionality, and SPL tolerance."
+    },
+    points: [
+      { zh: "近距离大声压更看重耐受和余量；远场语音更看重自噪声、阵列布局和后端处理。", en: "Close loud sources need SPL headroom; far-field speech depends more on self-noise, array placement, and downstream processing." },
+      { zh: "电容、动圈、驻极体和 MEMS 是换能与封装选择，不是单独代表音质高低。", en: "Condenser, dynamic, electret, and MEMS describe transducer and package choices, not a universal quality ranking." }
+    ]
   },
   {
-    title: { zh: "读懂四项关键参数", en: "Read four key specifications" },
-    description: { zh: "输出多大、频率是否均衡、底噪多低、何时过载，需要分别判断。", en: "Evaluate output level, frequency balance, noise floor, and overload limits separately." },
-    terms: ["Sensitivity", "Frequency response", "Self-noise / SNR", "Maximum SPL"]
-  },
-  {
-    title: { zh: "从单麦拾音到多麦阵列", en: "From single-mic pickup to arrays" },
-    description: { zh: "指向性描述单个麦克风的方向响应；阵列则结合多个麦克风的信号进行空间处理。", en: "A polar pattern describes one microphone's directional response; an array combines multiple microphone signals for spatial processing." },
-    terms: ["Polar pattern", "Microphone array"]
+    title: { zh: "再确认系统接口", en: "Then confirm the system interface" },
+    description: {
+      zh: "麦克风输出会决定后面接什么：模拟电压要经过偏置、前级和 ADC；数字麦则把部分前端放进器件内部。",
+      en: "The microphone output determines what follows: analog voltage needs bias, preamp, and ADC, while a digital mic integrates part of the front end."
+    },
+    points: [
+      { zh: "先保证信号链有足够余量，再比较灵敏度、频响、自噪声和最大 SPL 等规格。", en: "Ensure signal-chain headroom first, then compare sensitivity, frequency response, self-noise, and maximum SPL." },
+      { zh: "PDM、I2S、ADC 和阵列算法属于后续接口与处理环节，具体参数留给实验室验证。", en: "PDM, I2S, ADC, and array algorithms belong to later interface and processing stages; their parameters are explored in the lab." }
+    ]
   }
 ];
 
@@ -60,6 +69,7 @@ export function HardwareTopicPage({
 }: HardwareTopicPageProps) {
   const detail = topic.detail;
   const isMicrophone = detail.lab?.type === "microphone";
+  const isConverter = detail.lab?.type === "codec-hardware";
   const terms = detail.termExplanations ?? [];
   const flow = flowByType[detail.lab?.type ?? ""]?.[language] ?? topic.bullets.map((item) => item[language]);
 
@@ -91,7 +101,19 @@ export function HardwareTopicPage({
           </div>
         </section>
 
-        <section className="sound-topic-section">
+        {detail.chainContext ? <section className="details-chain-context hardware-chain-context" aria-label={language === "zh" ? "当前模块在音频链路中的位置" : "Current module in the audio chain"}>
+          <div className="details-chain-heading">
+            <strong>{language === "zh" ? "它在整条音频链路中的位置" : "Where this module fits"}</strong>
+            <span>{detail.chainContext.stage[language]}</span>
+          </div>
+          <div className="details-chain-grid">
+            <div><small>{language === "zh" ? "输入" : "Input"}</small><p>{detail.chainContext.input[language]}</p></div>
+            <div><small>{language === "zh" ? "本模块输出" : "Module output"}</small><p>{detail.chainContext.output[language]}</p></div>
+            <div><small>{language === "zh" ? "下一站" : "Next"}</small><p>{detail.chainContext.next[language]}</p></div>
+          </div>
+        </section> : null}
+
+        {!isConverter && <section className="sound-topic-section">
           <div className="sound-topic-section-heading">
             <div>
               <h2>{language === "zh" ? "典型信号链示例" : "Example signal chain"}</h2>
@@ -108,9 +130,9 @@ export function HardwareTopicPage({
           </ol>
           {detail.lab?.type === "microphone" && <p className="sound-topic-note">{language === "zh" ? "上图是模拟麦路径。数字麦在内部完成转换；PDM 输出需抽取滤波得到 PCM，I2S 数字麦可直接输出 PCM。" : "This shows an analog microphone path. Digital microphones convert internally: PDM needs decimation to PCM, while I2S microphones can output PCM directly."}</p>}
           {detail.lab?.type === "digital-interface" && <p className="sound-topic-note">{language === "zh" ? "上图仅示例 I2S/TDM。PDM 是 1-bit 密度流，SPDIF 携带嵌入时钟，USB Audio 使用数据包，不能套用同一时序。" : "This example covers I2S/TDM only. PDM carries a 1-bit density stream, SPDIF embeds its clock, and USB Audio uses packets; their timing differs."}</p>}
-        </section>
+        </section>}
 
-        {!isMicrophone && <section className="sound-topic-section">
+        {!isMicrophone && !isConverter && <section className="sound-topic-section">
           <div className="sound-topic-section-heading">
             <div>
               <h2>{language === "zh" ? "核心知识点" : "Core concepts"}</h2>
@@ -126,20 +148,21 @@ export function HardwareTopicPage({
           </div>
         </section>}
 
-        {isMicrophone ? microphoneSections.map((section) => (
+        {isConverter ? <ConverterGuide language={language} /> : isMicrophone ? microphoneSections.map((section, index) => (
           <section className="sound-topic-section microphone-topic-section" key={section.title.en}>
             <div className="microphone-topic-section-intro">
               <h2>{section.title[language]}</h2>
               <p>{section.description[language]}</p>
             </div>
-            <div className="sound-topic-glossary">
-              {section.terms.map((name) => terms.find((term) => term.name.en === name)).filter((term) => term !== undefined).map((term) => (
-                <article key={term.name.en}>
-                  <h3>{term.name[language]}</h3>
-                  <p>{term.explanation[language]}</p>
-                </article>
-              ))}
+            <div className="sound-topic-glossary microphone-topic-points">
+              {section.points.map((point) => <article key={point.en}><p>{point[language]}</p></article>)}
             </div>
+            {index === 0 && <>
+              <p className="sound-topic-note microphone-topic-boundary">
+                {language === "zh" ? "内容分工：这里帮助你建立选型判断；实验室负责切换麦克风类型、调节角度/距离/增益，并观察或试听参数变化。" : "Division of labor: this page frames the selection decision; the lab switches microphone types, adjusts angle/distance/gain, and makes the changes visible or audible."}
+              </p>
+              <MicrophoneAnatomy language={language} />
+            </>}
           </section>
         )) : <section className="sound-topic-section">
           <div className="sound-topic-section-heading">
