@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { AiAudioLab } from "./components/AiAudioLab";
 import { AlsaLab } from "./components/AlsaLab";
+import { AlsaPage } from "./components/AlsaPage";
 import { AmplifierSpeakerLab } from "./components/AmplifierSpeakerLab";
 import { AudioCodecLab } from "./components/AudioCodecLab";
+import { AudioCodecPage } from "./components/AudioCodecPage";
 import { AudioUnitsLab } from "./components/AudioUnitsLab";
 import { AudioUnitsPage } from "./components/AudioUnitsPage";
 import { AutomotiveAudioLab } from "./components/AutomotiveAudioLab";
@@ -24,12 +26,14 @@ import { ListeningMetricsPage } from "./components/ListeningMetricsPage";
 import { MeetingCommunicationLab } from "./components/MeetingCommunicationLab";
 import { MicrophoneLab } from "./components/MicrophoneLab";
 import { RealtimeAudioLab } from "./components/RealtimeAudioLab";
+import { RealtimeAudioPage } from "./components/RealtimeAudioPage";
 import { SearchBar } from "./components/SearchBar";
 import { SpeechEnhancementLab } from "./components/SpeechEnhancementLab";
 import { SoundWaveLab } from "./components/SoundWaveLab";
 import { SoundTopicPage } from "./components/SoundTopicPage";
 import { SpatialAudioLab } from "./components/SpatialAudioLab";
 import { SystemAudioLab } from "./components/SystemAudioLab";
+import { SystemAudioPage } from "./components/SystemAudioPage";
 import { TopicDetails } from "./components/TopicDetails";
 import { getTopicElementId, TopicGrid } from "./components/TopicGrid";
 import {
@@ -133,10 +137,14 @@ export default function App() {
     | "codecLab"
     | "digitalInterfaceLab"
     | "amplifierSpeakerLab"
+    | "systemAudioPage"
     | "systemAudioLab"
+    | "alsaPage"
     | "alsaLab"
     | "audioCodecLab"
+    | "realtimeAudioPage"
     | "realtimeAudioLab"
+    | "audioCodecPage"
     | "coreSignalProcessingLab"
     | "speechEnhancementLab"
     | "spatialAudioLab"
@@ -148,6 +156,7 @@ export default function App() {
 
   const [selectedTopic, setSelectedTopic] = useState<DisplayTopic | null>(null);
   const [activeHardwareTopic, setActiveHardwareTopic] = useState<DisplayTopic | null>(null);
+  const [activeSoftwareTopic, setActiveSoftwareTopic] = useState<DisplayTopic | null>(null);
 
   const allTopics = useMemo<DisplayTopic[]>(
     () =>
@@ -174,9 +183,17 @@ export default function App() {
     [allTopics]
   );
 
+  const softwareTopics = useMemo(
+    () => allTopics.filter((topic) => topic.category.id === "software"),
+    [allTopics]
+  );
+
   const selectedTopicKey = selectedTopic
     ? `${selectedTopic.category.id}-${selectedTopic.title.en}`
     : undefined;
+  const activeSoftwareTopicIndex = activeSoftwareTopic
+    ? softwareTopics.findIndex((topic) => topic.title.en === activeSoftwareTopic.title.en)
+    : -1;
 
   function toggleLanguage() {
     setLanguage((current) => {
@@ -201,11 +218,23 @@ export default function App() {
     setActiveView("knowledge");
   }
 
+  function returnToSoftware() {
+    setQuery("");
+    setActiveCategory("software");
+    setSelectedTopic(null);
+    setActiveSoftwareTopic(null);
+    setActiveView("knowledge");
+  }
+
   function openTopic(topic: DisplayTopic) {
     setSelectedTopic(null);
     if (topic.category.id === "hardware") {
       setActiveHardwareTopic(topic);
       setActiveView("hardwareTopicPage");
+      return;
+    }
+    if (topic.category.id === "software") {
+      openSoftwareTopic(topic);
       return;
     }
     switch (topic.detail.lab?.type) {
@@ -232,6 +261,33 @@ export default function App() {
     const currentIndex = hardwareTopics.findIndex((topic) => topic.title.en === activeHardwareTopic.title.en);
     const nextTopic = hardwareTopics[currentIndex + direction];
     if (nextTopic) setActiveHardwareTopic(nextTopic);
+  }
+
+  function openSoftwareTopic(topic: DisplayTopic) {
+    const pageByLab = {
+      "system-audio": "systemAudioPage",
+      alsa: "alsaPage",
+      "realtime-audio": "realtimeAudioPage",
+      "audio-codec": "audioCodecPage"
+    } as const;
+    const labType = topic.detail.lab?.type;
+    const page = labType ? pageByLab[labType as keyof typeof pageByLab] : undefined;
+
+    if (!page) {
+      setSelectedTopic(topic);
+      return;
+    }
+
+    setSelectedTopic(null);
+    setActiveSoftwareTopic(topic);
+    setActiveView(page);
+  }
+
+  function openAdjacentSoftwareTopic(direction: -1 | 1) {
+    if (!activeSoftwareTopic) return;
+    const currentIndex = softwareTopics.findIndex((topic) => topic.title.en === activeSoftwareTopic.title.en);
+    const nextTopic = softwareTopics[currentIndex + direction];
+    if (nextTopic) openSoftwareTopic(nextTopic);
   }
 
   useEffect(() => {
@@ -347,6 +403,25 @@ export default function App() {
           onOpenLab={() => setActiveView("audioUnitsLab")}
           onOpenPrevious={() => setActiveView("soundTopicPage")}
           onOpenNext={() => setActiveView("digitalTopicPage")}
+        />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+        </footer>
+      </div>
+    );
+  }
+
+  if (activeView === "systemAudioPage" && activeSoftwareTopic) {
+    return (
+      <div className="app-shell">
+        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <SystemAudioPage
+          language={language}
+          topic={activeSoftwareTopic}
+          onBack={returnToSoftware}
+          onOpenLab={() => setActiveView("systemAudioLab")}
+          onOpenPrevious={activeSoftwareTopicIndex > 0 ? () => openAdjacentSoftwareTopic(-1) : undefined}
+          onOpenNext={activeSoftwareTopicIndex < softwareTopics.length - 1 ? () => openAdjacentSoftwareTopic(1) : undefined}
         />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
@@ -571,6 +646,25 @@ export default function App() {
     );
   }
 
+  if (activeView === "alsaPage" && activeSoftwareTopic) {
+    return (
+      <div className="app-shell">
+        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <AlsaPage
+          language={language}
+          topic={activeSoftwareTopic}
+          onBack={returnToSoftware}
+          onOpenLab={() => setActiveView("alsaLab")}
+          onOpenPrevious={activeSoftwareTopicIndex > 0 ? () => openAdjacentSoftwareTopic(-1) : undefined}
+          onOpenNext={activeSoftwareTopicIndex < softwareTopics.length - 1 ? () => openAdjacentSoftwareTopic(1) : undefined}
+        />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+        </footer>
+      </div>
+    );
+  }
+
   if (activeView === "alsaLab") {
     return (
       <div className="app-shell">
@@ -578,7 +672,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <AlsaLab language={language} onBack={() => setActiveView("knowledge")} />
+        <AlsaLab language={language} onBack={returnToSoftware} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -601,6 +695,25 @@ export default function App() {
     );
   }
 
+  if (activeView === "realtimeAudioPage" && activeSoftwareTopic) {
+    return (
+      <div className="app-shell">
+        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <RealtimeAudioPage
+          language={language}
+          topic={activeSoftwareTopic}
+          onBack={returnToSoftware}
+          onOpenLab={() => setActiveView("realtimeAudioLab")}
+          onOpenPrevious={activeSoftwareTopicIndex > 0 ? () => openAdjacentSoftwareTopic(-1) : undefined}
+          onOpenNext={activeSoftwareTopicIndex < softwareTopics.length - 1 ? () => openAdjacentSoftwareTopic(1) : undefined}
+        />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+        </footer>
+      </div>
+    );
+  }
+
   if (activeView === "realtimeAudioLab") {
     return (
       <div className="app-shell">
@@ -609,6 +722,25 @@ export default function App() {
           onToggleLanguage={toggleLanguage}
         />
         <RealtimeAudioLab language={language} onBack={() => setActiveView("knowledge")} />
+        <footer className="site-footer">
+          <span>{interfaceCopy.footer[language]}</span>
+        </footer>
+      </div>
+    );
+  }
+
+  if (activeView === "audioCodecPage" && activeSoftwareTopic) {
+    return (
+      <div className="app-shell">
+        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <AudioCodecPage
+          language={language}
+          topic={activeSoftwareTopic}
+          onBack={returnToSoftware}
+          onOpenLab={() => setActiveView("audioCodecLab")}
+          onOpenPrevious={activeSoftwareTopicIndex > 0 ? () => openAdjacentSoftwareTopic(-1) : undefined}
+          onOpenNext={activeSoftwareTopicIndex < softwareTopics.length - 1 ? () => openAdjacentSoftwareTopic(1) : undefined}
+        />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>

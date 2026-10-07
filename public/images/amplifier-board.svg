@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640">
+  <rect width="960" height="640" rx="24" fill="#edf4ef"/>
+  <rect x="110" y="110" width="740" height="420" rx="18" fill="#226d60"/>
+  <rect x="370" y="170" width="220" height="170" rx="10" fill="#495b62"/>
+  <path d="M390 188h180M390 215h180M390 242h180M390 269h180M390 296h180" stroke="#b8c7cb" stroke-width="8"/>
+  <g fill="#d9984e"><circle cx="220" cy="190" r="34"/><circle cx="220" cy="280" r="34"/><circle cx="720" cy="190" r="34"/><circle cx="720" cy="280" r="34"/></g>
+  <g fill="#d7eee5"><rect x="170" y="405" width="120" height="54" rx="8"/><rect x="680" y="405" width="120" height="54" rx="8"/></g>
+  <text x="480" y="395" fill="#fff" font-family="system-ui" font-size="28" text-anchor="middle">CLASS-D AUDIO AMPLIFIER</text>
+  <text x="230" y="440" fill="#234c43" font-family="system-ui" font-size="22" text-anchor="middle">INPUT</text>
+  <text x="740" y="440" fill="#234c43" font-family="system-ui" font-size="22" text-anchor="middle">SPEAKER OUT</text>
+</svg>

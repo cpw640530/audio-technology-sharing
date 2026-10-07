@@ -3,6 +3,7 @@ import type { Category, Language, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
 import { MicrophoneAnatomy } from "./MicrophoneAnatomy";
 import { ConverterGuide } from "./ConverterGuide";
+import { AmplifierSpeakerAnatomy } from "./AmplifierSpeakerAnatomy";
 
 type DisplayTopic = Topic & { category: Category };
 
@@ -70,6 +71,7 @@ export function HardwareTopicPage({
   const detail = topic.detail;
   const isMicrophone = detail.lab?.type === "microphone";
   const isConverter = detail.lab?.type === "codec-hardware";
+  const isAmplifierSpeaker = detail.lab?.type === "amplifier-speaker";
   const terms = detail.termExplanations ?? [];
   const flow = flowByType[detail.lab?.type ?? ""]?.[language] ?? topic.bullets.map((item) => item[language]);
 
@@ -130,7 +132,19 @@ export function HardwareTopicPage({
           </ol>
           {detail.lab?.type === "microphone" && <p className="sound-topic-note">{language === "zh" ? "上图是模拟麦路径。数字麦在内部完成转换；PDM 输出需抽取滤波得到 PCM，I2S 数字麦可直接输出 PCM。" : "This shows an analog microphone path. Digital microphones convert internally: PDM needs decimation to PCM, while I2S microphones can output PCM directly."}</p>}
           {detail.lab?.type === "digital-interface" && <p className="sound-topic-note">{language === "zh" ? "上图仅示例 I2S/TDM。PDM 是 1-bit 密度流，SPDIF 携带嵌入时钟，USB Audio 使用数据包，不能套用同一时序。" : "This example covers I2S/TDM only. PDM carries a 1-bit density stream, SPDIF embeds its clock, and USB Audio uses packets; their timing differs."}</p>}
+          {isAmplifierSpeaker && <AmplifierSpeakerAnatomy language={language} />}
         </section>}
+
+        <section className="sound-topic-section hardware-topic-lab-entry" aria-label={language === "zh" ? "当前主题实验室入口" : "Current topic lab entry"}>
+          <div className="sound-topic-cta">
+            <CircuitBoard size={22} aria-hidden="true" />
+            <h2>{language === "zh" ? "先进入实验室验证" : "Verify it in the lab first"}</h2>
+            <p>{language === "zh" ? "先用交互实验观察参数变化，再阅读后面的核心知识点和术语说明。" : "Use the interactive lab to observe parameter changes before reading the core concepts and terms below."}</p>
+            <button className="diagram-open-button" type="button" onClick={onOpenLab}>
+              {detail.lab?.buttonLabel[language]}
+            </button>
+          </div>
+        </section>
 
         {!isMicrophone && !isConverter && <section className="sound-topic-section">
           <div className="sound-topic-section-heading">
@@ -181,18 +195,10 @@ export function HardwareTopicPage({
           </div>
         </section>}
 
-        <section className="sound-topic-section sound-topic-bottom-grid">
+        <section className="sound-topic-section">
           <div>
             <h2>{language === "zh" ? "工程边界" : "Engineering boundary"}</h2>
             <p>{detail.misconception[language]}</p>
-          </div>
-          <div className="sound-topic-cta">
-            <CircuitBoard size={22} aria-hidden="true" />
-            <h2>{language === "zh" ? "继续动手验证" : "Keep experimenting"}</h2>
-            <p>{language === "zh" ? "用交互实验验证参数变化，而不是只记住术语。" : "Use the interactive lab to verify parameter changes instead of memorizing terms."}</p>
-            <button className="diagram-open-button" type="button" onClick={onOpenLab}>
-              {detail.lab?.buttonLabel[language]}
-            </button>
           </div>
         </section>
       </div>

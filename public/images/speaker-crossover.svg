@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640">
+  <rect width="960" height="640" rx="24" fill="#edf4ef"/>
+  <rect x="120" y="105" width="720" height="430" rx="18" fill="#d7b878" stroke="#9a7540" stroke-width="8"/>
+  <path d="M190 320H300M660 320H770M300 320V210H660M300 320v110h360" fill="none" stroke="#536879" stroke-width="9"/>
+  <g fill="none" stroke="#226d60" stroke-width="10"><circle cx="360" cy="210" r="42"/><circle cx="600" cy="430" r="42"/></g>
+  <g fill="#e6f2ed" stroke="#226d60" stroke-width="6"><rect x="430" y="165" width="100" height="90" rx="8"/><rect x="430" y="385" width="100" height="90" rx="8"/></g>
+  <text x="480" y="220" fill="#234c43" font-family="system-ui" font-size="24" text-anchor="middle">C + R</text>
+  <text x="480" y="440" fill="#234c43" font-family="system-ui" font-size="24" text-anchor="middle">L + R</text>
+  <text x="480" y="585" fill="#234c43" font-family="system-ui" font-size="28" text-anchor="middle">PASSIVE CROSSOVER</text>
+</svg>

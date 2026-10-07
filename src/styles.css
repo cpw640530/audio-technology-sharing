@@ -4569,7 +4569,7 @@ body.details-open {
   box-shadow: 0 18px 54px rgba(23, 33, 31, 0.16);
   display: grid;
   gap: 18px;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
+  grid-template-columns: minmax(0, 1fr);
   padding: clamp(16px, 3vw, 26px);
 }
 
@@ -4732,32 +4732,12 @@ body.details-open {
   line-height: 1;
 }
 
-.system-audio-linux-notes {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.system-audio-linux-note {
-  background: rgba(126, 231, 216, 0.08);
-  border: 1px solid rgba(126, 231, 216, 0.18);
-  border-radius: 8px;
-  color: #dbe8e4;
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-  padding: 14px;
-}
-
-.system-audio-linux-note h3 {
-  color: #7ee7d8;
-  font-size: 1rem;
+.system-audio-overview-note {
+  border-left: 2px solid #7ee7d8;
+  color: #c4d6d1;
+  line-height: 1.65;
   margin: 0;
-}
-
-.system-audio-linux-note p {
-  line-height: 1.6;
-  margin: 0;
+  padding: 2px 0 2px 14px;
 }
 
 .amp-chain-arrow {
@@ -5439,62 +5419,22 @@ body.details-open {
   line-height: 1.55;
 }
 
-.system-audio-side {
-  align-content: start;
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+.system-audio-mode-summary {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   color: #dbe8e4;
   display: grid;
-  gap: 14px;
-  padding: 16px;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 0 0 14px;
 }
 
-.system-audio-side h2 {
+.system-audio-mode-summary strong {
   color: #ffffff;
-  font-size: 1.15rem;
-  margin: 0;
+  font-size: 1.05rem;
 }
 
-.system-audio-side p {
+.system-audio-mode-summary p {
   line-height: 1.6;
-  margin: 0;
-}
-
-.system-audio-concepts {
-  display: grid;
-  gap: 10px;
-}
-
-.system-audio-concept {
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.system-audio-stats {
-  display: grid;
-  gap: 10px;
-  margin: 0;
-}
-
-.system-audio-stats div {
-  background: rgba(126, 231, 216, 0.09);
-  border: 1px solid rgba(126, 231, 216, 0.18);
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.system-audio-stats dt {
-  color: #7ee7d8;
-  font-weight: 820;
-  margin-bottom: 6px;
-}
-
-.system-audio-stats dd {
-  color: #dbe8e4;
-  line-height: 1.5;
   margin: 0;
 }
 
@@ -5919,6 +5859,41 @@ body.details-open {
   line-height: 1.4;
   min-height: 54px;
   padding: 10px 12px;
+}
+
+.realtime-lab-headroom-note {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.realtime-lab-headroom-note strong {
+  color: #ffffff;
+}
+
+.realtime-lab-headroom-note span {
+  color: #c9d8d4;
+  line-height: 1.55;
+}
+
+.realtime-audio-workbench details > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.realtime-audio-workbench details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.realtime-audio-workbench details > summary::after {
+  color: #7ee7d8;
+  content: "+";
+  font-size: 1.2rem;
+  margin-left: auto;
+}
+
+.realtime-audio-workbench details[open] > summary::after {
+  content: "−";
 }
 
 .realtime-status.stable {
@@ -7412,8 +7387,7 @@ body.details-open {
   }
 
   .amp-lab-chain,
-  .system-audio-overview-grid,
-  .system-audio-linux-notes {
+  .system-audio-overview-grid {
     grid-template-columns: 1fr;
   }
 
@@ -8068,6 +8042,292 @@ body:has(.home-intro) {
 .sound-topic-cta h2 { font-size: 1.4rem; margin: 0; }
 .sound-topic-cta .diagram-open-button { justify-self: start; margin-top: 6px; }
 .sound-topic-page :is(button, a):focus-visible { outline: 2px solid #226d60; outline-offset: 3px; }
+
+.system-topic-page .system-topic-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+}
+
+.system-topic-page .system-topic-flow li {
+  min-height: 176px;
+  padding: 18px;
+  border: 1px solid rgba(34, 109, 96, 0.2);
+  background: rgba(255, 255, 255, 0.68);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.system-topic-page .system-topic-flow li > span {
+  color: #226d60;
+  font: 700 0.76rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.08em;
+}
+
+.system-topic-page .system-topic-flow strong {
+  display: block;
+  color: #162b27;
+  font-size: 1.02rem;
+}
+
+.system-topic-page .system-topic-flow p {
+  margin: 8px 0 0;
+  color: #53645e;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.system-topic-page .system-topic-lab-entry {
+  padding-top: 8px;
+}
+
+.system-topic-page .system-topic-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.system-topic-page .system-topic-mode-grid article {
+  min-height: 154px;
+  padding: 18px;
+  border-top: 2px solid #226d60;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.system-topic-page .system-topic-mode-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.system-topic-page .system-topic-mode-heading h3 {
+  margin: 0;
+  color: #162b27;
+  font-size: 1.04rem;
+}
+
+.system-topic-page .system-topic-mode-heading span {
+  color: #226d60;
+  font: 700 0.72rem/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap;
+}
+
+.system-topic-page .system-topic-mode-grid p {
+  margin: 18px 0 0;
+  color: #53645e;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.system-topic-page .system-topic-key-points article {
+  min-height: 108px;
+}
+
+.alsa-topic-page .alsa-topic-path {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+}
+
+.alsa-topic-page .alsa-topic-path li {
+  min-height: 156px;
+  padding: 18px;
+  border: 1px solid rgba(34, 109, 96, 0.2);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.alsa-topic-page .alsa-topic-path li > span {
+  color: #226d60;
+  font: 700 0.76rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.08em;
+}
+
+.alsa-topic-page .alsa-topic-path strong {
+  display: block;
+  margin-top: 22px;
+  color: #162b27;
+  font-size: 1rem;
+}
+
+.alsa-topic-page .alsa-topic-path p {
+  margin: 8px 0 0;
+  color: #53645e;
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.alsa-topic-page .alsa-topic-lab-entry {
+  padding-top: 8px;
+}
+
+.alsa-topic-page .alsa-topic-key-points article {
+  min-height: 108px;
+}
+
+.realtime-topic-page .realtime-topic-stages {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+}
+
+.realtime-topic-page .realtime-topic-stages li {
+  position: relative;
+  min-height: 156px;
+  padding: 18px;
+  border: 1px solid rgba(34, 109, 96, 0.2);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.realtime-topic-page .realtime-topic-stages li:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  top: 50%;
+  right: -17px;
+  z-index: 1;
+  color: #226d60;
+  font-size: 1.25rem;
+  font-weight: 800;
+  transform: translateY(-50%);
+}
+
+.realtime-topic-page .realtime-topic-stages li > span {
+  color: #226d60;
+  font: 700 0.76rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.08em;
+}
+
+.realtime-topic-page .realtime-topic-stages strong {
+  display: block;
+  margin-top: 22px;
+  color: #162b27;
+  font-size: 1rem;
+}
+
+.realtime-topic-page .realtime-topic-stages p {
+  margin: 8px 0 0;
+  color: #53645e;
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.realtime-topic-page .realtime-topic-lab-entry {
+  padding-top: 8px;
+}
+
+.realtime-topic-page .sound-topic-intro > div,
+.realtime-topic-page .sound-topic-section-heading > div {
+  max-width: 76ch;
+}
+
+.realtime-topic-page .realtime-topic-key-points {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.realtime-topic-page .realtime-topic-key-points article {
+  min-height: 108px;
+}
+
+.audio-codec-topic-page .audio-codec-topic-path-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.audio-codec-topic-page .sound-topic-intro > div {
+  max-width: 82ch;
+}
+
+.audio-codec-topic-page .sound-topic-intro strong {
+  color: #1b5d51;
+  font-weight: 760;
+}
+
+.audio-codec-topic-page .audio-codec-topic-path {
+  padding: 20px;
+  border: 1px solid rgba(34, 109, 96, 0.2);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.audio-codec-topic-page .audio-codec-topic-path h3 {
+  margin: 0 0 18px;
+  color: #162b27;
+  font-size: 1.05rem;
+}
+
+.audio-codec-topic-page .audio-codec-topic-path ol {
+  display: grid;
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.audio-codec-topic-page .audio-codec-topic-path li {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  padding: 13px 0;
+  border-top: 1px solid #d7e3dc;
+}
+
+.audio-codec-topic-page .audio-codec-topic-path li > span {
+  color: #226d60;
+  font: 700 0.76rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  padding-top: 3px;
+}
+
+.audio-codec-topic-page .audio-codec-topic-path strong {
+  color: #234c43;
+  font-size: 0.98rem;
+}
+
+.audio-codec-topic-page .audio-codec-topic-path p {
+  margin: 5px 0 0;
+  color: #53645e;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.audio-codec-topic-page .audio-codec-topic-path.encode { border-top: 3px solid #226d60; }
+.audio-codec-topic-page .audio-codec-topic-path.decode { border-top: 3px solid #a35e25; }
+.audio-codec-topic-page .audio-codec-topic-lab-entry { padding-top: 8px; }
+.audio-codec-topic-page .audio-codec-topic-key-points { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.audio-codec-topic-page .audio-codec-topic-key-points article { min-height: 108px; }
+
+@media (max-width: 980px) {
+  .system-topic-page .system-topic-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .system-topic-page .system-topic-mode-grid { grid-template-columns: 1fr; }
+  .alsa-topic-page .alsa-topic-path { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .realtime-topic-page .realtime-topic-stages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .realtime-topic-page .realtime-topic-key-points { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .realtime-topic-page .realtime-topic-stages li::after { display: none; }
+  .audio-codec-topic-page .audio-codec-topic-path-grid { grid-template-columns: 1fr; }
+  .audio-codec-topic-page .audio-codec-topic-key-points { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .system-topic-page .system-topic-flow { grid-template-columns: 1fr; }
+  .system-topic-page .system-topic-flow li { min-height: auto; }
+  .alsa-topic-page .alsa-topic-path { grid-template-columns: 1fr; }
+  .alsa-topic-page .alsa-topic-path li { min-height: auto; }
+  .realtime-topic-page .realtime-topic-stages { grid-template-columns: 1fr; }
+  .realtime-topic-page .realtime-topic-stages li { min-height: auto; }
+  .realtime-topic-page .realtime-topic-key-points { grid-template-columns: 1fr; }
+  .audio-codec-topic-page .audio-codec-topic-key-points { grid-template-columns: 1fr; }
+}
 .topic-pager {
   display: flex;
   flex-wrap: wrap;
@@ -8351,6 +8611,32 @@ body:has(.home-intro) {
   line-height: 1.65;
   margin: 5px 0 0;
 }
+.amplifier-speaker-anatomy { border-top: 1px solid #d7e3dc; display: grid; gap: 18px; padding-top: 24px; }
+.amplifier-speaker-modes { display: flex; flex-wrap: wrap; gap: 8px; }
+.amplifier-speaker-modes button { align-items: center; background: #f7faf8; border: 1px solid #9bb9b0; border-radius: 6px; color: #234c43; cursor: pointer; display: inline-flex; font: inherit; gap: 8px; min-height: 42px; padding: 9px 13px; }
+.amplifier-speaker-modes button[aria-pressed="true"] { background: #226d60; border-color: #226d60; color: #fff; }
+.amplifier-speaker-anatomy-grid { display: grid; gap: 26px; grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); }
+.amplifier-speaker-anatomy figure { margin: 0; min-width: 0; }
+.amplifier-speaker-anatomy figure img { background: #fff; border-radius: 6px; display: block; height: 280px; object-fit: contain; width: 100%; }
+.amplifier-speaker-schematic { background: #fff; border-radius: 6px; display: block; height: 280px; width: 100%; }
+.amplifier-speaker-schematic-bg { fill: #f4f8f5; }
+.amplifier-speaker-schematic-box { fill: #e5ede7; stroke: #226d60; stroke-width: 2; }
+.amplifier-speaker-schematic-line { fill: none; stroke: #226d60; stroke-width: 3; }
+.amplifier-speaker-schematic-line.feedback { stroke: #a35e25; stroke-dasharray: 8 6; stroke-width: 2; }
+.amplifier-speaker-schematic-coil { fill: none; stroke: #b87838; stroke-width: 5; }
+.amplifier-speaker-schematic-magnet { fill: #c9d8e2; stroke: #536879; stroke-width: 2; }
+.amplifier-speaker-schematic-cone { fill: #d7eee5; stroke: #226d60; stroke-width: 4; }
+.amplifier-speaker-schematic-wave { fill: none; stroke: #b87838; stroke-width: 3; }
+.amplifier-speaker-schematic-text, .amplifier-speaker-schematic-label { fill: #234c43; font: 14px system-ui, sans-serif; }
+.amplifier-speaker-schematic-label { font-size: 13px; }
+.amplifier-speaker-anatomy figcaption { color: #53645e; font-size: .88rem; line-height: 1.65; padding-top: 9px; }
+.amplifier-speaker-anatomy figcaption small { display: block; font-size: .76rem; }
+.amplifier-speaker-anatomy-copy { grid-column: 1 / -1; }
+.amplifier-speaker-anatomy-heading { align-items: center; color: #226d60; display: flex; gap: 8px; }
+.amplifier-speaker-anatomy-heading h3 { color: #234c43; font-size: 1.2rem; margin: 0; }
+.amplifier-speaker-anatomy-copy p, .amplifier-speaker-anatomy-copy li { color: #53645e; line-height: 1.75; }
+.amplifier-speaker-anatomy-copy ul { display: grid; gap: 9px; margin: 16px 0 0; padding-left: 20px; }
+.amplifier-speaker-anatomy-note { background: #e8efea; border-left: 3px solid #f0b46a; padding: 14px 16px; }
 .microphone-topic-page .microphone-topic-section {
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   gap: 40px;
@@ -8402,6 +8688,7 @@ body:has(.home-intro) {
 @media (max-width: 900px) {
   .microphone-topic-page .microphone-topic-section { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .hardware-chain-context .details-chain-grid { grid-template-columns: 1fr; gap: 14px; }
+  .amplifier-speaker-anatomy-grid { grid-template-columns: 1fr; }
 }
 .sound-topic-flow li { background: #e5ede7; border-top-width: 2px; min-width: 0; }
 .sound-topic-flow strong { overflow-wrap: anywhere; font-size: .95rem; }

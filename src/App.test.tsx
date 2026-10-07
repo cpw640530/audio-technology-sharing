@@ -41,6 +41,31 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("region", { name: "Topic Cards" })).toBeInTheDocument();
   });
 
+  it("navigates the audio software guides in card order", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
+    await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
+    await user.click(screen.getByRole("button", { name: /系统音频架构/ }));
+
+    expect(screen.getByRole("main", { name: "系统音频架构" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "上一张卡片" })).toBeDisabled();
+
+    for (const title of ["ALSA 框架", "实时音频处理", "音频编解码"]) {
+      await user.click(screen.getByRole("button", { name: "下一张卡片" }));
+      expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
+    }
+
+    expect(screen.getByRole("button", { name: "下一张卡片" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "上一张卡片" }));
+    expect(screen.getByRole("main", { name: "实时音频处理" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "返回知识分类" }));
+    expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
+    expect(within(screen.getByTestId("topic-grid")).getAllByRole("button")).toHaveLength(4);
+  });
+
   it("switches microphone anatomy and explains its components in both languages", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -895,9 +920,11 @@ describe("Audio knowledge app", () => {
     );
 
     await user.click(within(topicGrid).getByRole("button", { name: /ALSA 框架/ }));
-    const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(within(details).getByRole("heading", { name: "card / device / subdevice" })).toBeInTheDocument();
-    await user.click(within(details).getByRole("button", { name: "打开 ALSA 框架实验室" }));
+    const page = screen.getByRole("main", { name: "ALSA 框架" });
+    expect(within(page).getByRole("heading", { name: "card / device / subdevice" })).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "一次 PCM 播放如何落到硬件" })).toBeInTheDocument();
+    expect(within(page).getAllByText(/录音方向相反/).length).toBeGreaterThan(0);
+    await user.click(within(page).getByRole("button", { name: "打开 ALSA 框架实验室" }));
 
     const lab = screen.getByRole("main", { name: "ALSA 框架实验室" });
     expect(within(lab).getByRole("heading", { name: "ALSA 框架实验室" })).toBeInTheDocument();
@@ -1860,10 +1887,21 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("heading", { name: "分频阶数与相位" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "主动分频 vs 被动分频" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "线阵列扬声器" })).toBeInTheDocument();
+    const labEntry = within(details).getByRole("region", { name: "当前主题实验室入口" });
+    expect(within(labEntry).getByRole("button", { name: "打开功放与扬声器实验室" })).toBeInTheDocument();
+    expect(labEntry.compareDocumentPosition(within(details).getByRole("heading", { name: "功放是什么" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const anatomy = within(details).getByRole("region", { name: "功放与扬声器实物图解" });
+    expect(within(anatomy).getByRole("img", { name: "Synte 2 音频功放板实物图" })).toBeInTheDocument();
+    expect(within(anatomy).getByRole("img", { name: "功放板原理图" })).toBeInTheDocument();
+    await user.click(within(anatomy).getByRole("button", { name: "动圈扬声器" }));
+    expect(within(anatomy).getByRole("img", { name: "两个动圈低音扬声器单元实物图" })).toBeInTheDocument();
+    expect(within(anatomy).getByRole("img", { name: "动圈扬声器原理图" })).toBeInTheDocument();
+    await user.click(within(anatomy).getByRole("button", { name: "被动分频器" }));
+    expect(within(anatomy).getByRole("img", { name: "B&W DM2000 扬声器被动分频器实物图" })).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开功放与扬声器实验室" })).toBeInTheDocument();
   });
 
-  it("expands system audio architecture knowledge as a concise system boundary overview", async () => {
+  it("opens a dedicated system audio architecture page with the lab before core concepts", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -1871,19 +1909,24 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
     await user.click(screen.getByRole("button", { name: /系统音频架构/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(within(details).getByText(/系统音频架构回答的是/)).toBeInTheDocument();
-    expect(within(details).getByRole("region", { name: "当前模块在音频链路中的位置" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "请求生命周期" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "策略与数据流分离" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "平台边界" })).toBeInTheDocument();
-    expect(within(details).queryByRole("heading", { name: "音频服务" })).not.toBeInTheDocument();
-    expect(within(details).queryByRole("heading", { name: "HAL / 驱动" })).not.toBeInTheDocument();
-    expect(within(details).getByText(/不展开具体 DSP 算法、接口时序或低延迟调参/)).toBeInTheDocument();
-    expect(within(details).getByRole("button", { name: "打开系统音频架构实验室" })).toBeInTheDocument();
+    const page = screen.getByRole("main", { name: "系统音频架构" });
+    expect(within(page).getByText(/系统音频架构回答的是/)).toBeInTheDocument();
+    expect(within(page).getByRole("region", { name: "当前模块在音频链路中的位置" })).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "系统如何管理一条音频流" })).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "先分清三种数据方向" })).toBeInTheDocument();
+    expect(within(page).getByText("应用 → 设备")).toBeInTheDocument();
+    expect(within(page).getByText("设备 → 应用")).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "请求生命周期" })).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "策略与数据流分离" })).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "平台边界" })).toBeInTheDocument();
+    expect(within(page).queryByRole("heading", { name: "音频服务" })).not.toBeInTheDocument();
+    expect(within(page).queryByRole("heading", { name: "HAL / 驱动" })).not.toBeInTheDocument();
+    expect(within(page).getByText(/不展开具体 DSP 算法、接口时序或低延迟调参/)).toBeInTheDocument();
+    expect(within(page).getByRole("button", { name: "打开系统音频架构实验室" })).toBeInTheDocument();
+    expect(within(page).getByRole("region", { name: "当前主题实验室入口" })).toBeInTheDocument();
   });
 
-  it("expands real-time audio processing knowledge with detailed buffer and xrun terms", async () => {
+  it("opens a dedicated real-time audio page with deadline concepts", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -1891,19 +1934,15 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
     await user.click(screen.getByRole("button", { name: /实时音频处理/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(within(details).getByText(/每一小块音频都在截止时间前完成计算/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "Buffer size" })).toBeInTheDocument();
-    expect(within(details).getByText(/48 kHz 下 128 帧 buffer 约等于 2\.67 ms/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "回调 deadline" })).toBeInTheDocument();
-    expect(within(details).getByText(/deadline 由 buffer 帧数和采样率决定/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "XRUN" })).toBeInTheDocument();
-    expect(within(details).getByText(/XRUN 是 underrun 或 overrun 的统称/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "实时安全操作" })).toBeInTheDocument();
-    expect(within(details).getByText(/避免锁等待、磁盘 IO、网络请求、大量日志和运行期分配/)).toBeInTheDocument();
-    expect(within(details).getByText(/实时回调时间线/)).toBeInTheDocument();
-    expect(within(details).queryByRole("button", { name: "打开系统音频架构实验室" })).not.toBeInTheDocument();
-    expect(within(details).getByRole("button", { name: "打开实时音频处理实验室" })).toBeInTheDocument();
+    const page = screen.getByRole("main", { name: "实时音频处理" });
+    expect(within(page).getByText(/每一小块音频都在截止时间前完成计算/)).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "一块 PCM 如何经过实时处理" })).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "Buffer size" })).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "回调 deadline" })).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "XRUN" })).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "实时安全操作" })).toBeInTheDocument();
+    expect(within(page).getByText(/避免锁等待、磁盘 IO、网络请求、大量日志和运行期分配/)).toBeInTheDocument();
+    expect(within(page).getByRole("button", { name: "打开实时音频处理实验室" })).toBeInTheDocument();
   });
 
   it("opens the real-time audio processing lab and simulates deadline xruns", async () => {
@@ -2069,9 +2108,7 @@ describe("Audio knowledge app", () => {
     expect(within(linuxDiagram).getAllByText("驱动").length).toBeGreaterThan(1);
     expect(within(linuxDiagram).getByText("硬件")).toBeInTheDocument();
     expect(within(overview).queryByRole("img", { name: "播放和采集数据流方向图" })).not.toBeInTheDocument();
-    expect(within(overview).getByRole("heading", { name: "桌面 Linux" })).toBeInTheDocument();
-    expect(within(overview).getByRole("heading", { name: "嵌入式 Linux" })).toBeInTheDocument();
-    expect(within(overview).getByText(/ASoC 描述主控、Codec、接口和功放之间的声卡关系/)).toBeInTheDocument();
+    expect(within(overview).getByText(/Linux 只是具体映射/)).toBeInTheDocument();
   });
 
   it("expands audio codec knowledge with a dedicated compression lab", async () => {
@@ -2080,9 +2117,12 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /音频编解码/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(within(details).getByText(/这里的 Codec 指压缩编解码算法/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "编码与解码" })).toBeInTheDocument();
+    const details = screen.getByRole("main", { name: "音频编解码" });
+    expect(within(details).getByText("压缩编解码算法")).toBeInTheDocument();
+    expect(within(details).getByText("不是硬件章节中的音频 Codec 芯片")).toBeInTheDocument();
+    expect(within(details).getByText("解码回 PCM")).toBeInTheDocument();
+    expect(within(details).queryByText("压缩 Codec 处理的是数据表示")).not.toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "编码和解码是两个方向" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "帧长与算法延迟" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "蓝牙 Codec" })).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开音频编解码实验室" })).toBeInTheDocument();

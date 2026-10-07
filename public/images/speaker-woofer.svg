@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640">
+  <rect width="960" height="640" rx="24" fill="#edf4ef"/>
+  <circle cx="480" cy="320" r="225" fill="#536879"/>
+  <circle cx="480" cy="320" r="190" fill="#263c43" stroke="#b8c7cb" stroke-width="10"/>
+  <path d="M315 250 Q480 180 645 250 L590 425 Q480 490 370 425Z" fill="#637a82" stroke="#d7eee5" stroke-width="8"/>
+  <circle cx="480" cy="320" r="65" fill="#b87838"/>
+  <circle cx="480" cy="320" r="32" fill="#263c43"/>
+  <path d="M260 160L175 95M700 160l85-65M260 480l-85 65M700 480l85 65" stroke="#226d60" stroke-width="12"/>
+  <text x="480" y="585" fill="#234c43" font-family="system-ui" font-size="28" text-anchor="middle">MOVING-COIL WOOFER</text>
+</svg>

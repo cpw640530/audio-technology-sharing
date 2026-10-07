@@ -87,23 +87,6 @@ const linuxArchitectureLayers = [
   }
 ] satisfies ArchitectureLayer[];
 
-const linuxScenarioCards = [
-  {
-    title: { zh: "桌面 Linux", en: "Desktop Linux" },
-    body: {
-      zh: "常见链路是 App 连接 PipeWire 或 PulseAudio，再由服务层把流路由到 ALSA 设备，例如 USB 声卡、蓝牙耳机或主板声卡。",
-      en: "A common path is app to PipeWire or PulseAudio, then the service routes streams to an ALSA device such as USB audio, Bluetooth headset, or motherboard audio."
-    }
-  },
-  {
-    title: { zh: "嵌入式 Linux", en: "Embedded Linux" },
-    body: {
-      zh: "常见链路更靠近硬件。ASoC 描述主控、Codec、接口和功放之间的声卡关系，具体接口细节留给数字音频接口主题。",
-      en: "The path is closer to hardware. ASoC describes the sound-card relationship among host, codec, interfaces, and amplifiers; detailed interface timing belongs to the digital-interface topic."
-    }
-  }
-] satisfies Array<{ title: Record<Language, string>; body: Record<Language, string> }>;
-
 const architectureKindLabels = {
   app: { zh: "应用", en: "App" },
   middleware: { zh: "中间件", en: "Middleware" },
@@ -125,20 +108,6 @@ const flowCopy = {
       zh: "播放链路重点：系统把应用输出映射到当前可用的输出设备。",
       en: "Playback focus: the system maps app output to the currently available output device."
     },
-    concepts: [
-      {
-        zh: "音频焦点和会话状态决定媒体、通知、通话和提示音之间的优先级。",
-        en: "Audio focus and session state decide priority among media, notifications, calls, and prompts."
-      },
-      {
-        zh: "混音器和重采样器在系统层统一多路 App 输出，不展开具体 DSP 算法。",
-        en: "The mixer and resampler unify app outputs at the system layer without expanding DSP algorithms."
-      },
-      {
-        zh: "设备路由决定声音最终走扬声器、耳机、蓝牙、USB 声卡或虚拟设备。",
-        en: "Device routing decides whether audio finally goes to speakers, headset, Bluetooth, USB audio, or a virtual device."
-      }
-    ]
   },
   capture: {
     title: { zh: "录音链路重点", en: "Capture focus" },
@@ -146,20 +115,6 @@ const flowCopy = {
       zh: "录音链路重点：系统在应用拿到数据前完成权限、输入选择和格式交付。",
       en: "Capture focus: the system handles permission, input selection, and format delivery before the app receives data."
     },
-    concepts: [
-      {
-        zh: "麦克风权限和隐私指示属于系统边界，先于应用读取采集流。",
-        en: "Microphone permission and privacy indicators are system boundaries before apps read capture streams."
-      },
-      {
-        zh: "输入路由决定使用内置麦、耳机麦、USB 麦、蓝牙麦或虚拟输入。",
-        en: "Input routing selects built-in, headset, USB, Bluetooth, or virtual microphones."
-      },
-      {
-        zh: "格式和时间戳交付给应用后，实时处理和算法细节由其它主题继续展开。",
-        en: "After format and timestamps are delivered to the app, real-time and algorithm details continue in other topics."
-      }
-    ]
   },
   duplex: {
     title: { zh: "全双工重点", en: "Full-duplex focus" },
@@ -167,22 +122,8 @@ const flowCopy = {
       zh: "全双工重点：系统只说明回放参考和采集流怎样接入语音链路。",
       en: "Full-duplex focus: the system only shows how playback reference and capture stream enter the voice path."
     },
-    concepts: [
-      {
-        zh: "系统负责把回放参考送到语音处理模块；AEC 原理留给语音增强主题。",
-        en: "The system routes playback reference into voice processing; AEC theory belongs to speech enhancement."
-      },
-      {
-        zh: "AEC、NS、AGC 在这里只是链路节点，不解释参数和数学过程。",
-        en: "AEC, NS, and AGC are only path nodes here, without parameters or math details."
-      },
-      {
-        zh: "系统层关注输入设备、输出设备和通话会话是否保持一致。",
-        en: "The system layer focuses on keeping input device, output device, and call session consistent."
-      }
-    ]
   }
-} satisfies Record<FlowMode, { title: Record<Language, string>; summary: Record<Language, string>; concepts: Array<Record<Language, string>> }>;
+} satisfies Record<FlowMode, { title: Record<Language, string>; summary: Record<Language, string> }>;
 
 const flowSteps = {
   playback: [
@@ -465,14 +406,11 @@ export function SystemAudioLab({ language, onBack }: SystemAudioLabProps) {
           </article>
         </div>
 
-        <div className="system-audio-linux-notes" aria-label={language === "zh" ? "Linux 音频场景对比" : "Linux audio scenario comparison"}>
-          {linuxScenarioCards.map((card) => (
-            <article className="system-audio-linux-note" key={card.title.en}>
-              <h3>{card.title[language]}</h3>
-              <p>{card.body[language]}</p>
-            </article>
-          ))}
-        </div>
+        <p className="system-audio-overview-note">
+          {language === "zh"
+            ? "Linux 只是具体映射：桌面常见 PipeWire / PulseAudio → ALSA，嵌入式常见 ASoC → Codec / 功放。接口时序和环形 buffer 分别在对应专题展开。"
+            : "Linux is one concrete mapping: desktop systems commonly use PipeWire / PulseAudio → ALSA, while embedded systems often use ASoC → codec / amplifier. Interface timing and ring buffers belong to their dedicated topics."}
+        </p>
       </section>
 
       <section
@@ -493,30 +431,12 @@ export function SystemAudioLab({ language, onBack }: SystemAudioLabProps) {
               </button>
             ))}
           </div>
+          <div className="system-audio-mode-summary">
+            <strong>{currentCopy.title[language]}</strong>
+            <p>{currentCopy.summary[language]}</p>
+          </div>
           {renderFlowDiagram(language, flowMode)}
         </div>
-
-        <aside className="system-audio-side" aria-label={currentCopy.title[language]}>
-          <h2>{currentCopy.title[language]}</h2>
-          <p>{currentCopy.summary[language]}</p>
-          <div className="system-audio-concepts">
-            {currentCopy.concepts.map((concept) => (
-              <article className="system-audio-concept" key={concept.en}>
-                <p>{concept[language]}</p>
-              </article>
-            ))}
-          </div>
-          <dl className="system-audio-stats">
-            <div>
-              <dt>{language === "zh" ? "核心变量" : "Core variables"}</dt>
-              <dd>{language === "zh" ? "设备 / 路由 / 权限 / 会话" : "device / routing / permission / session"}</dd>
-            </div>
-            <div>
-              <dt>{language === "zh" ? "常见风险" : "Common risks"}</dt>
-              <dd>{language === "zh" ? "设备选错、权限缺失、切换中断" : "wrong device, missing permission, switch breaks"}</dd>
-            </div>
-          </dl>
-        </aside>
       </section>
     </main>
   );

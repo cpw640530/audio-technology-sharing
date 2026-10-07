@@ -688,6 +688,15 @@ export function RealtimeAudioLab({ language, onBack }: RealtimeAudioLabProps) {
             <strong className="realtime-status stable">{statusLabel}</strong>
           </div>
 
+          <div className="lab-live-note realtime-lab-headroom-note">
+            <strong>{language === "zh" ? `DSP 耗时：${formatMs(dspMs)}` : `DSP time: ${formatMs(dspMs)}`}</strong>
+            <span>
+              {language === "zh"
+                ? "当前示例留有充足处理余量，filter 处理加 CPU 抖动仍明显小于 32 ms deadline。"
+                : "The current example has enough processing headroom; filter time plus CPU jitter stays well below the 32 ms deadline."}
+            </span>
+          </div>
+
           <div className="realtime-flow-grid">
             <FlowChart
               ariaLabel={{ zh: "基础音频处理流程图", en: "Basic audio processing flow chart" }}
@@ -716,51 +725,11 @@ export function RealtimeAudioLab({ language, onBack }: RealtimeAudioLabProps) {
           </div>
         </section>
 
-        <aside className="realtime-audio-panel" aria-label={language === "zh" ? "当前示例参数" : "Current example parameters"}>
-          <div className="realtime-static-list">
-            <strong>{language === "zh" ? "当前示例参数" : "Current example parameters"}</strong>
-            <dl>
-              <div>
-                <dt>{language === "zh" ? "PCM 格式" : "PCM format"}</dt>
-                <dd>16 kHz / mono / 16-bit S16_LE</dd>
-              </div>
-              <div>
-                <dt>{language === "zh" ? "ALSA period" : "ALSA period"}</dt>
-                <dd>{bufferFrames} frames / {formatMs(periodMs)}</dd>
-              </div>
-              <div>
-                <dt>{language === "zh" ? "filter frame" : "filter frame"}</dt>
-                <dd>{samples} samples / {bytes} bytes / 32 ms</dd>
-              </div>
-              <div>
-                <dt>{language === "zh" ? "处理预算" : "Processing budget"}</dt>
-                <dd>
-                  {language === "zh"
-                    ? `DSP ${formatMs(dspMs)} + CPU 抖动 ${formatMs(jitterMs)}，小于 32 ms deadline`
-                    : `DSP ${formatMs(dspMs)} + CPU jitter ${formatMs(jitterMs)}, below the 32 ms deadline`}
-                </dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="lab-live-note">
-            <strong>{language === "zh" ? `DSP 耗时：${formatMs(dspMs)}` : `DSP time: ${formatMs(dspMs)}`}</strong>
-            <span>
-              {language === "zh"
-                ? "当前示例留有充足处理余量，filter 处理加 CPU 抖动仍明显小于 32 ms deadline。"
-                : "The current example has enough processing headroom; filter time plus CPU jitter stays well below the 32 ms deadline."}
-            </span>
-          </div>
-        </aside>
-
-        <section
-          className="codec-mode-concepts realtime-buffer-guide"
-          aria-label={language === "zh" ? "实时音频 buffer 分层说明" : "Real-time audio buffer layers"}
-        >
-          <div className="codec-mode-concepts-header">
+        <details className="codec-mode-concepts realtime-buffer-guide">
+          <summary className="codec-mode-concepts-header">
             <strong>{language === "zh" ? "这些 buffer 不是同一个东西" : "These buffers are not the same thing"}</strong>
             <span>{language === "zh" ? "按数据位置和用途区分" : "Separate them by location and purpose"}</span>
-          </div>
+          </summary>
           <div className="realtime-buffer-card-grid">
             {bufferCards.map((card) => (
               <article key={card.title.en}>
@@ -769,16 +738,13 @@ export function RealtimeAudioLab({ language, onBack }: RealtimeAudioLabProps) {
               </article>
             ))}
           </div>
-        </section>
+        </details>
 
-        <section
-          className="codec-mode-concepts realtime-audio-rules"
-          aria-label={language === "zh" ? "实时音频规则和排查" : "Real-time audio rules and troubleshooting"}
-        >
-          <div className="codec-mode-concepts-header">
+        <details className="codec-mode-concepts realtime-audio-rules">
+          <summary className="codec-mode-concepts-header">
             <strong>{language === "zh" ? "关键规则" : "Key rules"}</strong>
             <span>{language === "zh" ? "实时处理的重点是确定性" : "The priority is deterministic timing"}</span>
-          </div>
+          </summary>
           <div className="codec-concept-grid realtime-rule-grid">
             {ruleCards.map((card) => (
               <article key={card.title.en}>
@@ -787,7 +753,7 @@ export function RealtimeAudioLab({ language, onBack }: RealtimeAudioLabProps) {
               </article>
             ))}
           </div>
-        </section>
+        </details>
       </section>
     </main>
   );
