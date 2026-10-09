@@ -5,6 +5,7 @@ import type { Language } from "../content/knowledge";
 type SpatialAudioLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type SpatialMode = "cues" | "binaural" | "object" | "headTracking";
@@ -349,7 +350,7 @@ function SpatialPipeline({ language, mode }: { language: Language; mode: Spatial
   );
 }
 
-export function SpatialAudioLab({ language, onBack }: SpatialAudioLabProps) {
+export function SpatialAudioLab({ language, onBack, onBackToDetails }: SpatialAudioLabProps) {
   const [mode, setMode] = useState<SpatialMode>("cues");
   const [sourceAngle, setSourceAngle] = useState(-35);
   const [distance, setDistance] = useState(3);
@@ -380,10 +381,13 @@ export function SpatialAudioLab({ language, onBack }: SpatialAudioLabProps) {
   return (
     <main className="spatial-audio-page">
       <section className="sound-lab-hero" aria-labelledby="spatial-audio-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back" type="button" onClick={onBack}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails ? <button className="sound-lab-back" type="button" onClick={onBackToDetails}>{language === "zh" ? "返回详细内容" : "Back to details"}</button> : null}
+        </div>
         <div>
           <span className="section-kicker">{language === "zh" ? "传统 DSP 实验" : "Traditional DSP lab"}</span>
           <h1 id="spatial-audio-title">{language === "zh" ? "空间音频实验室" : "Spatial Audio Lab"}</h1>

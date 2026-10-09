@@ -120,7 +120,8 @@ describe("Audio knowledge app", () => {
     render(<App />);
     await user.click(within(screen.getByRole("region", { name: "知识分类" })).getByRole("button", { name: /应用场景/ }));
     await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /机器人音频/ }));
-    await user.click(screen.getByRole("button", { name: "打开机器人音频实验室" }));
+    const topicPage = screen.getByRole("main", { name: "机器人音频" });
+    await user.click(within(topicPage).getByRole("button", { name: "打开机器人音频实验室" }));
     const lab = screen.getByRole("main", { name: "机器人音频实验室" });
     expect(within(lab).getByRole("img", { name: "机器人音频部件结构图" })).toBeInTheDocument();
     await user.click(within(lab).getByRole("button", { name: "关节与电机" }));
@@ -137,6 +138,8 @@ describe("Audio knowledge app", () => {
     await user.click(screen.getByRole("button", { name: "English" }));
     expect(screen.getByRole("main", { name: "Robot Audio Lab" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Back to knowledge base" }));
+    expect(screen.getByRole("main", { name: "Robot Audio" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Back to knowledge base" }));
     expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
   });
 
@@ -145,7 +148,8 @@ describe("Audio knowledge app", () => {
     render(<App />);
     await user.click(screen.getByRole("button", { name: "应用场景" }));
     await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /蓝牙音频/ }));
-    await user.click(screen.getByRole("button", { name: "打开蓝牙音频实验室" }));
+    const topicPage = screen.getByRole("main", { name: "蓝牙音频：无线传输、编码与延迟" });
+    await user.click(within(topicPage).getByRole("button", { name: "打开蓝牙音频实验室" }));
     expect(screen.getByRole("heading", { name: "蓝牙音频链路实验室" })).toBeInTheDocument();
     expect(screen.getByTestId("bluetooth-payload")).toHaveTextContent("200.0 B");
     expect(screen.getByTestId("bluetooth-latency")).toHaveTextContent("80 ms");
@@ -162,7 +166,22 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("heading", { name: "Bluetooth Audio Link Lab" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Bluetooth codec" })).toHaveValue("LDAC");
     await user.click(screen.getByRole("button", { name: "Back to knowledge base" }));
+    expect(screen.getByRole("main", { name: "Bluetooth Audio: Wireless Transport, Coding, and Latency" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Back to knowledge base" }));
     expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
+  });
+
+  it("navigates application topics in card order", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: "应用场景" }));
+    await user.click(screen.getByRole("button", { name: /蓝牙音频/ }));
+
+    for (const title of ["会议与通信", "机器人音频", "车载声学", "IoT 与内容创作"]) {
+      await user.click(screen.getByRole("button", { name: "下一张卡片" }));
+      expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
+    }
+    expect(screen.getByRole("button", { name: "下一张卡片" })).toBeDisabled();
   });
 
   it("switches between Chinese and English interface copy", async () => {
@@ -242,7 +261,7 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /AI 音频/ }));
     await user.click(screen.getByRole("button", { name: /AI 音频事件识别/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "AI 音频事件识别" });
     expect(
       within(details).getByText("识别哭声、玻璃破碎、狗叫声、警报声等非语音事件。")
     ).toBeInTheDocument();
@@ -286,11 +305,11 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /AI 音频/ }));
     await user.click(screen.getByRole("button", { name: /语音识别 ASR/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "语音识别 ASR" });
     expect(within(details).getByText(/PCM 只是连续的压力变化数字/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "分帧加窗" })).toBeInTheDocument();
     expect(within(details).getByText(/例如 10 ms 或 20 ms/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "log-mel / MFCC" })).toBeInTheDocument();
+    expect(within(details).getAllByText("log-mel / MFCC").length).toBeGreaterThan(0);
     expect(within(details).getByText(/把每帧语音变成更接近人耳听感的频率能量图/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "Encoder 编码器" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "CTC / Attention / Transducer" })).toBeInTheDocument();
@@ -333,7 +352,7 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /AI 音频/ }));
     await user.click(screen.getByRole("button", { name: /AI 音频总流程/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "AI 音频总流程" });
     expect(within(details).getByText(/先采集得到 PCM 数字音频/)).toBeInTheDocument();
     expect(within(details).getByText(/PCM 只是数字波形/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "FFT / STFT / Mel / MFCC" })).toBeInTheDocument();
@@ -375,7 +394,7 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /AI 音频/ }));
     await user.click(screen.getByRole("button", { name: /AI 音频编码/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "AI 音频编码" });
     await user.click(within(details).getByRole("button", { name: "打开 AI 音频编码实验室" }));
 
     const lab = screen.getByRole("main", { name: "AI 音频编码实验室" });
@@ -399,7 +418,7 @@ describe("Audio knowledge app", () => {
 
     await user.click(within(screen.getByRole("region", { name: "知识分类" })).getByRole("button", { name: /AI 音频/ }));
     await user.click(screen.getByRole("button", { name: new RegExp(topic) }));
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: topic });
     await user.click(within(details).getByRole("button", { name: openLabel }));
 
     const lab = screen.getByRole("main", { name: labName });
@@ -416,7 +435,7 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /应用场景/ }));
     await user.click(screen.getByRole("button", { name: /会议与通信/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "会议与通信" });
     const openLabButton = within(details).getByRole("button", { name: "打开会议与通信实验室" });
     expect(details).toBeInTheDocument();
     expect(within(details).getByText(/个人终端、多人会议室、弱网会议和实时字幕/)).toBeInTheDocument();
@@ -508,7 +527,7 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /Applications/ }));
     await user.click(screen.getByRole("button", { name: /Conferencing and Communication/ }));
 
-    const details = screen.getByRole("dialog", { name: "Topic details" });
+    const details = screen.getByRole("main", { name: "Conferencing and Communication" });
     await user.click(within(details).getByRole("button", { name: "Open conferencing and communication lab" }));
 
     const lab = screen.getByRole("main", { name: "Conferencing and Communication Lab" });
@@ -536,7 +555,7 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /应用场景/ }));
     await user.click(screen.getByRole("button", { name: /车载声学/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "车载声学" });
     expect(within(details).getByText(/采集与定位、语音理解、回放与空间渲染、噪声控制/)).toBeInTheDocument();
     expect(within(details).getByText(/ANC \/ RNC 是闭环低频噪声控制/)).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开车载声学实验室" })).toBeInTheDocument();
@@ -653,7 +672,7 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /Applications/ }));
     await user.click(screen.getByRole("button", { name: /In-Car Acoustics/ }));
 
-    const details = screen.getByRole("dialog", { name: "Topic details" });
+    const details = screen.getByRole("main", { name: "In-Car Acoustics" });
     await user.click(within(details).getByRole("button", { name: "Open in-car acoustics lab" }));
 
     const lab = screen.getByRole("main", { name: "In-Car Acoustics Lab" });
@@ -693,7 +712,7 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /应用场景/ }));
     await user.click(screen.getByRole("button", { name: /IoT 与内容创作/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "IoT 与内容创作" });
     expect(within(details).getByText(/IoT 音频更像一个长期待机的边缘感知系统/)).toBeInTheDocument();
     expect(within(details).getByText(/内容创作音频更像一条可反复编辑和交付的生产流水线/)).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开 IoT 与内容创作实验室" })).toBeInTheDocument();
@@ -848,8 +867,11 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
     await user.click(screen.getByRole("button", { name: /基础信号处理/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "基础信号处理" });
     expect(within(details).getByText(/传统 DSP 的基础入口/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "一段 PCM 的三类任务" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "不要把所有 DSP 都画成 FFT 链路" })).toBeInTheDocument();
+    expect(within(details).getByText(/许多 FIR、IIR、EQ 和动态处理可直接逐样本或逐帧运行/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "时间域" })).toBeInTheDocument();
     expect(within(details).getByText(/波形、周期、瞬态、包络/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "频率域" })).toBeInTheDocument();
@@ -875,11 +897,13 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
     await user.click(screen.getByRole("button", { name: /语音增强/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "语音增强" });
     expect(within(details).getByText(/低延迟 PCM 处理链/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "AEC 回声消除" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "从麦克风到 ASR 的典型流程" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "每个模块负责什么" })).toBeInTheDocument();
+    expect(within(details).getAllByRole("heading", { name: "AEC 回声消除" })).toHaveLength(2);
     expect(within(details).getAllByText(/播放回采参考/).length).toBeGreaterThan(0);
-    expect(within(details).getByRole("heading", { name: "NS / ANR 降噪" })).toBeInTheDocument();
+    expect(within(details).getAllByRole("heading", { name: "NS / ANR 降噪" })).toHaveLength(2);
     expect(within(details).getByRole("heading", { name: "AGC 自动增益" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "多麦波束成形" })).toBeInTheDocument();
     expect(within(details).getByText(/Mic \/ PDM \/ I2S -> AI 驱动环形 buffer/)).toBeInTheDocument();
@@ -981,12 +1005,14 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
     await user.click(screen.getByRole("button", { name: /空间音频/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
+    const details = screen.getByRole("main", { name: "空间音频" });
     expect(within(details).getByText(/不是单一格式，而是一套从内容制作、空间编码、渲染到播放设备的完整链路/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "从声源到空间声场" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "耳机与扬声器是两条输出路径" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "ITD 到达时间差" })).toBeInTheDocument();
     expect(within(details).getByText(/声源在左侧时通常先到左耳/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "ILD 声级差" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "HRTF / HRIR" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "HRTF \/ HRIR" })).toBeInTheDocument();
     expect(within(details).getByText(/方向的 HRIR 做卷积/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "双耳渲染" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "环绕声与声道床" })).toBeInTheDocument();
@@ -999,7 +1025,6 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByText(/声源固定在外部世界/)).toBeInTheDocument();
     expect(within(details).getByText(/空间音频和语音增强里的波束成形方向相反/)).toBeInTheDocument();
     expect(within(details).getByText(/简单把左右声道拉宽、加一点混响或做左右声道延迟/)).toBeInTheDocument();
-    expect(within(details).getByText(/后续适合做空间音频实验室/)).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开空间音频实验室" })).toBeInTheDocument();
   });
 
@@ -1011,12 +1036,13 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
     await user.click(screen.getByRole("button", { name: /空间音频/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      within(screen.getByRole("main", { name: "空间音频" })).getByRole("button", {
         name: "打开空间音频实验室"
       })
     );
 
     expect(screen.getByRole("heading", { name: "空间音频实验室" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
     const lab = screen.getByRole("region", { name: "空间音频实验台" });
     expect(within(lab).getByRole("img", { name: "空间音频声源定位图" })).toBeInTheDocument();
     expect(within(lab).getByRole("img", { name: "房间反射时间响应图" })).toBeInTheDocument();
@@ -1052,6 +1078,23 @@ describe("Audio knowledge app", () => {
     expect(within(lab).getByText("外部化声像")).toBeInTheDocument();
   });
 
+  it("connects the traditional DSP topics in learning order", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
+    await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await user.click(screen.getByRole("button", { name: /基础信号处理/ }));
+
+    await user.click(screen.getByRole("button", { name: "下一张卡片" }));
+    expect(screen.getByRole("main", { name: "语音增强" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "上一张卡片" })).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "下一张卡片" }));
+    expect(screen.getByRole("main", { name: "空间音频" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "下一张卡片" })).toBeDisabled();
+  });
+
   it("opens the speech enhancement lab with SDK flow and enhancement controls", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -1060,12 +1103,13 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
     await user.click(screen.getByRole("button", { name: /语音增强/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      within(screen.getByRole("main", { name: "语音增强" })).getByRole("button", {
         name: "打开语音增强实验室"
       })
     );
 
     expect(screen.getByRole("heading", { name: "语音增强实验室" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
     const lab = screen.getByRole("region", { name: "语音增强实验台" });
     const flowDiagram = within(lab).getByRole("img", { name: "语音增强处理流程图" });
     expect(flowDiagram).toBeInTheDocument();
@@ -1243,13 +1287,14 @@ describe("Audio knowledge app", () => {
     await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
     await user.click(screen.getByRole("button", { name: /基础信号处理/ }));
     await user.click(
-      within(screen.getByRole("dialog", { name: "主题详情" })).getByRole("button", {
+      within(screen.getByRole("main", { name: "基础信号处理" })).getByRole("button", {
         name: "打开基础信号处理实验室"
       })
     );
 
     expect(screen.getByRole("heading", { name: "基础信号处理实验室" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
     const lab = screen.getByRole("region", { name: "基础信号处理实验台" });
     const stageFlow = within(lab).getByRole("list", { name: "音频处理阶段流程图" });
     expect(within(stageFlow).getByText("输入源")).toBeInTheDocument();
@@ -1479,22 +1524,14 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("link", { name: "Explore topics" })).toBeInTheDocument();
   });
 
-  it("opens and closes topic details from a topic card", async () => {
+  it("opens AI topic details directly from a topic card", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    expect(screen.queryByRole("dialog", { name: "主题详情" })).not.toBeInTheDocument();
-
     await user.click(screen.getByRole("button", { name: /语音识别 ASR/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(details).toHaveClass("topic-details-modal");
-    expect(screen.getByTestId("topic-details-backdrop")).toBeInTheDocument();
+    const details = screen.getByRole("main", { name: "语音识别 ASR" });
     expect(within(details).getByRole("heading", { name: "语音识别 ASR" })).toBeInTheDocument();
-    expect(within(details).getByText("内容扩展建议")).toBeInTheDocument();
-
-    await user.click(within(details).getByRole("button", { name: "关闭详情" }));
-
     expect(screen.queryByRole("dialog", { name: "主题详情" })).not.toBeInTheDocument();
   });
 
@@ -1504,23 +1541,22 @@ describe("Audio knowledge app", () => {
 
     await user.click(screen.getByRole("button", { name: /语音识别 ASR/ }));
 
-    const details = screen.getByRole("dialog", { name: "主题详情" });
-    expect(within(details).getByRole("heading", { name: "详细解释" })).toBeInTheDocument();
+    const details = screen.getByRole("main", { name: "语音识别 ASR" });
+    expect(within(details).getByRole("heading", { name: "先明确任务，再选择模型" })).toBeInTheDocument();
     expect(within(details).getByText(/把连续的语音波形转换成可编辑、可检索的文字/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "常见误区" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "工程边界" })).toBeInTheDocument();
     expect(within(details).getByText(/识别率高不等于在所有噪声、口音和设备上都稳定/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "内容扩展建议" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "English" }));
 
-    const englishDetails = screen.getByRole("dialog", { name: "Topic details" });
+    const englishDetails = screen.getByRole("main", { name: "Speech Recognition ASR" });
     expect(
-      within(englishDetails).getByRole("heading", { name: "Detailed explanation" })
+      within(englishDetails).getByRole("heading", { name: "Define the task before choosing the model" })
     ).toBeInTheDocument();
     expect(
       within(englishDetails).getByText(/turns continuous speech waveforms into editable/)
     ).toBeInTheDocument();
-    expect(within(englishDetails).getByRole("heading", { name: "Common misconception" })).toBeInTheDocument();
+    expect(within(englishDetails).getByRole("heading", { name: "Engineering boundary" })).toBeInTheDocument();
   });
 
   it("opens sound content directly without an intermediate dialog", async () => {

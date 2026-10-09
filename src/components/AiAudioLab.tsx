@@ -8,6 +8,7 @@ type AiAudioLabProps = {
   labId?: AiAudioLabId;
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
   onOpen?: (id: AiAudioLabId) => void;
 };
 
@@ -1493,16 +1494,19 @@ function AiArticleSections({
   );
 }
 
-export function AiAudioLab({ labId = "event", language, onBack, onOpen }: AiAudioLabProps) {
+export function AiAudioLab({ labId = "event", language, onBack, onBackToDetails, onOpen }: AiAudioLabProps) {
   const article = aiArticles[labId] ?? aiArticles.event;
 
   return (
     <main className="ai-audio-page ai-article-page" aria-label={article.title[language]}>
       <section className="sound-lab-hero ai-article-hero">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back" type="button" onClick={onBack}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails ? <button className="sound-lab-back" type="button" onClick={onBackToDetails}>{language === "zh" ? "返回详细内容" : "Back to details"}</button> : null}
+        </div>
         <div>
           <span className="details-category">{article.eyebrow[language]}</span>
           <h1>{article.title[language]}</h1>

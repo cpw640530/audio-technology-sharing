@@ -5,6 +5,7 @@ import type { Language } from "../content/knowledge";
 type SpeechEnhancementLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type EnhancementMode = "aec" | "ns" | "agc" | "beamforming" | "dereverb";
@@ -729,7 +730,7 @@ function AlgorithmStageWaveChart({
   );
 }
 
-export function SpeechEnhancementLab({ language, onBack }: SpeechEnhancementLabProps) {
+export function SpeechEnhancementLab({ language, onBack, onBackToDetails }: SpeechEnhancementLabProps) {
   const [mode, setMode] = useState<EnhancementMode>("beamforming");
   const [strengths, setStrengths] = useState<ProcessingStrengths>(() => ({ ...defaultProcessingStrengths }));
   const [micCount, setMicCount] = useState(2);
@@ -770,10 +771,16 @@ export function SpeechEnhancementLab({ language, onBack }: SpeechEnhancementLabP
   return (
     <main className="speech-enhancement-page">
       <section className="sound-lab-hero" aria-labelledby="speech-enhancement-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back" type="button" onClick={onBack}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails ? <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+          </button> : null}
+        </div>
         <div>
           <span className="section-kicker">{language === "zh" ? "传统 DSP 实验" : "Traditional DSP lab"}</span>
           <h1 id="speech-enhancement-title">{language === "zh" ? "语音增强实验室" : "Speech Enhancement Lab"}</h1>

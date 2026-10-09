@@ -5,6 +5,7 @@ import type { Language } from "../content/knowledge";
 type CoreSignalProcessingLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type SignalMode = "stft" | "filter" | "dynamics";
@@ -1227,7 +1228,7 @@ function DynamicsChart({
   );
 }
 
-export function CoreSignalProcessingLab({ language, onBack }: CoreSignalProcessingLabProps) {
+export function CoreSignalProcessingLab({ language, onBack, onBackToDetails }: CoreSignalProcessingLabProps) {
   const [mode, setMode] = useState<SignalMode>("stft");
   const [windowSize, setWindowSize] = useState(512);
   const [hopSize, setHopSize] = useState(256);
@@ -1282,10 +1283,16 @@ export function CoreSignalProcessingLab({ language, onBack }: CoreSignalProcessi
   return (
     <main className="sound-lab-page core-signal-page">
       <section className="sound-lab-hero" aria-labelledby="core-signal-lab-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back" type="button" onClick={onBack}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails ? <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+          </button> : null}
+        </div>
         <div>
           <span className="section-kicker">{language === "zh" ? "传统 DSP 实验" : "Traditional DSP lab"}</span>
           <h1 id="core-signal-lab-title">
