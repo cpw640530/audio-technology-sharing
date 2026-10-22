@@ -22,6 +22,7 @@ import { DigitalInterfaceLab } from "./components/DigitalInterfaceLab";
 import { Header } from "./components/Header";
 import { HardwareTopicPage } from "./components/HardwareTopicPage";
 import { Hero } from "./components/Hero";
+import { TechnicalNotesPage } from "./components/TechnicalNotesPage";
 import { IotContentLab } from "./components/IotContentLab";
 import { KnowledgeOutline } from "./components/KnowledgeOutline";
 import { ListeningMetricsLab } from "./components/ListeningMetricsLab";
@@ -120,6 +121,17 @@ function topicMatchesSearch(topic: DisplayTopic, query: string): boolean {
 }
 
 export default function App() {
+  const [showNotes, setShowNotes] = useState(() => window.location.hash === "#technical-notes");
+  useEffect(() => {
+    const syncNotes = () => {
+      if (!["", "#top", "#technical-notes"].includes(window.location.hash)) return;
+      setShowNotes(window.location.hash === "#technical-notes");
+      setActiveView("knowledge");
+      if (!window.navigator.userAgent.toLowerCase().includes("jsdom")) window.scrollTo({ top: 0, behavior: "auto" });
+    };
+    window.addEventListener("hashchange", syncNotes);
+    return () => window.removeEventListener("hashchange", syncNotes);
+  }, []);
   const [language, setLanguage] = useState<Language>(getInitialLanguage);
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeView, setActiveView] = useState<
@@ -452,6 +464,13 @@ export default function App() {
     target.focus({ preventScroll: true });
     setOutlineTargetId(null);
   }, [outlineTargetId]);
+
+  if (showNotes) {
+    return <div className="app-shell">
+      <Header language={language} onToggleLanguage={toggleLanguage} />
+      <TechnicalNotesPage language={language} />
+    </div>;
+  }
 
   if (activeView === "soundLab") {
     return (

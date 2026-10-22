@@ -1,4 +1,4 @@
-import { Github, LibraryBig } from "lucide-react";
+import { Github, LibraryBig, NotebookPen } from "lucide-react";
 import type { Language } from "../content/knowledge";
 import { interfaceCopy } from "../content/knowledge";
 import { BackgroundWave } from "./BackgroundWave";
@@ -22,6 +22,10 @@ export function Header({ language, onToggleLanguage }: HeaderProps) {
           <span>Audio Technology Sharing</span>
         </a>
         <nav className="header-actions" aria-label="Primary navigation">
+          <a href="#technical-notes">
+            <NotebookPen size={18} aria-hidden="true" />
+            <span>{language === "zh" ? "技术笔记" : "Technical notes"}</span>
+          </a>
           <a href="https://github.com/cpw640530/audio-technology-sharing" rel="noreferrer" target="_blank">
             <Github size={18} aria-hidden="true" />
             <span>{interfaceCopy.navGithub[language]}</span>
