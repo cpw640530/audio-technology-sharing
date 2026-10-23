@@ -5,6 +5,7 @@ import type { Language } from "../content/knowledge";
 type MeetingCommunicationLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type ScenarioId = "personal" | "room" | "network" | "captions";
@@ -199,14 +200,22 @@ function ScenarioScene({ id, language }: { id: ScenarioId; language: Language })
   );
 }
 
-export function MeetingCommunicationLab({ language, onBack }: MeetingCommunicationLabProps) {
+export function MeetingCommunicationLab({ language, onBack, onBackToDetails }: MeetingCommunicationLabProps) {
   const [activeScenario, setActiveScenario] = useState<ScenarioId>("personal");
   const scenario = scenarios[activeScenario];
 
   return (
     <main className="meeting-lab-page" aria-label={language === "zh" ? "会议与通信实验室" : "Conferencing and Communication Lab"}>
       <section className="sound-lab-hero meeting-lab-hero">
-        <button className="sound-lab-back" type="button" onClick={onBack}><ArrowLeft size={18} aria-hidden="true" />{language === "zh" ? "返回知识库" : "Back to knowledge base"}</button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+          </button>}
+        </div>
         <div><span className="details-category">{language === "zh" ? "应用场景" : "Applications"}</span><h1>{language === "zh" ? "会议与通信实验室" : "Conferencing and Communication Lab"}</h1><p>{language === "zh" ? "选择真实会议场景，观察用户体验、音频链路和工程排查重点如何同步变化。" : "Choose a real meeting scenario and see the user experience, audio chain, and engineering checks change together."}</p></div>
       </section>
 

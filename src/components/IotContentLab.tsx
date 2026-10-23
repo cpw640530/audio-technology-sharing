@@ -4,6 +4,7 @@ import type { Language } from "../content/knowledge";
 type IotContentLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type LocalizedText = Record<Language, string>;
@@ -197,14 +198,19 @@ function IotContentWorkflowDiagram({ language }: { language: Language }) {
   );
 }
 
-export function IotContentLab({ language, onBack }: IotContentLabProps) {
+export function IotContentLab({ language, onBack, onBackToDetails }: IotContentLabProps) {
   return (
     <main className="iot-content-lab-page" aria-label={language === "zh" ? "IoT 与内容创作实验室" : "IoT and Content Creation Lab"}>
       <section className="sound-lab-hero iot-content-lab-hero">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+          </button>}
+        </div>
         <div>
           <span className="details-category">{language === "zh" ? "应用场景" : "Applications"}</span>
           <h1>{language === "zh" ? "IoT 与内容创作实验室" : "IoT and Content Creation Lab"}</h1>

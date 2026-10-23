@@ -6,6 +6,7 @@ import type { Language, LocalizedText } from "../content/knowledge";
 type AlsaLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type AlsaMode = "playback" | "capture" | "buffer" | "xrun";
@@ -394,7 +395,7 @@ function AlsaBufferDiagram({
   );
 }
 
-function AlsaLab({ language, onBack }: AlsaLabProps) {
+function AlsaLab({ language, onBack, onBackToDetails }: AlsaLabProps) {
   const [config, setConfig] = useState<AlsaConfig>(defaultConfig);
   const [mode, setMode] = useState<AlsaMode>("playback");
   const [streamDirection, setStreamDirection] = useState<StreamDirection>("playback");
@@ -447,10 +448,15 @@ function AlsaLab({ language, onBack }: AlsaLabProps) {
   return (
     <main className="codec-lab-page alsa-lab-page" aria-label={language === "zh" ? "ALSA 框架实验室" : "ALSA Framework Lab"}>
       <section className="sound-lab-hero alsa-hero" aria-labelledby="alsa-lab-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft aria-hidden="true" size={18} />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+          </button>}
+        </div>
         <div>
           <span className="section-kicker">{language === "zh" ? "Linux 音频软件" : "Linux audio software"}</span>
           <h1 id="alsa-lab-title">{language === "zh" ? "ALSA 框架实验室" : "ALSA Framework Lab"}</h1>

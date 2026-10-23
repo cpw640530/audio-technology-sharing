@@ -5,6 +5,7 @@ import type { Language } from "../content/knowledge";
 type RealtimeAudioLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type FlowStep = {
@@ -637,16 +638,21 @@ function SocAecDiagram({ language }: { language: Language }) {
   );
 }
 
-export function RealtimeAudioLab({ language, onBack }: RealtimeAudioLabProps) {
+export function RealtimeAudioLab({ language, onBack, onBackToDetails }: RealtimeAudioLabProps) {
   const statusLabel = language === "zh" ? "状态：稳定" : "Status: stable";
 
   return (
     <main className="codec-lab-page realtime-audio-lab-page">
       <section className="sound-lab-hero" aria-labelledby="realtime-audio-lab-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+          </button>}
+        </div>
         <div>
           <span className="section-kicker">{language === "zh" ? "软件实验" : "Software lab"}</span>
           <h1 id="realtime-audio-lab-title">

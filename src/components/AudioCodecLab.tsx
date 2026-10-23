@@ -6,6 +6,7 @@ import type { Language } from "../content/knowledge";
 type AudioCodecLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type ScenarioId = "music" | "video" | "speech" | "meeting" | "bluetooth" | "lowLatency";
@@ -329,17 +330,22 @@ function CodecFlowChart({
   );
 }
 
-export function AudioCodecLab({ language, onBack }: AudioCodecLabProps) {
+export function AudioCodecLab({ language, onBack, onBackToDetails }: AudioCodecLabProps) {
   const [activeScenario, setActiveScenario] = useState<ScenarioId>("music");
   const scenario = scenarios[activeScenario];
 
   return (
     <main className="codec-lab-page audio-codec-lab-page">
       <section className="sound-lab-hero" aria-labelledby="audio-codec-lab-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+          </button>}
+        </div>
         <div>
           <span className="section-kicker">{language === "zh" ? "软件实验" : "Software lab"}</span>
           <h1 id="audio-codec-lab-title">{language === "zh" ? "音频编解码实验室" : "Audio Codec Lab"}</h1>

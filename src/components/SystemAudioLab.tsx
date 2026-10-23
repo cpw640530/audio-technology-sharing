@@ -29,6 +29,7 @@ type ArchitectureLayer = {
 type SystemAudioLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 const genericArchitectureLayers = [
@@ -356,17 +357,22 @@ function ArchitectureStack({
   );
 }
 
-export function SystemAudioLab({ language, onBack }: SystemAudioLabProps) {
+export function SystemAudioLab({ language, onBack, onBackToDetails }: SystemAudioLabProps) {
   const [flowMode, setFlowMode] = useState<FlowMode>("playback");
   const currentCopy = flowCopy[flowMode];
 
   return (
     <main className="codec-lab-page system-audio-lab">
       <section className="sound-lab-hero" aria-labelledby="system-audio-lab-title">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+          </button>}
+        </div>
         <div>
           <span className="section-kicker">{language === "zh" ? "软件实验" : "Software lab"}</span>
           <h1 id="system-audio-lab-title">

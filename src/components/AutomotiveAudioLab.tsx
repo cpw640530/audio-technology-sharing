@@ -5,6 +5,7 @@ import type { Language } from "../content/knowledge";
 type AutomotiveAudioLabProps = {
   language: Language;
   onBack: () => void;
+  onBackToDetails?: () => void;
 };
 
 type LocalizedText = Record<Language, string>;
@@ -355,17 +356,22 @@ function AutomotiveCabinDiagram({ activeModule, language }: { activeModule: Auto
   );
 }
 
-export function AutomotiveAudioLab({ language, onBack }: AutomotiveAudioLabProps) {
+export function AutomotiveAudioLab({ language, onBack, onBackToDetails }: AutomotiveAudioLabProps) {
   const [activeModule, setActiveModule] = useState<AutomotiveModule>("layout");
   const activeContent = automotiveModules[activeModule];
 
   return (
     <main className="automotive-lab-page" aria-label={language === "zh" ? "车载声学实验室" : "In-Car Acoustics Lab"}>
       <section className="sound-lab-hero automotive-lab-hero">
-        <button className="sound-lab-back" type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-        </button>
+        <div className="sound-lab-back-actions">
+          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+          </button>}
+        </div>
         <div>
           <span className="details-category">{language === "zh" ? "应用场景" : "Applications"}</span>
           <h1>{language === "zh" ? "车载声学实验室" : "In-Car Acoustics Lab"}</h1>

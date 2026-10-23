@@ -667,7 +667,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <MeetingCommunicationLab language={language} onBack={backFromApplicationLab} />
+        <MeetingCommunicationLab language={language} onBack={returnToApplications} onBackToDetails={backFromApplicationLab} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -682,7 +682,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <AutomotiveAudioLab language={language} onBack={backFromApplicationLab} />
+        <AutomotiveAudioLab language={language} onBack={returnToApplications} onBackToDetails={backFromApplicationLab} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -693,7 +693,7 @@ export default function App() {
   if (activeView === "robotAudioLab") {
     return <div className="app-shell">
       <Header language={language} onToggleLanguage={toggleLanguage} />
-      <RobotAudioLab language={language} onBack={backFromApplicationLab} />
+      <RobotAudioLab language={language} onBack={returnToApplications} onBackToDetails={backFromApplicationLab} />
       <footer className="site-footer"><span>{interfaceCopy.footer[language]}</span></footer>
     </div>;
   }
@@ -701,7 +701,7 @@ export default function App() {
   if (activeView === "bluetoothAudioLab") {
     return <div className="app-shell">
       <Header language={language} onToggleLanguage={toggleLanguage} />
-      <BluetoothAudioLab language={language} onBack={backFromApplicationLab} />
+      <BluetoothAudioLab language={language} onBack={returnToApplications} onBackToDetails={backFromApplicationLab} />
       <footer className="site-footer"><span>{interfaceCopy.footer[language]}</span></footer>
     </div>;
   }
@@ -713,7 +713,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <IotContentLab language={language} onBack={backFromApplicationLab} />
+        <IotContentLab language={language} onBack={returnToApplications} onBackToDetails={backFromApplicationLab} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -773,7 +773,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <SystemAudioLab language={language} onBack={() => setActiveView("knowledge")} />
+        <SystemAudioLab language={language} onBack={returnToSoftware} onBackToDetails={() => setActiveView("systemAudioPage")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -807,7 +807,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <AlsaLab language={language} onBack={returnToSoftware} />
+        <AlsaLab language={language} onBack={returnToSoftware} onBackToDetails={() => setActiveView("alsaPage")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -822,7 +822,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <AudioCodecLab language={language} onBack={() => setActiveView("knowledge")} />
+        <AudioCodecLab language={language} onBack={returnToSoftware} onBackToDetails={() => setActiveView("audioCodecPage")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -856,7 +856,7 @@ export default function App() {
           language={language}
           onToggleLanguage={toggleLanguage}
         />
-        <RealtimeAudioLab language={language} onBack={() => setActiveView("knowledge")} />
+        <RealtimeAudioLab language={language} onBack={returnToSoftware} onBackToDetails={() => setActiveView("realtimeAudioPage")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>

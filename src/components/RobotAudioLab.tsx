@@ -2,7 +2,7 @@ import { useState, type PointerEvent } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Language } from "../content/knowledge";
 
-export function RobotAudioLab({ language, onBack }: { language: Language; onBack: () => void }) {
+export function RobotAudioLab({ language, onBack, onBackToDetails }: { language: Language; onBack: () => void; onBackToDetails?: () => void }) {
   const t = (zh: string, en: string) => language === "zh" ? zh : en;
   const [view, setView] = useState("body");
   const [part, setPart] = useState(0);
@@ -43,7 +43,15 @@ export function RobotAudioLab({ language, onBack }: { language: Language; onBack
   }
   return <main className="robot-lab" aria-label={t("机器人音频实验室", "Robot Audio Lab")}>
     <section className="sound-lab-hero">
-      <button className="sound-lab-back" onClick={onBack}><ArrowLeft size={18} />{t("返回知识库", "Back to knowledge base")}</button>
+      <div className="sound-lab-back-actions">
+          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+          </button>}
+        </div>
       <div><span className="details-category">{t("应用场景", "Applications")}</span><h1>{t("机器人音频实验室", "Robot Audio Lab")}</h1><p>{t("从身体部件到空间交互：听到声音、找到方向、理解指令，再决定行动。", "From anatomy to spatial interaction: hear, locate, understand, then decide on an action.")}</p></div>
     </section>
     <div className="robot-buttons" aria-label={t("视图", "Views")}>{["body", "scene"].map((id, i) => <button key={id} aria-pressed={view === id} onClick={() => setView(id)}>{i === 0 ? t("机器人结构", "Robot anatomy") : t("工作场景", "Working scene")}</button>)}</div>

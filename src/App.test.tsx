@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
+import { categories } from "./content/knowledge";
 import { MeetingCommunicationLab } from "./components/MeetingCommunicationLab";
 
 describe("Audio knowledge app", () => {
@@ -19,6 +20,26 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("region", { name: "Topic Cards" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "中文" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "音频技术分享" })).not.toBeInTheDocument();
+  });
+
+  it.each(categories.flatMap(category => category.topics)
+    .filter(topic => topic.detail.lab)
+    .flatMap(topic => (["zh", "en"] as const).map(language => ({ topic, language, title: topic.title[language] }))))
+  ("returns from $title lab to its guide and knowledge base ($language)", async ({ topic, language }) => {
+    window.localStorage.setItem("audio-technology-language", language);
+    const user = userEvent.setup();
+    render(<App />);
+    const card = within(screen.getByTestId("topic-grid")).getAllByRole("button")
+      .find(button => button.querySelector("h3")?.textContent === topic.title[language]);
+    expect(card).toBeDefined();
+    await user.click(card!);
+    const title = screen.getByRole("main").querySelector("h1")?.textContent;
+    await user.click(screen.getByRole("button", { name: topic.detail.lab!.buttonLabel[language] }));
+    await user.click(screen.getByRole("button", { name: language === "zh" ? "返回详细内容" : /^Back to detail/ }));
+    expect(screen.getByRole("main").querySelector("h1")).toHaveTextContent(title!);
+    await user.click(screen.getByRole("button", { name: topic.detail.lab!.buttonLabel[language] }));
+    await user.click(screen.getByRole("button", { name: language === "zh" ? "返回知识库" : "Back to knowledge base" }));
+    expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
   });
 
   it("navigates the fundamental guides without crossing category boundaries", async () => {
@@ -137,7 +158,7 @@ describe("Audio knowledge app", () => {
     expect(within(lab).getByText(/播报已开启/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "English" }));
     expect(screen.getByRole("main", { name: "Robot Audio Lab" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Back to knowledge base" }));
+    await user.click(screen.getByRole("button", { name: "Back to detailed content" }));
     expect(screen.getByRole("main", { name: "Robot Audio" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Back to knowledge base" }));
     expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
@@ -165,7 +186,7 @@ describe("Audio knowledge app", () => {
     await user.click(screen.getByRole("button", { name: "English" }));
     expect(screen.getByRole("heading", { name: "Bluetooth Audio Link Lab" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Bluetooth codec" })).toHaveValue("LDAC");
-    await user.click(screen.getByRole("button", { name: "Back to knowledge base" }));
+    await user.click(screen.getByRole("button", { name: "Back to detailed content" }));
     expect(screen.getByRole("main", { name: "Bluetooth Audio: Wireless Transport, Coding, and Latency" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Back to knowledge base" }));
     expect(screen.getByTestId("topic-grid")).toBeInTheDocument();

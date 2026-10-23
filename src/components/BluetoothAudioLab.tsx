@@ -10,7 +10,7 @@ const codecs = {
 };
 type Codec = keyof typeof codecs;
 
-export function BluetoothAudioLab({ language, onBack }: { language: Language; onBack: () => void }) {
+export function BluetoothAudioLab({ language, onBack, onBackToDetails }: { language: Language; onBack: () => void; onBackToDetails?: () => void }) {
   const text = (cn: string, en: string) => language === "zh" ? cn : en;
   const [codec, setCodec] = useState<Codec>("LC3");
   const [rate, setRate] = useState(160);
@@ -42,7 +42,15 @@ export function BluetoothAudioLab({ language, onBack }: { language: Language; on
 
   return <main className="bluetooth-lab-page">
     <section className="sound-lab-hero">
-      <button className="sound-lab-back" type="button" onClick={onBack}><ArrowLeft size={18} aria-hidden="true" />{text("返回知识库", "Back to knowledge base")}</button>
+      <div className="sound-lab-back-actions">
+          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+          </button>
+          {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            {language === "zh" ? "返回详细内容" : "Back to detailed content"}
+          </button>}
+        </div>
       <div><span className="section-kicker">{text("应用场景", "Applications")}</span><h1>{text("蓝牙音频链路实验室", "Bluetooth Audio Link Lab")}</h1><p>{text("从手机到耳机：把压缩、无线传输和播放时限分开看。", "From phone to headphones: separate compression, radio transport, and playout deadlines.")}</p></div>
     </section>
     <section className="bluetooth-section" aria-label={text("蓝牙音频传输流程图", "Bluetooth audio transport flow diagram")}>
