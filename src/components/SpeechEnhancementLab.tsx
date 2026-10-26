@@ -70,77 +70,27 @@ const modeDescriptions: Record<EnhancementMode, Record<Language, string>> = {
   }
 };
 
-const modePrinciples: Record<EnhancementMode, Record<Language, string>[]> = {
-  beamforming: [
-    {
-      zh: "DOA 声源定位：多麦阵列要求至少两路同步麦克风，用到达时间差 τ 或相位差估计目标方向。",
-      en: "DOA localization: a microphone array needs at least two synchronized channels and estimates target direction from time difference tau or phase difference."
-    },
-    {
-      zh: "定向拾音：延时求和会把目标方向的多路麦克风对齐相加，目标语音被增强，侧向噪声因相位不一致被压低。",
-      en: "Directional pickup: delay-and-sum aligns channels from the target direction, boosting target speech while reducing side noise through phase mismatch."
-    },
-    {
-      zh: "单麦没有空间信息，所以不能做真正的多麦增强；最多只能做单通道降噪、AGC 或去混响。",
-      en: "A single microphone has no spatial information, so true array enhancement is unavailable; it can still use single-channel NS, AGC, or dereverb."
-    }
-  ],
-  aec: [
-    {
-      zh: "AEC 的关键输入是麦克风 PCM 和播放侧 reference PCM。reference 必须和麦克风里的回声时间对齐，否则自适应滤波器会估错。",
-      en: "AEC needs microphone PCM plus playback reference PCM. The reference must be time-aligned with the echo in the microphone signal, otherwise the adaptive filter estimates the wrong path."
-    },
-    {
-      zh: "自适应滤波器会学习扬声器、机壳、空气和房间形成的回声路径，生成一个“预测回声”，再从麦克风信号中相减。",
-      en: "An adaptive filter learns the echo path through the speaker, enclosure, air, and room, generates a predicted echo, then subtracts it from the microphone signal."
-    },
-    {
-      zh: "双讲时近端人声和远端播放声同时存在，AEC 不能盲目强收敛，否则会把近端人声当回声一起减掉。",
-      en: "During double-talk, near-end speech and far-end playback coexist. AEC must avoid aggressive adaptation or it can subtract near-end speech as if it were echo."
-    }
-  ],
-  ns: [
-    {
-      zh: "ANR/NS 通常按短帧做 FFT 或滤波器组分析，估计哪些频段更像稳定噪声，哪些频段更像语音。",
-      en: "ANR/NS usually analyzes short frames with FFT or filter banks to estimate which bands look like steady noise and which bands look like speech."
-    },
-    {
-      zh: "常见做法类似谱减法或维纳滤波：对噪声占比高的频段降低增益，对语音占比高的频段保留更多能量。",
-      en: "A common idea is spectral subtraction or Wiener-style filtering: reduce gain in noise-dominant bands and preserve more energy in speech-dominant bands."
-    },
-    {
-      zh: "强度太高会让辅音、高频细节和环境自然感被削掉，听起来像金属音、抽吸声或吞字。",
-      en: "Too much strength can remove consonants, high-frequency detail, and natural ambience, causing metallic sound, pumping, or clipped words."
-    }
-  ],
-  dereverb: [
-    {
-      zh: "混响由早期反射和后期反射组成。去混响通常重点压低后期拖尾，因为它会让语音变远、变糊。",
-      en: "Reverberation contains early and late reflections. Dereverb mainly reduces late tails because they make speech sound distant and blurred."
-    },
-    {
-      zh: "工程上常结合多麦空间信息、线性预测或频域衰减，判断哪些能量是持续拖尾，再按频段降低它。",
-      en: "Engineering implementations may combine array cues, linear prediction, or frequency-domain attenuation to identify sustained tails and reduce them by band."
-    },
-    {
-      zh: "去混响不会让房间完全消失。过强会把语音尾音和自然共鸣一起削弱，声音会变薄、发干。",
-      en: "Dereverb cannot make the room disappear. Aggressive settings can remove natural resonance and word endings, making speech thin and dry."
-    }
-  ],
-  agc: [
-    {
-      zh: "AGC 先估计短时 RMS、峰值或语音包络，再把电平拉向目标范围。它改变的是增益，不是频谱编码压缩。",
-      en: "AGC estimates short-term RMS, peaks, or speech envelope, then moves level toward a target range. It changes gain, not codec-style spectral compression."
-    },
-    {
-      zh: "Attack 和 release 决定增益变化速度：太快会抽吸，太慢会跟不上说话距离变化。",
-      en: "Attack and release set how quickly gain changes: too fast causes pumping, too slow fails to track changing speaker distance."
-    },
-    {
-      zh: "Limiter 常放在 AGC 后面兜底，防止增益过高导致数字削波。示意波形里 AGC 会让包络更均匀，而不是整体上下平移。",
-      en: "A limiter is often placed after AGC to prevent clipping. In the demo waveform, AGC evens the envelope rather than shifting the waveform up or down."
-    }
-  ]
+const modeLimits: Record<EnhancementMode, Record<Language, string>> = {
+  aec: {
+    zh: "边界：AEC 依赖时间对齐的播放 reference；双讲或延迟漂移时，过强收敛可能误削近端语音。",
+    en: "Limit: AEC depends on a time-aligned playback reference; during double-talk or delay drift, aggressive adaptation can suppress near-end speech."
+  },
+  ns: {
+    zh: "边界：更强抑制不等于更好；过强会损伤辅音和高频细节，并引入金属音或抽吸声。",
+    en: "Limit: stronger suppression is not always better; aggressive settings can damage consonants and high-frequency detail, causing metallic sound or pumping."
+  },
+  agc: {
+    zh: "边界：attack/release 决定跟随速度；过快会抽吸、过慢会跟不上变化，增益过高仍需 limiter 防止削波。",
+    en: "Limit: attack/release set tracking speed; too fast causes pumping, too slow misses level changes, and excessive gain still needs a limiter to prevent clipping."
+  },
+  beamforming: {
+    zh: "边界：至少需要两路同步麦克风；单麦没有空间差分，更多通道通常增加计算量，抑制效果和延迟还取决于阵列结构与算法。",
+    en: "Limit: at least two synchronized microphones are required; a single mic has no spatial difference. More channels usually add compute, while suppression and latency also depend on array geometry and the algorithm."
+  },
+  dereverb: {
+    zh: "边界：去混响主要压低后期拖尾；过强会削弱自然共鸣和词尾，声音变薄发干。",
+    en: "Limit: dereverb mainly reduces late tails; aggressive settings can remove natural resonance and word endings, making speech thin and dry."
+  }
 };
 
 const sourceReferenceRows = [
@@ -847,13 +797,9 @@ export function SpeechEnhancementLab({ language, onBack, onBackToDetails }: Spee
                   </li>
                 </ul>
               </section>
-              <section className="speech-principle-card" aria-label={language === "zh" ? "当前算法基本原理" : "Current algorithm principle"}>
-                <h2>{language === "zh" ? "基本原理" : "Principle"}</h2>
-                <ul>
-                  {modePrinciples[mode].map((point) => (
-                    <li key={point.en}>{point[language]}</li>
-                  ))}
-                </ul>
+              <section className="speech-principle-card" aria-label={language === "zh" ? "当前模式边界" : "Current-mode limits"}>
+                <h2>{language === "zh" ? "当前模式边界" : "Current-mode limits"}</h2>
+                <p>{modeLimits[mode][language]}</p>
               </section>
               <section className="speech-source-reference-card" aria-label={language === "zh" ? "算法源码参考" : "Algorithm source-code references"}>
                 <h2>{language === "zh" ? "算法源码参考" : "Algorithm source references"}</h2>

@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
 import type { Category, Language, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
@@ -8,6 +10,7 @@ import { AmplifierSpeakerAnatomy } from "./AmplifierSpeakerAnatomy";
 type DisplayTopic = Topic & { category: Category };
 
 type HardwareTopicPageProps = {
+  relatedTopics?: ReactNode;
   language: Language;
   topic: DisplayTopic;
   onBack: () => void;
@@ -44,7 +47,8 @@ const microphoneSections = [
     },
     points: [
       { zh: "近距离大声压更看重耐受和余量；远场语音更看重自噪声、阵列布局和后端处理。", en: "Close loud sources need SPL headroom; far-field speech depends more on self-noise, array placement, and downstream processing." },
-      { zh: "电容、动圈、驻极体和 MEMS 是换能与封装选择，不是单独代表音质高低。", en: "Condenser, dynamic, electret, and MEMS describe transducer and package choices, not a universal quality ranking." }
+      { zh: "电容、动圈、驻极体和 MEMS 是换能与封装选择，不是单独代表音质高低。", en: "Condenser, dynamic, electret, and MEMS describe transducer and package choices, not a universal quality ranking." },
+      { zh: "录音棚和乐器还要按声压、瞬态、音色目标和房间条件比较电容、动圈与铝带麦，并结合摆位。", en: "Studio and instrument capture also compares condenser, dynamic, and ribbon mics by SPL, transients, tone target, and room, then tunes placement." }
     ]
   },
   {
@@ -55,12 +59,13 @@ const microphoneSections = [
     },
     points: [
       { zh: "先保证信号链有足够余量，再比较灵敏度、频响、自噪声和最大 SPL 等规格。", en: "Ensure signal-chain headroom first, then compare sensitivity, frequency response, self-noise, and maximum SPL." },
-      { zh: "PDM、I2S、ADC 和阵列算法属于后续接口与处理环节，具体参数留给实验室验证。", en: "PDM, I2S, ADC, and array algorithms belong to later interface and processing stages; their parameters are explored in the lab." }
+      { zh: "PDM、I2S、ADC 和阵列算法属于后续接口与处理环节，具体参数留给实验室验证。", en: "PDM, I2S, ADC, and array algorithms belong to later interface and processing stages; their parameters are explored in the lab." },
+      { zh: "手机和耳机里的多麦 MEMS 常与波束成形、通话降噪和风噪检测配合，系统布局比单颗麦规格更关键。", en: "Multi-mic MEMS systems in phones and earbuds often pair beamforming with call noise reduction and wind detection, making layout as important as one mic's specification." }
     ]
   }
 ];
 
-export function HardwareTopicPage({
+export function HardwareTopicPage({ relatedTopics,
   language,
   topic,
   onBack,
@@ -95,8 +100,8 @@ export function HardwareTopicPage({
         </div>
       </header>
 
-      <div className="sound-topic-content">
-        <section className="sound-topic-section sound-topic-intro">
+      <TopicReadingLayout language={language}>
+        <section id={isMicrophone ? "mic-intro" : undefined} tabIndex={isMicrophone ? -1 : undefined} className="sound-topic-section sound-topic-intro">
           <div>
             <h2>{language === "zh" ? "先建立硬件链路" : "Start with the hardware chain"}</h2>
             <p>{detail.explanation[language]}</p>
@@ -115,7 +120,7 @@ export function HardwareTopicPage({
           </div>
         </section> : null}
 
-        {!isConverter && <section className="sound-topic-section">
+        {!isConverter && <section id={isMicrophone ? "mic-signal" : undefined} tabIndex={isMicrophone ? -1 : undefined} className="sound-topic-section">
           <div className="sound-topic-section-heading">
             <div>
               <h2>{language === "zh" ? "典型信号链示例" : "Example signal chain"}</h2>
@@ -135,7 +140,7 @@ export function HardwareTopicPage({
           {isAmplifierSpeaker && <AmplifierSpeakerAnatomy language={language} />}
         </section>}
 
-        <section className="sound-topic-section hardware-topic-lab-entry" aria-label={language === "zh" ? "当前主题实验室入口" : "Current topic lab entry"}>
+        <section id={isMicrophone ? "mic-lab" : undefined} tabIndex={isMicrophone ? -1 : undefined} className="sound-topic-section hardware-topic-lab-entry" aria-label={language === "zh" ? "当前主题实验室入口" : "Current topic lab entry"}>
           <div className="sound-topic-cta">
             <CircuitBoard size={22} aria-hidden="true" />
             <h2>{language === "zh" ? "先进入实验室验证" : "Verify it in the lab first"}</h2>
@@ -163,14 +168,14 @@ export function HardwareTopicPage({
         </section>}
 
         {isConverter ? <ConverterGuide language={language} /> : isMicrophone ? microphoneSections.map((section, index) => (
-          <section className="sound-topic-section microphone-topic-section" key={section.title.en}>
+          <section id={index === 0 ? "mic-selection" : "mic-interface"} tabIndex={-1} className="sound-topic-section microphone-topic-section" key={section.title.en}>
             <div className="microphone-topic-section-intro">
               <h2>{section.title[language]}</h2>
               <p>{section.description[language]}</p>
             </div>
-            <div className="sound-topic-glossary microphone-topic-points">
-              {section.points.map((point) => <article key={point.en}><p>{point[language]}</p></article>)}
-            </div>
+            <ul className="microphone-topic-points">
+              {section.points.map((point) => <li key={point.en}>{point[language]}</li>)}
+            </ul>
             {index === 0 && <>
               <p className="sound-topic-note microphone-topic-boundary">
                 {language === "zh" ? "内容分工：这里帮助你建立选型判断；实验室负责切换麦克风类型、调节角度/距离/增益，并观察或试听参数变化。" : "Division of labor: this page frames the selection decision; the lab switches microphone types, adjusts angle/distance/gain, and makes the changes visible or audible."}
@@ -195,13 +200,14 @@ export function HardwareTopicPage({
           </div>
         </section>}
 
-        <section className="sound-topic-section">
+        <section id={isMicrophone ? "mic-boundary" : undefined} tabIndex={isMicrophone ? -1 : undefined} className="sound-topic-section">
           <div>
             <h2>{language === "zh" ? "工程边界" : "Engineering boundary"}</h2>
             <p>{detail.misconception[language]}</p>
           </div>
         </section>
-      </div>
+      </TopicReadingLayout>
+      {relatedTopics}
       <TopicPager language={language} onBack={onBack} onPrevious={onOpenPrevious} onNext={onOpenNext} />
     </main>
   );

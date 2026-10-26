@@ -10,19 +10,9 @@ type CodecHardwareLabProps = {
 
 type CodecMode = "adc" | "dac" | "codec";
 
-type ModeConcept = {
-  title: string;
-  body: string;
-};
-
 type ModeCopy = {
   title: string;
   body: string;
-  chain: string[];
-  concepts: ModeConcept[];
-  playbackChain?: string[];
-  recordLabel?: string;
-  playbackLabel?: string;
 };
 
 const modeLabels: Record<CodecMode, Record<Language, string>> = {
@@ -152,49 +142,7 @@ function getModeCopy(mode: CodecMode, language: Language): ModeCopy {
       body:
         language === "zh"
           ? "输入信号先经过 PGA 和抗混叠滤波，再按采样时钟取点并量化。电平过高会削波，位深过低会增加量化噪声，时钟不稳会让采样时刻产生偏差。"
-          : "The input passes through PGA and anti-alias filtering, then is sampled and quantized by the clock. Too much level clips, low bit depth raises quantization noise, and unstable clocks shift sample timing.",
-      chain:
-        language === "zh"
-          ? ["模拟输入", "PGA", "抗混叠", "采样量化", "I2S PCM"]
-          : ["Analog in", "PGA", "Anti-alias", "Sample/quantize", "I2S PCM"],
-      concepts:
-        language === "zh"
-          ? [
-              {
-                title: "输入范围",
-                body: "ADC 只能接收有限电压范围，超出满量程会把波峰压平，形成不可恢复的削波失真。"
-              },
-              {
-                title: "PGA / 前级增益",
-                body: "PGA 在采样前调整模拟电平，让弱信号远离噪声底，同时避免大信号把 ADC 推到削波。"
-              },
-              {
-                title: "抗混叠滤波",
-                body: "采样前的低通滤波会压掉高于奈奎斯特频率的成分，防止它们折叠到可听频段。"
-              },
-              {
-                title: "量化误差",
-                body: "连续电压被映射到有限等级，位深越低，台阶越粗，误差和量化噪声越明显。"
-              }
-            ]
-          : [
-              {
-                title: "Input range",
-                body: "The ADC accepts a limited voltage span. Exceeding full scale flattens peaks and creates irreversible clipping."
-              },
-              {
-                title: "PGA / front-end gain",
-                body: "The PGA sets analog level before sampling so quiet signals clear the noise floor without clipping loud signals."
-              },
-              {
-                title: "Anti-alias filter",
-                body: "A pre-sampling low-pass filter attenuates content above Nyquist so it cannot fold into the audible band."
-              },
-              {
-                title: "Quantization error",
-                body: "Continuous voltage is mapped to finite levels. Lower bit depth means coarser steps and more quantization noise."
-              }
-            ]
+          : "The input passes through PGA and anti-alias filtering, then is sampled and quantized by the clock. Too much level clips, low bit depth raises quantization noise, and unstable clocks shift sample timing."
     };
   }
 
@@ -204,49 +152,7 @@ function getModeCopy(mode: CodecMode, language: Language): ModeCopy {
       body:
         language === "zh"
           ? "本图使用量化样本、零阶保持和一阶 RC 低通（时间常数 25 μs，初始输出为 0），展示滤波的平滑、衰减和延迟。实际 Σ-Δ DAC 还包含插值与噪声整形，不能等同于这里的简化模型。"
-          : "This model uses quantized samples, zero-order hold and a first-order RC low-pass (25 μs time constant, zero initial output) to show smoothing, attenuation and delay. Real sigma-delta DACs also use interpolation and noise shaping; this is not a chip simulation.",
-      chain:
-        language === "zh"
-          ? ["I2S PCM", "插值", "DAC 核心", "重建滤波", "模拟输出"]
-          : ["I2S PCM", "Interpolation", "DAC core", "Reconstruction", "Analog out"],
-      concepts:
-        language === "zh"
-          ? [
-              {
-                title: "插值与过采样",
-                body: "DAC 常先插入中间样本并提高内部采样率，让后面的模拟滤波更容易处理。"
-              },
-              {
-                title: "保持输出",
-                body: "本实验采用零阶保持：每个量化值保持到下次更新，形成阶梯。这是教学模型，不代表所有 DAC 的内部结构。"
-              },
-              {
-                title: "重建滤波",
-                body: "本实验的一阶低通由实际阶梯输入计算，保留幅度衰减、相位延迟和启动过程；它不能完全消除镜像，也不是理想重建。"
-              },
-              {
-                title: "输出驱动",
-                body: "缓冲器、耳放或功放负责提供电流能力，决定能否稳定推动耳机、线路输入或扬声器。"
-              }
-            ]
-          : [
-              {
-                title: "Interpolation and oversampling",
-                body: "DACs often insert intermediate samples and raise the internal rate so analog filtering can be gentler."
-              },
-              {
-                title: "Hold output",
-                body: "This lab uses zero-order hold: each quantized value stays constant until the next update. This teaching model does not represent every DAC architecture."
-              },
-              {
-                title: "Reconstruction filter",
-                body: "The first-order filter is computed from the held samples and includes attenuation, phase lag and startup. It cannot remove all images and is not ideal reconstruction."
-              },
-              {
-                title: "Output driver",
-                body: "Buffers, headphone amps, or speaker amps supply current for headphones, line inputs, or speakers."
-              }
-            ]
+          : "This model uses quantized samples, zero-order hold and a first-order RC low-pass (25 μs time constant, zero initial output) to show smoothing, attenuation and delay. Real sigma-delta DACs also use interpolation and noise shaping; this is not a chip simulation."
     };
   }
 
@@ -255,55 +161,7 @@ function getModeCopy(mode: CodecMode, language: Language): ModeCopy {
     body:
       language === "zh"
         ? "Codec 芯片不是单向链路，而是同时包含录音和播放两条通路。录音时麦克风/线路输入经 PGA 和 ADC 变成数字音频送给主控；播放时主控把 I2S/TDM 数字音频送回 Codec，经 DAC 和耳放/功放输出。"
-        : "A codec chip is not one single direction. It contains capture and playback paths at the same time. Capture sends mic/line input through PGA and ADC to the host; playback sends I2S/TDM audio from the host through DAC and output amplifiers.",
-    chain:
-      language === "zh"
-        ? ["Mic/Line", "PGA", "ADC", "I2S/TDM", "主控"]
-        : ["Mic/Line", "PGA", "ADC", "I2S/TDM", "Host"],
-    playbackChain:
-      language === "zh"
-        ? ["主控", "I2S/TDM", "DAC", "耳放/功放", "Speaker"]
-        : ["Host", "I2S/TDM", "DAC", "HP/Speaker amp", "Speaker"],
-    concepts:
-      language === "zh"
-        ? [
-            {
-              title: "路由矩阵",
-              body: "Codec 内部会把 Mic、Line、ADC、DAC、Mixer 和输出端按寄存器配置连接起来。"
-            },
-            {
-              title: "I2S / TDM 接口",
-              body: "I2S 常用于左右声道，TDM 可在同一组时钟上传多路音频，必须匹配位宽、帧长和主从时钟。"
-            },
-            {
-              title: "寄存器配置",
-              body: "软件通过控制寄存器设置输入选择、增益、采样率、静音、数字滤波和接口格式。"
-            },
-            {
-              title: "电源与静音控制",
-              body: "Codec 会分区管理 ADC、DAC、PGA、PLL 和功放电源，切换时需要软静音避免爆音。"
-            }
-          ]
-        : [
-            {
-              title: "Routing matrix",
-              body: "The codec connects mic, line, ADC, DAC, mixer, and outputs through register-controlled routing."
-            },
-            {
-              title: "I2S / TDM interface",
-              body: "I2S commonly carries stereo audio, while TDM carries more channels on one clock group with matched framing."
-            },
-            {
-              title: "Register configuration",
-              body: "Software sets input selection, gain, sample rate, mute, digital filters, and interface format through registers."
-            },
-            {
-              title: "Power and mute control",
-              body: "Codecs gate ADC, DAC, PGA, PLL, and amplifier power domains and use soft mute to avoid pops during changes."
-            }
-          ],
-    playbackLabel: language === "zh" ? "播放链路" : "Playback path",
-    recordLabel: language === "zh" ? "录音链路" : "Capture path"
+        : "A codec chip is not one single direction. It contains capture and playback paths at the same time. Capture sends mic/line input through PGA and ADC to the host; playback sends I2S/TDM audio from the host through DAC and output amplifiers."
   };
 }
 
@@ -335,6 +193,42 @@ function getModeStatus({
   return language === "zh"
     ? `双向链路 · I2S/TDM · 每帧样本：${sampleRate}`
     : `Duplex path · I2S/TDM · samples per frame: ${sampleRate}`;
+}
+
+function getModeObservation({
+  bitDepth,
+  clippingRisk,
+  inputLevel,
+  jitterRisk,
+  language,
+  mode,
+  quantizationError,
+  sampleRate
+}: {
+  bitDepth: number;
+  clippingRisk: number;
+  inputLevel: number;
+  jitterRisk: number;
+  language: Language;
+  mode: CodecMode;
+  quantizationError: number;
+  sampleRate: number;
+}) {
+  if (mode === "adc") {
+    return language === "zh"
+      ? `本图把 100% 视为归一化满量程；当前输入 ${inputLevel}% 时削波样本占比 ${clippingRisk}%，PGA/前端增益应在不超出输入范围的前提下把弱信号抬离噪声底。${bitDepth} bit 量化和 ${jitterRisk}% Ts 时序偏移是本模型的限制，不是具体芯片规格。`
+      : `This model treats 100% as normalized full scale; at ${inputLevel}% input, ${clippingRisk}% of samples clip, so PGA/front-end gain must lift quiet signals without exceeding the input range. ${bitDepth}-bit quantization and ${jitterRisk}% Ts timing offset are model limits, not a specific chip's specification.`;
+  }
+
+  if (mode === "dac") {
+    return language === "zh"
+      ? `当前用 ${sampleRate} 个样本、${bitDepth} bit 量化和 ${jitterRisk}% Ts 时序偏移观察重建，平均量化误差为 ${quantizationError.toFixed(3)} FS。零阶保持加一阶 RC 只示意平滑、衰减和延迟，不代表实际 DAC 的插值、噪声整形或输出驱动。`
+      : `This view uses ${sampleRate} samples, ${bitDepth}-bit quantization, and ${jitterRisk}% Ts timing offset; mean quantization error is ${quantizationError.toFixed(3)} FS. Zero-order hold plus first-order RC illustrates smoothing, attenuation, and delay, not a real DAC's interpolation, noise shaping, or output drive.`;
+  }
+
+  return language === "zh"
+    ? "这张图只表示 Codec 的双向路由；实际 PGA/增益、I2S/TDM 格式、采样率、静音和电源时序仍由具体芯片寄存器与时钟方案决定。"
+    : "This diagram shows only the Codec's bidirectional routing; actual PGA/gain, I2S/TDM format, sample rate, mute, and power sequencing depend on the chip's registers and clock plan.";
 }
 
 function renderCodecSvgDefs() {
@@ -392,6 +286,16 @@ export function CodecHardwareLab({ language, onBack, onBackToDetails }: CodecHar
   const modeCopy = getModeCopy(mode, language);
   const levels = 2 ** bitDepth;
   const modeStatus = getModeStatus({ bitDepth, language, levels, mode, sampleRate });
+  const modeObservation = getModeObservation({
+    bitDepth,
+    clippingRisk: data.clippingRisk,
+    inputLevel,
+    jitterRisk: data.jitterRisk,
+    language,
+    mode,
+    quantizationError: data.quantizationError,
+    sampleRate
+  });
 
   return (
     <main className="codec-lab-page">
@@ -612,23 +516,10 @@ export function CodecHardwareLab({ language, onBack, onBackToDetails }: CodecHar
           <div className="lab-live-note">
             <strong>{modeLabels[mode][language]}</strong>
             <span>{modeCopy.body}</span>
+            <span>{modeObservation}</span>
           </div>
         </div>
 
-        <section className="codec-mode-concepts" aria-label={language === "zh" ? "当前模式关键知识点" : "Current mode key concepts"}>
-          <div className="codec-mode-concepts-header">
-            <strong>{language === "zh" ? "当前模式关键知识点" : "Current mode key concepts"}</strong>
-            <span>{modeLabels[mode][language]}</span>
-          </div>
-          <div className="codec-concept-grid">
-            {modeCopy.concepts.map((concept) => (
-              <article key={concept.title}>
-                <h2>{concept.title}</h2>
-                <p>{concept.body}</p>
-              </article>
-            ))}
-          </div>
-        </section>
       </section>
     </main>
   );

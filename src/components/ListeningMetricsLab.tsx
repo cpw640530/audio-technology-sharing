@@ -1021,8 +1021,8 @@ export function ListeningMetricsLab({ language, onBack, onBackToDetails }: Liste
           <h1 id="listening-lab-title">{language === "zh" ? "听感与指标实验室" : "Listening Metrics Lab"}</h1>
           <p>
             {language === "zh"
-              ? "把主观描述、可测指标和可听音效放在一起，理解“听起来如何”背后的工程原因。"
-              : "Connect subjective descriptions, measurable metrics, and audible examples to understand engineering causes behind perception."}
+              ? "比较原始与处理后的声音，对照曲线观察效果强度带来的变化。"
+              : "Compare original and processed audio, and relate changes in effect strength to the chart."}
           </p>
         </div>
       </section>

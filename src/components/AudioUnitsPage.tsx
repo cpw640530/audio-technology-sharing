@@ -1,8 +1,11 @@
+import type { ReactNode } from "react";
+import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, Gauge, Ruler } from "lucide-react";
 import { categories, type Language } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
 
 type AudioUnitsPageProps = {
+  relatedTopics?: ReactNode;
   language: Language;
   onBack: () => void;
   onOpenLab: () => void;
@@ -25,7 +28,7 @@ const references: Record<string, Record<Language, string>> = {
   "dBu / dBV": { zh: "模拟电压：0.775 / 1 Vrms", en: "Analog voltage: 0.775 / 1 Vrms" }
 };
 
-export function AudioUnitsPage({ language, onBack, onOpenLab, onOpenPrevious, onOpenNext }: AudioUnitsPageProps) {
+export function AudioUnitsPage({ relatedTopics, language, onBack, onOpenLab, onOpenPrevious, onOpenNext }: AudioUnitsPageProps) {
   const detail = audioUnitsTopic.detail;
   const terms = detail.termExplanations ?? [];
   const chain = language === "zh"
@@ -52,12 +55,27 @@ export function AudioUnitsPage({ language, onBack, onOpenLab, onOpenPrevious, on
         </div>
       </header>
 
-      <div className="sound-topic-content">
+      <TopicReadingLayout language={language}>
         <section className="sound-topic-section sound-topic-intro">
 
           <div>
             <h2>{language === "zh" ? "先问：这个 dB 相对于什么？" : "First ask: relative to what?"}</h2>
             <p>{detail.explanation[language]}</p>
+          </div>
+        </section>
+
+        <section className="sound-topic-section sound-topic-bottom-grid">
+          <div>
+            <h2>{language === "zh" ? "换算前先确认边界" : "Check the boundary before converting"}</h2>
+            <p>{detail.misconception[language]}</p>
+          </div>
+          <div className="sound-topic-cta">
+            <Gauge size={22} aria-hidden="true" />
+            <h2>{language === "zh" ? "进入换算实验室" : "Open the conversion lab"}</h2>
+            <p>{language === "zh" ? "输入源单位和数值，观察同一参考域内的等效结果，并用距离计算器理解理想自由场衰减。" : "Enter a source unit and value, inspect equivalent results inside one reference domain, and use the distance calculator to understand ideal free-field loss."}</p>
+            <button className="diagram-open-button" type="button" onClick={onOpenLab}>
+              {detail.lab?.buttonLabel[language]}
+            </button>
           </div>
         </section>
 
@@ -98,6 +116,18 @@ export function AudioUnitsPage({ language, onBack, onOpenLab, onOpenPrevious, on
           </ol>
           <div className="audio-units-formulas">
             <div>
+              <code>dB = 20 log10(A2 / A1)</code>
+              <p>{language === "zh" ? "幅度减半约为 -6 dB；幅度比采用相同测量定义。比较电压所对应的功率时，还需保证阻抗相同。" : "Halving amplitude is about -6 dB; use the same amplitude measure. Relating voltage ratios to power also requires equal impedance."}</p>
+            </div>
+            <div>
+              <code>dB = 10 log10(P2 / P1)</code>
+              <p>{language === "zh" ? "功率翻倍约为 +3 dB，不要与幅度翻倍的 +6 dB 混淆。" : "Doubling power is about +3 dB, unlike the +6 dB from doubling amplitude."}</p>
+            </div>
+            <div>
+              <code>Vrms = 0.775 × 10^(dBu / 20)</code>
+              <p>{language === "zh" ? "+4 dBu 约等于 1.228 Vrms；这是电压参考，不是声压级。" : "+4 dBu is about 1.228 Vrms: a voltage reference, not a sound pressure level."}</p>
+            </div>
+            <div>
               <Gauge size={18} aria-hidden="true" />
               <code>dBSPL = 20 log10(p / 20 µPa)</code>
               <p>{language === "zh" ? "声压级使用 20 µPa 作为参考，94 dBSPL 约等于 1 Pa。" : "SPL uses 20 µPa as its reference; 94 dBSPL is approximately 1 Pa."}</p>
@@ -120,7 +150,7 @@ export function AudioUnitsPage({ language, onBack, onOpenLab, onOpenPrevious, on
             </div>
           </div>
           <div className="sound-topic-glossary">
-            {terms.map((term) => (
+            {terms.slice(4).map((term) => (
               <article key={term.name.en}>
                 <h3>{term.name[language]}</h3>
                 <p>{term.explanation[language]}</p>
@@ -129,22 +159,8 @@ export function AudioUnitsPage({ language, onBack, onOpenLab, onOpenPrevious, on
           </div>
         </section>
 
-        <section className="sound-topic-section sound-topic-bottom-grid">
-          <div>
-
-            <h2>{language === "zh" ? "换算前先确认边界" : "Check the boundary before converting"}</h2>
-            <p>{detail.misconception[language]}</p>
-          </div>
-          <div className="sound-topic-cta">
-            <Gauge size={22} aria-hidden="true" />
-            <h2>{language === "zh" ? "进入换算实验室" : "Open the conversion lab"}</h2>
-            <p>{language === "zh" ? "输入源单位和数值，观察同一参考域内的等效结果，并用距离计算器理解理想自由场衰减。" : "Enter a source unit and value, inspect equivalent results inside one reference domain, and use the distance calculator to understand ideal free-field loss."}</p>
-            <button className="diagram-open-button" type="button" onClick={onOpenLab}>
-              {detail.lab?.buttonLabel[language]}
-            </button>
-          </div>
-        </section>
-      </div>
+      </TopicReadingLayout>
+      {relatedTopics}
       <TopicPager language={language} onPrevious={onOpenPrevious} onBack={onBack} onNext={onOpenNext} />
     </main>
   );

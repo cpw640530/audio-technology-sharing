@@ -1055,40 +1055,6 @@ export function MicrophoneLab({ language, onBack, onBackToDetails }: MicrophoneL
         </div>
       </section>
 
-      <section className="mic-knowledge-grid" aria-label={language === "zh" ? "麦克风选型提示" : "Microphone selection tips"}>
-        <article>
-          <h2>{language === "zh" ? "直播 / 播客" : "Livestream / Podcast"}</h2>
-          <p>
-            {language === "zh"
-              ? "安静房间可用电容麦获得细节；普通房间或键盘噪声较多时，近讲动圈麦更稳。"
-              : "A quiet room can benefit from condenser detail; in ordinary rooms with keyboard noise, a close dynamic mic is often more stable."}
-          </p>
-        </article>
-        <article>
-          <h2>{language === "zh" ? "会议 / 远场" : "Meeting / Far field"}</h2>
-          <p>
-            {language === "zh"
-              ? "重点不是单颗麦多贵，而是阵列位置、回声消除、噪声抑制和房间混响控制。"
-              : "The key is not one expensive capsule, but array placement, echo cancellation, noise suppression, and room reverb control."}
-          </p>
-        </article>
-        <article>
-          <h2>{language === "zh" ? "手机 / 耳机" : "Phone / Earbuds"}</h2>
-          <p>
-            {language === "zh"
-              ? "MEMS 麦克风适合小体积和多麦协同，常结合波束成形、通话降噪和风噪检测。"
-              : "MEMS microphones fit compact multi-mic systems, often paired with beamforming, call noise reduction, and wind detection."}
-          </p>
-        </article>
-        <article>
-          <h2>{language === "zh" ? "录音棚 / 乐器" : "Studio / Instruments"}</h2>
-          <p>
-            {language === "zh"
-              ? "根据声源声压、瞬态、音色目标和房间条件选择电容、动圈或铝带麦，并控制摆位。"
-              : "Choose condenser, dynamic, or ribbon mics by SPL, transient response, tone target, and room condition, then tune placement."}
-          </p>
-        </article>
-      </section>
     </main>
   );
 }

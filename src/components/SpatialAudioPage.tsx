@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
 import type { Category, Language, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
@@ -5,6 +7,7 @@ import { TopicPager } from "./TopicPager";
 type DisplayTopic = Topic & { category: Category };
 
 type SpatialAudioPageProps = {
+  relatedTopics?: ReactNode;
   language: Language;
   topic: DisplayTopic;
   onBack: () => void;
@@ -35,7 +38,7 @@ const spatialFlow = [
   }
 ];
 
-export function SpatialAudioPage({ language, topic, onBack, onOpenLab, onOpenPrevious }: SpatialAudioPageProps) {
+export function SpatialAudioPage({ relatedTopics, language, topic, onBack, onOpenLab, onOpenPrevious }: SpatialAudioPageProps) {
   const detail = topic.detail;
 
   return (
@@ -55,7 +58,7 @@ export function SpatialAudioPage({ language, topic, onBack, onOpenLab, onOpenPre
         </div>
       </header>
 
-      <div className="sound-topic-content">
+      <TopicReadingLayout language={language}>
         <section className="sound-topic-section sound-topic-intro">
           <div>
             <h2>{language === "zh" ? "空间音频先解决一个问题：声音应该位于哪里" : "Spatial audio answers one question first: where should a sound be?"}</h2>
@@ -105,7 +108,8 @@ export function SpatialAudioPage({ language, topic, onBack, onOpenLab, onOpenPre
         </section>
 
         <section className="sound-topic-section"><div><h2>{language === "zh" ? "工程边界" : "Engineering boundary"}</h2><p>{detail.misconception[language]}</p></div></section>
-      </div>
+      </TopicReadingLayout>
+      {relatedTopics}
       <TopicPager language={language} onBack={onBack} onPrevious={onOpenPrevious} />
     </main>
   );

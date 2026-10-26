@@ -1,9 +1,12 @@
+import type { ReactNode } from "react";
+import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, Waves } from "lucide-react";
 import { categories, type Language } from "../content/knowledge";
 import { SoundWaveDiagram } from "./TopicDetails";
 import { TopicPager } from "./TopicPager";
 
 type SoundTopicPageProps = {
+  relatedTopics?: ReactNode;
   language: Language;
   onBack: () => void;
   onOpenLab: () => void;
@@ -18,7 +21,7 @@ if (!soundTopic) {
   throw new Error("The sound topic is required for the professional sound guide.");
 }
 
-export function SoundTopicPage({ language, onBack, onOpenLab, onOpenNext }: SoundTopicPageProps) {
+export function SoundTopicPage({ relatedTopics, language, onBack, onOpenLab, onOpenNext }: SoundTopicPageProps) {
   const detail = soundTopic.detail;
   const terms = detail.termExplanations ?? [];
   const flow = language === "zh"
@@ -45,12 +48,27 @@ export function SoundTopicPage({ language, onBack, onOpenLab, onOpenNext }: Soun
         </div>
       </header>
 
-      <div className="sound-topic-content">
+      <TopicReadingLayout language={language}>
         <section className="sound-topic-section sound-topic-intro">
 
           <div>
             <h2>{language === "zh" ? "先建立一个准确的直觉" : "Start with the right intuition"}</h2>
             <p>{detail.explanation[language]}</p>
+          </div>
+        </section>
+
+        <section className="sound-topic-section sound-topic-bottom-grid">
+          <div>
+            <h2>{language === "zh" ? "两个必须记住的边界" : "Two boundaries to remember"}</h2>
+            <p>{detail.misconception[language]}</p>
+          </div>
+          <div className="sound-topic-cta">
+            <Waves size={22} aria-hidden="true" />
+            <h2>{language === "zh" ? "继续动手验证" : "Keep experimenting"}</h2>
+            <p>{language === "zh" ? "用实验室调节频率、振幅和相位，把公式和听感对应起来。" : "Use the lab to connect frequency, amplitude, and phase with the formula and what you hear."}</p>
+            <button className="diagram-open-button" type="button" onClick={onOpenLab}>
+              {detail.lab?.buttonLabel[language]}
+            </button>
           </div>
         </section>
 
@@ -106,7 +124,7 @@ export function SoundTopicPage({ language, onBack, onOpenLab, onOpenNext }: Soun
             </div>
           </div>
           <div className="sound-topic-glossary">
-            {terms.map((term) => (
+            {terms.filter((term) => term.name.en !== "From pressure to PCM").map((term) => (
               <article key={term.name.en}>
                 <h3>{term.name[language]}</h3>
                 <p>{term.explanation[language]}</p>
@@ -115,22 +133,8 @@ export function SoundTopicPage({ language, onBack, onOpenLab, onOpenNext }: Soun
           </div>
         </section>
 
-        <section className="sound-topic-section sound-topic-bottom-grid">
-          <div>
-
-            <h2>{language === "zh" ? "两个必须记住的边界" : "Two boundaries to remember"}</h2>
-            <p>{detail.misconception[language]}</p>
-          </div>
-          <div className="sound-topic-cta">
-            <Waves size={22} aria-hidden="true" />
-            <h2>{language === "zh" ? "继续动手验证" : "Keep experimenting"}</h2>
-            <p>{language === "zh" ? "用实验室调节频率、振幅和相位，把公式和听感对应起来。" : "Use the lab to connect frequency, amplitude, and phase with the formula and what you hear."}</p>
-            <button className="diagram-open-button" type="button" onClick={onOpenLab}>
-              {detail.lab?.buttonLabel[language]}
-            </button>
-          </div>
-        </section>
-      </div>
+      </TopicReadingLayout>
+      {relatedTopics}
       <TopicPager language={language} onBack={onBack} onNext={onOpenNext} />
     </main>
   );

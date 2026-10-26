@@ -458,40 +458,6 @@ export function SpatialAudioLab({ language, onBack, onBackToDetails }: SpatialAu
           </aside>
         </div>
 
-        <section className="spatial-concept-grid" aria-label={language === "zh" ? "空间音频关键解释" : "Spatial audio key explanations"}>
-          <article>
-            <h2>ITD / ILD</h2>
-            <p>
-              {language === "zh"
-                ? "ITD 是左右耳到达时间差，ILD 是左右耳声级差。它们主要帮助判断左右方向，但前后和高度还需要 HRTF 频谱线索。"
-                : "ITD is arrival-time difference and ILD is level difference between ears. They mainly help left-right localization, while front/back and height need HRTF spectral cues."}
-            </p>
-          </article>
-          <article>
-            <h2>HRTF / HRIR</h2>
-            <p>
-              {language === "zh"
-                ? "HRTF/HRIR 描述头部、耳廓和躯干对某个方向声音的滤波。耳机双耳渲染会用它把虚拟声源变成左右耳 PCM。"
-                : "HRTF/HRIR describes how the head, pinna, and torso filter sound from a direction. Headphone binaural rendering uses it to turn virtual sources into left/right ear PCM."}
-            </p>
-          </article>
-          <article>
-            <h2>{language === "zh" ? "对象音频 / Ambisonics" : "Object audio / Ambisonics"}</h2>
-            <p>
-              {language === "zh"
-                ? "对象音频保存每个声音的位置元数据；Ambisonics 保存球面声场。二者都需要在播放端按设备能力解码或渲染。"
-                : "Object audio stores position metadata per sound; Ambisonics stores a spherical sound field. Both must be decoded or rendered for the playback device."}
-            </p>
-          </article>
-          <article>
-            <h2>{language === "zh" ? "头部追踪" : "Head tracking"}</h2>
-            <p>
-              {language === "zh"
-                ? "头部追踪会把世界坐标中的声源重新换算到耳朵坐标。延迟过高时，声像会跟头移动或产生漂移。"
-                : "Head tracking converts sources in world coordinates into ear-relative coordinates. With too much latency, the image moves with the head or drifts."}
-            </p>
-          </article>
-        </section>
       </section>
     </main>
   );

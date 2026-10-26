@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
 import type { Category, Language, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
@@ -5,6 +7,7 @@ import { TopicPager } from "./TopicPager";
 type DisplayTopic = Topic & { category: Category };
 
 type SystemAudioPageProps = {
+  relatedTopics?: ReactNode;
   language: Language;
   topic: DisplayTopic;
   onBack: () => void;
@@ -54,7 +57,7 @@ const systemModes = [
   }
 ];
 
-export function SystemAudioPage({
+export function SystemAudioPage({ relatedTopics,
   language,
   topic,
   onBack,
@@ -85,7 +88,7 @@ export function SystemAudioPage({
         </div>
       </header>
 
-      <div className="sound-topic-content">
+      <TopicReadingLayout language={language}>
         <section className="sound-topic-section sound-topic-intro">
           <div>
             <h2>{language === "zh" ? "先建立系统地图" : "Build the system map first"}</h2>
@@ -198,7 +201,8 @@ export function SystemAudioPage({
             <p>{detail.misconception[language]}</p>
           </div>
         </section>
-      </div>
+      </TopicReadingLayout>
+      {relatedTopics}
       <TopicPager language={language} onBack={onBack} onPrevious={onOpenPrevious} onNext={onOpenNext} />
     </main>
   );

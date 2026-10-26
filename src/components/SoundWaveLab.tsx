@@ -194,8 +194,8 @@ export function SoundWaveLab({ language, onBack, onBackToDetails }: SoundWaveLab
           </h1>
           <p>
             {language === "zh"
-              ? "调节频率、振幅和相位：频率与振幅会改变听感，相位主要改变波形起点，并在多信号叠加时发挥作用。"
-              : "Adjust frequency, amplitude, and phase: frequency and amplitude affect hearing, while phase shifts the waveform start and matters mainly when signals combine."}
+              ? "对照当前公式与波形，观察频率、振幅和相位分别改变什么。"
+              : "Compare the current formula and waveform to observe what frequency, amplitude, and phase each change."}
           </p>
         </div>
       </section>

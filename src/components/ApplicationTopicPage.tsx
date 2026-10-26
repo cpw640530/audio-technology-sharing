@@ -1,9 +1,12 @@
+import type { ReactNode } from "react";
+import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
 import type { Category, Language, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
 
 type DisplayTopic = Topic & { category: Category };
-type ApplicationTopicPageProps = { language: Language; topic: DisplayTopic; onBack: () => void; onOpenLab: () => void; onOpenPrevious?: () => void; onOpenNext?: () => void };
+type ApplicationTopicPageProps = {
+  relatedTopics?: ReactNode; language: Language; topic: DisplayTopic; onBack: () => void; onOpenLab: () => void; onOpenPrevious?: () => void; onOpenNext?: () => void };
 
 type Stage = { title: Record<Language, string>; detail: Record<Language, string> };
 const stageMap: Record<string, Stage[]> = {
@@ -39,7 +42,7 @@ const stageMap: Record<string, Stage[]> = {
   ]
 };
 
-export function ApplicationTopicPage({ language, topic, onBack, onOpenLab, onOpenPrevious, onOpenNext }: ApplicationTopicPageProps) {
+export function ApplicationTopicPage({ relatedTopics, language, topic, onBack, onOpenLab, onOpenPrevious, onOpenNext }: ApplicationTopicPageProps) {
   const detail = topic.detail;
   const stages = stageMap[detail.lab?.type ?? ""] ?? [];
   return (
@@ -51,14 +54,15 @@ export function ApplicationTopicPage({ language, topic, onBack, onOpenLab, onOpe
         <p className="sound-topic-lede">{topic.summary[language]}</p>
         <div className="sound-topic-meta"><span>{language === "zh" ? "真实场景" : "Real-world scenario"}</span><span>{language === "zh" ? "端到端链路" : "End-to-end path"}</span><span>{language === "zh" ? "实验验证" : "Hands-on lab"}</span></div>
       </header>
-      <div className="sound-topic-content">
+      <TopicReadingLayout language={language}>
         <section className="sound-topic-section sound-topic-intro"><div><h2>{language === "zh" ? "先从场景问题出发" : "Start from the scenario problem"}</h2><p>{detail.explanation[language]}</p></div></section>
         <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{language === "zh" ? "从输入到用户结果" : "From input to user outcome"}</h2><p>{language === "zh" ? "同一个音频算法放进不同设备后，采集位置、实时约束、网络和交互反馈都会改变。" : "When an audio algorithm enters a product, capture position, real-time constraints, network, and feedback all change."}</p></div></div><ol className="application-topic-flow" aria-label={language === "zh" ? "应用场景音频流程" : "Application audio flow"}>{stages.map((stage, index) => <li key={stage.title.en}><span>{String(index + 1).padStart(2, "0")}</span><h3>{stage.title[language]}</h3><p>{stage.detail[language]}</p></li>)}</ol></section>
         <section className="sound-topic-section application-topic-lab-entry" aria-label={language === "zh" ? "当前主题实验室入口" : "Current topic lab entry"}><div className="sound-topic-cta"><CircuitBoard size={22} aria-hidden="true" /><h2>{detail.lab?.title[language]}</h2><p>{detail.lab?.description[language]}</p><button className="diagram-open-button" type="button" onClick={onOpenLab}>{detail.lab?.buttonLabel[language]}</button></div></section>
         <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{language === "zh" ? "核心知识点" : "Core concepts"}</h2><p>{language === "zh" ? "把产品体验拆回环境、信号链、指标和故障边界。" : "Break product experience into environment, signal chain, metrics, and failure boundaries."}</p></div></div><div className="sound-topic-glossary">{detail.keyConcepts.map((concept) => <article key={concept.en}><p>{concept[language]}</p></article>)}</div></section>
         <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{language === "zh" ? "场景术语" : "Scenario terms"}</h2><p>{language === "zh" ? "这些概念连接设备能力和实际用户体验。" : "These concepts connect device capabilities to user experience."}</p></div></div><div className="sound-topic-glossary">{detail.termExplanations?.map((term) => <article key={term.name.en}><h3>{term.name[language]}</h3><p>{term.explanation[language]}</p></article>)}</div></section>
         <section className="sound-topic-section"><div><h2>{language === "zh" ? "工程边界" : "Engineering boundary"}</h2><p>{detail.misconception[language]}</p></div></section>
-      </div>
+      </TopicReadingLayout>
+      {relatedTopics}
       <TopicPager language={language} onBack={onBack} onPrevious={onOpenPrevious} onNext={onOpenNext} />
     </main>
   );

@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
 import type { Category, Language, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
@@ -5,6 +7,7 @@ import { TopicPager } from "./TopicPager";
 type DisplayTopic = Topic & { category: Category };
 
 type SpeechEnhancementPageProps = {
+  relatedTopics?: ReactNode;
   language: Language;
   topic: DisplayTopic;
   onBack: () => void;
@@ -64,7 +67,7 @@ const moduleCards = [
   }
 ];
 
-export function SpeechEnhancementPage({ language, topic, onBack, onOpenLab, onOpenPrevious, onOpenNext }: SpeechEnhancementPageProps) {
+export function SpeechEnhancementPage({ relatedTopics, language, topic, onBack, onOpenLab, onOpenPrevious, onOpenNext }: SpeechEnhancementPageProps) {
   const detail = topic.detail;
 
   return (
@@ -84,7 +87,7 @@ export function SpeechEnhancementPage({ language, topic, onBack, onOpenLab, onOp
         </div>
       </header>
 
-      <div className="sound-topic-content">
+      <TopicReadingLayout language={language}>
         <section className="sound-topic-section sound-topic-intro">
           <div>
             <h2>{language === "zh" ? "语音增强是一条有顺序的 PCM 链路" : "Speech enhancement is an ordered PCM chain"}</h2>
@@ -128,7 +131,8 @@ export function SpeechEnhancementPage({ language, topic, onBack, onOpenLab, onOp
         </section>
 
         <section className="sound-topic-section"><div><h2>{language === "zh" ? "工程边界" : "Engineering boundary"}</h2><p>{detail.misconception[language]}</p></div></section>
-      </div>
+      </TopicReadingLayout>
+      {relatedTopics}
       <TopicPager language={language} onBack={onBack} onPrevious={onOpenPrevious} onNext={onOpenNext} />
     </main>
   );

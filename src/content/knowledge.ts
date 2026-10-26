@@ -375,6 +375,7 @@ export const categories: Category[] = [
             { zh: "采样率决定时间轴上的记录密度，常见音乐和视频音频会使用 44.1 kHz 或 48 kHz。", en: "Sample rate determines density along the time axis; music and video commonly use 44.1 kHz or 48 kHz." },
             { zh: "奈奎斯特采样定理说明采样率至少要高于最高有效频率的两倍，采样前通常需要抗混叠滤波。", en: "The Nyquist theorem says the sample rate must be more than twice the highest useful frequency, so anti-alias filtering is usually needed before sampling." },
             { zh: "位深影响量化噪声和理论动态范围，16-bit 常用于发行，24-bit 常用于录音和制作。", en: "Bit depth affects quantization noise and theoretical dynamic range; 16-bit is common for delivery, while 24-bit is common for recording and production." },
+            { zh: "傅里叶变换把一段时间波形表示为不同频率正弦分量的组合；FFT 是快速计算 DFT 的算法，不是另一种变换。", en: "The Fourier transform represents a time waveform as a combination of sinusoidal components; FFT is a fast algorithm for computing the DFT, not a different transform." },
             { zh: "编码把采样值组织成文件或码流，PCM 保留原始采样，FLAC 无损压缩，MP3、AAC、Opus 有损压缩。", en: "Encoding organizes samples into files or streams: PCM preserves raw samples, FLAC compresses losslessly, and MP3, AAC, and Opus compress lossily." }
           ],
           termExplanations: [
@@ -404,6 +405,13 @@ export const categories: Category[] = [
               explanation: {
                 zh: "采样率是每秒采样次数，单位是 Hz。44.1 kHz 表示每秒 44100 个采样点；48 kHz 常用于视频、会议和系统音频。采样率提高会增加数据量，但不自动等于更好听。",
                 en: "Sample rate is the number of samples per second, measured in Hz. 44.1 kHz means 44,100 samples per second; 48 kHz is common for video, conferencing, and system audio. Raising it increases data size but does not automatically sound better."
+              }
+            },
+            {
+              name: { zh: "傅里叶变换", en: "Fourier transform" },
+              explanation: {
+                zh: "傅里叶变换把时间域信号投影到频率域：它回答‘这段声音里有哪些频率、各自有多强、相位如何’。实际音频通常对有限长度的一帧做 DFT；FFT 只是利用对称性减少计算量的快速实现。窗口越长，频率间隔 Δf = fₛ/N 越细，但时间定位越粗；短时傅里叶变换（STFT）就是连续分帧后分别做 FFT。",
+                en: "The Fourier transform projects a time-domain signal into the frequency domain, answering which frequencies are present, how strong they are, and what their phases are. Audio usually applies a DFT to a finite frame; FFT is a faster implementation that reduces repeated computation. A longer window gives finer frequency spacing Δf = fₛ/N but coarser time localization; STFT applies FFT to successive frames."
               }
             },
             {
@@ -1652,8 +1660,8 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "真实声音经过麦克风、Codec/ADC 采集后得到 PCM 数字音频；PCM 只是数字波形，不直接包含语义。不同任务会按需使用原始波形、FFT/STFT、Mel/MFCC、学习型 embedding 或神经 codec token，再由专用模型完成识别、生成、增强或编码。声音分类常把频谱图作为二维特征，但这不是所有 AI 音频的统一前端；专业系统还必须明确训练目标、任务指标，以及流式/离线、端侧/云端的延迟和算力预算。",
-            en: "Microphones and Codec/ADC hardware capture real sound as PCM, which is waveform data rather than semantics. Each task may use raw waveform, FFT/STFT, Mel/MFCC, learned embeddings, or neural-codec tokens before a specialized model performs recognition, generation, enhancement, or coding. Sound classification often uses spectrograms as 2D features, but that is not a universal AI-audio front end. A production system must also define its training objective, task metrics, and latency/compute budget for streaming or offline, edge or cloud deployment."
+            zh: "真实声音经过麦克风、Codec/ADC 采集后得到 PCM 数字音频；PCM 只是数字波形，不直接包含语义。\n\n不同任务会按需使用原始波形、FFT/STFT、Mel/MFCC、学习型 embedding 或神经 codec token，再由专用模型完成识别、生成、增强或编码。\n\n声音分类常把频谱图作为二维特征，但这不是所有 AI 音频的统一前端；专业系统还必须明确训练目标、任务指标，以及流式/离线、端侧/云端的延迟和算力预算。",
+            en: "Microphones and Codec/ADC hardware capture real sound as PCM, which is waveform data rather than semantics.\n\nEach task may use raw waveform, FFT/STFT, Mel/MFCC, learned embeddings, or neural-codec tokens before a specialized model performs recognition, generation, enhancement, or coding.\n\nSound classification often uses spectrograms as 2D features, but that is not a universal AI-audio front end. A production system must also define its training objective, task metrics, and latency/compute budget for streaming or offline, edge or cloud deployment."
           },
           termExplanations: [
             {
@@ -1724,8 +1732,8 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "语音识别把连续的语音波形转换成可编辑、可检索的文字，但 ASR 并不是把每个采样点直接翻译成文字。PCM 只是连续的压力变化数字，系统通常先把它切成 10 ms 或 20 ms 左右的短帧，再提取每帧的频率能量结构，形成 log-mel、MFCC 或神经网络 embedding。随后 Encoder 把这些连续声学变化压成更稳定的上下文表示，CTC、Attention 或 Transducer 等识别头再估计最可能的 token 序列，最后经过语言上下文、热词、标点、时间戳和说话人信息等后处理，得到最终文本。",
-            en: "Speech recognition turns continuous speech waveforms into editable, searchable text, but ASR does not translate each sample directly into words. PCM is only a sequence of pressure-change numbers. A system usually slices it into short frames of about 10 ms or 20 ms, extracts frequency-energy structure from each frame, and forms log-mel features, MFCCs, or neural embeddings. An encoder then compresses those acoustic changes into more stable contextual representations; CTC, attention, or transducer heads estimate the most likely token sequence; and language context, hotwords, punctuation, timestamps, and speaker metadata produce the final text."
+            zh: "语音识别把连续的语音波形转换成可编辑、可检索的文字，但 ASR 并不是把每个采样点直接翻译成文字。\n\nPCM 只是连续的压力变化数字，系统通常先把它切成 10 ms 或 20 ms 左右的短帧，再提取每帧的频率能量结构，形成 log-mel、MFCC 或神经网络 embedding。\n\n随后 Encoder 把这些连续声学变化压成更稳定的上下文表示，CTC、Attention 或 Transducer 等识别头再估计最可能的 token 序列，最后经过语言上下文、热词、标点、时间戳和说话人信息等后处理，得到最终文本。",
+            en: "Speech recognition turns continuous speech waveforms into editable, searchable text, but ASR does not translate each sample directly into words.\n\nPCM is only a sequence of pressure-change numbers. A system usually slices it into short frames of about 10 ms or 20 ms, extracts frequency-energy structure from each frame, and forms log-mel features, MFCCs, or neural embeddings.\n\nAn encoder then compresses those acoustic changes into more stable contextual representations; CTC, attention, or transducer heads estimate the most likely token sequence; and language context, hotwords, punctuation, timestamps, and speaker metadata produce the final text."
           },
           termExplanations: [
             {
@@ -1826,8 +1834,8 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "语音合成把文本转换成自然语音。现代 TTS 通常先处理文本、读音和韵律，再由声学模型生成声学表示，最后通过声码器输出波形，可用于导航、客服、播客、配音和无障碍阅读。",
-            en: "Text-to-speech converts text into natural speech. Modern TTS usually normalizes text, predicts pronunciation and prosody, generates acoustic representations, and uses a vocoder to output waveforms for navigation, support, podcasts, dubbing, and accessibility."
+            zh: "语音合成把文本转换成自然语音。\n\n现代 TTS 通常先处理文本、读音和韵律，再由声学模型生成声学表示，最后通过声码器输出波形，可用于导航、客服、播客、配音和无障碍阅读。",
+            en: "Text-to-speech converts text into natural speech.\n\nModern TTS usually normalizes text, predicts pronunciation and prosody, generates acoustic representations, and uses a vocoder to output waveforms for navigation, support, podcasts, dubbing, and accessibility."
           },
           termExplanations: [
             {
@@ -1891,8 +1899,8 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "音频生成使用 AI 根据文本、旋律、参考声音或视频画面生成新的音乐、音效、人声或环境声。它能提升内容生产效率，但也需要处理可控性、版权、身份冒用和质量一致性问题。",
-            en: "Audio generation uses AI to create music, sound effects, voices, or ambience from text, melody, reference audio, or video. It can speed up content creation, but it also raises control, copyright, impersonation, and consistency challenges."
+            zh: "音频生成使用 AI 根据文本、旋律、参考声音或视频画面生成新的音乐、音效、人声或环境声。\n\n它能提升内容生产效率，但也需要处理可控性、版权、身份冒用和质量一致性问题。",
+            en: "Audio generation uses AI to create music, sound effects, voices, or ambience from text, melody, reference audio, or video.\n\nIt can speed up content creation, but it also raises control, copyright, impersonation, and consistency challenges."
           },
           termExplanations: [
             {
@@ -1956,8 +1964,8 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "AI 音频事件识别关注“发生了什么声音”，而不是“说了什么话”。系统通常把 PCM 变成梅尔谱、log-mel 特征或 learned embedding，再用分类模型判断哭声、玻璃破碎、狗叫声、烟雾报警器、门铃、枪声、碰撞声等事件，并输出时间范围和置信度。",
-            en: "AI audio event detection asks what sound happened, not what words were spoken. A system usually converts PCM into mel spectrograms, log-mel features, or learned embeddings, then uses a classifier to detect events such as baby cries, glass breaks, dog barks, smoke alarms, doorbells, gunshots, or impacts with timestamps and confidence."
+            zh: "AI 音频事件识别关注“发生了什么声音”，而不是“说了什么话”。\n\n系统通常把 PCM 变成梅尔谱、log-mel 特征或 learned embedding，再用分类模型判断哭声、玻璃破碎、狗叫声、烟雾报警器、门铃、枪声、碰撞声等事件，并输出时间范围和置信度。",
+            en: "AI audio event detection asks what sound happened, not what words were spoken.\n\nA system usually converts PCM into mel spectrograms, log-mel features, or learned embeddings, then uses a classifier to detect events such as baby cries, glass breaks, dog barks, smoke alarms, doorbells, gunshots, or impacts with timestamps and confidence."
           },
           termExplanations: [
             {
@@ -2021,8 +2029,8 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "AI 音频增强把带噪、混响或多人叠加的音频输入神经网络，让模型估计干净语音、目标声源或频谱掩蔽。它常用于会议、耳机、直播、助听、车载和短视频处理。和传统 DSP 的固定滤波不同，AI 增强依赖训练数据学习噪声、语音和房间模式，但也可能引入音乐噪声、语音发闷、断字和过度抑制。",
-            en: "AI audio enhancement feeds noisy, reverberant, or overlapping audio into neural networks so the model can estimate clean speech, a target source, or a spectral mask. It is common in conferencing, headsets, live streaming, hearing assistance, cars, and short-video processing. Unlike fixed traditional DSP filters, AI enhancement learns noise, speech, and room patterns from data, but can introduce artifacts such as musical noise, muffled speech, clipped words, or over-suppression."
+            zh: "AI 音频增强把带噪、混响或多人叠加的音频输入神经网络，让模型估计干净语音、目标声源或频谱掩蔽。\n\n它常用于会议、耳机、直播、助听、车载和短视频处理。和传统 DSP 的固定滤波不同，AI 增强依赖训练数据学习噪声、语音和房间模式，但也可能引入音乐噪声、语音发闷、断字和过度抑制。",
+            en: "AI audio enhancement feeds noisy, reverberant, or overlapping audio into neural networks so the model can estimate clean speech, a target source, or a spectral mask.\n\nIt is common in conferencing, headsets, live streaming, hearing assistance, cars, and short-video processing. Unlike fixed traditional DSP filters, AI enhancement learns noise, speech, and room patterns from data, but can introduce artifacts such as musical noise, muffled speech, clipped words, or over-suppression."
           },
           termExplanations: [
             {
@@ -2086,8 +2094,8 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "AI 音频编码用神经网络把 PCM 压缩成离散 token 或连续 latent，再由神经解码器重建波形。它和 MP3/AAC/Opus 这类传统 codec 不同：传统 codec 主要依赖听觉模型、变换和熵编码，AI codec 则让模型学习哪些声音信息最该保留，甚至可用生成模型补全细节。它适合低码率语音、实时通信、生成式语音 token、内容编辑和弱网传输，但要关注延迟、算力、跨设备一致性和失真类型。",
-            en: "AI audio coding uses neural networks to compress PCM into discrete tokens or continuous latents, then reconstructs waveform audio with a neural decoder. It differs from traditional codecs such as MP3, AAC, and Opus: traditional codecs rely mainly on psychoacoustic models, transforms, and entropy coding, while AI codecs learn which sound information to preserve and may use generative reconstruction. It suits low-bitrate speech, real-time communication, generative speech tokens, content editing, and weak networks, but latency, compute, device consistency, and distortion types matter."
+            zh: "AI 音频编码用神经网络把 PCM 压缩成离散 token 或连续 latent，再由神经解码器重建波形。\n\n它和 MP3/AAC/Opus 这类传统 codec 不同：传统 codec 主要依赖听觉模型、变换和熵编码，AI codec 则让模型学习哪些声音信息最该保留，甚至可用生成模型补全细节。\n\n它适合低码率语音、实时通信、生成式语音 token、内容编辑和弱网传输，但要关注延迟、算力、跨设备一致性和失真类型。",
+            en: "AI audio coding uses neural networks to compress PCM into discrete tokens or continuous latents, then reconstructs waveform audio with a neural decoder.\n\nIt differs from traditional codecs such as MP3, AAC, and Opus: traditional codecs rely mainly on psychoacoustic models, transforms, and entropy coding, while AI codecs learn which sound information to preserve and may use generative reconstruction.\n\nIt suits low-bitrate speech, real-time communication, generative speech tokens, content editing, and weak networks, but latency, compute, device consistency, and distortion types matter."
           },
           termExplanations: [
             {

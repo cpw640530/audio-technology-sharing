@@ -9,51 +9,6 @@ type IotContentLabProps = {
 
 type LocalizedText = Record<Language, string>;
 
-const workflowModules = [
-  {
-    title: { zh: "边缘语音唤醒", en: "Edge wake word" },
-    body: {
-      zh: "设备在低功耗状态持续听固定唤醒词，只在命中后打开更高功耗的采集、识别或联网链路。重点指标是误唤醒、漏唤醒、功耗和响应时间。",
-      en: "The device listens for a wake word in a low-power state and only enables higher-power capture, recognition, or network paths after a hit. Key metrics are false accepts, false rejects, power, and response time."
-    }
-  },
-  {
-    title: { zh: "本地命令与云端能力", en: "Local commands and cloud capability" },
-    body: {
-      zh: "开灯、暂停、音量调节等固定命令适合本地识别；开放问答、复杂意图和多轮对话通常需要云端 ASR/LLM 或更强边缘 NPU。",
-      en: "Fixed commands such as light on, pause, and volume control fit local recognition; open Q&A, complex intent, and multi-turn dialogue usually need cloud ASR/LLM or a stronger edge NPU."
-    }
-  },
-  {
-    title: { zh: "内容响度与动态", en: "Content loudness and dynamics" },
-    body: {
-      zh: "播客、短视频和直播需要控制底噪、齿音、爆音、动态范围和响度目标，避免用户切换节目或平台时音量忽大忽小。",
-      en: "Podcasts, shorts, and live streams manage noise floor, sibilance, plosives, dynamic range, and loudness targets so listeners do not hear large level jumps across programs or platforms."
-    }
-  },
-  {
-    title: { zh: "实时直播链路", en: "Live streaming chain" },
-    body: {
-      zh: "直播更接近实时系统：麦克风、声卡、降噪、压缩、混音、编码和平台推流都要控制延迟，处理不能太重。",
-      en: "Live streaming is closer to a real-time system: microphone, interface, denoising, compression, mixing, encoding, and platform upload all need controlled latency and modest processing."
-    }
-  },
-  {
-    title: { zh: "AI 配音与自动母带", en: "AI dubbing and auto mastering" },
-    body: {
-      zh: "AI 配音负责把文本变成符合角色和语气的语音，自动母带负责统一响度、动态和频响。它们提高效率，但仍要检查语义、情绪、版权和平台规范。",
-      en: "AI dubbing turns text into voice with suitable role and tone, while auto mastering normalizes loudness, dynamics, and tonal balance. They improve efficiency but still need checks for meaning, emotion, rights, and platform rules."
-    }
-  },
-  {
-    title: { zh: "交付与复用", en: "Delivery and reuse" },
-    body: {
-      zh: "同一份内容可能要导出成播客、短视频、直播回放、多语言版本和字幕包。好的工具链会保留工程文件、素材版本和可追溯处理参数。",
-      en: "One project may become a podcast, short video, stream replay, multilingual edition, and caption package. A good workflow preserves project files, asset versions, and traceable processing settings."
-    }
-  }
-] satisfies Array<{ title: LocalizedText; body: LocalizedText }>;
-
 const issueCards = [
   {
     title: { zh: "误唤醒", en: "False wake" },
@@ -216,29 +171,14 @@ export function IotContentLab({ language, onBack, onBackToDetails }: IotContentL
           <h1>{language === "zh" ? "IoT 与内容创作实验室" : "IoT and Content Creation Lab"}</h1>
           <p>
             {language === "zh"
-              ? "用双路径图对比两类音频应用：IoT 语音控制追求低功耗、低延迟和可靠触发；内容创作追求可编辑、响度一致和交付质量。"
-              : "Use a dual-path diagram to compare two audio applications: IoT voice control optimizes for power, latency, and reliable triggering; content creation optimizes for editability, consistent loudness, and delivery quality."}
+              ? "先看双路径图，再用典型问题诊断验证 IoT 语音和内容创作的不同约束。"
+              : "Start with the dual-path diagram, then use the issue cards to test the different constraints of IoT voice and creator audio."}
           </p>
         </div>
       </section>
 
       <section className="iot-content-diagram-section" aria-label={language === "zh" ? "IoT 与内容创作双路径流程" : "IoT and content creation dual-path workflow"}>
         <IotContentWorkflowDiagram language={language} />
-      </section>
-
-      <section className="iot-content-module-section" aria-label={language === "zh" ? "IoT 与内容创作模块解释" : "IoT and content creation module explanations"}>
-        <div className="iot-content-section-heading">
-          <span>{language === "zh" ? "模块拆解" : "Module breakdown"}</span>
-          <h2>{language === "zh" ? "每个模块解决什么问题" : "What each module solves"}</h2>
-        </div>
-        <div className="iot-content-module-grid">
-          {workflowModules.map((module) => (
-            <article className="iot-content-module-card" key={module.title.en}>
-              <h3>{module.title[language]}</h3>
-              <p>{module.body[language]}</p>
-            </article>
-          ))}
-        </div>
       </section>
 
       <section className="iot-content-issue-section" aria-label={language === "zh" ? "IoT 与内容创作典型问题诊断" : "IoT and content creation troubleshooting"}>

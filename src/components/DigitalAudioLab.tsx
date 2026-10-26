@@ -422,29 +422,6 @@ export function DigitalAudioLab({ language, onBack, onBackToDetails }: DigitalAu
           {language === "zh" ? "这里关注封装关系：文件头描述参数，PCM Data 保存样本。" : "This view focuses on the container relationship: the header describes parameters and PCM Data stores samples."}
         </p>
       </section>
-
-      <section className="codec-table-section" aria-label={language === "zh" ? "编码格式对比" : "Codec comparison"}>
-        <div className="section-heading">
-          <div>
-            <span className="section-kicker">{language === "zh" ? "编码" : "Encoding"}</span>
-            <h2>{language === "zh" ? "编码格式快速对比" : "Codec comparison"}</h2>
-          </div>
-        </div>
-        <div className="codec-table">
-          {codecPrinciples.map((row) => (
-            <article key={row.format}>
-              <h3>{row.format}</h3>
-              <strong>{row.ratio[language]}</strong>
-              <p>{row.relation[language]}</p>
-            </article>
-          ))}
-        </div>
-        <p className="codec-note">
-          {language === "zh"
-            ? "压缩比是大致范围，会随原始 PCM 参数、目标码率、内容类型和编码器实现变化。"
-            : "Compression ratios are rough ranges and vary with PCM source settings, target bitrate, content type, and encoder implementation."}
-        </p>
-      </section>
     </main>
   );
 }

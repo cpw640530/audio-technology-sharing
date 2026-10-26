@@ -319,13 +319,6 @@ const bufferCards = [
 
 const ruleCards = [
   {
-    title: { zh: "实时安全规则", en: "Real-time safety rules" },
-    body: {
-      zh: "不要在采集回调或低延迟线程里做磁盘 IO、网络请求、锁等待或动态内存分配。把不可预测工作放到非实时线程。",
-      en: "Do not do disk IO, network calls, lock waits, or runtime allocation inside capture callbacks or low-latency threads. Move unpredictable work elsewhere."
-    }
-  },
-  {
     title: { zh: "排查方向", en: "Troubleshooting direction" },
     body: {
       zh: "CPU 峰值过高、period 太小、filter 太慢、copy 阻塞或编码器攒帧过多，都可能让采集链路发生 overrun。",

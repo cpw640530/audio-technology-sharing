@@ -1,3 +1,5 @@
+import { RelatedTopics } from "./components/RelatedTopics";
+import { getTopicKey, type TopicKey } from "./content/relatedTopics";
 import { useEffect, useMemo, useState } from "react";
 import { AiAudioLab } from "./components/AiAudioLab";
 import { AiAudioTopicPage } from "./components/AiAudioTopicPage";
@@ -316,6 +318,10 @@ export default function App() {
     }
   }
 
+  function renderRelatedTopics(topicKey: TopicKey | undefined) {
+    return topicKey ? <RelatedTopics topicKey={topicKey} language={language} onOpen={openTopic} /> : null;
+  }
+
   function openHardwareLab() {
     switch (activeHardwareTopic?.detail.lab?.type) {
       case "microphone": setActiveView("microphoneLab"); break;
@@ -445,7 +451,7 @@ export default function App() {
     if (!window.navigator.userAgent.toLowerCase().includes("jsdom")) {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     }
-  }, [activeView, activeHardwareTopic]);
+  }, [activeView, activeHardwareTopic, activeSoftwareTopic, activeAiTopic, activeApplicationTopic]);
 
   useEffect(() => {
     if (!outlineTargetId) {
@@ -495,6 +501,7 @@ export default function App() {
           onToggleLanguage={toggleLanguage}
         />
         <SoundTopicPage
+          relatedTopics={renderRelatedTopics("sound-wave")}
           language={language}
           onBack={returnToFundamentals}
           onOpenLab={() => setActiveView("soundLab")}
@@ -514,6 +521,7 @@ export default function App() {
       <div className="app-shell">
         <Header language={language} onToggleLanguage={toggleLanguage} />
         <HardwareTopicPage
+          relatedTopics={renderRelatedTopics(getTopicKey(activeHardwareTopic))}
           language={language}
           topic={activeHardwareTopic}
           onBack={returnToHardware}
@@ -533,6 +541,7 @@ export default function App() {
       <div className="app-shell">
         <Header language={language} onToggleLanguage={toggleLanguage} />
         <AudioUnitsPage
+          relatedTopics={renderRelatedTopics("audio-units")}
           language={language}
           onBack={returnToFundamentals}
           onOpenLab={() => setActiveView("audioUnitsLab")}
@@ -551,6 +560,7 @@ export default function App() {
       <div className="app-shell">
         <Header language={language} onToggleLanguage={toggleLanguage} />
         <SystemAudioPage
+          relatedTopics={renderRelatedTopics(getTopicKey(activeSoftwareTopic))}
           language={language}
           topic={activeSoftwareTopic}
           onBack={returnToSoftware}
@@ -585,6 +595,7 @@ export default function App() {
       <div className="app-shell">
         <Header language={language} onToggleLanguage={toggleLanguage} />
         <DigitalAudioPage
+          relatedTopics={renderRelatedTopics("sampling-quantization")}
           language={language}
           onBack={returnToFundamentals}
           onOpenLab={() => setActiveView("digitalLab")}
@@ -618,6 +629,7 @@ export default function App() {
       <div className="app-shell">
         <Header language={language} onToggleLanguage={toggleLanguage} />
         <ListeningMetricsPage
+          relatedTopics={renderRelatedTopics("listening-metrics")}
           language={language}
           onBack={returnToFundamentals}
           onOpenLab={() => setActiveView("listeningLab")}
@@ -786,6 +798,7 @@ export default function App() {
       <div className="app-shell">
         <Header language={language} onToggleLanguage={toggleLanguage} />
         <AlsaPage
+          relatedTopics={renderRelatedTopics(getTopicKey(activeSoftwareTopic))}
           language={language}
           topic={activeSoftwareTopic}
           onBack={returnToSoftware}
@@ -835,6 +848,7 @@ export default function App() {
       <div className="app-shell">
         <Header language={language} onToggleLanguage={toggleLanguage} />
         <RealtimeAudioPage
+          relatedTopics={renderRelatedTopics(getTopicKey(activeSoftwareTopic))}
           language={language}
           topic={activeSoftwareTopic}
           onBack={returnToSoftware}
@@ -869,6 +883,7 @@ export default function App() {
       <div className="app-shell">
         <Header language={language} onToggleLanguage={toggleLanguage} />
         <AudioCodecPage
+          relatedTopics={renderRelatedTopics(getTopicKey(activeSoftwareTopic))}
           language={language}
           topic={activeSoftwareTopic}
           onBack={returnToSoftware}
@@ -888,6 +903,7 @@ export default function App() {
       <div className="app-shell">
         <Header language={language} onToggleLanguage={toggleLanguage} />
         <CoreSignalProcessingPage
+          relatedTopics={renderRelatedTopics("core-signal-processing")}
           language={language}
           topic={coreSignalProcessingTopic}
           onBack={returnToTraditionalDsp}
@@ -923,6 +939,7 @@ export default function App() {
       <div className="app-shell">
         <Header language={language} onToggleLanguage={toggleLanguage} />
         <SpeechEnhancementPage
+          relatedTopics={renderRelatedTopics("speech-enhancement")}
           language={language}
           topic={speechEnhancementTopic}
           onBack={returnToTraditionalDsp}
@@ -955,6 +972,7 @@ export default function App() {
       <div className="app-shell">
         <Header language={language} onToggleLanguage={toggleLanguage} />
         <SpatialAudioPage
+          relatedTopics={renderRelatedTopics("spatial-audio")}
           language={language}
           topic={spatialAudioTopic}
           onBack={returnToTraditionalDsp}
@@ -987,6 +1005,7 @@ export default function App() {
       <div className="app-shell">
         <Header language={language} onToggleLanguage={toggleLanguage} />
         <AiAudioTopicPage
+          relatedTopics={renderRelatedTopics(getTopicKey(activeAiTopic))}
           language={language}
           topic={activeAiTopic}
           mode={mode}
@@ -1026,6 +1045,7 @@ export default function App() {
       <div className="app-shell">
         <Header language={language} onToggleLanguage={toggleLanguage} />
         <ApplicationTopicPage
+          relatedTopics={renderRelatedTopics(getTopicKey(activeApplicationTopic))}
           language={language}
           topic={activeApplicationTopic}
           onBack={returnToApplications}

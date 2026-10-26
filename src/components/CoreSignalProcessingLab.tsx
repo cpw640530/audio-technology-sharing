@@ -868,103 +868,6 @@ function StftChart({
   );
 }
 
-function StftKeyConcepts({ language }: { language: Language }) {
-  return (
-    <section className="core-key-concepts" aria-labelledby="stft-key-concepts-title">
-      <div className="codec-mode-concepts-header">
-        <span>{language === "zh" ? "关键知识点" : "Key concepts"}</span>
-        <strong id="stft-key-concepts-title">
-          {language === "zh" ? "窗口长度、hop size 和能量图怎么理解" : "How to read window size, hop size, and energy maps"}
-        </strong>
-      </div>
-      <div className="core-key-concept-grid">
-        <article>
-          <h3>{language === "zh" ? "FFT 和 STFT 是什么" : "What FFT and STFT are"}</h3>
-          <p>
-            {language === "zh"
-              ? "FFT 是 Fast Fourier Transform，中文叫快速傅里叶变换。它是快速计算 DFT 的算法：输入一段时间域 PCM 样本，输出这段声音里各个频率成分的大致强弱。"
-              : "FFT quickly computes a spectrum: it takes a block of time-domain PCM samples and estimates how strong each frequency component is in that block."}
-          </p>
-          <p>
-            {language === "zh"
-              ? "可以把声音理解成很多个正弦波叠加：低频决定慢起伏，中高频决定细节和边缘。复杂波形可以看成很多个正弦波叠加，FFT 就是在估计这些正弦波各自有多强。"
-              : "A sound can be treated as many sine waves added together: low frequencies create slow movement, while mid and high frequencies create detail. FFT estimates how strong those sine-like components are."}
-          </p>
-          <p>
-            {language === "zh"
-              ? "FFT 的输入是一帧 PCM 采样点，输出不是新的声音，而是一组频率格的幅度或能量。横轴从低频到高频，纵轴表示对应频率成分的强弱。"
-              : "The input to FFT is one frame of PCM samples. The output is not new audio; it is magnitudes or energy values across frequency bins."}
-          </p>
-          <p>
-            {language === "zh"
-              ? "STFT 是 Short-Time Fourier Transform，中文叫短时傅里叶变换。它不是快速傅里叶变换，而是把长音频切成短帧，每帧通常用 FFT 算频谱，再按时间排成能量图。"
-              : "STFT repeats FFT over time: it cuts long audio into short windowed frames, runs FFT per frame, then arranges the spectra over time to form a spectrogram."}
-          </p>
-          <p>
-            {language === "zh"
-              ? "完整流程可以理解为：PCM 音频 -> 分帧 -> 加窗 -> 每帧 FFT -> 时间-频率能量图。FFT 只能描述这一小段里有哪些频率；STFT 把很多小段排起来，才看到频率随时间怎么变化。"
-              : "The full flow is: PCM audio -> framing -> windowing -> FFT per frame -> time-frequency energy map. FFT describes one short block; STFT lines up many blocks to show how frequency changes over time."}
-          </p>
-        </article>
-        <article>
-          <h3>{language === "zh" ? "窗口长度为什么影响频谱" : "Why window size changes the spectrum"}</h3>
-          <p>
-            {language === "zh"
-              ? "STFT 会先截取一小段 PCM 样本，再对这一段做 FFT。窗口越长，参与分析的样本越多，频率格越细；这不是“更能表现高频”，而是相邻频率格的间隔更小，更容易区分接近的频率。"
-              : "STFT cuts a short PCM segment and runs FFT on that segment. A longer window uses more samples, so frequency bins are finer, but it covers more time and smears transients across the frame."}
-          </p>
-          <p>
-            {language === "zh"
-              ? "频率格更细指 Δf = 采样率 Fs / FFT 点数 N 更小。16 kHz 下，512 点约 31.25 Hz/bin，1024 点约 15.63 Hz/bin。能看到的最高频率主要由采样率决定，16 kHz 采样最高约到 8 kHz。"
-              : "Frequency resolution: Delta f = sample rate Fs / FFT size N. At 16 kHz, 512 points are about 31.25 Hz/bin, while 1024 points are about 15.63 Hz/bin."}
-          </p>
-          <p>
-            {language === "zh"
-              ? "第 k 个 bin 近似对应 k × Fs / N Hz。比如 Fs=16 kHz、N=512 时，第 10 个 bin 大约是 312.5 Hz。窗口越长，频率分辨率越细，但时间定位越粗，瞬态会被摊到更长的一帧里。"
-              : "Bin k roughly maps to k x Fs / N Hz. With Fs=16 kHz and N=512, bin 10 is about 312.5 Hz. A longer window gives finer frequency resolution but coarser time localization."}
-          </p>
-        </article>
-        <article>
-          <h3>{language === "zh" ? "hop size 表示什么" : "What hop size means"}</h3>
-          <p>
-            {language === "zh"
-              ? "hop size 是相邻两帧起点之间相隔多少个采样点。hop 越小，相同时间内帧数越多，能量图横向更密，时间变化看起来更平滑；但单帧 FFT 的频率格和频率范围不变。"
-              : "Hop size is the sample distance between the start of adjacent frames. Smaller hop means more overlap and smoother time changes, but it also produces more frames and higher compute cost."}
-          </p>
-          <p>
-            {language === "zh"
-              ? "重叠率可以理解为：1 - hop size / 窗口长度。比如 512 点窗口、256 点 hop，就是 50% 重叠。hop 改变会影响特征序列的帧率，而不是让某个频率本身变强。"
-              : "Overlap can be read as 1 - hop size / window size. For example, a 512-point window with a 256-point hop has 50% overlap."}
-          </p>
-          <p>
-            {language === "zh"
-              ? "采样率决定最高可分析频率，理论上最高到 Fs/2。16 kHz 采样最高约 8 kHz；如果要分析 12 kHz 高频，采样率至少要高于 24 kHz。"
-              : "Sample rate sets the highest analyzable frequency, ideally up to Fs/2. A 16 kHz sample rate reaches about 8 kHz; analyzing 12 kHz needs more than 24 kHz sampling."}
-          </p>
-        </article>
-        <article>
-          <h3>{language === "zh" ? "能量高低表示什么" : "What energy level means"}</h3>
-          <p>
-            {language === "zh"
-              ? "STFT 能量图里的每个格子，对应一个时间帧和一个频率范围。颜色越亮，表示这个时间点附近、这个频率范围里的声音成分越强。"
-              : "Each spectrogram cell maps to one time frame and one frequency range. Brighter color means that frequency component is stronger around that time."}
-          </p>
-          <p>
-            {language === "zh"
-              ? "它不是新的音频信号，而是把原始波形拆成“什么时候有什么频率、强度有多大”的可视化。"
-              : "It is not a new audio signal; it visualizes the original waveform as what frequencies exist at what times and how strong they are."}
-          </p>
-          <p>
-            {language === "zh"
-              ? "后续算法常会把频谱进一步压缩、重排或学习成特征向量，例如 Mel 能量、MFCC 或 embedding；这些特征更适合识别、分类、增强或编码模型使用。"
-              : "Later algorithms often compress, remap, or learn spectra into feature vectors such as Mel energy, MFCCs, or embeddings for recognition, classification, enhancement, or coding models."}
-          </p>
-        </article>
-      </div>
-    </section>
-  );
-}
-
 function FilterChart({
   cutoff,
   eqGain,
@@ -1267,8 +1170,8 @@ export function CoreSignalProcessingLab({ language, onBack, onBackToDetails }: C
   }[filterType];
   const activeChangeNote = {
     stft: {
-      zh: "这一步变化：窗口长度改变频率格间隔；hop size 改变横向时间帧密度，不改变单帧 FFT 频谱。",
-      en: "Current change: the frame/window block changes width, and FFT frequency bins become finer."
+      zh: "窗口越长，频率分辨率越细但时间定位越粗；hop 越小，帧重叠越多、能量图时间轴越密且计算量更高；颜色越亮表示该帧频段能量越强。",
+      en: "A longer window gives finer frequency resolution but coarser timing; a smaller hop adds overlap, denser time frames, and more compute; brighter cells mean more energy in that frame/bin."
     },
     filter: {
       zh: "这一步变化：截止频率、Q 和 EQ 增益共同改变频率响应，输出频谱会随各频段保留比例变化。",
@@ -1446,7 +1349,6 @@ export function CoreSignalProcessingLab({ language, onBack, onBackToDetails }: C
           </aside>
         </div>
 
-        {mode === "stft" ? <StftKeyConcepts language={language} /> : null}
       </section>
     </main>
   );

@@ -1,8 +1,11 @@
+import type { ReactNode } from "react";
+import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, Ear, Gauge } from "lucide-react";
 import { categories, type Language } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
 
 type ListeningMetricsPageProps = {
+  relatedTopics?: ReactNode;
   language: Language;
   onBack: () => void;
   onOpenLab: () => void;
@@ -53,10 +56,10 @@ const perceptionMap = [
 const metricDefinitions = [
   {
     title: "LUFS",
-    formula: "K-weighting → channel weighting → gating → integration",
+    formula: "K-weighting → mean square → channel weighting → gating / integration",
     note: {
-      zh: "用于节目响度与真峰值管理，不是声压级，也不能直接换算成 dBSPL。",
-      en: "Used for program loudness and true-peak management; it is not SPL and cannot be converted directly to dBSPL."
+      zh: "LUFS 表示节目响度；真峰值单独用 dBTP 测量。门限用于综合响度测量，LUFS 不是声压级，不能直接换算成 dBSPL。",
+      en: "LUFS measures program loudness; true peak is measured separately in dBTP. Gating applies to integrated loudness. LUFS is not SPL and cannot be converted directly to dBSPL."
     }
   },
   {
@@ -101,7 +104,7 @@ const metricDefinitions = [
   }
 ] as const;
 
-export function ListeningMetricsPage({ language, onBack, onOpenLab, onOpenPrevious }: ListeningMetricsPageProps) {
+export function ListeningMetricsPage({ relatedTopics, language, onBack, onOpenLab, onOpenPrevious }: ListeningMetricsPageProps) {
   const detail = listeningTopic.detail;
   const evaluationFlow = language === "zh"
     ? ["固定播放条件", "匹配响度", "参考与处理盲听", "测量关键指标", "结合场景下结论"]
@@ -127,12 +130,28 @@ export function ListeningMetricsPage({ language, onBack, onOpenLab, onOpenPrevio
         </div>
       </header>
 
-      <div className="sound-topic-content">
+      <TopicReadingLayout language={language}>
         <section className="sound-topic-section sound-topic-intro">
 
           <div>
             <h2>{language === "zh" ? "听感不是某一个数字" : "Perception is not one number"}</h2>
             <p>{detail.explanation[language]}</p>
+          </div>
+        </section>
+
+        <section className="sound-topic-section sound-topic-bottom-grid">
+          <div>
+            <h2>{language === "zh" ? "先描述现象，再选择指标" : "Describe first, measure second"}</h2>
+            <p>{language === "zh" ? "“刺耳”“浑浊”“靠右”是排查线索，不是测量结论。记录内容、播放电平、设备和环境，结果才可复现。" : "Harsh, muddy, or right-heavy are investigation cues, not measurement conclusions. Record content, level, device, and room so results are reproducible."}</p>
+          </div>
+          <div className="sound-topic-cta">
+            <Ear size={22} aria-hidden="true" />
+            <h2>{language === "zh" ? "进入听感实验室" : "Open the listening lab"}</h2>
+            <p>{language === "zh" ? "切换频响、噪声、失真、压缩和声像，观察教学曲线并试听参数变化。" : "Switch among response, noise, distortion, compression, and stereo image to inspect teaching curves and hear parameter changes."}</p>
+            <button className="diagram-open-button" type="button" onClick={onOpenLab}>
+              <Gauge size={16} aria-hidden="true" />
+              {detail.lab?.buttonLabel[language]}
+            </button>
           </div>
         </section>
 
@@ -195,23 +214,8 @@ export function ListeningMetricsPage({ language, onBack, onOpenLab, onOpenPrevio
           <p className="sound-topic-note">{detail.misconception[language]}</p>
         </section>
 
-        <section className="sound-topic-section sound-topic-bottom-grid">
-          <div>
-
-            <h2>{language === "zh" ? "先描述现象，再选择指标" : "Describe first, measure second"}</h2>
-            <p>{language === "zh" ? "“刺耳”“浑浊”“靠右”是排查线索，不是测量结论。记录内容、播放电平、设备和环境，结果才可复现。" : "Harsh, muddy, or right-heavy are investigation cues, not measurement conclusions. Record content, level, device, and room so results are reproducible."}</p>
-          </div>
-          <div className="sound-topic-cta">
-            <Ear size={22} aria-hidden="true" />
-            <h2>{language === "zh" ? "进入听感实验室" : "Open the listening lab"}</h2>
-            <p>{language === "zh" ? "切换频响、噪声、失真、压缩和声像，观察教学曲线并试听参数变化。" : "Switch among response, noise, distortion, compression, and stereo image to inspect teaching curves and hear parameter changes."}</p>
-            <button className="diagram-open-button" type="button" onClick={onOpenLab}>
-              <Gauge size={16} aria-hidden="true" />
-              {detail.lab?.buttonLabel[language]}
-            </button>
-          </div>
-        </section>
-      </div>
+      </TopicReadingLayout>
+      {relatedTopics}
       <TopicPager language={language} onPrevious={onOpenPrevious} onBack={onBack} />
     </main>
   );

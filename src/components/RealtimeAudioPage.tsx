@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
 import type { Category, Language, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
@@ -5,6 +7,7 @@ import { TopicPager } from "./TopicPager";
 type DisplayTopic = Topic & { category: Category };
 
 type RealtimeAudioPageProps = {
+  relatedTopics?: ReactNode;
   language: Language;
   topic: DisplayTopic;
   onBack: () => void;
@@ -32,7 +35,7 @@ const realtimeStages = [
   }
 ];
 
-export function RealtimeAudioPage({ language, topic, onBack, onOpenLab, onOpenPrevious, onOpenNext }: RealtimeAudioPageProps) {
+export function RealtimeAudioPage({ relatedTopics, language, topic, onBack, onOpenLab, onOpenPrevious, onOpenNext }: RealtimeAudioPageProps) {
   const detail = topic.detail;
   const terms = detail.termExplanations ?? [];
 
@@ -56,7 +59,7 @@ export function RealtimeAudioPage({ language, topic, onBack, onOpenLab, onOpenPr
         </div>
       </header>
 
-      <div className="sound-topic-content">
+      <TopicReadingLayout language={language}>
         <section className="sound-topic-section sound-topic-intro">
           <div>
             <h2>{language === "zh" ? "实时的关键是按时完成" : "Real-time means finishing on time"}</h2>
@@ -135,7 +138,8 @@ export function RealtimeAudioPage({ language, topic, onBack, onOpenLab, onOpenPr
             <p>{detail.misconception[language]}</p>
           </div>
         </section>
-      </div>
+      </TopicReadingLayout>
+      {relatedTopics}
       <TopicPager language={language} onBack={onBack} onPrevious={onOpenPrevious} onNext={onOpenNext} />
     </main>
   );

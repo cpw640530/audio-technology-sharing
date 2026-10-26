@@ -380,8 +380,8 @@ export function SystemAudioLab({ language, onBack, onBackToDetails }: SystemAudi
           </h1>
           <p>
             {language === "zh"
-              ? "用系统分层理解应用请求、音频服务、路由策略、驱动和硬件之间的边界。"
-              : "Use system layers to understand the boundaries among app requests, audio services, routing policy, drivers, and hardware."}
+              ? "对照通用架构与 Linux 映射，切换播放、录音和全双工的数据方向。"
+              : "Compare the generic architecture with its Linux mapping, then switch playback, capture, and full-duplex data paths."}
           </p>
         </div>
       </section>

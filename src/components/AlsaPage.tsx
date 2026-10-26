@@ -1,10 +1,13 @@
+import type { ReactNode } from "react";
+import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
-import type { Category, Language, Topic } from "../content/knowledge";
+import type { Category, Language, LocalizedText, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
 
 type DisplayTopic = Topic & { category: Category };
 
 type AlsaPageProps = {
+  relatedTopics?: ReactNode;
   language: Language;
   topic: DisplayTopic;
   onBack: () => void;
@@ -13,30 +16,55 @@ type AlsaPageProps = {
   onOpenNext?: () => void;
 };
 
-const alsaPath = [
+const frameworkLayers: Array<{
+  id: string;
+  label: LocalizedText;
+  nodes: Array<{ title: LocalizedText; detail: LocalizedText }>;
+  handoff?: LocalizedText;
+}> = [
   {
-    title: { zh: "应用程序", en: "Application" },
-    detail: { zh: "调用播放或录音 API，交付 PCM 帧。", en: "Calls playback or capture APIs and delivers PCM frames." }
+    id: "user",
+    label: { zh: "用户态", en: "User space" },
+    nodes: [
+      { title: { zh: "应用程序", en: "Applications" }, detail: { zh: "播放器 / 录音 / 通话", en: "playback / capture / calls" } },
+      { title: { zh: "可选音频服务", en: "Optional audio server" }, detail: { zh: "PipeWire / PulseAudio / JACK", en: "PipeWire / PulseAudio / JACK" } },
+      { title: { zh: "alsa-lib", en: "alsa-lib" }, detail: { zh: "PCM API + Control API", en: "PCM API + Control API" } },
+      { title: { zh: "PCM 插件", en: "PCM plugins" }, detail: { zh: "hw / plughw / default / dmix", en: "hw / plughw / default / dmix" } }
+    ],
+    handoff: { zh: "系统调用 / ioctl / mmap", en: "system calls / ioctl / mmap" }
   },
   {
-    title: { zh: "alsa-lib", en: "alsa-lib" },
-    detail: { zh: "提供 PCM、Control 等用户态接口。", en: "Provides user-space PCM, Control, and related APIs." }
+    id: "kernel",
+    label: { zh: "内核 ALSA", en: "Kernel ALSA" },
+    nodes: [
+      { title: { zh: "ALSA Core", en: "ALSA Core" }, detail: { zh: "声卡注册、状态与公共接口", en: "card registration, state, common APIs" } },
+      { title: { zh: "PCM 子系统", en: "PCM subsystem" }, detail: { zh: "音频帧、buffer、period、XRUN", en: "frames, buffer, period, XRUN" } },
+      { title: { zh: "Control 子系统", en: "Control subsystem" }, detail: { zh: "音量、静音、路由与开关", en: "volume, mute, routes, switches" } }
+    ],
+    handoff: { zh: "驱动回调 / 参数约束 / 中断", en: "driver callbacks / constraints / interrupts" }
   },
   {
-    title: { zh: "PCM 插件", en: "PCM plugins" },
-    detail: { zh: "hw、plughw、default 等配置决定是否适配格式和路由。", en: "hw, plughw, default, and configuration decide format adaptation and routing." }
+    id: "driver",
+    label: { zh: "设备驱动", en: "Device drivers" },
+    nodes: [
+      { title: { zh: "PC / USB 驱动", en: "PC / USB drivers" }, detail: { zh: "PCI、USB 等声卡驱动", en: "PCI, USB, and other sound drivers" } },
+      { title: { zh: "嵌入式 ASoC", en: "Embedded ASoC" }, detail: { zh: "Machine + Platform / CPU DAI", en: "Machine + Platform / CPU DAI" } },
+      { title: { zh: "Codec 驱动", en: "Codec driver" }, detail: { zh: "Codec DAI、Mixer、DAPM", en: "Codec DAI, Mixer, DAPM" } }
+    ],
+    handoff: { zh: "寄存器 / DMA / 音频总线", en: "registers / DMA / audio buses" }
   },
   {
-    title: { zh: "内核 ALSA / 驱动", en: "Kernel ALSA / driver" },
-    detail: { zh: "维护 PCM 状态、DMA、period 和设备约束。", en: "Maintains PCM state, DMA, periods, and device constraints." }
-  },
-  {
-    title: { zh: "硬件设备", en: "Hardware" },
-    detail: { zh: "连接 USB、PCI、I2S、Codec、ADC、DAC 等设备。", en: "Connects USB, PCI, I2S, codecs, ADCs, DACs, and related devices." }
+    id: "hardware",
+    label: { zh: "硬件", en: "Hardware" },
+    nodes: [
+      { title: { zh: "USB / PCI 声卡", en: "USB / PCI audio" }, detail: { zh: "独立设备路径", en: "discrete device path" } },
+      { title: { zh: "SoC 音频控制器", en: "SoC audio controller" }, detail: { zh: "DMA + I2S / TDM / PDM", en: "DMA + I2S / TDM / PDM" } },
+      { title: { zh: "Codec 与换能器", en: "Codec and transducers" }, detail: { zh: "ADC / DAC → 麦克风、功放、扬声器", en: "ADC / DAC → mic, amp, speaker" } }
+    ]
   }
 ];
 
-export function AlsaPage({ language, topic, onBack, onOpenLab, onOpenPrevious, onOpenNext }: AlsaPageProps) {
+export function AlsaPage({ relatedTopics, language, topic, onBack, onOpenLab, onOpenPrevious, onOpenNext }: AlsaPageProps) {
   const detail = topic.detail;
   const terms = detail.termExplanations ?? [];
 
@@ -60,7 +88,7 @@ export function AlsaPage({ language, topic, onBack, onOpenLab, onOpenPrevious, o
         </div>
       </header>
 
-      <div className="sound-topic-content">
+      <TopicReadingLayout language={language}>
         <section className="sound-topic-section sound-topic-intro">
           <div>
             <h2>{language === "zh" ? "先定位 ALSA" : "Place ALSA first"}</h2>
@@ -83,28 +111,58 @@ export function AlsaPage({ language, topic, onBack, onOpenLab, onOpenPrevious, o
         ) : null}
 
         <section className="sound-topic-section">
-          <div className="sound-topic-section-heading">
+          <h2>{language === "zh" ? "Linux ALSA 分层框架" : "Linux ALSA layers"}</h2>
+        <figure className="alsa-framework-figure" aria-labelledby="alsa-framework-title">
+          <div className="alsa-framework-heading">
             <div>
-              <h2>{language === "zh" ? "一次 PCM 播放如何落到硬件" : "How PCM playback reaches hardware"}</h2>
-              <p>{language === "zh" ? "把 ALSA 看成连接用户态音频程序和硬件设备的桥：应用交付样本，ALSA 负责接口、状态和传输。" : "Think of ALSA as the bridge between user-space audio programs and hardware: apps deliver samples while ALSA manages interfaces, state, and transport."}</p>
+              <span className="section-kicker">Linux ALSA</span>
+              <h3 id="alsa-framework-title">{language === "zh" ? "Linux ALSA 分层框架图" : "Linux ALSA layered framework"}</h3>
+            </div>
+            <div className="alsa-framework-legend" aria-label={language === "zh" ? "通路图例" : "Path legend"}>
+              <span><i className="alsa-framework-key pcm" />{language === "zh" ? "PCM 数据" : "PCM data"}</span>
+              <span><i className="alsa-framework-key control" />{language === "zh" ? "Control 控制" : "Control path"}</span>
             </div>
           </div>
-          <ol className="alsa-topic-path" aria-label={language === "zh" ? "ALSA PCM 数据路径" : "ALSA PCM data path"}>
-            {alsaPath.map((step, index) => (
-              <li key={step.title.en}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <div>
-                  <strong>{step.title[language]}</strong>
-                  <p>{step.detail[language]}</p>
+          <div
+            className="alsa-framework-diagram"
+            role="img"
+            aria-label={language === "zh" ? "Linux ALSA 分层框架图" : "Linux ALSA layered framework diagram"}
+          >
+            {frameworkLayers.map((layer) => (
+              <div className="alsa-framework-stage" key={layer.id}>
+                <div className={`alsa-framework-layer-label ${layer.id}`}>{layer.label[language]}</div>
+                <div className="alsa-framework-nodes">
+                  {layer.nodes.map((node) => (
+                    <div className={`alsa-framework-node ${layer.id}`} key={node.title.en}>
+                      <strong>{node.title[language]}</strong>
+                      <span>{node.detail[language]}</span>
+                    </div>
+                  ))}
                 </div>
-              </li>
+                {layer.handoff ? (
+                  <div className="alsa-framework-handoff">
+                    <span aria-hidden="true">↓</span>
+                    <small>{layer.handoff[language]}</small>
+                  </div>
+                ) : null}
+              </div>
             ))}
-          </ol>
-          <p className="sound-topic-note">
+          </div>
+          <figcaption>
             {language === "zh"
-              ? "录音方向相反：硬件产生 PCM，DMA 写入内核缓冲，应用再通过 alsa-lib 读取。Control/Mixer 改变音量和路由，但不搬运 PCM 帧。"
-              : "Capture reverses the direction: hardware produces PCM, DMA writes the kernel buffer, and the app reads through alsa-lib. Control/Mixer changes volume and routing but does not move PCM frames."}
+              ? "应用可以直接调用 alsa-lib，也可以先经过 PipeWire、PulseAudio 或 JACK；后者是可选上层服务。ASoC 是嵌入式 Linux 常见驱动框架，不是 USB/PCI 声卡的必经路径。"
+              : "An application may call alsa-lib directly or use PipeWire, PulseAudio, or JACK first; those are optional higher-level services. ASoC is common in embedded Linux, not a mandatory path for USB or PCI audio."}
+          </figcaption>
+        </figure>
+        <aside className="alsa-embedded-note" aria-label={language === "zh" ? "嵌入式 Linux 链路说明" : "Embedded Linux path note"}>
+          <strong>{language === "zh" ? "嵌入式 Linux 常见链路" : "Common embedded Linux path"}</strong>
+          <p>
+            {language === "zh"
+              ? "ASoC 通常把 CPU DAI、I2S、Codec DAI、Codec 和功放组合成声卡；DAI 是接口抽象，I2S 是常见协议。这个链路适合解释嵌入式系统，但不是所有 PC 声卡的固定结构。"
+              : "ASoC often combines CPU DAI, I2S, codec DAI, codec, and amplifier into a sound card; DAI is an interface abstraction and I2S is a common protocol. This explains embedded systems, not every PC sound card."}
           </p>
+        </aside>
+          <p className="sound-topic-note">{language === "zh" ? "录音方向相反：硬件产生 PCM，应用读取；Control/Mixer 改变音量和路由，不搬运 PCM 帧。" : "Capture reverses the direction: hardware produces PCM and the app reads it; Control/Mixer changes volume and routing without moving PCM frames."}</p>
         </section>
 
         <section className="sound-topic-section alsa-topic-lab-entry" aria-label={language === "zh" ? "ALSA 实验室入口" : "ALSA lab entry"}>
@@ -153,7 +211,8 @@ export function AlsaPage({ language, topic, onBack, onOpenLab, onOpenPrevious, o
             <p>{detail.misconception[language]}</p>
           </div>
         </section>
-      </div>
+      </TopicReadingLayout>
+      {relatedTopics}
       <TopicPager language={language} onBack={onBack} onPrevious={onOpenPrevious} onNext={onOpenNext} />
     </main>
   );

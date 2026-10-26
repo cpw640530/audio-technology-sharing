@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
 import type { Category, Language, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
@@ -5,6 +7,7 @@ import { TopicPager } from "./TopicPager";
 type DisplayTopic = Topic & { category: Category };
 
 type CoreSignalProcessingPageProps = {
+  relatedTopics?: ReactNode;
   language: Language;
   topic: DisplayTopic;
   onBack: () => void;
@@ -63,7 +66,7 @@ const signalPaths = [
   }
 ];
 
-export function CoreSignalProcessingPage({ language, topic, onBack, onOpenLab, onOpenNext }: CoreSignalProcessingPageProps) {
+export function CoreSignalProcessingPage({ relatedTopics, language, topic, onBack, onOpenLab, onOpenNext }: CoreSignalProcessingPageProps) {
   const detail = topic.detail;
 
   return (
@@ -86,7 +89,7 @@ export function CoreSignalProcessingPage({ language, topic, onBack, onOpenLab, o
         </div>
       </header>
 
-      <div className="sound-topic-content">
+      <TopicReadingLayout language={language}>
         <section className="sound-topic-section sound-topic-intro">
           <div>
             <h2>{language === "zh" ? "先判断：分析还是处理" : "First decide: analyze or process"}</h2>
@@ -165,6 +168,14 @@ export function CoreSignalProcessingPage({ language, topic, onBack, onOpenLab, o
             </div>
           </div>
           <div className="sound-topic-glossary">
+            <article>
+              <h3>FFT / STFT</h3>
+              <p>
+                {language === "zh"
+                  ? "FFT（Fast Fourier Transform，快速傅里叶变换）是快速计算 DFT 的算法，把一帧时间域 PCM 转成复数频谱，包含幅度和相位信息；取模后可显示幅度谱。STFT（Short-Time Fourier Transform，短时傅里叶变换）把连续音频切成加窗短帧，通常逐帧用 FFT 计算，再按时间排列频谱。"
+                  : "FFT (Fast Fourier Transform) is a fast algorithm for computing the DFT. It converts a PCM frame into a complex spectrum carrying magnitude and phase; taking magnitudes produces a magnitude spectrum. STFT (Short-Time Fourier Transform) analyzes successive windowed frames, typically using FFTs, and arranges their spectra over time."}
+              </p>
+            </article>
             {detail.termExplanations?.map((term) => (
               <article key={term.name.en}><h3>{term.name[language]}</h3><p>{term.explanation[language]}</p></article>
             ))}
@@ -177,8 +188,9 @@ export function CoreSignalProcessingPage({ language, topic, onBack, onOpenLab, o
             <p>{detail.misconception[language]}</p>
           </div>
         </section>
-      </div>
+      </TopicReadingLayout>
 
+      {relatedTopics}
       <TopicPager language={language} onBack={onBack} onNext={onOpenNext} />
     </main>
   );

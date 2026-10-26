@@ -23,7 +23,6 @@ const protocolCopy: Record<
   {
     title: Record<Language, string>;
     body: Record<Language, string>;
-    keyPoints: Array<Record<Language, string>>;
   }
 > = {
   i2s: {
@@ -31,139 +30,82 @@ const protocolCopy: Record<
     body: {
       zh: "I2S 用 BCLK 移动每一位数据，用 LRCLK 标记每条 SD 线上的左右半帧，SD 线上按固定对齐方式传 PCM 样本。MCLK 常作为 Codec 或 DAC 内部 PLL 的参考时钟。",
       en: "I2S uses BCLK to shift each data bit, LRCLK to mark left/right half-frames on each SD line, and SD to carry PCM words with fixed alignment. MCLK is often the reference for a codec or DAC PLL."
-    },
-    keyPoints: [
-      { zh: "单条 SD 的 BCLK = 采样率(Hz) × 每声道位深 × 2；多通道 I2S 增加的是并行 SD 线，不会放大单条 SD 的 BCLK。", en: "Per-SD BCLK = sample rate in Hz x bits per channel x 2; multichannel I2S adds parallel SD lines without multiplying each line's BCLK." },
-      { zh: "LRCLK 的频率就是音频采样率；在多条 SD 并行的多通道 I2S 中，LRCLK 仍只区分每条 SD 的 L / R 半帧。", en: "LRCLK frequency equals the audio sample rate; in multichannel I2S with parallel SD lines, LRCLK still only separates L/R half-frames on each SD line." },
-      { zh: "多通道 I2S 用多条 SD 线并行扩展声道；TDM 则用一条 SD 线按 slot 时分复用，两者不要混为一谈。", en: "Multichannel I2S expands channels with parallel SD lines; TDM time-multiplexes slots on one SD line, so keep the two concepts separate." }
-    ]
+    }
   },
   tdm: {
     title: { zh: "协议：TDM 多通道时分复用", en: "Protocol: TDM multichannel time division" },
     body: {
       zh: "TDM 把多个声道放进一帧里的多个 slot。它仍然依赖 BCLK 和帧同步，但每个声道只占自己的时隙，常用于多麦阵列、会议设备、车载和多通道 Codec。",
       en: "TDM packs multiple channels into slots within one frame. It still depends on BCLK and frame sync, but each channel owns a slot. It is common in mic arrays, conferencing devices, automotive systems, and multichannel codecs."
-    },
-    keyPoints: [
-      { zh: "slot 数、slot 宽度和声道顺序必须两端一致。", en: "Slot count, slot width, and channel order must match at both ends." },
-      { zh: "TDM 可以用一条 SD 数据线承载 4、8 或更多声道。", en: "TDM can carry 4, 8, or more channels on one SD line." },
-      { zh: "帧同步极性或延迟错一位会导致声道错位。", en: "Wrong frame-sync polarity or one-bit delay can shift channels." }
-    ]
+    }
   },
   pdm: {
     title: { zh: "协议：PDM 数字麦克风", en: "Protocol: PDM digital microphone" },
     body: {
-      zh: "PDM 不是多 bit PCM，而是 1-bit 高速脉冲密度流。脉冲越密代表瞬时幅度越高，主控或 Codec 需要用抽取滤波把它变成普通 PCM。",
-      en: "PDM is not multibit PCM. It is a high-speed 1-bit pulse-density stream. Denser pulses mean higher instantaneous amplitude, and a host or codec decimates it into regular PCM."
-    },
-    keyPoints: [
-      { zh: "常见于数字 MEMS 麦克风。", en: "Common in digital MEMS microphones." },
-      { zh: "需要 PDM 时钟、数据线和抽取滤波器。", en: "Needs a PDM clock, data line, and decimation filter." },
-      { zh: "左右声道常通过时钟边沿或选择脚区分。", en: "Left and right channels are often separated by clock edge or a select pin." }
-    ]
+      zh: "PDM 不是多 bit PCM，而是 1-bit 高速脉冲密度流。脉冲越密代表瞬时幅度越高，主控或 Codec 需要用抽取滤波把它变成普通 PCM；左右声道常通过时钟边沿或选择脚区分。",
+      en: "PDM is not multibit PCM. It is a high-speed 1-bit pulse-density stream. Denser pulses mean higher instantaneous amplitude, and a host or codec decimates it into regular PCM; left and right channels are often separated by clock edge or a select pin."
+    }
   },
   spdif: {
     title: { zh: "协议：SPDIF 设备间数字音频", en: "Protocol: SPDIF device-to-device audio" },
     body: {
       zh: "SPDIF 常走同轴或光纤，在一根链路里同时携带音频数据和时钟信息。它适合播放器、电视、功放、声卡之间连接，不适合作为芯片内部短距离总线。",
       en: "SPDIF often runs over coaxial or optical links and carries both audio data and clock information on one connection. It fits players, TVs, amplifiers, and audio interfaces rather than short internal chip buses."
-    },
-    keyPoints: [
-      { zh: "嵌入式时钟 + 双相标记编码。", en: "Embedded clock plus biphase mark coding." },
-      { zh: "常传立体声 PCM，也可承载压缩环绕声码流。", en: "Often carries stereo PCM and can carry compressed surround bitstreams." },
-      { zh: "接收端需要从数据流中恢复时钟。", en: "The receiver recovers clock from the data stream." }
-    ]
+    }
   },
   usb: {
     title: { zh: "协议：USB Audio 外设音频", en: "Protocol: USB Audio peripheral audio" },
     body: {
       zh: "USB Audio 是外设级协议，不是简单的几根时钟线。音频样本被装进 USB 等时包，主机和设备通过缓冲、反馈端点和描述符协商采样率、通道和格式。",
       en: "USB Audio is a peripheral-level protocol, not a few clock wires. Audio samples are packed into USB isochronous packets, while host and device coordinate sample rate, channels, and format through buffers, feedback endpoints, and descriptors."
-    },
-    keyPoints: [
-      { zh: "音频样本被装入 USB 等时包。", en: "Audio samples are packed into USB isochronous packets." },
-      { zh: "主机 / 设备用缓冲和反馈端点校准速率。", en: "Host and device use buffering and feedback endpoints to align rates." },
-      { zh: "常见于 USB 声卡、耳机、麦克风和录音接口。", en: "Common in USB sound cards, headsets, microphones, and recording interfaces." }
-    ]
+    }
   }
 };
 
-const protocolOverviews: Array<{
-  protocol: InterfaceProtocol;
-  title: Record<Language, string>;
-  wires: Record<Language, string>;
-  signals: Record<Language, string>;
-  carries: Record<Language, string>;
-}> = [
-  {
-    protocol: "i2s",
-    title: { zh: "I2S / IIS / I²S", en: "I2S / IIS / I²S" },
-    wires: { zh: "常见 3-4 根信号线", en: "Usually 3-4 signal lines" },
-    signals: {
-      zh: "BCLK 位时钟、LRCLK 左右声道时钟、SD 数据线、可选 MCLK 主时钟",
-      en: "BCLK bit clock, LRCLK left/right clock, SD data, optional MCLK master clock"
-    },
-    carries: {
-      zh: "主要传双声道 PCM，常见于主控、Codec、DAC、ADC 和数字功放之间。",
-      en: "Mainly carries stereo PCM between hosts, codecs, DACs, ADCs, and digital amplifiers."
-    }
-  },
-  {
-    protocol: "tdm",
-    title: { zh: "TDM", en: "TDM" },
-    wires: { zh: "常见 3-4 根信号线", en: "Usually 3-4 signal lines" },
-    signals: {
-      zh: "BCLK 位时钟、FS 帧同步、SD 数据线、可选 MCLK 主时钟",
-      en: "BCLK bit clock, FS frame sync, SD data, optional MCLK master clock"
-    },
-    carries: {
-      zh: "一帧里放多个 slot，适合 4 路、8 路或更多多通道音频。",
-      en: "Packs multiple slots in one frame, useful for 4, 8, or more audio channels."
-    }
-  },
-  {
-    protocol: "pdm",
-    title: { zh: "PDM", en: "PDM" },
-    wires: { zh: "常见 2-3 根信号线", en: "Usually 2-3 signal lines" },
-    signals: {
-      zh: "CLK 时钟、DATA 1-bit 数据、可选左右声道选择脚",
-      en: "CLK clock, DATA 1-bit data, optional left/right select pin"
-    },
-    carries: {
-      zh: "数字 MEMS 麦常用的 1-bit 脉冲密度流，后端要抽取滤波成 PCM。",
-      en: "A 1-bit pulse-density stream common in digital MEMS microphones, later decimated to PCM."
-    }
-  },
-  {
-    protocol: "spdif",
-    title: { zh: "SPDIF", en: "SPDIF" },
-    wires: { zh: "常见 1 根同轴或 1 路光纤", en: "Usually one coaxial line or one optical link" },
-    signals: {
-      zh: "数据和时钟嵌在同一条链路里，接收端恢复时钟",
-      en: "Data and clock are embedded on one link; the receiver recovers the clock"
-    },
-    carries: {
-      zh: "设备之间传立体声 PCM 或压缩环绕声码流，不是芯片内部常用总线。",
-      en: "Carries stereo PCM or compressed surround streams between devices, not a common internal chip bus."
-    }
-  },
-  {
-    protocol: "usb",
-    title: { zh: "USB Audio", en: "USB Audio" },
-    wires: { zh: "常见 USB D+ / D- 差分线加电源地", en: "Usually USB D+ / D- differential pair plus power and ground" },
-    signals: {
-      zh: "USB 包、端点、描述符、反馈端点和缓冲机制",
-      en: "USB packets, endpoints, descriptors, feedback endpoints, and buffering"
-    },
-    carries: {
-      zh: "电脑、手机、声卡、耳机之间传音频包，不是简单的同步时钟线接口。",
-      en: "Carries audio packets between computers, phones, interfaces, and headsets, not a simple synchronous clock-line interface."
-    }
-  }
-];
-
 function formatMhz(value: number) {
   return value.toFixed(3);
+}
+
+function getProtocolObservation({
+  bclkFormula,
+  language,
+  mclkFormula,
+  mclkMultiple,
+  protocol
+}: {
+  bclkFormula: string;
+  language: Language;
+  mclkFormula: string;
+  mclkMultiple: number;
+  protocol: InterfaceProtocol;
+}) {
+  if (protocol === "i2s") {
+    return language === "zh"
+      ? `当前公式按每条 SD 计算名义 BCLK：${bclkFormula}；多通道 I2S 增加并行 SD 线，不把单条 SD 的 BCLK 乘以总通道数。MCLK=${mclkMultiple}fs（${mclkFormula}）只是单位换算，实际主从选择、PLL 锁定和时钟容差仍需校准。`
+      : `The formula gives nominal BCLK per SD line: ${bclkFormula}; multichannel I2S adds parallel SD lines instead of multiplying one line's BCLK by total channels. MCLK=${mclkMultiple}fs (${mclkFormula}) is a unit conversion; master/slave choice, PLL lock, and clock tolerance still need hardware calibration.`;
+  }
+
+  if (protocol === "tdm") {
+    return language === "zh"
+      ? `当前公式按一帧的 slot 数和 slot 宽度计算名义 BCLK：${bclkFormula}；slot 数、宽度、顺序和 FS 极性必须与两端一致。MCLK=${mclkMultiple}fs（${mclkFormula}）不等于实测时钟精度，未模拟 PLL 锁定或边界偏移。`
+      : `The formula gives nominal BCLK from frame slots and slot width: ${bclkFormula}; slot count, width, order, and FS polarity must match at both ends. MCLK=${mclkMultiple}fs (${mclkFormula}) is not measured clock accuracy, and PLL lock or edge offset is not simulated.`;
+  }
+
+  if (protocol === "pdm") {
+    return language === "zh"
+      ? "图中的 PDM 密度只用于说明 1-bit 流如何表达幅度；实际 PCM 还取决于抽取比、滤波器通带和噪声整形，左右声道的时钟边沿/选择脚也必须与接收端一致。"
+      : "The PDM density here only illustrates how a 1-bit stream represents amplitude; actual PCM also depends on decimation ratio, filter passband, and noise shaping, while left/right clock-edge or select-pin wiring must match the receiver.";
+  }
+
+  if (protocol === "spdif") {
+    return language === "zh"
+      ? "SPDIF 把数据和时钟嵌在同一链路并由接收端恢复；本图不模拟线缆抖动、误码、PLL 锁定或接收端容差，不能把链路示意当成时钟质量测量。"
+      : "SPDIF embeds data and clock on one link for receiver recovery; this diagram does not model cable jitter, bit errors, PLL lock, or receiver tolerance, so it is not a clock-quality measurement.";
+  }
+
+  return language === "zh"
+    ? "USB Audio 没有本页 I2S/TDM 那样固定的 BCLK 线；等时包、缓冲和反馈端点用于对齐主机与设备速率，本图不模拟主机调度、端到端延迟或时钟漂移校准。"
+    : "USB Audio has no fixed BCLK wire like I2S/TDM here; isochronous packets, buffers, and feedback endpoints align host and device rates. This diagram does not simulate host scheduling, end-to-end latency, or clock-drift calibration.";
 }
 
 function createSquareWavePath({
@@ -628,6 +570,7 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
   const mclkFormula = `${sampleRate} kHz × 1000 × ${mclkMultiple} ÷ 1,000,000 = ${mclkMhz} MHz`;
   const activeCopy = protocolCopy[protocol];
   const usesClockControls = protocol === "i2s" || protocol === "tdm";
+  const protocolObservation = getProtocolObservation({ bclkFormula, language, mclkFormula, mclkMultiple, protocol });
 
   return (
     <main className="digital-interface-page">
@@ -650,22 +593,6 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
               ? "切换常见数字音频接口，观察时钟线、数据线、帧同步、slot、PDM 抽取和 USB 包传输之间的区别。"
               : "Switch common digital audio interfaces and compare clocks, data lines, frame sync, slots, PDM decimation, and USB packet transport."}
           </p>
-        </div>
-      </section>
-
-      <section className="interface-overview-section" aria-label={language === "zh" ? "接口速览" : "Interface overview"}>
-        <div className="codec-mode-concepts-header">
-          <strong>{language === "zh" ? "接口速览" : "Interface overview"}</strong>
-          <span>{language === "zh" ? "先看线数和信号脚" : "Start with wires and pins"}</span>
-        </div>
-        <div className="interface-overview-grid">
-          {protocolOverviews.map((item) => (
-            <article className="interface-overview-card" key={item.protocol}>
-              <h2>{`${item.title[language]}：${item.wires[language]}`}</h2>
-              <strong>{item.signals[language]}</strong>
-              <p>{item.carries[language]}</p>
-            </article>
-          ))}
         </div>
       </section>
 
@@ -782,38 +709,10 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
           <div className="lab-live-note">
             <strong>{language === "zh" ? "协议说明  :  " : "Protocol notes"}</strong>
             <span>{activeCopy.body[language]}</span>
+            <span>{protocolObservation}</span>
           </div>
         </div>
 
-        <section className="interface-comparison" aria-label={language === "zh" ? "I2S 多通道与 TDM 对比" : "Multichannel I2S and TDM comparison"}>
-          <div className="codec-mode-concepts-header"><strong>{language === "zh" ? "多声道方式对比" : "Multichannel comparison"}</strong><span>{language === "zh" ? "不要混淆数据线与 slot" : "Separate data lines from slots"}</span></div>
-          <div className="interface-comparison-grid">
-            {(language === "zh" ? [
-              ["双声道 I2S", "1 条 SD", "LRCLK 切换 L / R"],
-              ["多通道 I2S", "多条 SD 并行", "每条 SD 各传一对 L / R"],
-              ["TDM", "1 条 SD", "多个 slot 按时间复用"]
-            ] : [
-              ["Stereo I2S", "1 SD line", "LRCLK switches L / R"],
-              ["Multichannel I2S", "Parallel SD lines", "Each SD carries one L / R pair"],
-              ["TDM", "1 SD line", "Multiple time-multiplexed slots"]
-            ]).map(([title, wires, method]) => <article key={title}><h2>{title}</h2><strong>{wires}</strong><p>{method}</p></article>)}
-          </div>
-        </section>
-
-        <section className="codec-mode-concepts" aria-label={language === "zh" ? "接口关键知识点" : "Interface key concepts"}>
-          <div className="codec-mode-concepts-header">
-            <strong>{language === "zh" ? "当前协议关键点" : "Current protocol key points"}</strong>
-            <span>{protocolLabels[protocol][language]}</span>
-          </div>
-          <div className="codec-concept-grid">
-            {activeCopy.keyPoints.map((point, index) => (
-              <article key={point.en}>
-                <h2>{language === "zh" ? `关键点 ${index + 1}` : `Key point ${index + 1}`}</h2>
-                <p>{point[language]}</p>
-              </article>
-            ))}
-          </div>
-        </section>
       </section>
     </main>
   );

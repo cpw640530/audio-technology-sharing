@@ -247,32 +247,6 @@ function calculateDistanceLevels(rawSpl: string, rawDistance: string): Conversio
   };
 }
 
-const conversionRows = [
-  {
-    label: { zh: "幅度比", en: "Amplitude ratio" },
-    formula: "dB = 20 x log10(A2 / A1)",
-    example: { zh: "-6 dB 约等于幅度减半", en: "-6 dB is roughly half amplitude" }
-  },
-  {
-    label: { zh: "功率比", en: "Power ratio" },
-    formula: "dB = 10 x log10(P2 / P1)",
-    example: { zh: "+3 dB 约等于功率翻倍", en: "+3 dB is roughly double power" }
-  },
-  {
-    label: { zh: "dBu 转电压", en: "dBu to voltage" },
-    formula: "Vrms = 0.775 x 10^(dBu / 20)",
-    example: { zh: "+4 dBu 约等于 1.228 Vrms", en: "+4 dBu is about 1.228 Vrms" }
-  },
-  {
-    label: { zh: "sample 转 ms", en: "samples to ms" },
-    formula: "ms = samples / sampleRate x 1000",
-    example: { zh: "48 kHz 下 480 samples = 10 ms", en: "At 48 kHz, 480 samples = 10 ms" }
-  }
-] satisfies Array<{
-  label: Record<Language, string>;
-  formula: string;
-  example: Record<Language, string>;
-}>;
 
 function AudioUnitsDiagram({ language }: { language: Language }) {
   return (
@@ -496,21 +470,6 @@ export function AudioUnitsLab({ language, onBack, onBackToDetails }: AudioUnitsL
           </section>
         </section>
 
-        <section className="audio-units-conversions" aria-label={language === "zh" ? "常用换算关系" : "Common conversion relationships"}>
-          <div className="codec-mode-concepts-header">
-            <strong>{language === "zh" ? "常用换算关系" : "Common conversion relationships"}</strong>
-            <span>{language === "zh" ? "先确认参考点，再使用公式" : "Confirm the reference first, then use the formula"}</span>
-          </div>
-          <div className="audio-units-grid">
-            {conversionRows.map((row) => (
-              <article className="audio-unit-card compact" key={row.formula}>
-                <h2>{row.label[language]}</h2>
-                <strong>{row.formula}</strong>
-                <p>{row.example[language]}</p>
-              </article>
-            ))}
-          </div>
-        </section>
       </section>
     </main>
   );

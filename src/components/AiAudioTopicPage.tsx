@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
 import type { AiAudioLabId, Category, Language, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
@@ -5,6 +7,7 @@ import { TopicPager } from "./TopicPager";
 type DisplayTopic = Topic & { category: Category };
 
 type AiAudioTopicPageProps = {
+  relatedTopics?: ReactNode;
   language: Language;
   topic: DisplayTopic;
   mode: AiAudioLabId;
@@ -63,7 +66,7 @@ const modeLabels: Record<AiAudioLabId, Record<Language, string>> = {
   overview: { zh: "AI 音频总流程", en: "AI audio overview" }, asr: { zh: "语音识别", en: "ASR" }, tts: { zh: "语音合成", en: "TTS" }, generation: { zh: "音频生成", en: "Generation" }, event: { zh: "事件识别", en: "Event detection" }, enhancement: { zh: "音频增强", en: "Enhancement" }, codec: { zh: "神经编码", en: "Neural coding" }
 };
 
-export function AiAudioTopicPage({ language, topic, mode, onBack, onOpenLab, onOpenPrevious, onOpenNext }: AiAudioTopicPageProps) {
+export function AiAudioTopicPage({ relatedTopics, language, topic, mode, onBack, onOpenLab, onOpenPrevious, onOpenNext }: AiAudioTopicPageProps) {
   const detail = topic.detail;
   const steps = flows[mode];
   return (
@@ -75,14 +78,15 @@ export function AiAudioTopicPage({ language, topic, mode, onBack, onOpenLab, onO
         <p className="sound-topic-lede">{topic.summary[language]}</p>
         <div className="sound-topic-meta"><span>{modeLabels[mode][language]}</span><span>{language === "zh" ? "模型与部署" : "Models and deployment"}</span><span>{language === "zh" ? "实验验证" : "Hands-on lab"}</span></div>
       </header>
-      <div className="sound-topic-content">
-        <section className="sound-topic-section sound-topic-intro"><div><h2>{language === "zh" ? "先明确任务，再选择模型" : "Define the task before choosing the model"}</h2><p>{detail.explanation[language]}</p></div></section>
+      <TopicReadingLayout language={language}>
+        <section className="sound-topic-section sound-topic-intro"><div><h2>{language === "zh" ? "先明确任务，再选择模型" : "Define the task before choosing the model"}</h2>{detail.explanation[language].split("\n\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></section>
         <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{language === "zh" ? "这张卡片的 AI 音频链路" : "The AI audio path for this topic"}</h2><p>{language === "zh" ? "输入表示、模型输出和工程后处理会随任务变化，不能把所有 AI 音频都当成频谱图像分类。" : "Input representations, model outputs, and engineering post-processing vary by task; not all AI audio is spectrogram classification."}</p></div></div><ol className="ai-topic-flow" aria-label={language === "zh" ? "AI 音频处理流程" : "AI audio processing flow"}>{steps.map((step, index) => <li key={step.title.en}><span>{String(index + 1).padStart(2, "0")}</span><h3>{step.title[language]}</h3><p>{step.detail[language]}</p></li>)}</ol></section>
         <section className="sound-topic-section ai-topic-lab-entry" aria-label={language === "zh" ? "当前主题实验室入口" : "Current topic lab entry"}><div className="sound-topic-cta"><CircuitBoard size={22} aria-hidden="true" /><h2>{detail.lab?.title[language]}</h2><p>{detail.lab?.description[language]}</p><button className="diagram-open-button" type="button" onClick={onOpenLab}>{detail.lab?.buttonLabel[language]}</button></div></section>
         <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{language === "zh" ? "核心知识点" : "Core concepts"}</h2><p>{language === "zh" ? "先掌握任务边界，再深入实验室中的公式、模型和案例。" : "Understand the task boundary before diving into formulas, models, and cases in the lab."}</p></div></div><div className="sound-topic-glossary">{detail.keyConcepts.map((concept) => <article key={concept.en}><p>{concept[language]}</p></article>)}</div></section>
         <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{language === "zh" ? "相关术语" : "Related terms"}</h2><p>{language === "zh" ? "这些术语说明数据如何表示、模型如何工作以及结果如何评价。" : "These terms explain data representation, model behavior, and result evaluation."}</p></div></div><div className="sound-topic-glossary">{detail.termExplanations?.map((term) => <article key={term.name.en}><h3>{term.name[language]}</h3><p>{term.explanation[language]}</p></article>)}</div></section>
         <section className="sound-topic-section"><div><h2>{language === "zh" ? "工程边界" : "Engineering boundary"}</h2><p>{detail.misconception[language]}</p></div></section>
-      </div>
+      </TopicReadingLayout>
+      {relatedTopics}
       <TopicPager language={language} onBack={onBack} onPrevious={onOpenPrevious} onNext={onOpenNext} />
     </main>
   );
