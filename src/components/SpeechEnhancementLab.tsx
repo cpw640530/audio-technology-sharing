@@ -1,5 +1,5 @@
 import { ArrowLeft } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { Language } from "../content/knowledge";
 
 type SpeechEnhancementLabProps = {
@@ -97,7 +97,7 @@ const sourceReferenceRows = [
   {
     title: "AEC",
     keyword: "NLMS adaptive filter",
-    pseudo: "e[n] = mic[n] - sum(w[k] * ref[n-k]); w += mu * e[n] * ref",
+    pseudo: "e = mic - dot(w, ref); w += mu * e * ref / (epsilon + dot(ref, ref))",
     note: {
       zh: "源码关键词：NLMS adaptive filter、delay estimation、double-talk detection。重点看播放 reference 如何对齐麦克风回声。",
       en: "Source keywords: NLMS adaptive filter, delay estimation, double-talk detection. Focus on how playback reference is aligned to mic echo."
@@ -266,6 +266,15 @@ function gaussian(value: number, center: number, width: number) {
   return Math.exp(-((value - center) ** 2) / width);
 }
 
+function residualScales(processing: WaveProcessing, micCount: number) {
+  const beam = micCount > 1 ? (processing.beamforming ?? 0) * (micCount === 4 ? 1 : 0.72) : 0;
+  return {
+    noise: (1 - (processing.ns ?? 0) * 0.93) * (1 - beam * 0.48),
+    echo: 1 - (processing.aec ?? 0) * 0.94,
+    reverb: (1 - (processing.dereverb ?? 0) * 0.9) * (1 - beam * 0.18)
+  };
+}
+
 function speechEnvelopeAt(ratio: number) {
   return clamp(
     0.18 +
@@ -311,7 +320,7 @@ function createSpeechWavePath({
   startX?: number;
   strength: number;
 }) {
-  const points = 180;
+  const points = 512;
   const y = centerY ?? (enhanced ? 282 : 150);
   const activeProcessing = enhanced ? (processing ?? getSelectedProcessing(mode, strength, micCount)) : {};
   const noise = noiseLevel / 100;
@@ -319,13 +328,11 @@ function createSpeechWavePath({
   const reverb = reverbLevel / 100;
   const isMultiMic = micCount > 1;
   const beamformingAmount = isMultiMic ? (activeProcessing.beamforming ?? 0) * (micCount === 4 ? 1 : 0.72) : 0;
-  const aecAmount = activeProcessing.aec ?? 0;
-  const nsAmount = activeProcessing.ns ?? 0;
-  const dereverbAmount = activeProcessing.dereverb ?? 0;
   const agcAmount = activeProcessing.agc ?? 0;
-  const noiseScale = noise * Math.max(0.03, 1 - nsAmount * 0.93 - beamformingAmount * 0.48);
-  const echoScale = echo * Math.max(0.02, 1 - aecAmount * 0.94);
-  const reverbScale = reverb * Math.max(0.05, 1 - dereverbAmount * 0.9 - beamformingAmount * 0.18);
+  const residual = residualScales(activeProcessing, micCount);
+  const noiseScale = noise * residual.noise;
+  const echoScale = echo * residual.echo;
+  const reverbScale = reverb * residual.reverb;
   const targetEnvelope = 0.58;
   const speechPresenceBoost = 1 + beamformingAmount * 0.14;
 
@@ -340,22 +347,16 @@ function createSpeechWavePath({
       Math.sin(ratio * Math.PI * 143 + 1.3) * 0.3 +
       Math.sin(ratio * Math.PI * 211 + 0.2) * 0.14;
     const delayedRatio = Math.max(0, ratio - 0.12);
-    const echoTail =
-      delayedRatio === 0
-        ? 0
-        : speechCarrierAt(delayedRatio) * speechEnvelopeAt(delayedRatio) * Math.exp(-delayedRatio * 1.2);
+    const echoTail = delayedRatio === 0 ? 0 : Math.sin(delayedRatio * Math.PI * 14 + 0.3) * (0.6 + 0.3 * Math.sin(delayedRatio * Math.PI * 3));
     const lateRatio = Math.max(0, ratio - 0.18);
-    const reverbTail =
-      (Math.sin(lateRatio * Math.PI * 24 + 0.4) * 0.54 +
-        Math.sin(lateRatio * Math.PI * 41 + 1.6) * 0.25) *
-      Math.exp(-lateRatio * 1.55);
+    const reverbTail = ratio <= 0.18 ? 0 : speechCarrierAt(lateRatio) * speechEnvelopeAt(lateRatio) * Math.exp(-lateRatio * 1.55);
     const value =
-      speech * leveledEnvelope * speechPresenceBoost +
+      speech * speechEnvelope * speechPresenceBoost +
       noiseTexture * noiseScale * 0.52 +
       echoTail * echoScale * 0.92 +
       reverbTail * reverbScale * 0.58;
-    const limitedValue = clamp(value, -1.08, 1.08);
-    const pointY = y - limitedValue * 48;
+    const agcGain = leveledEnvelope / speechEnvelope;
+    const pointY = y - value * agcGain * 20;
 
     return `${index === 0 ? "M" : "L"} ${pointX.toFixed(1)} ${pointY.toFixed(1)}`;
   }).join(" ");
@@ -567,8 +568,8 @@ function WaveComparison({
       <path className="speech-enhanced-wave" data-testid="speech-enhanced-wave" d={enhancedPath} />
       <text className="speech-lab-axis-label" x="54" y="112">{language === "zh" ? "原始：近端语音 + 噪声 + 回声 + 混响" : "Raw: speech + noise + echo + reverb"}</text>
       <text className="speech-lab-axis-label" x="54" y="244">{language === "zh" ? "增强后：保留语音，压低干扰" : "Enhanced: speech preserved, interference reduced"}</text>
-      <text className="speech-lab-note" x="470" y="328">
-        {language === "zh" ? "示意图表达趋势，不代表具体算法输出" : "Illustrates trends, not exact algorithm output"}
+      <text className="speech-lab-note" x="54" y="328">
+        {language === "zh" ? "示意图表达趋势，不代表具体算法输出" : "Model trends, not real algorithm output"}
       </text>
     </svg>
   );
@@ -663,7 +664,7 @@ function AlgorithmStageWaveChart({
               mode: "aec",
               noiseLevel,
               pathWidth: 524,
-              processing: stage.processing,
+              processing: stage.enhanced ? { beamforming: micCount > 1 ? strengths.beamforming / 100 : 0, ...stage.processing } : {},
               reverbLevel,
               startX: 176,
               strength: strengths.aec
@@ -673,8 +674,8 @@ function AlgorithmStageWaveChart({
       ))}
       <text className="speech-lab-note" x="54" y="410">
         {language === "zh"
-          ? "累计示意：AEC 压低延迟回声，NS/ANR 减少细碎噪声，去混响缩短拖尾，AGC 拉平包络。"
-          : "Cumulative view: AEC lowers echo, NS/ANR reduces fine noise, dereverb shortens tails, and AGC evens the envelope."}
+          ? "累计示意：多麦预处理 → AEC → NS/ANR → 去混响 → AGC；单麦跳过多麦预处理。"
+          : "Cumulative: array (if present) → AEC → NS/ANR → dereverb → AGC."}
       </text>
     </svg>
   );
@@ -690,19 +691,8 @@ export function SpeechEnhancementLab({ language, onBack, onBackToDetails }: Spee
   const reverbLevel = demoReverbLevel;
   const availableModes = flowModes.filter((item) => item !== "beamforming" || micCount > 1);
 
-  const metrics = useMemo(() => {
-    const strengthRatio = strength / 100;
-    const isMultiMic = micCount > 1;
-    const beamformingAmount = mode === "beamforming" && isMultiMic ? strengthRatio * (micCount === 4 ? 1 : 0.72) : 0;
-    const noiseReduction = Math.round(noiseLevel * (mode === "ns" ? strengthRatio * 0.26 : beamformingAmount * 0.14));
-    const echoReduction = Math.round(echoLevel * (mode === "aec" ? strengthRatio * 0.3 : 0));
-    const reverbReduction = Math.round(reverbLevel * (mode === "dereverb" ? strengthRatio * 0.22 : beamformingAmount * 0.04));
-    const speechLoss = Math.round(strengthRatio * (mode === "ns" ? noiseLevel * 0.02 : mode === "dereverb" ? reverbLevel * 0.018 : 0.7));
-    const latencyCost = mode === "beamforming" ? 8 : mode === "aec" ? 7 : mode === "dereverb" ? 6 : mode === "ns" ? 4 : 3;
-    const latency = 8 + latencyCost + Math.round(strengthRatio * 4 + (micCount - 1) * 2);
-
-    return { echoReduction, latency, noiseReduction, reverbReduction, speechLoss };
-  }, [echoLevel, micCount, mode, noiseLevel, reverbLevel, strength]);
+  const residual = residualScales(getSelectedProcessing(mode, strength, micCount), micCount);
+  const attenuation = (scale: number) => (-20 * Math.log10(scale)).toFixed(1);
 
   function handleMicCountChange(count: number) {
     setMicCount(count);
@@ -842,12 +832,11 @@ export function SpeechEnhancementLab({ language, onBack, onBackToDetails }: Spee
                 <input aria-label={language === "zh" ? "处理强度" : "Processing strength"} max="100" min="0" step="5" type="range" value={strength} onChange={(event) => handleStrengthChange(Number(event.target.value))} />
               </label>
               <div className="speech-enhancement-metrics">
-                <strong>{language === "zh" ? `估计降噪：${metrics.noiseReduction} dB` : `Estimated NS: ${metrics.noiseReduction} dB`}</strong>
-                <strong>{language === "zh" ? `估计回声衰减：${metrics.echoReduction} dB` : `Estimated echo reduction: ${metrics.echoReduction} dB`}</strong>
-                <strong>{language === "zh" ? `估计混响衰减：${metrics.reverbReduction} dB` : `Estimated dereverb: ${metrics.reverbReduction} dB`}</strong>
-                <strong>{language === "zh" ? `语音损伤风险：${metrics.speechLoss} / 10` : `Speech damage risk: ${metrics.speechLoss} / 10`}</strong>
-                <strong>{language === "zh" ? `算法延迟：约 ${metrics.latency} ms` : `Algorithm latency: about ${metrics.latency} ms`}</strong>
+                <strong>{language === "zh" ? `模型噪声分量衰减：${attenuation(residual.noise)} dB` : `Model noise attenuation: ${attenuation(residual.noise)} dB`}</strong>
+                <strong>{language === "zh" ? `模型回声分量衰减：${attenuation(residual.echo)} dB` : `Model echo attenuation: ${attenuation(residual.echo)} dB`}</strong>
+                <strong>{language === "zh" ? `模型混响分量衰减：${attenuation(residual.reverb)} dB` : `Model reverb attenuation: ${attenuation(residual.reverb)} dB`}</strong>
               </div>
+              <p className="traditional-model-note">{language === "zh" ? "已知分量的教学模型，不是运行真实 AEC / NS 或测量 SoC 性能。回声来自独立远端信号，混响是本地语音的延迟副本；AGC 对整路信号施加相同增益，也会抬高残留噪声。图中幅度/时间为归一化示意，未模拟收敛与 attack/release。" : "A known-component teaching model, not a running AEC/NS engine or SoC benchmark. Echo comes from an independent remote signal; reverb is delayed local speech. AGC applies the same gain to the whole signal, including residual noise. Axes are normalized; adaptation and attack/release are not simulated."}</p>
             </aside>
           </div>
         </div>

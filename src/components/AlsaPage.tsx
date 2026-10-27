@@ -59,7 +59,7 @@ const frameworkLayers: Array<{
     nodes: [
       { title: { zh: "USB / PCI 声卡", en: "USB / PCI audio" }, detail: { zh: "独立设备路径", en: "discrete device path" } },
       { title: { zh: "SoC 音频控制器", en: "SoC audio controller" }, detail: { zh: "DMA + I2S / TDM / PDM", en: "DMA + I2S / TDM / PDM" } },
-      { title: { zh: "Codec 与换能器", en: "Codec and transducers" }, detail: { zh: "ADC / DAC → 麦克风、功放、扬声器", en: "ADC / DAC → mic, amp, speaker" } }
+      { title: { zh: "Codec 与换能器", en: "Codec and transducers" }, detail: { zh: "麦克风 → ADC；DAC → 功放 → 扬声器", en: "mic → ADC; DAC → amp → speaker" } }
     ]
   }
 ];

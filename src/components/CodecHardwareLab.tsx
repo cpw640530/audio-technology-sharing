@@ -52,11 +52,10 @@ function createConverterData({
   const analogPoints = Array.from({ length: 140 }, (_, index) => {
     const ratio = index / 139;
     const value = Math.sin(ratio * Math.PI * 4.6) * (inputLevel / 100);
-    const clipped = Math.max(-1, Math.min(1, value));
     return {
       x: 50 + ratio * width,
-      y: midY - clipped * amplitude,
-      value: clipped
+      y: midY - value * amplitude,
+      value
     };
   });
 
@@ -69,7 +68,7 @@ function createConverterData({
     const quantized = quantizeSample(clipped, bitDepth);
     return {
       x: 50 + ratio * width,
-      y: midY - clipped * amplitude,
+      y: midY - value * amplitude,
       quantizedY: midY - quantized * amplitude,
       ratio,
       clipped: Math.abs(value) > 1,
@@ -119,7 +118,8 @@ function createConverterData({
   const visibleQuantizationLineCount = Math.min(33, levels);
   const visibleQuantizationLines = Array.from({ length: visibleQuantizationLineCount }, (_, index) => {
     const ratio = visibleQuantizationLineCount <= 1 ? 0 : index / (visibleQuantizationLineCount - 1);
-    const value = ratio * 2 - 1;
+    const code = Math.round(ratio * (levels - 1));
+    const value = (code / (levels - 1)) * 2 - 1;
     return midY - value * amplitude;
   });
 
@@ -141,8 +141,8 @@ function getModeCopy(mode: CodecMode, language: Language): ModeCopy {
       title: language === "zh" ? "ADC：模拟电压变成数字样本" : "ADC: analog voltage to digital samples",
       body:
         language === "zh"
-          ? "输入信号先经过 PGA 和抗混叠滤波，再按采样时钟取点并量化。电平过高会削波，位深过低会增加量化噪声，时钟不稳会让采样时刻产生偏差。"
-          : "The input passes through PGA and anti-alias filtering, then is sampled and quantized by the clock. Too much level clips, low bit depth raises quantization noise, and unstable clocks shift sample timing."
+          ? "曲线与小点表示量化前输入，大点表示限幅后的量化值。输入可以超过 ±1 FS，但数字输出会饱和在量程边界；这里不模拟 PGA 或抗混叠滤波器的内部响应。"
+          : "The curve and small dots show the input before quantization; large dots show clipped, quantized values. Input may exceed ±1 FS while digital output saturates at the limits. Internal PGA and anti-alias filter responses are not simulated."
     };
   }
 
@@ -191,8 +191,8 @@ function getModeStatus({
   }
 
   return language === "zh"
-    ? `双向链路 · I2S/TDM · 每帧样本：${sampleRate}`
-    : `Duplex path · I2S/TDM · samples per frame: ${sampleRate}`;
+    ? "双向链路 · 音频数据与寄存器控制分开"
+    : "Duplex path · separate audio data and register control";
 }
 
 function getModeObservation({
@@ -327,6 +327,7 @@ export function CodecHardwareLab({ language, onBack, onBackToDetails }: CodecHar
             <strong>{modeCopy.title}</strong>
             <span>{modeStatus}</span>
           </div>
+          <div className="codec-diagram-scroll" role="region" aria-label={modeLabels[mode][language]} tabIndex={0}>
           {mode === "adc" ? (
             <svg
               aria-label={language === "zh" ? "ADC 采集图" : "ADC capture chart"}
@@ -347,8 +348,10 @@ export function CodecHardwareLab({ language, onBack, onBackToDetails }: CodecHar
                     <circle className="digital-quantized-dot" cx={sample.x.toFixed(2)} cy={sample.quantizedY.toFixed(2)} r="4.5" />
                   </g>
                 ))}
-                <text className="lab-label" x="54" y="40">{language === "zh" ? "ADC 输入模拟波形" : "ADC analog input"}</text>
-                <text className="lab-label" x="54" y="270">{language === "zh" ? "采样点与量化等级" : "Samples and quantization levels"}</text>
+                <text className="lab-label" x="54" y="23">{language === "zh" ? "ADC 输入模拟波形" : "ADC analog input"}</text>
+                <text className="lab-label" x="54" y="292">{language === "zh" ? "采样点与量化等级" : "Samples and quantization levels"}</text>
+                {[0, 0.5, 1].map(t => <text key={t} className="lab-label" x={50 + t * 660} y="319" textAnchor="middle">{t} ms</text>)}
+                {[-1, 0, 1].map(value => <text key={value} className="lab-label" x="40" y={150 - value * 92 + 5} textAnchor="end">{value}</text>)}
             </svg>
           ) : null}
           {mode === "dac" ? (
@@ -359,7 +362,7 @@ export function CodecHardwareLab({ language, onBack, onBackToDetails }: CodecHar
               xmlns="http://www.w3.org/2000/svg"
             >
               {renderCodecSvgDefs()}
-              {renderCodecSvgBase()}
+              <rect className="lab-diagram-bg" height="340" rx="14" width="760" />
                 <line className="codec-sub-axis" x1="50" x2="710" y1="112" y2="112" />
                 <line className="codec-sub-axis" x1="50" x2="710" y1="232" y2="232" />
                 <path className="codec-step-path" d={data.dacHoldPath} />
@@ -373,10 +376,6 @@ export function CodecHardwareLab({ language, onBack, onBackToDetails }: CodecHar
                 {[112, 232].map(center => <g key={center}>{[-1, 0, 1].map(value => <text key={value} className="lab-label" x="40" y={center - value * 52 + 5} textAnchor="end">{value}</text>)}</g>)}
             </svg>
           ) : null}
-          {mode !== "codec" && <>
-            {renderCodecMetricChips({ ...data, language })}
-            <p className="codec-model-note">{language === "zh" ? "横轴：0–1 ms；纵轴：归一化幅度（±1 FS）。Ts 为名义采样间隔，时间偏移为夸大的周期性演示。DAC 模式先在这些时刻取得量化样本，再以相同时刻更新保持输出；不是独立的 DAC 时钟误差仿真。" : "X: 0–1 ms; Y: normalized amplitude (±1 FS). Ts is the nominal sample interval; timing error is exaggerated and periodic. DAC mode acquires samples at these times and holds them on the same schedule; it does not simulate independent DAC clock error."}</p>
-          </>}
           {mode === "codec" ? (
             <svg
               aria-label={language === "zh" ? "Codec 芯片链路图" : "Codec chip path chart"}
@@ -395,7 +394,6 @@ export function CodecHardwareLab({ language, onBack, onBackToDetails }: CodecHar
               <rect className="lab-diagram-bg" height="340" rx="14" width="760" />
               <text className="lab-label" x="54" y="42">{language === "zh" ? "录音链路" : "Capture path"}</text>
               <text className="lab-label" x="54" y="190">{language === "zh" ? "播放链路" : "Playback path"}</text>
-              <text className="codec-block-note" x="534" y="42">{language === "zh" ? "控制面" : "Control plane"}</text>
 
               <g className="codec-block-row">
                 {["Mic/Line", "PGA", "ADC", "I2S/TDM", language === "zh" ? "主控" : "Host"].map((item, index) => {
@@ -424,14 +422,20 @@ export function CodecHardwareLab({ language, onBack, onBackToDetails }: CodecHar
               </g>
 
               <g>
-                <rect className="codec-control-node" height="70" rx="10" width="138" x="552" y="120" />
-                <text className="codec-control-text" x="621" y="150">{language === "zh" ? "寄存器控制" : "Registers"}</text>
-                <text className="codec-control-subtext" x="621" y="174">{language === "zh" ? "路由 / 增益 / 静音" : "route / gain / mute"}</text>
-                <path className="codec-control-line" d="M 590 120 L 400 128" />
-                <path className="codec-control-line" d="M 590 190 L 400 218" />
+                <rect className="codec-control-node" height="60" rx="10" width="138" x="552" y="138" />
+                <text className="codec-control-text" x="621" y="160">{language === "zh" ? "寄存器控制" : "Registers"}</text>
+                <text className="codec-control-subtext" x="621" y="184">{language === "zh" ? "路由 / 增益 / 静音" : "route / gain / mute"}</text>
+                <path className="codec-control-line" d="M 552 150 L 400 128" />
+                <path className="codec-control-line" d="M 552 186 L 400 218" />
               </g>
             </svg>
           ) : null}
+          </div>
+          {mode !== "codec" && <>
+            {renderCodecMetricChips({ ...data, language })}
+            <p className="codec-model-note">{language === "zh" ? "横轴：0–1 ms；纵轴：归一化幅度（±1 FS 为量程边界）。Ts 为名义采样间隔，时间偏移为夸大的周期性演示。DAC 使用相同的采样与更新时间，不模拟独立的 DAC 时钟误差。" : "X: 0–1 ms; Y: normalized amplitude (range limits ±1 FS). Ts is the nominal sample interval; timing error is exaggerated and periodic. DAC acquisition and updates share the same schedule, not independent DAC clock error."}</p>
+            <p className="codec-model-note">{language === "zh" ? "量化采用包含 ±1 两端的理想等间隔电平，不是有符号 PCM 码值映射。网格最多显示 33 条真实电平线，量化仍使用全部电平；平均量化误差不含输入超量程的削波误差。" : "Quantization uses ideal equally spaced levels including both ±1 endpoints, not signed PCM code mapping. The grid shows at most 33 actual levels; quantization uses all levels. Mean quantization error excludes overrange clipping error."}</p>
+          </>}
         </div>
 
         <div className="codec-lab-panel">
@@ -440,6 +444,7 @@ export function CodecHardwareLab({ language, onBack, onBackToDetails }: CodecHar
               <button
                 className={mode === item ? "waveform-tab active" : "waveform-tab"}
                 key={item}
+                aria-pressed={mode === item}
                 type="button"
                 onClick={() => setMode(item)}
               >

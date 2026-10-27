@@ -177,8 +177,8 @@ const principleCopy: Record<MicPrinciple, PrincipleCopy> = {
     signal: { zh: "输出：增强后的目标声", en: "Output: enhanced target voice" },
     output: { zh: "多路麦克风同步采集后，算法利用时间差和相位差增强目标方向。", en: "Multiple synchronized microphones use time and phase differences to enhance the target direction." },
     core: {
-      zh: "声源到每颗麦克风的距离不同，到达时间和相位也不同。阵列算法估计方向，延时对齐并加权求和，形成波束，同时抑制非目标方向噪声和回声。",
-      en: "A source reaches each microphone at different times and phases. Array algorithms estimate direction, delay-align and weight channels to form a beam, while suppressing off-target noise and echo."
+      zh: "声源到每颗麦克风的距离不同，到达时间和相位也不同。延时对齐并加权求和可形成波束，增强目标方向并衰减部分离轴干扰；这不等同于使用播放参考的 AEC 回声消除。",
+      en: "A source reaches each microphone at different times and phases. Delay alignment and weighted summation form a beam that favors a target direction and attenuates some off-axis interference; this is not playback-reference AEC."
     },
     stages: [
       { zh: "多路采集", en: "Multi capture" },
@@ -890,6 +890,7 @@ export function MicrophoneLab({ language, onBack, onBackToDetails }: MicrophoneL
               className={principle === type ? "mic-principle-tab active" : "mic-principle-tab"}
               key={type}
               type="button"
+              aria-pressed={principle === type}
               onClick={() => setPrinciple(type)}
             >
               {principleCopy[type].label[language]}
@@ -910,10 +911,12 @@ export function MicrophoneLab({ language, onBack, onBackToDetails }: MicrophoneL
             <strong>{language === "zh" ? `指向性：${polarLabels[pattern].zh}` : `Pattern: ${polarLabels[pattern].en}`}</strong>
             <span>{language === "zh" ? `拾音强度：${analysis.levelPercent}%` : `Pickup level: ${analysis.levelPercent}%`}</span>
           </div>
+          <p className="mic-polar-legend">{language === "zh" ? "外点：声源方向；内点：方向响应幅度。曲线仅表示理想指向性，不随距离或增益缩放。" : "Outer dot: source direction. Inner dot: directional magnitude. The curve shows ideal directivity, independent of distance and gain."}</p>
+          <div className="mic-polar-display">
           <svg
             aria-label={language === "zh" ? "麦克风指向性极坐标图" : "Microphone polar pattern chart"}
             role="img"
-            viewBox="0 0 760 420"
+            viewBox="-20 0 420 400"
             xmlns="http://www.w3.org/2000/svg"
           >
             <defs>
@@ -925,7 +928,7 @@ export function MicrophoneLab({ language, onBack, onBackToDetails }: MicrophoneL
                 <path d="M0 0 8 4 0 8Z" fill="#f0b46a" />
               </marker>
             </defs>
-            <rect className="lab-diagram-bg" height="420" rx="14" width="760" />
+            <rect className="lab-diagram-bg" x="-20" height="400" rx="14" width="420" />
             <g transform="translate(190 190)">
               {[50, 95, 142].map((radius) => (
                 <circle className="mic-polar-grid" cx="0" cy="0" key={radius} r={radius} />
@@ -933,30 +936,27 @@ export function MicrophoneLab({ language, onBack, onBackToDetails }: MicrophoneL
               <line className="mic-polar-axis" x1="0" x2="0" y1="-160" y2="160" />
               <line className="mic-polar-axis" x1="-160" x2="160" y1="0" y2="0" />
               <text className="lab-label" x="-12" y="-170">0°</text>
-              <text className="lab-label" x="148" y="6">90°</text>
+              <text className="lab-label" x="170" y="6">90°</text>
               <text className="lab-label" x="-28" y="184">180°</text>
-              <text className="lab-label" x="-170" y="6">-90°</text>
+              <text className="lab-label" x="-170" y="6" textAnchor="end">-90°</text>
             </g>
             <path className="mic-polar-path" d={polar.path} />
             <circle className="mic-capsule" cx="190" cy="190" r="14" />
             <line className="mic-source-line" markerEnd="url(#micArrow)" x1="190" x2={polar.source.x.toFixed(2)} y1="190" y2={polar.source.y.toFixed(2)} />
             <circle className="mic-source-dot" cx={polar.source.x.toFixed(2)} cy={polar.source.y.toFixed(2)} r="10" />
             <circle className="mic-pickup-dot" cx={polar.pickup.x.toFixed(2)} cy={polar.pickup.y.toFixed(2)} r="6" />
-            <text className="lab-chip" x="392" y="42">
-              {language === "zh" ? "外点：声源；内点：有效拾音" : "Outer: source; inner: effective pickup"}
-            </text>
-            <text className="lab-chip" x="392" y="78">{language === "zh" ? `角度 ${angle}°` : `Angle ${angle}°`}</text>
-            <text className="lab-chip" x="392" y="114">{language === "zh" ? `距离 ${distance.toFixed(1)} m` : `Distance ${distance.toFixed(1)} m`}</text>
-            <text className="lab-chip" x="392" y="150">{language === "zh" ? `前级增益 ${gain}%` : `Preamp gain ${gain}%`}</text>
-            <g className="mic-meter" transform="translate(390 205)">
-              <text className="lab-label" x="0" y="-18">{language === "zh" ? "拾音结果" : "Pickup result"}</text>
-              <rect height="14" rx="7" width="280" x="0" y="0" />
-              <rect className="mic-meter-fill" height="14" rx="7" width={(analysis.levelPercent * 2.8).toFixed(1)} x="0" y="0" />
-              <text className="lab-label" x="0" y="48">{language === "zh" ? `清晰度 ${analysis.clarity}%` : `Clarity ${analysis.clarity}%`}</text>
-              <text className="lab-label" x="0" y="84">{language === "zh" ? `噪声风险 ${analysis.noiseRisk}%` : `Noise risk ${analysis.noiseRisk}%`}</text>
-              <text className="lab-label" x="0" y="120">{language === "zh" ? `削波风险 ${analysis.clippingRisk}%` : `Clipping risk ${analysis.clippingRisk}%`}</text>
-            </g>
           </svg>
+          <dl className="mic-pickup-readouts" aria-label={language === "zh" ? "拾音教学结果" : "Pickup teaching results"}>
+            <div><dt>{language === "zh" ? "角度" : "Angle"}</dt><dd>{angle}°</dd></div>
+            <div><dt>{language === "zh" ? "距离" : "Distance"}</dt><dd>{distance.toFixed(1)} m</dd></div>
+            <div><dt>{language === "zh" ? "增益旋钮" : "Gain control"}</dt><dd>{gain}%</dd></div>
+            <div><dt>{language === "zh" ? "拾音强度" : "Pickup level"}</dt><dd>{analysis.levelPercent}%</dd></div>
+            <div><dt>{language === "zh" ? "清晰度评分" : "Clarity score"}</dt><dd>{analysis.clarity}%</dd></div>
+            <div><dt>{language === "zh" ? "噪声风险评分" : "Noise risk score"}</dt><dd>{analysis.noiseRisk}%</dd></div>
+            <div><dt>{language === "zh" ? "削波风险评分" : "Clipping risk score"}</dt><dd>{analysis.clippingRisk}%</dd></div>
+          </dl>
+          </div>
+          <p className="mic-polar-legend">{language === "zh" ? "教学模型：评分不是实测 SNR、失真或概率，增益百分比不是 dB。试听为合成信号；距离采用有近场限幅的 1/r 近似，不模拟真实房间。8 字形只展示响应幅度，不演示背瓣的极性反转。" : "Teaching model: scores are not measured SNR, distortion, or probabilities; gain percentage is not dB. Playback is synthetic. Distance uses a near-field-clamped 1/r approximation, not a real room. Figure-8 shows magnitude only, not rear-lobe polarity reversal."}</p>
         </div>
 
         <div className="microphone-panel">
@@ -966,6 +966,7 @@ export function MicrophoneLab({ language, onBack, onBackToDetails }: MicrophoneL
                 className={pattern === type ? "waveform-tab active" : "waveform-tab"}
                 key={type}
                 type="button"
+                aria-pressed={pattern === type}
                 onClick={() => setPattern(type)}
               >
                 {polarLabels[type][language]}

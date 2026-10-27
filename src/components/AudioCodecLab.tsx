@@ -21,7 +21,7 @@ const encodeSteps = [
 
 const decodeSteps = [
   { title: { zh: "码流 / 文件 / 网络包", en: "Bitstream / file / packet" }, detail: { zh: "来自存储、流媒体或蓝牙", en: "from storage, streaming, or Bluetooth" } },
-  { title: { zh: "解包 / 纠错", en: "Unpack / repair" }, detail: { zh: "取出帧、时间戳和冗余", en: "read frames, timestamps, redundancy" } },
+  { title: { zh: "解包 / 解析", en: "Unpack / parse" }, detail: { zh: "取出编码帧与时间戳", en: "extract frames and timestamps" } },
   { title: { zh: "反量化 / 合成", en: "Inverse quantize / synthesize" }, detail: { zh: "还原频域或语音模型参数", en: "restore transform or speech parameters" } },
   { title: { zh: "PCM 输出", en: "PCM output" }, detail: { zh: "恢复为系统可播放样本", en: "samples ready for the system" } },
   { title: { zh: "播放 / 后处理", en: "Playback / post-process" }, detail: { zh: "混音、音效、DAC 或蓝牙输出", en: "mix, effects, DAC, or Bluetooth out" } }
@@ -51,14 +51,14 @@ const scenarios = {
     summary: { zh: "语音通话：清晰度、抗丢包和低码率更关键。", en: "Voice call: intelligibility, packet-loss robustness, and low bitrate matter most." },
     recommendation: { zh: "推荐：Opus / AMR / LC3", en: "Recommended: Opus / AMR / LC3" },
     metrics: [
-      { zh: "语音 Codec 会优先保留人声可懂度，而不是音乐细节。", en: "Speech codecs preserve intelligibility before musical detail." },
+      { zh: "按链路选择：Opus 用于互联网语音，AMR 用于蜂窝语音，LC3 用于 LE Audio 耳机段；不是同一链路的任意替代品。", en: "Choose by link: Opus for Internet voice, AMR for cellular voice, LC3 for the LE Audio headset segment; these are not interchangeable on every link." },
       { zh: "网络抖动、丢包隐藏和回声处理常比纯码率更影响体验。", en: "Jitter, packet-loss concealment, and echo handling often matter more than bitrate alone." }
     ]
   },
   meeting: {
     label: { zh: "会议", en: "Meeting" },
     summary: { zh: "会议：要在多人语音、弱网和设备切换中保持稳定。", en: "Meeting: stay stable across multi-speaker voice, weak networks, and device changes." },
-    recommendation: { zh: "推荐：Opus / LC3", en: "Recommended: Opus / LC3" },
+    recommendation: { zh: "互联网链路：Opus；LE Audio 耳机段：LC3", en: "Internet link: Opus; LE Audio headset segment: LC3" },
     metrics: [
       { zh: "会议链路通常还会叠加降噪、回声消除、自动增益和混音。", en: "Meeting paths usually add noise suppression, echo cancellation, AGC, and mixing." },
       { zh: "可变码率和抗丢包能力比极高保真更重要。", en: "Variable bitrate and packet-loss resilience matter more than maximum fidelity." }
@@ -78,7 +78,7 @@ const scenarios = {
     summary: { zh: "低延迟互动：帧长、缓冲、网络和解码等待都必须压低。", en: "Low-latency interaction: frame size, buffering, network, and decode wait must stay low." },
     recommendation: { zh: "推荐：Opus / LC3 / 低延迟专用链路", en: "Recommended: Opus / LC3 / dedicated low-latency paths" },
     metrics: [
-      { zh: "游戏语音、实时合奏和监听返送对 100 ms 以内体验更敏感。", en: "Game chat, live jamming, and monitoring are sensitive to sub-100 ms experiences." },
+      { zh: "游戏语音、远程合奏和本地监听的预算不同；监听通常比通话要求更短的延迟，不能共用一个 100 ms 标准。", en: "Game chat, remote ensemble playing, and local monitoring have different budgets; monitoring typically needs much less delay than conversation, not a shared 100 ms target." },
       { zh: "过度追求压缩率会增加算法等待和错误恢复成本。", en: "Chasing compression ratio can increase algorithmic wait and recovery cost." }
     ]
   }
@@ -115,6 +115,7 @@ function CodecFlowChart({
   title: Record<Language, string>;
 }) {
   return (
+    <div className="audio-codec-flow-scroll" role="region" aria-label={label[language]} tabIndex={0}>
     <svg
       aria-label={label[language]}
       className={`audio-codec-flow-chart ${tone}`}
@@ -133,15 +134,16 @@ function CodecFlowChart({
         const x = 42 + index * 176;
         return (
           <g key={step.title.en}>
-            <rect className="audio-codec-pipeline-node" height="88" rx="10" width="136" x={x} y="86" />
-            <text className="audio-codec-node-title" x={x + 68} y="119">{step.title[language]}</text>
-            <text className="audio-codec-node-detail" x={x + 68} y="148">{step.detail[language]}</text>
-            {index < steps.length - 1 ? <path className="audio-codec-pipeline-arrow" d={`M ${x + 142} 130 L ${x + 170} 130`} /> : null}
+            <rect className="audio-codec-pipeline-node" height="140" rx="8" width="152" x={x} y="72" />
+            <foreignObject x={x + 10} y="82" width="132" height="120">
+              <div className="audio-codec-node-copy"><strong>{step.title[language]}</strong><span>{step.detail[language]}</span></div>
+            </foreignObject>
+            {index < steps.length - 1 ? <path className="audio-codec-pipeline-arrow" d={`M ${x + 154} 142 L ${x + 174} 142`} markerEnd={`url(#audioCodecArrow-${tone})`} /> : null}
           </g>
         );
       })}
-      <path className="audio-codec-bitrate-line" d="M 72 212 C 260 198 414 198 548 212 S 746 228 888 204" />
     </svg>
+    </div>
   );
 }
 
@@ -183,7 +185,7 @@ export function AudioCodecLab({ language, onBack, onBackToDetails }: AudioCodecL
               label={{ zh: "音频编码流程图", en: "Audio encoding flow chart" }}
               language={language}
               steps={encodeSteps}
-              title={{ zh: "编码：PCM 变成更小的码流", en: "Encoding: PCM becomes a smaller bitstream" }}
+              title={{ zh: "有损编码示例：PCM → 码流", en: "Lossy encoding example: PCM → bitstream" }}
               tone="encode"
             />
             <CodecFlowChart
@@ -197,6 +199,7 @@ export function AudioCodecLab({ language, onBack, onBackToDetails }: AudioCodecL
         </section>
 
         <section className="codec-mode-concepts audio-codec-metrics" aria-label={language === "zh" ? "编解码关键指标" : "Codec key metrics"}>
+          <p className="sound-topic-note">{language === "zh" ? "图中量化 / 反量化对应有损编码。FLAC 等无损编码保存预测残差等信息，不丢弃样本精度。封装负责组织码流，不等于压缩；PLC 是丢包估计，FEC 需要额外冗余，均不是每种解码器都有的纠错步骤。" : "Quantization / inverse quantization here describe lossy coding. Lossless codecs such as FLAC retain prediction residuals without discarding sample precision. Packaging is not compression; PLC estimates missing audio and FEC requires redundancy, neither is a universal decoder repair step."}</p>
           <div className="codec-mode-concepts-header">
             <strong>{language === "zh" ? "关键指标" : "Key metrics"}</strong>
             <span>{language === "zh" ? "不要只看码率" : "Do not only compare bitrate"}</span>

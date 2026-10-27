@@ -564,8 +564,8 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "麦克风是把空气中的声压变化转换成电信号的换能器。声波推动振膜振动，振膜运动再通过线圈、电容变化、驻极体材料或 MEMS 结构变成电压或数字脉冲流，随后经过前置放大、滤波和 ADC 进入数字音频系统。",
-            en: "A microphone is a transducer that converts air-pressure variation into an electrical signal. Sound moves a diaphragm; that motion is converted by a coil, capacitance change, electret material, or MEMS structure into voltage or a digital pulse stream, then passes through preamp, filtering, and ADC stages."
+            zh: "麦克风把声压变化转换成电信号：动圈麦利用电磁感应，常见电容、驻极体和电容式 MEMS 麦利用振膜与背板之间的电容变化。模拟输出经前级、滤波和 ADC 进入数字系统；数字麦已在内部完成模数转换，PDM 输出需抽取为 PCM，I2S 型号则输出 PCM 数据。",
+            en: "Microphones convert pressure changes into electrical signals. Moving-coil microphones use electromagnetic induction; common condenser, electret, and capacitive MEMS microphones use diaphragm-to-backplate capacitance changes. Analog outputs need a preamp, filtering, and ADC. Digital microphones convert internally: PDM output needs decimation to PCM, while I2S models output PCM data."
           },
           chainContext: {
             stage: { zh: "采集入口：声学到电信号", en: "Chain position: capture entry from acoustics to electricity" },
@@ -1170,8 +1170,8 @@ export const categories: Category[] = [
             {
               name: { zh: "buffer / period", en: "buffer / period" },
               explanation: {
-                zh: "buffer 是环形队列的总帧数，period 是一次硬件推进、DMA 通知或应用唤醒的帧数；period count 近似表示 bufferFrames / periodFrames。period 越小，唤醒频率越高、理论等待更短，但调度和处理余量也更紧。",
-                en: "The buffer is the total frame capacity of the ring, while a period is the frame block for one hardware advance, DMA notification, or application wakeup. Period count is approximately bufferFrames / periodFrames. Smaller periods can shorten waiting time but increase wakeups and reduce scheduling headroom."
+                zh: "buffer 是环形队列的总帧数；period 是硬件传输的进度通知单位，不是另一块独立 buffer。period count 近似为 bufferFrames / periodFrames。period 越小通知通常越频繁，但应用实际唤醒还取决于 avail_min、通知方式与调度。",
+                en: "The buffer is the ring's total frame capacity; a period is a hardware-transfer progress interval, not another independent buffer. Period count is approximately bufferFrames / periodFrames. Smaller periods typically increase notifications, but actual app wakeups also depend on avail_min, notification mode, and scheduling."
               }
             },
             {
@@ -1228,15 +1228,15 @@ export const categories: Category[] = [
             {
               name: { zh: "Buffer size", en: "Buffer size" },
               explanation: {
-                zh: "Buffer size 表示一次回调处理多少帧音频。48 kHz 下 128 帧 buffer 约等于 2.67 ms，64 帧约等于 1.33 ms；buffer 越小，端到端延迟越低，但每次回调的可用计算时间也越短。",
-                en: "Buffer size is the number of audio frames processed by one callback. At 48 kHz, a 128-frame buffer is about 2.67 ms and a 64-frame buffer is about 1.33 ms. Smaller buffers lower end-to-end latency but reduce the available compute time per callback."
+                zh: "先区分一次回调的处理块与整个 ring buffer 容量。48 kHz 下 128 帧处理块对应 2.67 ms，64 帧对应 1.33 ms；缩小处理块可减少块等待，但不会自动消除其他队列、算法前视和设备延迟。",
+                en: "Distinguish a callback block from total ring-buffer capacity. At 48 kHz, a 128-frame block spans 2.67 ms and 64 frames span 1.33 ms. Smaller blocks reduce block waiting, not other queues, algorithmic lookahead, or device delay."
               }
             },
             {
               name: { zh: "回调 deadline", en: "Callback deadline" },
               explanation: {
-                zh: "deadline 由 buffer 帧数和采样率决定。实时线程必须在下一块 buffer 到来前完成 DSP、格式转换和数据交付，否则播放端会缺样本，采集端会丢样本。",
-                en: "The deadline is set by buffer frames and sample rate. The real-time thread must finish DSP, format conversion, and handoff before the next buffer arrives, otherwise playback runs out of samples or capture drops samples."
+                zh: "块帧数 / 采样率给出稳态每块处理预算。实际截止时间还受队列水位和启动策略影响；一次超时未必立即 XRUN，但持续落后会耗尽余量，导致播放缺样本或采集丢样本。",
+                en: "Block frames / sample rate gives a steady-state per-block budget. Actual deadlines also depend on queue occupancy and start policy. One late block need not cause an immediate XRUN, but sustained delay exhausts headroom and causes playback underruns or capture overruns."
               }
             },
             {
@@ -1263,8 +1263,8 @@ export const categories: Category[] = [
             type: "realtime-audio",
             title: { zh: "实时音频处理实验室", en: "Real-Time Audio Processing Lab" },
             description: {
-              zh: "进入独立界面调节采样率、buffer 帧数、DSP 处理耗时和 CPU 抖动，观察 deadline、端到端延迟和 XRUN 风险如何变化。",
-              en: "Open an independent lab to adjust sample rate, buffer frames, DSP time, and CPU jitter, then watch deadline, end-to-end latency, and XRUN risk change."
+              zh: "通过固定的 16 kHz 单声道实例，追踪采集、512 点处理块、MP3 攒帧、解码播放，以及 AEC 播放参考回采路径。",
+              en: "Trace a fixed 16 kHz mono example through capture, 512-sample blocks, MP3 framing, decoded playback, and the AEC playback-reference path."
             },
             buttonLabel: { zh: "打开实时音频处理实验室", en: "Open real-time audio processing lab" }
           },

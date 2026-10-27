@@ -19,8 +19,8 @@ type AmplifierSpeakerLabProps = {
 };
 
 const chainLabels = {
-  zh: ["DAC / Codec 输出", "功放", "分频 / 保护", "扬声器单元", "空气声波"],
-  en: ["DAC / Codec out", "Amplifier", "Crossover / protection", "Speaker driver", "Air pressure"]
+  zh: ["DAC / Codec 输出", "功放", "被动分频（如有）", "扬声器单元", "空气声波"],
+  en: ["DAC / Codec out", "Amplifier", "Passive crossover (if used)", "Speaker driver", "Air pressure"]
 } satisfies Record<Language, string[]>;
 
 const diagramModes: Array<{ id: DiagramMode; label: Record<Language, string> }> = [
@@ -65,14 +65,14 @@ const ampPrinciples = {
   "class-a": {
     zh: {
       principle: "基本原理：输出器件始终处在导通区，完整正负半周都由线性放大路径连续处理。",
-      advantage: "优势：线性好，交越失真少，声音细节容易保持。",
+      advantage: "优势：正常工作范围内没有推挽交接造成的交越失真；不等于没有其他失真。",
       caution: "注意：静态电流大，效率低，发热明显。",
       usage: "常见：小功率高保真、耳放、前级或偏重音质的线性电路。"
     },
     en: {
       principle:
         "Principle: the output device stays biased on, so the full positive and negative waveform is handled through a continuous linear path.",
-      advantage: "Benefit: good linearity and very little crossover distortion.",
+      advantage: "Benefit: no handover crossover distortion within its operating range; other distortion can still occur.",
       caution: "Watch out: high idle current, low efficiency, and obvious heat.",
       usage: "Common in: low-power hi-fi, headphone amps, preamps, and linear circuits focused on sound quality."
     }
@@ -96,14 +96,14 @@ const ampPrinciples = {
     zh: {
       principle: "基本原理：音频信号先变成 PWM 或类似的高速开关脉冲，输出级只在开/关之间切换，再通过滤波和扬声器还原音频电流。",
       advantage: "优势：效率高、发热低，适合电池供电和小体积设备。",
-      caution: "注意：需要输出滤波，并关注 EMI、电源和 PCB 布局。",
+      caution: "注意：外置 LC 是否需要取决于调制方式、负载和布线；仍需检查 EMI、电源和 PCB 布局。",
       usage: "常见：蓝牙音箱、手机、电视、便携设备和高效率大功率功放。"
     },
     en: {
       principle:
         "Principle: the audio signal is converted into PWM or a similar high-speed switching pulse stream, the output stage switches on/off, then filtering and the speaker recover audio current.",
       advantage: "Benefit: high efficiency and low heat, well suited to battery-powered and compact devices.",
-      caution: "Watch out: output filtering, EMI, power supply, and PCB layout matter.",
+      caution: "Watch out: external LC requirements depend on modulation, load and wiring; EMI, supply and layout still matter.",
       usage: "Common in: Bluetooth speakers, phones, TVs, portable devices, and high-efficiency high-power amps."
     }
   }
@@ -119,15 +119,19 @@ function renderAmplifierDiagram(language: Language, ampClass: AmpClass) {
   } satisfies Record<AmpClass, Record<Language, string>>;
   const outputLabel = {
     "class-a": { zh: "线性连续输出", en: "Linear continuous output" },
-    "class-ab": { zh: "正负半周交替输出", en: "Positive and negative halves alternate" },
+    "class-ab": { zh: "正负半周交替输出", en: "Push-pull sum" },
     "class-d": { zh: "PWM 开关输出", en: "PWM switching output" }
   } satisfies Record<AmpClass, Record<Language, string>>;
-  const outputWave = {
-    "class-a": "M 438 190 C 456 134 474 134 492 190 S 528 246 546 190",
-    "class-ab": "M 438 190 C 452 144 466 144 480 190 H 492 C 506 236 520 236 534 190 H 546",
-    "class-d": "M 438 190 H 451 V 138 H 464 V 242 H 477 V 138 H 490 V 242 H 503 V 138 H 516 V 242 H 529 V 138 H 542 V 190"
-  } satisfies Record<AmpClass, string>;
-  const inputWave = "M 62 190 C 80 152 98 152 116 190 S 152 228 170 190 206 152 224 190";
+  const sinePath = (x: number, width: number, amplitude: number) => Array.from({ length: 121 }, (_, i) =>
+    `${i === 0 ? "M" : "L"} ${(x + width * i / 120).toFixed(2)} ${(190 - amplitude * Math.sin(2 * Math.PI * i / 120)).toFixed(2)}`
+  ).join(" ");
+  const inputWave = sinePath(62, 162, 28);
+  const linearOutput = sinePath(438, 108, 44);
+  // Deliberately slow carrier: one sampled duty value per period makes PWM visible.
+  const pwmOutput = "M 438 242 " + Array.from({ length: 10 }, (_, i) => {
+    const duty = 0.5 + 0.4 * Math.sin(2 * Math.PI * (i + 0.5) / 10);
+    return `V 138 H ${(438 + (i + duty) * 10.8).toFixed(2)} V 242 H ${(438 + (i + 1) * 10.8).toFixed(2)}`;
+  }).join(" ");
 
   return (
     <figure className="amp-diagram-figure">
@@ -150,8 +154,8 @@ function renderAmplifierDiagram(language: Language, ampClass: AmpClass) {
         </text>
         <text className="interface-node-sub amp-flow-note" x="48" y="66">
           {language === "zh"
-            ? "同一条中线表示同一个时间基准，方便比较波形如何变化"
-            : "The shared center line uses the same time reference so waveform changes are easier to compare"}
+            ? "输入与输出各自展示同一周期；电压仅示意，横向间距不是传播时间"
+            : "Input and output each span one period; voltage is illustrative, spacing is not propagation time"}
         </text>
 
         <line className="amp-flow-centerline" x1="48" x2="712" y1="190" y2="190" />
@@ -174,23 +178,13 @@ function renderAmplifierDiagram(language: Language, ampClass: AmpClass) {
         <text className="interface-node-text" x="328" y="180">{ampClassLabel}</text>
         <text className="interface-node-sub" x="328" y="207">{stageLabel[ampClass][language]}</text>
         <text className="interface-node-sub" x="328" y="268">
-          {language === "zh" ? "决定效率、失真和发热" : "Sets efficiency, distortion, and heat"}
+          {language === "zh" ? "决定效率、失真和发热" : "Efficiency / distortion / heat"}
         </text>
 
         <text className="lab-label" x="492" y="112">
           {language === "zh" ? "功率输出" : "Power output"}
         </text>
-        <path className="interface-clock-line" d={outputWave[ampClass]} />
-        {ampClass === "class-ab" ? (
-          <>
-            <text className="interface-node-sub" x="470" y="246">
-              {language === "zh" ? "正半周" : "Positive half"}
-            </text>
-            <text className="interface-node-sub" x="528" y="246">
-              {language === "zh" ? "负半周" : "Negative half"}
-            </text>
-          </>
-        ) : null}
+        <path className={`interface-clock-line amp-output-wave${ampClass === "class-d" ? " amp-pwm-output" : ""}`} d={ampClass === "class-d" ? pwmOutput : linearOutput} />
         <text className="interface-node-sub" x="492" y="268">{outputLabel[ampClass][language]}</text>
 
         <text className="lab-label" x="656" y="112">
@@ -203,7 +197,9 @@ function renderAmplifierDiagram(language: Language, ampClass: AmpClass) {
           {language === "zh" ? "滤波后推动扬声器" : "Filtered current drives speaker"}
         </text>
       </svg>
-      <figcaption>{currentCopy}</figcaption>
+      <figcaption>{currentCopy}<br />{language === "zh"
+        ? (ampClass === "class-d" ? "PWM 占空比随输入变化；为看清脉宽，示例仅画每音频周期 10 个开关周期，并非实际开关频率或滤波仿真。" : "图示为未削波的理想线性输出。A / AB 的差别主要在器件偏置与导通角，AB 不应必然出现零点缺口。")
+        : (ampClass === "class-d" ? "PWM duty follows the input. Only 10 switching periods per audio cycle are drawn for readability, not a real switching frequency or filter simulation." : "Ideal unclipped linear output. A / AB differ mainly in bias and conduction angle; an AB output need not have a zero-crossing notch.")}</figcaption>
     </figure>
   );
 }
@@ -386,7 +382,7 @@ function renderTsDiagram(language: Language) {
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <marker id="tsFlowArrow" markerHeight="10" markerWidth="10" orient="auto" refX="8" refY="5">
+          <marker id="ampMatchArrow" markerHeight="10" markerWidth="10" orient="auto" refX="8" refY="5">
             <path d="M 0 0 L 10 5 L 0 10 Z" fill="#f0b46a" />
           </marker>
         </defs>
@@ -441,9 +437,9 @@ function renderTsDiagram(language: Language) {
 
 function renderCrossoverOrderDiagram(language: Language) {
   const rows = [
-    { label: language === "zh" ? "一阶" : "1st order", slope: "6 dB/oct", phase: language === "zh" ? "相位旋转小" : "less phase rotation", d: "M 84 132 C 220 132 302 142 420 230" },
-    { label: language === "zh" ? "二阶" : "2nd order", slope: "12 dB/oct", phase: language === "zh" ? "常需反相/对齐" : "often needs polarity/alignment", d: "M 84 212 C 196 212 292 222 420 310" },
-    { label: language === "zh" ? "四阶" : "4th order", slope: "24 dB/oct", phase: language === "zh" ? "保护强，设计更严格" : "more protection, stricter design", d: "M 84 292 C 190 292 262 302 420 382" }
+    { order: 1, label: language === "zh" ? "一阶" : "1st order", slope: "6 dB/oct", phase: language === "zh" ? "渐近带外衰减" : "asymptotic roll-off" },
+    { order: 2, label: language === "zh" ? "二阶" : "2nd order", slope: "12 dB/oct", phase: language === "zh" ? "渐近带外衰减" : "asymptotic roll-off" },
+    { order: 4, label: language === "zh" ? "四阶" : "4th order", slope: "24 dB/oct", phase: language === "zh" ? "渐近带外衰减" : "asymptotic roll-off" }
   ];
 
   return (
@@ -460,11 +456,22 @@ function renderCrossoverOrderDiagram(language: Language) {
         </text>
         <line className="spatial-response-axis" x1="84" x2="430" y1="352" y2="352" />
         <line className="spatial-response-axis" x1="84" x2="84" y1="92" y2="352" />
-        <text className="interface-node-sub" x="86" y="380">{language === "zh" ? "频率升高" : "frequency increases"}</text>
-        <text className="interface-node-sub" x="44" y="94">{language === "zh" ? "电平" : "level"}</text>
+        <text className="interface-node-sub" x="250" y="402">{language === "zh" ? "频率 / fc（对数轴）" : "Frequency / fc (log axis)"}</text>
+        <text className="interface-node-sub" x="54" y="80">dB</text>
+        {[0, -24, -48, -72].map(db => <g key={db}>
+          <line className="spatial-response-axis" x1="84" x2="430" y1={100 - db * 3.5} y2={100 - db * 3.5} />
+          <text className="interface-node-sub" x="60" y={104 - db * 3.5}>{db}</text>
+        </g>)}
+        {[0.125, 0.5, 1, 2, 8].map(ratio => <text className="interface-node-sub" key={ratio} x={84 + (Math.log2(ratio) + 3) / 6 * 346} y="374">{ratio}</text>)}
+        <line className="spatial-response-axis" x1="257" x2="257" y1="92" y2="352" />
+        <text className="interface-node-sub" x="300" y="86">fc: −3.01 dB</text>
         {rows.map((row, index) => (
           <g key={row.label}>
-            <path className={`amp-crossover-slope order-${index + 1}`} d={row.d} />
+            <path className={`amp-crossover-slope order-${index + 1}`} d={Array.from({ length: 121 }, (_, i) => {
+              const ratio = 2 ** (-3 + i / 20);
+              const db = -10 * Math.log10(1 + ratio ** (2 * row.order));
+              return `${i === 0 ? "M" : "L"} ${(84 + i / 120 * 346).toFixed(2)} ${(100 - Math.max(-72, db) * 3.5).toFixed(2)}`;
+            }).join(" ")} />
             <text className="lab-label" x="468" y={126 + index * 80}>{row.label}</text>
             <text className="interface-node-sub" x="548" y={126 + index * 80}>{row.slope}</text>
             <text className="interface-node-sub" x="468" y={150 + index * 80}>{row.phase}</text>
@@ -477,8 +484,8 @@ function renderCrossoverOrderDiagram(language: Language) {
       </svg>
       <figcaption>
         {language === "zh"
-          ? "分频不是简单切一刀。阶数越高，带外衰减越快，单元更安全；但电声相位、单元声学中心和摆位都会影响最终叠加。"
-          : "A crossover is not just a cut. Higher order gives faster out-of-band attenuation and better driver protection, but electrical/acoustic phase, acoustic centers, and placement affect the final sum."}
+          ? "分频不是简单切一刀。这里比较同一 fc、同一增益基准的 Butterworth 低通：电平 = −10 log10[1 + (f/fc)^(2n)]。这不是完整分频器的声学总响应；不能仅凭阶数判断是否反相，还要考虑滤波器类型、单元声学中心和摆位。"
+          : "A crossover is not just a cut. These Butterworth low-passes share fc and gain: level = −10 log10[1 + (f/fc)^(2n)]. This is not the summed acoustic response. Order alone does not decide polarity; filter type, acoustic centers and placement also matter."}
       </figcaption>
     </figure>
   );
@@ -494,7 +501,7 @@ function renderActivePassiveDiagram(language: Language) {
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <marker id="activePassiveArrow" markerHeight="10" markerWidth="10" orient="auto" refX="8" refY="5">
+          <marker id="enclosureFlowArrow" markerHeight="10" markerWidth="10" orient="auto" refX="8" refY="5">
             <path d="M 0 0 L 10 5 L 0 10 Z" fill="#f0b46a" />
           </marker>
         </defs>
@@ -502,7 +509,8 @@ function renderActivePassiveDiagram(language: Language) {
         <text className="lab-label amp-diagram-title" x="48" y="42">{language === "zh" ? "主动分频：先分频，再分别功放" : "Active crossover: split first, then amplify each band"}</text>
         <rect className="amp-block" height="58" rx="10" width="112" x="54" y="84" />
         <text className="interface-node-text" x="110" y="120">DSP</text>
-        <path className="amp-enclosure-arrow" d="M 170 112 H 220" />
+        <path className="amp-enclosure-arrow" d="M 170 112 H 196 V 92 H 220" />
+        <path className="amp-enclosure-arrow" d="M 196 112 V 176 H 220" />
         <rect className="amp-block" height="58" rx="10" width="112" x="224" y="62" />
         <text className="interface-node-text" x="280" y="98">{language === "zh" ? "低频功放" : "LF amp"}</text>
         <rect className="amp-block" height="58" rx="10" width="112" x="224" y="146" />
@@ -650,14 +658,14 @@ function renderMatchingDiagram(language: Language) {
           {language === "zh" ? "实际声压" : "Actual SPL"}
         </text>
         <text className="interface-node-sub" x="595" y="204">
-          {language === "zh" ? "听起来有多响" : "How loud it sounds"}
+          {language === "zh" ? "测量位置的声压级" : "SPL at the measurement point"}
         </text>
         <line className="amp-match-divider" x1="526" x2="670" y1="222" y2="222" />
         <text className="interface-node-text" x="595" y="240">
           {language === "zh" ? "失真 / 保护风险" : "Distortion / protection risk"}
         </text>
         <text className="interface-node-sub" x="595" y="282">
-          {language === "zh" ? "功率过小会削波，阻抗过低会过流" : "Too little power clips; too low impedance overcurrents"}
+          {language === "zh" ? "超出电压余量会削波；低阻抗可能触发过流" : "Voltage limit: clipping; current limit: protection"}
         </text>
         <text className="interface-node-sub" x="595" y="302">
           {language === "zh" ? "灵敏度低需要更多功率" : "Low sensitivity needs more power"}
@@ -668,8 +676,8 @@ function renderMatchingDiagram(language: Language) {
       </svg>
       <figcaption>
         {language === "zh"
-          ? "匹配不是只看一个参数：功放功率、扬声器阻抗和灵敏度共同决定可达到的声压、失真风险和保护动作。"
-          : "Matching is not one number: amplifier power, speaker impedance, and sensitivity together determine achievable SPL, distortion risk, and protection behavior."}
+          ? "匹配不是只看一个参数。额定功率小不代表一定削波，超过电压或电流余量才可能失真。阻抗随频率变化；灵敏度要区分 1 W/1 m 与 2.83 V/1 m，后者仅在 8 Ω 纯电阻下等于 1 W。"
+          : "Matching is not one number. A low power rating alone does not cause clipping; exceeding voltage or current headroom can distort. Impedance varies with frequency. Distinguish 1 W/1 m from 2.83 V/1 m; the latter equals 1 W only into an 8-ohm resistive load."}
       </figcaption>
     </figure>
   );

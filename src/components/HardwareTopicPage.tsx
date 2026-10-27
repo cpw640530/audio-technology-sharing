@@ -42,8 +42,8 @@ const microphoneSections = [
   {
     title: { zh: "先判断采集任务", en: "Start with the capture task" },
     description: {
-      zh: "专业内容页只建立选型框架：先看声源、距离和空间环境，再决定需要的灵敏度、指向性和耐受声压。",
-      en: "This page establishes the selection frame: check the source, distance, and room first, then choose sensitivity, directionality, and SPL tolerance."
+      zh: "先看声源、距离和空间环境，再决定需要的灵敏度、指向性和耐受声压。",
+      en: "Check the source, distance, and room first, then choose sensitivity, directionality, and SPL tolerance."
     },
     points: [
       { zh: "近距离大声压更看重耐受和余量；远场语音更看重自噪声、阵列布局和后端处理。", en: "Close loud sources need SPL headroom; far-field speech depends more on self-noise, array placement, and downstream processing." },
@@ -54,12 +54,12 @@ const microphoneSections = [
   {
     title: { zh: "再确认系统接口", en: "Then confirm the system interface" },
     description: {
-      zh: "麦克风输出会决定后面接什么：模拟电压要经过偏置、前级和 ADC；数字麦则把部分前端放进器件内部。",
-      en: "The microphone output determines what follows: analog voltage needs bias, preamp, and ADC, while a digital mic integrates part of the front end."
+      zh: "模拟输出需要匹配前级和 ADC；供电按类型决定：普通被动动圈不需供电，两线驻极体通常需要外部偏置。数字麦还需匹配电源、时钟和 PDM 或 I2S 接口。",
+      en: "Analog outputs need a suitable preamp and ADC. Power depends on type: conventional passive moving-coil capsules need none; two-wire electret capsules typically need external bias. Digital mics also require compatible power, clocks, and PDM or I2S interfaces."
     },
     points: [
       { zh: "先保证信号链有足够余量，再比较灵敏度、频响、自噪声和最大 SPL 等规格。", en: "Ensure signal-chain headroom first, then compare sensitivity, frequency response, self-noise, and maximum SPL." },
-      { zh: "PDM、I2S、ADC 和阵列算法属于后续接口与处理环节，具体参数留给实验室验证。", en: "PDM, I2S, ADC, and array algorithms belong to later interface and processing stages; their parameters are explored in the lab." },
+      { zh: "PDM 接收端需要抽取滤波；I2S 接收端需要匹配时钟、字长和声道配置。不能仅凭‘数字麦’判断接口兼容。", en: "PDM reception needs decimation; I2S reception needs matching clocks, word length, and channel settings. The label 'digital mic' alone does not establish compatibility." },
       { zh: "手机和耳机里的多麦 MEMS 常与波束成形、通话降噪和风噪检测配合，系统布局比单颗麦规格更关键。", en: "Multi-mic MEMS systems in phones and earbuds often pair beamforming with call noise reduction and wind detection, making layout as important as one mic's specification." }
     ]
   }
@@ -177,9 +177,6 @@ export function HardwareTopicPage({ relatedTopics,
               {section.points.map((point) => <li key={point.en}>{point[language]}</li>)}
             </ul>
             {index === 0 && <>
-              <p className="sound-topic-note microphone-topic-boundary">
-                {language === "zh" ? "内容分工：这里帮助你建立选型判断；实验室负责切换麦克风类型、调节角度/距离/增益，并观察或试听参数变化。" : "Division of labor: this page frames the selection decision; the lab switches microphone types, adjusts angle/distance/gain, and makes the changes visible or audible."}
-              </p>
               <MicrophoneAnatomy language={language} />
             </>}
           </section>

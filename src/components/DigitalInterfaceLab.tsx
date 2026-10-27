@@ -28,36 +28,36 @@ const protocolCopy: Record<
   i2s: {
     title: { zh: "协议：I2S / IIS / I²S", en: "Protocol: I2S / IIS / I²S" },
     body: {
-      zh: "I2S 用 BCLK 移动每一位数据，用 LRCLK 标记每条 SD 线上的左右半帧，SD 线上按固定对齐方式传 PCM 样本。MCLK 常作为 Codec 或 DAC 内部 PLL 的参考时钟。",
-      en: "I2S uses BCLK to shift each data bit, LRCLK to mark left/right half-frames on each SD line, and SD to carry PCM words with fixed alignment. MCLK is often the reference for a codec or DAC PLL."
+      zh: "增加总通道数时，会增加并行 SD 线，而不是提高单条线的位时钟。图中表示数字样本的传输顺序，不表示 ADC 在左右半帧分别采样。",
+      en: "Adding channels adds parallel SD lines rather than increasing the bit clock per line. The diagram shows sample transport order, not alternating left/right ADC acquisition."
     }
   },
   tdm: {
     title: { zh: "协议：TDM 多通道时分复用", en: "Protocol: TDM multichannel time division" },
     body: {
-      zh: "TDM 把多个声道放进一帧里的多个 slot。它仍然依赖 BCLK 和帧同步，但每个声道只占自己的时隙，常用于多麦阵列、会议设备、车载和多通道 Codec。",
-      en: "TDM packs multiple channels into slots within one frame. It still depends on BCLK and frame sync, but each channel owns a slot. It is common in mic arrays, conferencing devices, automotive systems, and multichannel codecs."
+      zh: "保持 slot 宽度不变，降低有效位深只增加填充位，不降低 BCLK；改变 slot 数或宽度才改变帧长。缩小时隙会同步降低超出范围的位深，提高位深则自动扩展时隙。",
+      en: "With fixed slot width, reducing valid bit depth adds padding without lowering BCLK. Slot count and width set frame length. Narrowing a slot also reduces any excessive bit depth; increasing bit depth expands the slot when needed."
     }
   },
   pdm: {
     title: { zh: "协议：PDM 数字麦克风", en: "Protocol: PDM digital microphone" },
     body: {
-      zh: "PDM 不是多 bit PCM，而是 1-bit 高速脉冲密度流。脉冲越密代表瞬时幅度越高，主控或 Codec 需要用抽取滤波把它变成普通 PCM；左右声道常通过时钟边沿或选择脚区分。",
-      en: "PDM is not multibit PCM. It is a high-speed 1-bit pulse-density stream. Denser pulses mean higher instantaneous amplitude, and a host or codec decimates it into regular PCM; left and right channels are often separated by clock edge or a select pin."
+      zh: "观察一小段时间内的 1/0 比例，而不是某一个 bit：1 较多偏向正电平，0 较多偏向负电平，各半接近零。图中脉冲是密度示例，并非上方正弦波的逐点调制结果。",
+      en: "Read the local proportion of 1s and 0s, not a single bit: more 1s means a more positive level, more 0s a more negative level, and half each is near zero. The bits illustrate density, not a simulated modulation of the sine above."
     }
   },
   spdif: {
     title: { zh: "协议：SPDIF 设备间数字音频", en: "Protocol: SPDIF device-to-device audio" },
     body: {
-      zh: "SPDIF 常走同轴或光纤，在一根链路里同时携带音频数据和时钟信息。它适合播放器、电视、功放、声卡之间连接，不适合作为芯片内部短距离总线。",
-      en: "SPDIF often runs over coaxial or optical links and carries both audio data and clock information on one connection. It fits players, TVs, amplifiers, and audio interfaces rather than short internal chip buses."
+      zh: "实物图为光纤线缆；下方两条线表示同轴与光纤两种可选连接，并不是需要同时连接两条线。接收端从所选链路中恢复时钟。",
+      en: "The photo shows an optical cable. The two lines below represent coaxial and optical alternatives, not two required simultaneous connections. The receiver recovers clocking from the chosen link."
     }
   },
   usb: {
     title: { zh: "协议：USB Audio 外设音频", en: "Protocol: USB Audio peripheral audio" },
     body: {
-      zh: "USB Audio 是外设级协议，不是简单的几根时钟线。音频样本被装进 USB 等时包，主机和设备通过缓冲、反馈端点和描述符协商采样率、通道和格式。",
-      en: "USB Audio is a peripheral-level protocol, not a few clock wires. Audio samples are packed into USB isochronous packets, while host and device coordinate sample rate, channels, and format through buffers, feedback endpoints, and descriptors."
+      zh: "这里示例主机向声卡异步播放，声卡用显式反馈向主机报告所需数据速率。并非所有 USB Audio 设备都使用独立反馈端点；采集方向及其他同步模式的配置不同。",
+      en: "This example shows asynchronous playback from host to interface, with explicit feedback reporting the required data rate. Not all USB Audio devices use a separate feedback endpoint; capture and other synchronization modes differ."
     }
   }
 };
@@ -169,7 +169,7 @@ function renderI2sDiagram(language: Language, bitDepth: number, channels: number
   const i2sDataRowHeight = 34;
   const i2sLastDataRowY = i2sDataStartY + (dataLines.length - 1) * i2sDataRowGap;
   const i2sNotesY = i2sLastDataRowY + i2sDataRowHeight + 44;
-  const i2sMclkLabelY = i2sNotesY + 94;
+  const i2sMclkLabelY = i2sNotesY + 134;
   const i2sMclkWaveY = i2sMclkLabelY + 16;
   const i2sMappingY = i2sMclkWaveY + 58;
   const i2sDiagramHeight = isMultichannelI2s ? i2sMappingY + 36 : 360;
@@ -191,7 +191,7 @@ function renderI2sDiagram(language: Language, bitDepth: number, channels: number
       <rect className="lab-diagram-bg" height={i2sDiagramHeight} rx="14" width="760" />
       <text className="lab-label" x="42" y="44">BCLK</text>
       <text className="lab-label" x="42" y="116">LRCLK</text>
-      <text className="lab-label" x="42" y={isMultichannelI2s ? 150 : 188}>{isMultichannelI2s ? "SD 数据线" : "SD"}</text>
+      <text className="lab-label" x="42" y={isMultichannelI2s ? 150 : 188}>{isMultichannelI2s ? (language === "zh" ? "SD 数据线" : "SD lines") : "SD"}</text>
       <text className="lab-label" x="42" y={isMultichannelI2s ? i2sMclkLabelY : 282}>MCLK</text>
       <path className="interface-clock-line" d={createSquareWavePath({ height: 28, pulses: 24, width: 588, x: 124, y: 72 })} />
       <path className="interface-frame-line" d="M 124 132 H 418 V 104 H 712 V 132" />
@@ -223,18 +223,18 @@ function renderI2sDiagram(language: Language, bitDepth: number, channels: number
           </text>
           <text className="interface-tdm-note" x="124" y={i2sNotesY + 22}>
             {language === "zh"
-              ? `左半帧同时采集 ${leftFrameChannels}`
-              : `The left half-frame captures ${leftFrameChannels} at the same time`}
-          </text>
-          <text className="interface-tdm-note" x="430" y={i2sNotesY + 22}>
-            {language === "zh"
-              ? `右半帧同时采集 ${rightFrameChannels}`
-              : `The right half-frame captures ${rightFrameChannels} at the same time`}
+              ? `左半帧并行传输 ${leftFrameChannels}`
+              : `Left half-frame transfers ${leftFrameChannels} in parallel`}
           </text>
           <text className="interface-tdm-note" x="124" y={i2sNotesY + 44}>
+            {language === "zh"
+              ? `右半帧并行传输 ${rightFrameChannels}`
+              : `Right half-frame transfers ${rightFrameChannels} in parallel`}
+          </text>
+          <text className="interface-tdm-note" x="124" y={i2sNotesY + 66}>
             {language === "zh" ? "每条 SD 仍只传一对 L / R；LRCLK 只负责左右半帧" : "Each SD still carries one L/R pair; LRCLK only marks the two half-frames"}
           </text>
-          <text className="interface-tdm-note" x="430" y={i2sNotesY + 44}>
+          <text className="interface-tdm-note" x="124" y={i2sNotesY + 88}>
             {language === "zh" ? "如果只用一条 SD 放多声道，那是 TDM 的 slot 思路" : "If one SD carries many channels, that is the TDM slot approach"}
           </text>
           <path className="interface-clock-line faint" d={createSquareWavePath({ height: 18, pulses: 12, width: 588, x: 124, y: i2sMclkWaveY })} />
@@ -269,14 +269,14 @@ function renderI2sDiagram(language: Language, bitDepth: number, channels: number
           </g>
           <text className="interface-channel-label" x="216" y="238">{language === "zh" ? `L: bit${bitDepth - 1} → bit0` : `L: bit${bitDepth - 1} to bit0`}</text>
           <text className="interface-channel-label" x="506" y="238">{language === "zh" ? `R: bit${bitDepth - 1} → bit0` : `R: bit${bitDepth - 1} to bit0`}</text>
-          <text className="lab-chip" x="390" y="324">{language === "zh" ? "LRCLK 每翻转一次切换声道" : "LRCLK toggles between channels"}</text>
+          <text className="lab-chip" x="418" y="324" textAnchor="middle">{language === "zh" ? "LRCLK 每翻转一次切换声道" : "LRCLK toggles between channels"}</text>
         </>
       )}
     </svg>
   );
 }
 
-function renderTdmDiagram(language: Language, channels: number, slotWidth: number) {
+function renderTdmDiagram(language: Language, channels: number, slotWidth: number, bitDepth: number) {
   const slots = Array.from({ length: channels }, (_, index) => index + 1);
   const slotVisualWidth = 620 / channels;
   const channelBoxWidth = 548 / channels;
@@ -285,7 +285,7 @@ function renderTdmDiagram(language: Language, channels: number, slotWidth: numbe
     <svg
       aria-label={language === "zh" ? "TDM 时隙图" : "TDM slot diagram"}
       role="img"
-      viewBox="0 0 760 430"
+      viewBox="0 0 760 460"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
@@ -293,12 +293,12 @@ function renderTdmDiagram(language: Language, channels: number, slotWidth: numbe
           <path d="M 0 0 L 8 4 L 0 8 Z" fill="#f0b46a" />
         </marker>
       </defs>
-      <rect className="lab-diagram-bg" height="430" rx="14" width="760" />
+      <rect className="lab-diagram-bg" height="460" rx="14" width="760" />
       <text className="lab-label" x="48" y="42">{language === "zh" ? "时钟与帧同步" : "Clock and frame sync"}</text>
       <text className="lab-chip" x="424" y="42">
         {language === "zh" ? `一帧 = ${channels} 个 slot` : `One frame = ${channels} slots`}
       </text>
-      <text className="lab-label" x="48" y="86">BCLK</text>
+      <text className="lab-label" x="18" y="86">BCLK</text>
       <path className="interface-clock-line" d={createSquareWavePath({ height: 22, pulses: 32, width: 620, x: 70, y: 94 })} />
       <text className="lab-label" x="48" y="138">FS</text>
       <path className="interface-frame-line" d="M 70 142 V 116 H 132 V 142 H 690" />
@@ -318,14 +318,14 @@ function renderTdmDiagram(language: Language, channels: number, slotWidth: numbe
               <text className="interface-slot-label" x={x + slotVisualWidth / 2 - 2.5} y="224">{`Slot ${slot}`}</text>
               <text className="interface-slot-sub" x={x + slotVisualWidth / 2 - 2.5} y="246">{language === "zh" ? `CH${slot}` : `CH${slot}`}</text>
               <text className="interface-slot-sub" x={x + slotVisualWidth / 2 - 2.5} y="268">
-                {slotWidth > 24 ? `bit${slotWidth - 1} → bit0` : "MSB→LSB"}
+                {`${bitDepth}+${slotWidth - bitDepth}`}
               </text>
             </g>
           );
         })}
       </g>
       <text className="interface-tdm-note" x="70" y="316">
-        {language === "zh" ? "每个 slot 内仍按 MSB → LSB 传一个采样字" : "Each slot still sends one sample word from MSB to LSB"}
+        {language === "zh" ? "每个 slot 内仍按 MSB → LSB 传一个采样字" : "Each slot sends one sample, MSB to LSB"}
       </text>
       <text className="interface-tdm-note" x="430" y="316">
         {language === "zh" ? `${channels} 个 slot 共用一条 SD 数据线` : `${channels} slots share one SD line`}
@@ -348,7 +348,7 @@ function renderTdmDiagram(language: Language, channels: number, slotWidth: numbe
       <text className="interface-tdm-note" x="70" y="420">
         {language === "zh" ? "slot 宽度可以大于有效位深，多余 bit 通常补 0" : "Slot width can exceed valid bit depth; extra bits are usually padded with 0"}
       </text>
-      <text className="interface-tdm-note" x="408" y="420">
+      <text className="interface-tdm-note" x="70" y="444">
         {language === "zh" ? "slot 顺序两端必须一致，否则 CH1/CH2 会错位" : "Slot order must match at both ends, or CH1/CH2 will shift"}
       </text>
     </svg>
@@ -363,7 +363,7 @@ function renderPdmDiagram(language: Language) {
     <svg
       aria-label={language === "zh" ? "PDM 到 PCM 转换图" : "PDM to PCM conversion diagram"}
       role="img"
-      viewBox="0 0 760 500"
+      viewBox="0 0 760 540"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
@@ -371,7 +371,7 @@ function renderPdmDiagram(language: Language) {
           <path d="M 0 0 L 8 4 L 0 8 Z" fill="#f0b46a" />
         </marker>
       </defs>
-      <rect className="lab-diagram-bg" height="500" rx="14" width="760" />
+      <rect className="lab-diagram-bg" height="540" rx="14" width="760" />
       <text className="lab-label" x="48" y="44">{language === "zh" ? "PDM 从哪里来" : "Where PDM comes from"}</text>
       <path className="interface-pcm-wave" d="M 58 116 C 86 74 122 74 150 116 S 214 158 242 116" />
       <text className="lab-chip" x="58" y="76">{language === "zh" ? "模拟声音电压" : "Analog sound voltage"}</text>
@@ -387,13 +387,13 @@ function renderPdmDiagram(language: Language) {
             className={bit === "1" ? "interface-pdm-bit high" : "interface-pdm-bit"}
             height={bit === "1" ? 58 : 16}
             key={`${bit}-${index}`}
-            width="7"
-            x={index * 11}
+            width="5"
+            x={index * 7}
             y={bit === "1" ? 0 : 42}
           />
         ))}
       </g>
-      <text className="lab-chip" x="492" y="170">{language === "zh" ? "1-bit 高速脉冲密度流" : "High-speed 1-bit pulse-density stream"}</text>
+      <text className="lab-chip" x="482" y="170">{language === "zh" ? "1-bit 高速脉冲密度流" : "High-rate 1-bit PDM"}</text>
 
       <text className="lab-label" x="48" y="230">{language === "zh" ? "密度如何表示幅度" : "Density represents amplitude"}</text>
       <text className="interface-tdm-note" x="56" y="260">{language === "zh" ? "脉冲密度表示幅度" : "Pulse density represents amplitude"}</text>
@@ -402,16 +402,16 @@ function renderPdmDiagram(language: Language) {
           <rect className={bit === "1" ? "interface-pdm-bit high" : "interface-pdm-bit"} height={bit === "1" ? 34 : 10} key={`dense-${index}`} width="9" x={index * 13} y={bit === "1" ? 0 : 24} />
         ))}
       </g>
-      <text className="interface-tdm-note" x="56" y="334">{language === "zh" ? "1 更密 = 幅度更高" : "Denser 1s = higher amplitude"}</text>
+      <text className="interface-tdm-note" x="56" y="334">{language === "zh" ? "1 更多 = 电平更偏正" : "More 1s = more positive"}</text>
       <g transform="translate(284 278)">
         {"1010101010101010".split("").map((bit, index) => (
           <rect className={bit === "1" ? "interface-pdm-bit high" : "interface-pdm-bit"} height={bit === "1" ? 34 : 10} key={`mid-${index}`} width="9" x={index * 13} y={bit === "1" ? 0 : 24} />
         ))}
       </g>
-      <text className="interface-tdm-note" x="284" y="334">{language === "zh" ? "1/0 接近一半 = 幅度接近 0" : "Balanced 1/0 = near zero amplitude"}</text>
+      <text className="interface-tdm-note" x="284" y="334">{language === "zh" ? "1/0 各半 ≈ 零电平" : "Half 1s / 0s ≈ zero"}</text>
 
       <rect className="interface-node" height="78" rx="10" width="158" x="534" y="250" />
-      <text className="interface-node-text" x="613" y="280">{language === "zh" ? "低通滤波 + 抽取降采样" : "LPF + decimation"}</text>
+      <text className="interface-node-text" x="613" y="280">{language === "zh" ? "低通 + 抽取" : "LPF + decimation"}</text>
       <text className="interface-node-sub" x="613" y="306">PDM → PCM</text>
       <path className="interface-flow-arrow" d="M 468 294 L 526 294" />
       <text className="interface-tdm-note" x="56" y="370">
@@ -425,8 +425,8 @@ function renderPdmDiagram(language: Language) {
       <text className="interface-tdm-note" x="56" y="478">
         {language === "zh" ? "48 kHz PCM 常见：3.072 MHz PDM = 48 kHz × 64" : "Common 48 kHz PCM case: 3.072 MHz PDM = 48 kHz x 64"}
       </text>
-      <text className="interface-tdm-note" x="392" y="478">
-        {language === "zh" ? "PDM 时钟由麦克风/Codec/外设时钟提供，不等于 CPU 主频" : "PDM clock comes from mic/codec/peripheral clocks, not the CPU frequency"}
+      <text className="interface-tdm-note" x="56" y="510">
+        {language === "zh" ? "数字麦的 PDM 时钟通常由主控或 Codec 提供，不等于 CPU 主频" : "The host or codec typically clocks a PDM mic, not at the CPU frequency"}
       </text>
     </svg>
   );
@@ -445,28 +445,32 @@ function renderSpdifDiagram(language: Language) {
         aria-label={language === "zh" ? "SPDIF 同轴光纤线示例图" : "SPDIF coaxial optical cable example"}
         height="210"
         href="/audio-technology-sharing/images/spdif-line.png"
-        preserveAspectRatio="xMidYMid slice"
+        preserveAspectRatio="xMidYMid meet"
         role="img"
         width="250"
         x="48"
         y="50"
       />
       <text className="lab-label" x="336" y="76">{language === "zh" ? "SPDIF 线缆示例" : "SPDIF cable example"}</text>
-      <text className="interface-tdm-note" x="336" y="110">
+      <foreignObject x="336" y="94" width="376" height="190">
+      <div className="interface-diagram-copy">
+      <p>
         {language === "zh"
           ? "同轴或光纤用于设备之间传数字音频"
           : "Coaxial or optical links carry digital audio between devices"}
-      </text>
-      <text className="interface-tdm-note" x="336" y="136">
+      </p>
+      <p>
         {language === "zh"
           ? "音频数据和时钟信息嵌在同一条链路里，接收端再恢复时钟"
           : "Audio data and clocking are embedded in one link, then recovered by the receiver"}
-      </text>
-      <text className="interface-tdm-note" x="336" y="162">
+      </p>
+      <p>
         {language === "zh"
           ? "它是外部设备互连接口，不是芯片内部的 I2S/TDM 总线"
           : "It is an external device interconnect, not an internal I2S/TDM chip bus"}
-      </text>
+      </p>
+      </div>
+      </foreignObject>
       <rect className="interface-device-node" height="96" rx="12" width="150" x="68" y="326" />
       <text className="interface-node-text" x="143" y="362">{language === "zh" ? "播放器 / 电视" : "Player / TV"}</text>
       <text className="interface-node-sub" x="143" y="390">{language === "zh" ? "SPDIF 输出" : "SPDIF out"}</text>
@@ -489,29 +493,38 @@ function renderUsbDiagram(language: Language) {
       viewBox="0 0 760 520"
       xmlns="http://www.w3.org/2000/svg"
     >
+      <defs>
+        <marker id="interfaceArrow" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4">
+          <path d="M 0 0 L 8 4 L 0 8 Z" fill="#f0b46a" />
+        </marker>
+      </defs>
       <rect className="lab-diagram-bg" height="520" rx="14" width="760" />
       <image
         aria-label={language === "zh" ? "USB 外置声卡示例图" : "USB external sound card example"}
         height="210"
         href="/audio-technology-sharing/images/usb-audio-card.png.png"
-        preserveAspectRatio="xMidYMid slice"
+        preserveAspectRatio="xMidYMid meet"
         role="img"
         width="250"
         x="48"
         y="50"
       />
       <text className="lab-label" x="336" y="76">{language === "zh" ? "USB 外置声卡示例" : "USB external sound card example"}</text>
-      <text className="interface-tdm-note" x="336" y="110">
+      <foreignObject x="336" y="94" width="376" height="190">
+      <div className="interface-diagram-copy">
+      <p>
         {language === "zh"
           ? "USB 连接主机，设备提供耳机、麦克风和耳麦一体接口"
           : "USB connects to the host; the device provides headphone, mic, and combo headset ports"}
-      </text>
-      <text className="interface-tdm-note" x="336" y="136">
+      </p>
+      <p>
         {language === "zh"
           ? "这类产品属于 USB Audio 外设，不是 SPDIF 同轴/光纤接口"
           : "This is a USB Audio peripheral, not an SPDIF coaxial or optical interface"}
-      </text>
-      <text className="lab-chip" x="336" y="188">{language === "zh" ? "设备枚举 → 端点 → 等时包 → 音频缓冲" : "Enumeration to endpoints to isochronous packets to audio buffers"}</text>
+      </p>
+      <p>{language === "zh" ? "设备枚举 → 端点 → 等时包 → 音频缓冲" : "Enumeration to endpoints to isochronous packets to audio buffers"}</p>
+      </div>
+      </foreignObject>
       <rect className="interface-device-node" height="82" rx="12" width="136" x="54" y="326" />
       <text className="interface-node-text" x="122" y="354">{language === "zh" ? "主机" : "Host"}</text>
       <text className="interface-node-sub" x="122" y="380">PC / Phone</text>
@@ -525,17 +538,18 @@ function renderUsbDiagram(language: Language) {
         </g>
       ))}
       <path className="interface-flow-arrow" d="M 196 366 L 224 366" />
-      <path className="interface-flow-arrow" d="M 552 366 L 526 366" />
-      <path className="interface-link-line alt" d="M 224 452 C 330 494 430 494 536 452" />
-      <text className="lab-chip" x="224" y="296">{language === "zh" ? "音频样本被装入 USB 等时包" : "Audio samples are packed into USB isochronous packets"}</text>
-      <text className="lab-chip" x="156" y="492">{language === "zh" ? "主机 / 设备用缓冲和反馈端点校准速率" : "Host/device align rates with buffers and feedback endpoints"}</text>
+      <path className="interface-flow-arrow" d="M 526 366 L 552 366" />
+      <path className="interface-link-line alt" d="M 536 452 C 430 484 330 484 224 452" />
+      <path className="interface-flow-arrow" d="M 244 452 L 224 452" />
+      <text className="lab-chip" x="224" y="296">{language === "zh" ? "音频样本被装入 USB 等时包" : "Playback: isochronous audio packets"}</text>
+      <text className="lab-chip" x="156" y="504">{language === "zh" ? "异步播放示例：设备向主机反馈速率" : "Async playback: rate feedback to host"}</text>
     </svg>
   );
 }
 
 function renderProtocolDiagram(protocol: InterfaceProtocol, language: Language, bitDepth: number, channels: number, slotWidth: number) {
   if (protocol === "tdm") {
-    return renderTdmDiagram(language, channels, slotWidth);
+    return renderTdmDiagram(language, channels, slotWidth, bitDepth);
   }
 
   if (protocol === "pdm") {
@@ -608,7 +622,13 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
               </span>
             ) : null}
           </div>
-          {renderProtocolDiagram(protocol, language, bitDepth, channels, slotWidth)}
+          <div className="interface-diagram-scroll" role="region" aria-label={language === "zh" ? "接口图解" : "Interface diagram"} tabIndex={0}>
+            {renderProtocolDiagram(protocol, language, bitDepth, channels, slotWidth)}
+          </div>
+          {usesClockControls && <p className="codec-model-note">{language === "zh"
+            ? (protocol === "i2s" ? "本图展示声道排布，位单元与时钟周期有省略，不按比例绘制。标准 I2S 在 LRCLK 切换后一个 BCLK 周期发送新声道 MSB；此处计算假设每个声道时隙宽度等于有效位深，不含填充。" : `每个 slot 下方的 ${bitDepth}+${slotWidth - bitDepth} 表示有效数据位 + 填充位；示例按左对齐、补 0 处理。时钟图不逐位展开，FS 宽度、极性和首位延迟以芯片配置为准。`)
+            : (protocol === "i2s" ? "Channel-layout schematic: bit cells and clock cycles are abbreviated, not to scale. Standard I2S sends the new MSB one BCLK after LRCLK changes. This calculation assumes slot width equals valid bit depth, with no padding." : `${bitDepth}+${slotWidth - bitDepth} in each slot means valid data bits + padding bits, shown left-aligned with zero padding. Clock cycles are abbreviated; FS width, polarity and first-bit delay depend on chip configuration.`)}
+          </p>}
         </div>
 
         <div className="digital-interface-panel">
@@ -617,6 +637,7 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
               <button
                 className={protocol === item ? "waveform-tab active" : "waveform-tab"}
                 key={item}
+                aria-pressed={protocol === item}
                 type="button"
                 onClick={() => setProtocol(item)}
               >
@@ -633,7 +654,11 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
                     {language === "zh" ? "Slot 宽度" : "Slot width"}
                     <strong>{slotWidth} bit</strong>
                   </span>
-                  <select aria-label={language === "zh" ? "Slot 宽度" : "Slot width"} value={slotWidth} onChange={(event) => setSlotWidth(Number(event.target.value))}>
+                  <select aria-label={language === "zh" ? "Slot 宽度" : "Slot width"} value={slotWidth} onChange={(event) => {
+                    const width = Number(event.target.value);
+                    setSlotWidth(width);
+                    setBitDepth(Math.min(bitDepth, width));
+                  }}>
                     {[16, 24, 32].map((value) => <option key={value} value={value}>{value} bit</option>)}
                   </select>
                 </label>}
@@ -664,7 +689,11 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
                     step="8"
                     type="range"
                     value={bitDepth}
-                    onChange={(event) => setBitDepth(Number(event.target.value))}
+                    onChange={(event) => {
+                      const depth = Number(event.target.value);
+                      setBitDepth(depth);
+                      setSlotWidth(Math.max(slotWidth, depth));
+                    }}
                   />
                 </label>
                 <label>

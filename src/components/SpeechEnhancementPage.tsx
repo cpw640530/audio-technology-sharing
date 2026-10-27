@@ -98,7 +98,7 @@ export function SpeechEnhancementPage({ relatedTopics, language, topic, onBack, 
         <section className="sound-topic-section">
           <div className="sound-topic-section-heading"><div>
             <h2>{language === "zh" ? "从麦克风到 ASR 的典型流程" : "A typical path from microphone to ASR"}</h2>
-            <p>{language === "zh" ? "模块名称会随 SoC SDK 改变，但数据边界和依赖关系大致稳定。" : "SDK names vary by SoC, but data boundaries and dependencies are broadly stable."}</p>
+            <p>{language === "zh" ? "这是一个典型链路，不是所有 SDK 的固定顺序。AEC 可以在各麦通道上先处理，也可以位于波束成形之后；应以具体 SDK 的参考信号、通道配置和模块依赖为准。" : "This is one typical chain, not a universal SDK order. AEC may run per microphone before beamforming or after it; follow the SDK's reference routing, channel configuration, and module dependencies."}</p>
           </div></div>
           <ol className="speech-topic-stages" aria-label={language === "zh" ? "语音增强处理流程" : "Speech enhancement processing flow"}>
             {stages.map((stage) => <li key={stage.number}><span>{stage.number}</span><strong>{stage.title[language]}</strong><p>{stage.detail[language]}</p></li>)}

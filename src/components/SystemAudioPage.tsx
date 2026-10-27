@@ -114,7 +114,7 @@ export function SystemAudioPage({ relatedTopics,
           <div className="sound-topic-section-heading">
             <div>
               <h2>{language === "zh" ? "系统如何管理一条音频流" : "How the system manages an audio stream"}</h2>
-              <p>{language === "zh" ? "这四层是系统级边界：播放通常从左向右，采集方向相反，全双工同时存在两条流。" : "These four layers define the system boundary: playback usually moves left to right, capture reverses it, and full duplex has both flows at once."}</p>
+              <p>{language === "zh" ? "这四层是职责边界，不是四道信号处理算法。播放数据由应用送往设备，采集数据反向返回；权限和路由策略控制两条流的建立与交付。" : "These are responsibility boundaries, not four signal-processing algorithms. Playback data goes from app to device; capture returns in reverse. Permission and routing policy control stream setup and delivery."}</p>
             </div>
           </div>
           <ol className="system-topic-flow" aria-label={language === "zh" ? "系统音频请求流程" : "System audio request flow"}>

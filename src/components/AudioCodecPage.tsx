@@ -102,7 +102,7 @@ const codecRows = [
   {
     name: "aptX",
     family: { zh: "蓝牙有损", en: "Bluetooth lossy" },
-    bitrate: { zh: "约 352-420 kbps", en: "about 352-420 kbps" },
+    bitrate: { zh: "经典 aptX：352.8 / 384 kbps", en: "Classic aptX: 352.8 / 384 kbps" },
     latency: { zh: "中，低延迟版本更低", en: "Medium, lower with low-latency variants" },
     principle: { zh: "通俗理解：不直接记完整波形，而是记相邻采样之间怎么变，计算量相对可控。", en: "Plainly: it stores how samples change from one to the next rather than storing the full waveform directly." },
     example: { zh: "例子：aptX 需要手机和耳机都支持；如果任一端不支持，通常会退回 SBC 或其他公共格式。", en: "Example: aptX needs support on both phone and headset; otherwise it usually falls back to SBC or another common format." },
@@ -121,10 +121,10 @@ const codecRows = [
 
 const compressionComparisonRows = [
   {
-    codec: "PCM / WAV",
+    codec: "PCM / PCM WAV",
     ratio: { zh: "约 1:1", en: "About 1:1" },
     typical: { zh: "48 kHz / 16-bit / 双声道约 1536 kbps", en: "48 kHz / 16-bit / stereo is about 1536 kbps" },
-    note: { zh: "不压缩，最直观，适合编辑和系统内部处理。", en: "Uncompressed and direct; good for editing and system internals." }
+    note: { zh: "此处特指 WAV 内装 PCM；WAV 是容器，也可装其他编码。", en: "This row means PCM in WAV; WAV is a container and can carry other codecs." }
   },
   {
     codec: "FLAC",
@@ -134,26 +134,32 @@ const compressionComparisonRows = [
   },
   {
     codec: "MP3 / AAC",
-    ratio: { zh: "约 6:1 到 16:1", en: "About 6:1 to 16:1" },
-    typical: { zh: "常见 96-320 kbps", en: "Often 96-320 kbps" },
+    ratio: { zh: "约 4.8:1 到 16:1", en: "About 4.8:1 to 16:1" },
+    typical: { zh: "48 kHz / 16-bit / 双声道：1536 → 96-320 kbps", en: "48 kHz / 16-bit / stereo: 1536 → 96-320 kbps" },
     note: { zh: "有损，依靠听觉掩蔽分配比特；低码率更容易损失高频细节。", en: "Lossy; uses auditory masking for bit allocation, and low bitrate more easily loses treble detail." }
   },
   {
-    codec: "Opus / LC3",
-    ratio: { zh: "约 6:1 到 30:1", en: "About 6:1 to 30:1" },
-    typical: { zh: "语音常见 16-64 kbps，音乐可更高", en: "Speech often 16-64 kbps; music can be higher" },
-    note: { zh: "更适合实时通信、弱网和低功耗场景。", en: "Better suited to real-time communication, weak networks, and low-power devices." }
+    codec: "Opus",
+    ratio: { zh: "示例 4:1 到 16:1", en: "Example: 4:1 to 16:1" },
+    typical: { zh: "16 kHz / 16-bit / 单声道：256 → 16-64 kbps", en: "16 kHz / 16-bit / mono: 256 → 16-64 kbps" },
+    note: { zh: "这是指定输入格式的语音例子，不是编码器固定压缩比。", en: "A voice example with a specified input format, not a fixed codec ratio." }
   },
   {
-    codec: "AMR",
-    ratio: { zh: "约 10:1 到 30:1", en: "About 10:1 to 30:1" },
-    typical: { zh: "约 4.75-23.85 kbps", en: "About 4.75-23.85 kbps" },
+    codec: "LC3",
+    ratio: { zh: "示例 8:1", en: "Example: 8:1" },
+    typical: { zh: "16 kHz / 16-bit / 单声道：256 → 32 kbps", en: "16 kHz / 16-bit / mono: 256 → 32 kbps" },
+    note: { zh: "LE Audio 的一个语音配置示例；实际按采样率、帧长和每帧字节数协商。", en: "One LE Audio speech configuration; actual operation negotiates sample rate, frame duration, and bytes per frame." }
+  },
+  {
+    codec: "AMR-NB",
+    ratio: { zh: "约 10.5:1 到 26.9:1", en: "About 10.5:1 to 26.9:1" },
+    typical: { zh: "8 kHz / 16-bit / 单声道：128 → 4.75-12.2 kbps", en: "8 kHz / 16-bit / mono: 128 → 4.75-12.2 kbps" },
     note: { zh: "语音专用，保可懂度，不适合音乐保真。", en: "Speech specific; keeps intelligibility, not music fidelity." }
   },
   {
     codec: "ADPCM",
     ratio: { zh: "约 4:1", en: "About 4:1" },
-    typical: { zh: "常见于简单设备和低延迟链路", en: "Common in simple devices and low-latency links" },
+    typical: { zh: "示例：16-bit PCM → 4-bit ADPCM，不计块头", en: "Example: 16-bit PCM → 4-bit ADPCM, excluding block headers" },
     note: { zh: "保存预测差分，实现简单，但压缩效率有限。", en: "Stores prediction differences; simple, but compression efficiency is limited." }
   }
 ] satisfies Array<{
@@ -211,7 +217,7 @@ const encodePath = [
 
 const decodePath = [
   { title: { zh: "码流输入", en: "Bitstream input" }, detail: { zh: "来自文件、网络、蓝牙或实时通信。", en: "From a file, network, Bluetooth, or live call." } },
-  { title: { zh: "解包与纠错", en: "Unpack and repair" }, detail: { zh: "取出编码帧、时间戳和必要冗余。", en: "Recover frames, timestamps, and redundancy." } },
+  { title: { zh: "解包与解析", en: "Unpack and parse" }, detail: { zh: "取出编码帧和时间戳；丢包恢复取决于协议和编解码器。", en: "Extract frames and timestamps; loss recovery depends on the protocol and codec." } },
   { title: { zh: "反量化与合成", en: "Inverse quantization and synthesis" }, detail: { zh: "从模型参数重建频域或时域信号。", en: "Reconstruct frequency- or time-domain signals from model parameters." } },
   { title: { zh: "PCM 输出", en: "PCM output" }, detail: { zh: "交给系统音频栈、后处理或 DAC。", en: "Deliver to the system audio stack, post-processing, or DAC." } }
 ];
@@ -287,8 +293,8 @@ export function AudioCodecPage({ relatedTopics, language, topic, onBack, onOpenL
           </div>
           <p className="sound-topic-note">
             {language === "zh"
-              ? "无损编码解码后可以逐样本还原；有损编码会利用听觉掩蔽、语音模型或带宽约束减少数据，因此音质、码率和延迟需要一起权衡。"
-              : "Lossless codecs can restore samples exactly; lossy codecs reduce data using auditory masking, speech models, or bandwidth constraints, so quality, bitrate, and latency must be balanced."}
+              ? "以上是有损编码路径：量化会引入不可逆误差。FLAC 等无损编码以预测残差和熵编码等方式保留全部样本精度；解码可逐样本还原，不经过丢精度的量化。"
+              : "The paths above describe lossy coding: quantization introduces irreversible error. Lossless codecs such as FLAC use prediction residuals and entropy coding to preserve sample precision and restore samples exactly."}
           </p>
         </section>
 
@@ -319,7 +325,7 @@ export function AudioCodecPage({ relatedTopics, language, topic, onBack, onOpenL
         <article className="audio-codec-reference-card">
           <div className="codec-mode-concepts-header">
             <h2>{language === "zh" ? "编码压缩率对比" : "Codec compression ratio comparison"}</h2>
-            <span>{language === "zh" ? "典型范围，受内容和编码器影响" : "Typical ranges, content and encoder dependent"}</span>
+            <span>{language === "zh" ? "压缩比 = 原 PCM 码率 / 编码码率；示例不计封装开销" : "Ratio = original PCM bitrate / encoded bitrate; examples exclude packaging overhead"}</span>
           </div>
           <div className="audio-codec-reference-table">
             <div className="audio-codec-reference-row header">

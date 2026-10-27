@@ -1563,6 +1563,9 @@ body.details-open {
   min-height: 420px;
 }
 
+.traditional-model-note { color: #c9d8d4; font-size: 13px; line-height: 1.6; margin: 16px 0 0; }
+.spatial-response-figure { margin: 0; }
+
 .core-signal-title {
   fill: #ffffff;
   font-size: 19px;
@@ -4985,6 +4988,22 @@ body.details-open {
   min-width: 0;
 }
 
+.mic-polar-display {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+}
+.mic-polar-display svg { width: 100%; }
+.mic-polar-legend { color: #c9d8d4; font-size: .875rem; line-height: 1.6; margin: 0; }
+.mic-pickup-readouts { margin: 0; color: #e9f5f1; font-size: .875rem; }
+.mic-pickup-readouts > div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #456059; }
+.mic-pickup-readouts dt { min-width: 0; overflow-wrap: anywhere; }
+.mic-pickup-readouts dd { margin: 0; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+@media (max-width: 600px) {
+  .mic-polar-display { grid-template-columns: minmax(0, 1fr); }
+}
+
 .codec-lab-visual {
   display: grid;
   gap: 14px;
@@ -5044,6 +5063,56 @@ body.details-open {
   display: block;
   height: auto;
   max-width: 100%;
+}
+
+.codec-diagram-scroll {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.interface-diagram-scroll {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.interface-diagram-scroll svg {
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .interface-diagram-scroll svg {
+    min-width: 700px;
+  }
+}
+
+.interface-diagram-copy {
+  color: #c9d8d4;
+  font: 14px/1.5 sans-serif;
+}
+
+.interface-diagram-copy p {
+  margin: 0 0 10px;
+}
+
+.codec-diagram-scroll svg {
+  width: 100%;
+  min-width: 580px;
+}
+
+.codec-lab-panel .waveform-tabs {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.codec-lab-panel .waveform-tab {
+  flex: 1 1 140px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .codec-diagram-scroll svg {
+    min-width: 700px;
+  }
 }
 
 .audio-codec-visual svg {
@@ -5410,32 +5479,23 @@ body.details-open {
 .system-audio-flow svg {
   display: block;
   height: auto;
-  min-height: 520px;
   width: 100%;
+}
+
+.system-audio-flow-scroll {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+@media (max-width: 700px) {
+  .system-audio-flow svg {
+    min-width: 1000px;
+  }
 }
 
 .system-audio-flow figcaption {
   color: #dbe8e4;
   line-height: 1.55;
-}
-
-.system-audio-mode-summary {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  color: #dbe8e4;
-  display: grid;
-  gap: 6px;
-  margin-bottom: 16px;
-  padding: 0 0 14px;
-}
-
-.system-audio-mode-summary strong {
-  color: #ffffff;
-  font-size: 1.05rem;
-}
-
-.system-audio-mode-summary p {
-  line-height: 1.6;
-  margin: 0;
 }
 
 .codec-analog-path {
@@ -5705,6 +5765,44 @@ body.details-open {
   stroke: rgba(126, 231, 216, 0.36);
   stroke-width: 1.5;
 }
+
+.audio-codec-flow-scroll {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.audio-codec-flow-chart {
+  display: block;
+  width: 100%;
+  min-width: 760px;
+  height: auto;
+}
+
+.audio-codec-node-copy {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  overflow-wrap: anywhere;
+  color: #c9d8d4;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.audio-codec-node-copy strong {
+  color: #fff;
+  font-size: 16px;
+}
+
+.alsa-buffer-svg [data-pointer] {
+  cursor: grab;
+  touch-action: none;
+}
+
+.alsa-app-legend { color: #7ee7d8; }
+.alsa-dma-legend { color: #f0b46a; }
 
 .audio-codec-pipeline-node.compressed {
   fill: rgba(240, 180, 106, 0.11);
@@ -6071,6 +6169,32 @@ body.details-open {
 .realtime-flow-chart {
   min-width: 0;
   width: 100%;
+}
+
+.realtime-flow-scroll {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.realtime-flow-scroll .realtime-flow-chart {
+  display: block;
+  min-width: 1050px;
+  height: auto;
+}
+
+.realtime-flow-node-copy {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  overflow-wrap: anywhere;
+  color: #c9d8d4;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.realtime-flow-node-copy strong {
+  color: #fff;
+  font-size: 21px;
 }
 
 .realtime-flow-chart marker path {
@@ -6471,6 +6595,11 @@ body.details-open {
 
 .amp-wave-input {
   stroke-width: 5;
+}
+
+.amp-pwm-output {
+  stroke-width: 1.2;
+  stroke-linecap: butt;
 }
 
 .amp-flow-centerline {

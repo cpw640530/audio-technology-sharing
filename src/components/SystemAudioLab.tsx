@@ -72,7 +72,7 @@ const linuxArchitectureLayers = [
     detail: { zh: "音频流管理、路由、会话和低延迟服务", en: "stream management, routing, sessions, low-latency service" }
   },
   {
-    kind: "driver",
+    kind: "software",
     title: { zh: "ALSA 用户态接口", en: "ALSA user-space interface" },
     detail: { zh: "alsa-lib / PCM API / mixer control", en: "alsa-lib / PCM API / mixer control" }
   },
@@ -104,32 +104,29 @@ const flowTabs: Array<{ id: FlowMode; label: Record<Language, string> }> = [
 
 const flowCopy = {
   playback: {
-    title: { zh: "播放链路重点", en: "Playback focus" },
     summary: {
       zh: "播放链路重点：系统把应用输出映射到当前可用的输出设备。",
       en: "Playback focus: the system maps app output to the currently available output device."
     },
   },
   capture: {
-    title: { zh: "录音链路重点", en: "Capture focus" },
     summary: {
       zh: "录音链路重点：系统在应用拿到数据前完成权限、输入选择和格式交付。",
       en: "Capture focus: the system handles permission, input selection, and format delivery before the app receives data."
     },
   },
   duplex: {
-    title: { zh: "全双工重点", en: "Full-duplex focus" },
     summary: {
       zh: "全双工重点：系统只说明回放参考和采集流怎样接入语音链路。",
       en: "Full-duplex focus: the system only shows how playback reference and capture stream enter the voice path."
     },
   }
-} satisfies Record<FlowMode, { title: Record<Language, string>; summary: Record<Language, string> }>;
+} satisfies Record<FlowMode, { summary: Record<Language, string> }>;
 
 const flowSteps = {
   playback: [
     {
-      label: { zh: "App 播放请求", en: "App playback request" },
+      label: { zh: "App 播放请求", en: "Playback request" },
       sub: { zh: "媒体 / 游戏 / 提示音", en: "Media / game / prompt" },
       x: 178,
       y: 170
@@ -185,13 +182,13 @@ const flowSteps = {
       y: 170
     },
     {
-      label: { zh: "权限 / 隐私指示", en: "Permission / privacy" },
-      sub: { zh: "麦克风授权", en: "microphone grant" },
+      label: { zh: "音频服务", en: "Audio service" },
+      sub: { zh: "授权后交付", en: "authorized delivery" },
       x: 794,
       y: 448
     },
     {
-      label: { zh: "预处理", en: "Preprocess" },
+      label: { zh: "可选预处理", en: "Optional processing" },
       sub: { zh: "增益 / 降噪 / 格式", en: "gain / denoise / format" },
       x: 486,
       y: 448
@@ -206,7 +203,7 @@ const flowSteps = {
   duplex: [
     {
       label: { zh: "回放流", en: "Playback stream" },
-      sub: { zh: "远端语音 / 提示音", en: "remote voice / prompt" },
+      sub: { zh: "混音 / 音量后 PCM", en: "post-mix / volume PCM" },
       x: 190,
       y: 170
     },
@@ -218,7 +215,7 @@ const flowSteps = {
     },
     {
       label: { zh: "回放参考", en: "Playback reference" },
-      sub: { zh: "送入语音处理", en: "to voice processing" },
+      sub: { zh: "数字副本，需时间对齐", en: "aligned digital copy" },
       x: 822,
       y: 170
     },
@@ -256,7 +253,7 @@ function renderFlowDiagram(language: Language, flowMode: FlowMode) {
       return (
         <path
           className="system-audio-arrow"
-          d={`M ${Math.min(step.x, next.x) + FLOW_NODE_HALF_WIDTH} ${step.y} H ${Math.max(step.x, next.x) - FLOW_NODE_HALF_WIDTH}`}
+          d={`M ${step.x + Math.sign(next.x - step.x) * FLOW_NODE_HALF_WIDTH} ${step.y} H ${next.x - Math.sign(next.x - step.x) * FLOW_NODE_HALF_WIDTH}`}
           key={`${step.label.en}-${next.label.en}`}
         />
       );
@@ -273,6 +270,7 @@ function renderFlowDiagram(language: Language, flowMode: FlowMode) {
 
   return (
     <figure className="system-audio-flow">
+      <div className="system-audio-flow-scroll" role="region" aria-label={language === "zh" ? "链路图解" : "Path diagram"} tabIndex={0}>
       <svg aria-label={label[flowMode][language]} role="img" viewBox={FLOW_VIEWBOX} xmlns="http://www.w3.org/2000/svg">
         <defs>
           <marker id="systemAudioArrow" markerHeight="10" markerWidth="10" orient="auto" refX="8" refY="5">
@@ -304,16 +302,16 @@ function renderFlowDiagram(language: Language, flowMode: FlowMode) {
         {isDuplex ? (
           <>
             <path className="system-audio-arrow" d="M 316 170 H 380" />
-            <path className="system-audio-arrow" d="M 632 170 H 696" />
+            <path className="system-audio-arrow reference" d="M 348 170 V 78 H 822 V 94" />
             <path className="system-audio-arrow reference" d="M 822 246 C 822 330 632 354 548 386" />
             <path className="system-audio-arrow" d="M 316 462 H 380" />
             <path className="system-audio-arrow" d="M 632 462 H 696" />
             <path className="system-audio-arrow echo" d="M 506 246 C 416 318 286 342 190 386" />
-            <text className="system-audio-note" x="944" y="176">
-              {language === "zh" ? "回放参考不出声，只给算法对齐" : "Reference is for algorithm alignment"}
+            <text className="system-audio-note" x="56" y="584">
+              {language === "zh" ? "青色虚线：回放 PCM 分支 → AEC 参考；用于估计回声，需匹配延迟与采样时钟" : "Teal dashed: playback PCM → AEC reference; estimates echo with delay / clock alignment"}
             </text>
-            <text className="system-audio-note" x="306" y="628">
-              {language === "zh" ? "扬声器声可能被麦克风再次采到" : "Speaker sound may be captured by the mic"}
+            <text className="system-audio-note" x="56" y="628">
+              {language === "zh" ? "橙色虚线：扬声器声经过房间传播，被麦克风再次采到" : "Orange dashed: speaker sound travels through the room and reaches the mic"}
             </text>
           </>
         ) : (
@@ -323,7 +321,10 @@ function renderFlowDiagram(language: Language, flowMode: FlowMode) {
           })
         )}
       </svg>
-      <figcaption>{flowCopy[flowMode].summary[language]}</figcaption>
+      </div>
+      <figcaption>{flowCopy[flowMode].summary[language]}{flowMode === "capture" && (language === "zh"
+        ? " 权限与隐私属于控制策略，不是处理 PCM 的滤波步骤；授权可在打开设备前或交付数据前检查。"
+        : " Permission and privacy are control policy, not PCM filtering; checks can gate device opening or data delivery.")}</figcaption>
     </figure>
   );
 }
@@ -359,13 +360,13 @@ function ArchitectureStack({
 
 export function SystemAudioLab({ language, onBack, onBackToDetails }: SystemAudioLabProps) {
   const [flowMode, setFlowMode] = useState<FlowMode>("playback");
-  const currentCopy = flowCopy[flowMode];
 
   return (
     <main className="codec-lab-page system-audio-lab">
       <section className="sound-lab-hero" aria-labelledby="system-audio-lab-title">
         <div className="sound-lab-back-actions">
           <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
+            <ArrowLeft size={18} aria-hidden="true" />
             {language === "zh" ? "返回知识库" : "Back to knowledge base"}
           </button>
           {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
@@ -414,8 +415,8 @@ export function SystemAudioLab({ language, onBack, onBackToDetails }: SystemAudi
 
         <p className="system-audio-overview-note">
           {language === "zh"
-            ? "Linux 只是具体映射：桌面常见 PipeWire / PulseAudio → ALSA，嵌入式常见 ASoC → Codec / 功放。接口时序和环形 buffer 分别在对应专题展开。"
-            : "Linux is one concrete mapping: desktop systems commonly use PipeWire / PulseAudio → ALSA, while embedded systems often use ASoC → codec / amplifier. Interface timing and ring buffers belong to their dedicated topics."}
+            ? "Linux 只是具体映射：PipeWire、PulseAudio、JACK 是不同服务方案，不是必须逐级串联；应用也可直接使用 alsa-lib。alsa-lib 在用户态，ALSA/ASoC 驱动在内核态。以上箭头表示播放方向，采集方向相反。"
+            : "Linux is one concrete mapping: PipeWire, PulseAudio and JACK are service alternatives, not mandatory successive layers; applications can also use alsa-lib directly. alsa-lib is user-space software; ALSA/ASoC drivers run in the kernel. The stack arrows show playback; capture runs in reverse."}
         </p>
       </section>
 
@@ -436,10 +437,6 @@ export function SystemAudioLab({ language, onBack, onBackToDetails }: SystemAudi
                 {tab.label[language]}
               </button>
             ))}
-          </div>
-          <div className="system-audio-mode-summary">
-            <strong>{currentCopy.title[language]}</strong>
-            <p>{currentCopy.summary[language]}</p>
           </div>
           {renderFlowDiagram(language, flowMode)}
         </div>

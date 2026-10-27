@@ -23,7 +23,7 @@ const realtimeStages = [
   },
   {
     title: { zh: "开始计时", en: "The clock starts" },
-    detail: { zh: "采样率和帧数决定下一次交付前的 deadline。", en: "Sample rate and frame count determine the deadline before the next delivery." }
+    detail: { zh: "帧数 / 采样率给出稳态的每块时间预算；实际截止时间还受队列水位影响。", en: "Frames / sample rate gives a steady-state block budget; the actual deadline also depends on queue occupancy." }
   },
   {
     title: { zh: "完成处理", en: "Processing completes" },
@@ -31,7 +31,7 @@ const realtimeStages = [
   },
   {
     title: { zh: "按时交付", en: "Handoff on time" },
-    detail: { zh: "输出端拿到新数据，或输入端及时取走数据；否则出现 XRUN。", en: "The output receives new data or the input is read in time; otherwise an XRUN occurs." }
+    detail: { zh: "及时交付或读取数据；延误耗尽缓冲余量后，才会出现 underrun / overrun。", en: "Deliver or read on time; delays cause underrun / overrun once buffering headroom is exhausted." }
   }
 ];
 
@@ -96,7 +96,7 @@ export function RealtimeAudioPage({ relatedTopics, language, topic, onBack, onOp
           <div className="sound-topic-cta">
             <CircuitBoard size={22} aria-hidden="true" />
             <h2>{language === "zh" ? "进入实时音频处理实验室" : "Open the real-time audio processing lab"}</h2>
-            <p>{language === "zh" ? "调整采样率、buffer 帧数、DSP 耗时和 CPU 抖动，观察 deadline、延迟和 XRUN 风险的关系。" : "Adjust sample rate, buffer frames, DSP time, and CPU jitter to observe deadline, latency, and XRUN risk."}</p>
+            <p>{language === "zh" ? "沿 16 kHz 单声道实例，跟踪采集、512 点处理块、MP3 攒帧和解码播放；再查看 AEC 的播放参考路径。" : "Follow a fixed 16 kHz mono example through capture, 512-sample processing blocks, MP3 framing, and decoded playback, then trace the AEC playback reference."}</p>
             <button className="diagram-open-button" type="button" onClick={onOpenLab}>
               {detail.lab?.buttonLabel[language]}
             </button>

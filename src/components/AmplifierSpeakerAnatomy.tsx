@@ -63,13 +63,13 @@ const icons = { amplifier: CircuitBoard, woofer: Speaker, crossover: Radio };
 function PrincipleDiagram({ mode, language }: { mode: AnatomyMode; language: Language }) {
   const zh = language === "zh";
   const labels = mode === "amplifier"
-    ? (zh ? ["输入小信号", "电压/电流增益", "输出级", "扬声器负载", "电源"] : ["Small signal", "Voltage/current gain", "Output stage", "Speaker load", "Power"])
+    ? (zh ? ["输入小信号", "电压/电流增益", "输出级", "扬声器负载", "电源"] : ["Small signal", "Gain", "Output stage", "Speaker load", "Power"])
     : mode === "woofer"
       ? (zh ? ["音频电流", "音圈", "磁隙中的力", "振膜运动", "空气声压"] : ["Audio current", "Voice coil", "Force in gap", "Diaphragm", "Air pressure"])
       : (zh ? ["功放输出", "低通支路", "低音单元", "高通支路", "高音单元"] : ["Amp output", "Low-pass", "Woofer", "High-pass", "Tweeter"]);
   return <svg className="amplifier-speaker-schematic" role="img" aria-label={zh ? `${modes[mode].label.zh}原理图` : `${modes[mode].label.en} principle diagram`} viewBox="0 0 620 300">
     <rect className="amplifier-speaker-schematic-bg" height="300" rx="12" width="620" />
-    <path className="amplifier-speaker-schematic-line" d="M48 150 H572" />
+    {mode !== "crossover" && <path className="amplifier-speaker-schematic-line" d="M48 150 H572" />}
     {mode === "amplifier" && <>
       {[{ x: 58, text: labels[0] }, { x: 190, text: labels[1] }, { x: 322, text: labels[2] }, { x: 454, text: labels[3] }].map(({ x, text }) => <g key={text}><rect className="amplifier-speaker-schematic-box" height="58" rx="7" width="108" x={x} y="121" /><text className="amplifier-speaker-schematic-text" textAnchor="middle" x={x + 54} y="155">{text}</text></g>)}
       <path className="amplifier-speaker-schematic-line" d="M376 121 V64 H250" /><text className="amplifier-speaker-schematic-label" x="258" y="55">{labels[4]}</text>
@@ -107,7 +107,6 @@ export function AmplifierSpeakerAnatomy({ language }: { language: Language }) {
         <figure><PrincipleDiagram language={language} mode={mode} /><figcaption>{language === "zh" ? "原理图：抽象表示主要能量或信号路径，不按比例。" : "Principle diagram: an abstract signal or energy path, not to scale."}</figcaption></figure>
         <div className="amplifier-speaker-anatomy-copy"><div className="amplifier-speaker-anatomy-heading"><Icon size={20} aria-hidden="true" /><h3>{item.label[language]}</h3></div><p>{item.description[language]}</p><ul>{item.parts.map((part) => <li key={part.en}>{part[language]}</li>)}</ul></div>
       </div>
-      <p className="amplifier-speaker-anatomy-note">{language === "zh" ? "详细内容负责识别器件与基本职责；功放类别、箱体、T/S 参数、分频和线阵列的可视化变化请在实验室中验证。" : "This guide identifies objects and their roles; use the lab to explore amplifier classes, enclosures, T/S parameters, crossovers, and line arrays."}</p>
     </section>
   );
 }

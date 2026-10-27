@@ -224,7 +224,7 @@ function AlsaFlowDiagram({ language, direction }: { language: Language; directio
       </div>
       <figcaption className="alsa-flow-caption">
         <strong>{path[language]}</strong>
-        <span>{description[language]}</span>
+        <span>{language === "zh" ? "这是嵌入式 I2S 示例；USB / PCI 声卡不必经过 ASoC 和 I2S，PCM 插件也取决于设备名配置。" : "This is an embedded I2S example; USB / PCI devices need not use ASoC or I2S, and PCM plugins depend on device-name configuration."}</span>
       </figcaption>
     </figure>
   );
@@ -234,14 +234,18 @@ function AlsaBufferDiagram({
   config,
   direction,
   language,
-  usedFrames
+  usedFrames,
+  readFrame,
+  onChange
 }: {
   config: AlsaConfig;
   direction: StreamDirection;
   language: Language;
   usedFrames: number;
+  readFrame: number;
+  onChange: (readFrame: number, usedFrames: number) => void;
 }) {
-  const [dragFrame, setDragFrame] = useState<number | null>(null);
+  const [dragPointer, setDragPointer] = useState<"read" | "write" | null>(null);
   const bufferFrames = config.periodFrames * config.periodCount;
   const center = 310;
   const radius = 128;
@@ -251,9 +255,9 @@ function AlsaBufferDiagram({
     const angle = (frameAngle(frame) * Math.PI) / 180;
     return { x: center + Math.cos(angle) * distance, y: 210 + Math.sin(angle) * distance };
   };
-  const displayedFrames = dragFrame ?? usedFrames;
-  const appPointer = direction === "playback" ? displayedFrames : 0;
-  const dmaPointer = direction === "playback" ? 0 : displayedFrames;
+  const writeFrame = (readFrame + usedFrames) % bufferFrames;
+  const appPointer = direction === "playback" ? writeFrame : readFrame;
+  const dmaPointer = direction === "playback" ? readFrame : writeFrame;
   const title = language === "zh" ? "ALSA 环形 buffer" : "ALSA ring buffer";
   const description = direction === "playback"
     ? {
@@ -275,27 +279,30 @@ function AlsaBufferDiagram({
       >
         <svg aria-label={title} className="alsa-buffer-svg" role="img" viewBox="0 0 620 430" xmlns="http://www.w3.org/2000/svg"
           onPointerMove={(event) => {
-            if (dragFrame === null) return;
-            const rect = event.currentTarget.getBoundingClientRect();
-            const x = ((event.clientX - rect.left) / rect.width) * 620;
-            const y = ((event.clientY - rect.top) / rect.height) * 430;
-            const angle = (Math.atan2(y - 210, x - center) * 180) / Math.PI + 90;
-            setDragFrame(Math.round((((angle + 360) % 360) / 360) * bufferFrames));
+            if (dragPointer === null) return;
+            const matrix = event.currentTarget.getScreenCTM();
+            if (!matrix) return;
+            const cursor = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
+            const angle = (Math.atan2(cursor.y - 210, cursor.x - center) * 180) / Math.PI + 90;
+            const frame = Math.round((((angle + 360) % 360) / 360) * bufferFrames) % bufferFrames;
+            if (dragPointer === "read") onChange(frame, (writeFrame - frame + bufferFrames) % bufferFrames);
+            else onChange(readFrame, (frame - readFrame + bufferFrames) % bufferFrames);
           }}
-          onPointerUp={() => setDragFrame(null)}
-          onPointerLeave={() => setDragFrame(null)}>
+          onPointerUp={() => setDragPointer(null)}
+          onPointerCancel={() => setDragPointer(null)}
+          onLostPointerCapture={() => setDragPointer(null)}>
           <title>{title}</title>
           <desc>{description[language]}</desc>
           <rect className="alsa-buffer-background" height="430" rx="16" width="620" />
           <text className="alsa-buffer-heading" x="310" y="405" textAnchor="middle">{bufferFrames} frames · {language === "zh" ? "顺时针推进" : "clockwise progress"}</text>
           <circle className="alsa-buffer-track" cx={center} cy="210" r={radius} />
-          <circle className="alsa-buffer-period-used" cx={center} cy="210" r={radius} transform="rotate(-90 310 210)" strokeDasharray={`${(displayedFrames / bufferFrames) * circumference} ${circumference}`} />
+          <circle className="alsa-buffer-period-used" cx={center} cy="210" r={radius} transform={`rotate(${frameAngle(readFrame)} 310 210)`} strokeDasharray={`${(usedFrames / bufferFrames) * circumference} ${circumference}`} />
           <text className="alsa-buffer-heading" textAnchor="middle" x="310" y="203">{language === "zh" ? "着色：未读数据" : "Color: unread data"}</text>
-          <text className="alsa-buffer-heading" textAnchor="middle" x="310" y="230">{displayedFrames} frames</text>
+          <text className="alsa-buffer-heading" textAnchor="middle" x="310" y="230">{usedFrames} frames</text>
           {Array.from({ length: config.periodCount }, (_, index) => {
             const inner = point(index * config.periodFrames, radius - 18);
             const boundary = point(index * config.periodFrames, radius + 18);
-            const label = point((index + 0.5) * config.periodFrames, radius + 32);
+            const label = point((index + 0.5) * config.periodFrames, radius);
             return (
               <g key={index}>
                 <line className="alsa-buffer-period" data-period-index={index} x1={inner.x} x2={boundary.x} y1={inner.y} y2={boundary.y} />
@@ -303,14 +310,34 @@ function AlsaBufferDiagram({
               </g>
             );
           })}
-          {[{ frame: appPointer, className: "alsa-buffer-pointer-app", label: direction === "playback" ? (language === "zh" ? "应用写" : "App write") : (language === "zh" ? "应用读" : "App read") }, { frame: dmaPointer, className: "alsa-buffer-pointer-dma", label: direction === "playback" ? (language === "zh" ? "硬件/DMA 读" : "HW/DMA read") : (language === "zh" ? "硬件/DMA 写" : "HW/DMA write") }].map(({ frame, className, label }) => {
-            const inner = point(frame, radius - 10);
-            const outer = point(frame, radius + 28);
-            const text = point(frame, radius + 58);
-            return <g key={className} onPointerDown={() => setDragFrame(frame)}><line className={`alsa-buffer-pointer ${className}`} x1={inner.x} x2={outer.x} y1={inner.y} y2={outer.y} /><text className="alsa-buffer-pointer-label" textAnchor="middle" x={text.x} y={text.y + 4}>{label}</text></g>;
+          {[{ frame: appPointer, className: "alsa-buffer-pointer-app", kind: direction === "playback" ? "write" : "read" }, { frame: dmaPointer, className: "alsa-buffer-pointer-dma", kind: direction === "playback" ? "read" : "write" }].map(({ frame, className, kind }, index) => {
+            const inner = point(frame, index === 0 ? radius - 36 : radius + 20);
+            const outer = point(frame, index === 0 ? radius - 20 : radius + 36);
+            return <g key={className} data-pointer={kind} onPointerDown={(event) => {
+              event.preventDefault();
+              event.currentTarget.ownerSVGElement?.setPointerCapture(event.pointerId);
+              setDragPointer(kind as "read" | "write");
+            }}><line className={`alsa-buffer-pointer ${className}`} x1={inner.x} x2={outer.x} y1={inner.y} y2={outer.y} /></g>;
           })}
         </svg>
       </div>
+      <div className="alsa-controls">
+        <label className="alsa-control">
+          <span>{language === "zh" ? "读指针位置" : "Read pointer position"}: {readFrame}</span>
+          <input aria-label={language === "zh" ? "读指针位置" : "Read pointer position"} type="range" min="0" max={bufferFrames - 1} value={readFrame} onChange={(event) => {
+            const frame = Number(event.target.value);
+            onChange(frame, (writeFrame - frame + bufferFrames) % bufferFrames);
+          }} />
+        </label>
+        <label className="alsa-control">
+          <span>{language === "zh" ? "未读帧数" : "Unread frames"}: {usedFrames}</span>
+          <input aria-label={language === "zh" ? "未读帧数" : "Unread frames"} type="range" min="0" max={bufferFrames} value={usedFrames} onChange={(event) => onChange(readFrame, Number(event.target.value))} />
+        </label>
+      </div>
+      <p className="alsa-buffer-caption">
+        <span className="alsa-app-legend">APP: {direction === "playback" ? (language === "zh" ? "应用写" : "app write") : (language === "zh" ? "应用读" : "app read")} {appPointer} ({language === "zh" ? "内侧" : "inner"})</span>
+        {" · "}<span className="alsa-dma-legend">DMA: {direction === "playback" ? (language === "zh" ? "硬件读" : "hardware read") : (language === "zh" ? "硬件写" : "hardware write")} {dmaPointer} ({language === "zh" ? "外侧" : "outer"})</span>
+      </p>
       <figcaption className="alsa-buffer-caption">{description[language]} {language === "zh" ? "数字代表 period 分区，位置按 buffer 容量取模后回绕；这是静态快照，不代表指针停止。实际 ALSA 使用逻辑指针跟踪进度，仅靠环上位置不能区分空和满。" : "Numbers identify periods; positions wrap modulo buffer capacity. This is a static snapshot, not stopped pointers. ALSA tracks progress using logical pointers: ring positions alone cannot distinguish empty from full."}</figcaption>
     </figure>
   );
@@ -320,21 +347,26 @@ function AlsaLab({ language, onBack, onBackToDetails }: AlsaLabProps) {
   const [config, setConfig] = useState<AlsaConfig>(defaultConfig);
   const [mode, setMode] = useState<AlsaMode>("playback");
   const [streamDirection, setStreamDirection] = useState<StreamDirection>("playback");
+  const [ring, setRing] = useState({ read: 0, used: 320 });
   const periodMs = (config.periodFrames / config.sampleRate) * 1000;
   const bufferFrames = config.periodFrames * config.periodCount;
   const bufferMs = (bufferFrames / config.sampleRate) * 1000;
   const wakeupsPerSecond = config.sampleRate / config.periodFrames;
   const bytesPerSecond = config.sampleRate * config.channels * (config.bitDepth / 8);
-  const usedFrames = Math.round(bufferFrames * (streamDirection === "playback" ? 0.625 : 0.375));
+  const usedFrames = ring.used;
   const availableFrames = bufferFrames - usedFrames;
   const currentTab = modeTabs.find((tab) => tab.id === mode) ?? modeTabs[0];
   const format = formatNames[config.bitDepth];
   const command = streamDirection === "playback"
-    ? `aplay -D plughw:0,0 -f ${format} -r ${config.sampleRate} -c ${config.channels} raw.pcm`
-    : `arecord -D plughw:0,0 -f ${format} -r ${config.sampleRate} -c ${config.channels} capture.raw`;
+    ? `aplay -D plughw:0,0 -t raw -f ${format} -r ${config.sampleRate} -c ${config.channels} raw.pcm`
+    : `arecord -D plughw:0,0 -t raw -f ${format} -r ${config.sampleRate} -c ${config.channels} capture.raw`;
 
   function updateConfig(key: keyof AlsaConfig, value: number) {
     setConfig((current) => ({ ...current, [key]: value } as AlsaConfig));
+    if (key === "periodFrames" || key === "periodCount") {
+      const capacity = key === "periodFrames" ? value * config.periodCount : config.periodFrames * value;
+      setRing({ read: ring.read % capacity, used: Math.min(ring.used, capacity) });
+    }
   }
 
   function selectMode(nextMode: AlsaMode) {
@@ -442,14 +474,15 @@ function AlsaLab({ language, onBack, onBackToDetails }: AlsaLabProps) {
               <strong>buffer {formatMs(bufferMs)} ms</strong>
             </article>
             <article className="alsa-metric">
-              <span>{language === "zh" ? "唤醒频率" : "Wakeups per second"}</span>
-              <strong>{language === "zh" ? `${wakeupsPerSecond.toFixed(2)} 次/秒` : `${wakeupsPerSecond.toFixed(2)} wakeups/s`}</strong>
+              <span>{language === "zh" ? "名义 period 频率" : "Nominal period rate"}</span>
+              <strong>{wakeupsPerSecond.toFixed(2)} periods/s</strong>
             </article>
             <article className="alsa-metric">
               <span>{language === "zh" ? "数据速率" : "Data rate"}</span>
               <strong>{formatInteger(bytesPerSecond)} B/s</strong>
             </article>
           </section>
+          <p className="alsa-buffer-caption">{language === "zh" ? "period 频率不等于实际线程唤醒次数；后者还取决于 avail_min、通知方式和调度。" : "Period rate is not the actual thread wakeup rate; avail_min, notification mode, and scheduling also matter."}</p>
 
           <div className="alsa-mode-tabs" role="group" aria-label={language === "zh" ? "ALSA 实验模式" : "ALSA lab modes"}>
             {modeTabs.map((tab) => (
@@ -471,7 +504,7 @@ function AlsaLab({ language, onBack, onBackToDetails }: AlsaLabProps) {
                 <h2>{language === "zh" ? "环形 buffer 与指针" : "Ring buffer and pointers"}</h2>
                 <p>{language === "zh" ? "每个分区代表一个 period；分区数量和总容量随参数实时变化。" : "Each partition represents one period; partition count and total capacity update with the parameters."}</p>
               </div>
-              <AlsaBufferDiagram config={config} direction={streamDirection} language={language} usedFrames={usedFrames} />
+              <AlsaBufferDiagram config={config} direction={streamDirection} language={language} usedFrames={usedFrames} readFrame={ring.read} onChange={(read, used) => setRing({ read, used })} />
               <dl className="alsa-buffer-stats">
                 <div>
                   <dt>{streamDirection === "playback" ? (language === "zh" ? "排队待播放" : "Queued for playback") : (language === "zh" ? "可读采集帧" : "Captured frames ready")}</dt>
@@ -510,8 +543,8 @@ function AlsaLab({ language, onBack, onBackToDetails }: AlsaLabProps) {
                 <strong>snd_pcm_prepare</strong>
                 <p>
                   {language === "zh"
-                    ? "prepare 只把 PCM 流恢复到可运行状态；它不解决调度、处理耗时、设备参数或驱动时钟的根因。"
-                    : "prepare only returns the PCM stream to a runnable state; it does not fix scheduling, processing time, device parameters, or driver-clock root causes."}
+                    ? "prepare 只恢复到 PREPARED，不等于已经 RUNNING；仍需按启动阈值或显式 start 启动。它不解决调度、处理耗时、设备参数或驱动时钟的根因。"
+                    : "prepare returns the stream to PREPARED, not RUNNING; starting still follows the start threshold or an explicit start. It does not fix scheduling, processing time, device parameters, or driver-clock root causes."}
                 </p>
               </aside>
             </section>

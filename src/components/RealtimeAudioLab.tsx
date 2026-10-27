@@ -26,7 +26,8 @@ const periodMs = (bufferFrames / sampleRate) * 1000;
 const samples = bufferFrames * channels;
 const bytes = samples * bytesPerSample;
 const worstProcessingMs = dspMs + jitterMs;
-const latencyMs = periodMs * 3;
+const codecFrameSamples = 576;
+const firstFrameReadyMs = Math.ceil(codecFrameSamples / bufferFrames) * periodMs;
 
 const basicFlowSteps = [
   {
@@ -118,8 +119,8 @@ const alsaFlowSteps = [
     type: "hardware"
   },
   {
-    title: { zh: "I2S / PDM / USB Audio", en: "I2S / PDM / USB Audio" },
-    detail: { zh: "硬件接口把采样送到 SoC 或声卡", en: "hardware interface sends samples to SoC or audio card" },
+    title: { zh: "I2S", en: "I2S" },
+    detail: { zh: "本例 Codec 通过 I2S 把 PCM 送到 SoC", en: "this codec sends PCM to the SoC over I2S" },
     type: "hardware"
   },
   {
@@ -134,7 +135,7 @@ const alsaFlowSteps = [
   },
   {
     title: { zh: "period ready", en: "period ready" },
-    detail: { zh: "达到一个 period 后中断或唤醒应用", en: "interrupts or wakes the app when one period is ready" },
+    detail: { zh: "通知 period 进度；应用唤醒还取决于 avail_min", en: "reports period progress; app wakeups also depend on avail_min" },
     type: "driver"
   },
   {
@@ -164,7 +165,7 @@ const alsaFlowSteps = [
   },
   {
     title: { zh: "MP3 frame", en: "MP3 frame" },
-    detail: { zh: "例如 MP3 常见 1152 samples 一帧", en: "for example, MP3 commonly uses 1152 samples per frame" },
+    detail: { zh: "16 kHz MPEG-2 Layer III：576 samples / 36 ms", en: "16 kHz MPEG-2 Layer III: 576 samples / 36 ms" },
     type: "codec"
   }
 ] satisfies FlowStep[];
@@ -172,7 +173,7 @@ const alsaFlowSteps = [
 const playbackFlowSteps = [
   {
     title: { zh: "网络包 / 文件码流", en: "Network packet / file bitstream" },
-    detail: { zh: "RTSP/RTP 包、文件块或其他压缩码流入口", en: "RTSP/RTP packets, file chunks, or compressed bitstream input" },
+    detail: { zh: "RTP 承载媒体；RTSP 管理会话；也可读文件", en: "RTP carries media; RTSP controls the session; files also work" },
     type: "codec"
   },
   {
@@ -248,8 +249,8 @@ const bufferCards = [
   {
     title: { zh: "period buffer", en: "period buffer" },
     body: {
-      zh: "period 是 ALSA 唤醒应用的节奏单位。这里默认 512 samples，也就是 16 kHz 下 32 ms。",
-      en: "A period is the cadence that wakes the app. Here it is 512 samples, or 32 ms at 16 kHz."
+      zh: "period 是 ring buffer 的分区和进度通知单位，不是另一块独立 buffer。本例每 period 为 512 帧，即 16 kHz 下 32 ms；实际唤醒还取决于 avail_min 和调度。",
+      en: "A period partitions the ring and sets a progress-notification interval, not another buffer. Here 512 frames span 32 ms at 16 kHz; actual wakeups also depend on avail_min and scheduling."
     }
   },
   {
@@ -269,8 +270,8 @@ const bufferCards = [
   {
     title: { zh: "encoder input buffer", en: "Encoder input buffer" },
     body: {
-      zh: "编码器会按自己的帧长攒样本。比如 MP3 需要 1152 samples，32 ms 的 512 samples 需要多次拼帧。",
-      en: "The codec accumulates samples according to its own frame length. MP3 needs 1152 samples, so multiple 512-sample blocks are combined."
+      zh: "本例 16 kHz MPEG-2 Layer III 每帧 576 点（36 ms）；收到两个 512 点块后才够首帧，取走 576 点还剩 448 点。MPEG-1 Layer III 才是每帧 1152 点。攒帧时间不等于编码器全部算法延迟。",
+      en: "At 16 kHz, MPEG-2 Layer III uses 576 samples (36 ms). Two 512-sample blocks supply the first frame, leaving 448 samples. MPEG-1 Layer III uses 1152 samples. Accumulation time is not the full codec delay."
     }
   },
   {
@@ -290,8 +291,8 @@ const bufferCards = [
   {
     title: { zh: "解码器输入 buffer", en: "Decoder input buffer" },
     body: {
-      zh: "解码器通常不能只拿半帧数据工作，需要先攒够一个完整压缩帧，再输出对应的一段 PCM。",
-      en: "Decoders usually cannot process half a frame. They need a complete compressed frame before outputting a block of PCM."
+      zh: "通常需先收齐压缩帧；MP3 还可能引用前帧的 bit reservoir，因此有完整帧不代表可以从任意位置独立解码。",
+      en: "A complete compressed frame is usually required. MP3 may also reference earlier bit-reservoir data, so a complete frame does not guarantee independent decoding at an arbitrary position."
     }
   },
   {
@@ -356,84 +357,6 @@ function formatFrameMs(value: number) {
   return Number.isInteger(value) ? `${value} ms` : formatMs(value);
 }
 
-function getFlowTextUnits(text: string) {
-  return Array.from(text).reduce((total, char) => {
-    if (/[\u4e00-\u9fff]/.test(char)) {
-      return total + 1;
-    }
-    if (char === " ") {
-      return total + 0.3;
-    }
-    if (/[/|.,:;()\-]/.test(char)) {
-      return total + 0.35;
-    }
-    if (/[A-Za-z0-9_]/.test(char)) {
-      return total + 0.58;
-    }
-    return total + 0.75;
-  }, 0);
-}
-
-function findFlowTextBreak(text: string, maxUnits: number) {
-  const breakpoints = [" / ", "，", ", ", "、", " "];
-  const breakpointPositions = breakpoints.flatMap((separator) => {
-    const positions: number[] = [];
-    let index = text.indexOf(separator);
-    while (index !== -1) {
-      positions.push(index + separator.length);
-      index = text.indexOf(separator, index + separator.length);
-    }
-    return positions;
-  });
-  const minUsefulBreak = Math.max(2.5, maxUnits * 0.45);
-  const preferredBreakpoint = breakpointPositions
-    .map((position) => ({ position, units: getFlowTextUnits(text.slice(0, position)) }))
-    .filter(({ units }) => units > minUsefulBreak && units <= maxUnits)
-    .sort((a, b) => b.units - a.units)[0]?.position;
-  const fallbackBreakpoint = breakpointPositions
-    .map((position) => ({ position, units: getFlowTextUnits(text.slice(0, position)) }))
-    .filter(({ units }) => units > maxUnits && units <= maxUnits * 1.22)
-    .sort((a, b) => a.units - b.units)[0]?.position;
-
-  if (preferredBreakpoint ?? fallbackBreakpoint) {
-    return preferredBreakpoint ?? fallbackBreakpoint;
-  }
-
-  let units = 0;
-  for (let index = 0; index < text.length; index += 1) {
-    units += getFlowTextUnits(text[index]);
-    if (units >= maxUnits) {
-      return index + 1;
-    }
-  }
-
-  return text.length;
-}
-
-function splitFlowText(text: string, maxUnits: number, maxLines = 2) {
-  const lines: string[] = [];
-  let remaining = text;
-
-  while (getFlowTextUnits(remaining) > maxUnits && lines.length < maxLines - 1) {
-    const splitIndex = findFlowTextBreak(remaining, maxUnits);
-    lines.push(remaining.slice(0, splitIndex).trimEnd());
-    remaining = remaining.slice(splitIndex).trimStart();
-  }
-
-  if (remaining) {
-    lines.push(remaining);
-  }
-
-  return lines;
-}
-
-function renderFlowTextLines(lines: string[], x: number, lineGap: number) {
-  return lines.map((line, index) => (
-    <tspan dy={index === 0 ? 0 : lineGap} key={`${line}-${index}`} x={x}>
-      {index < lines.length - 1 ? `${line} ` : line}
-    </tspan>
-  ));
-}
 
 function FlowChart({
   ariaLabel,
@@ -453,7 +376,7 @@ function FlowChart({
   const isCompact = layout === "compact-horizontal";
   const canvasWidth = isCompact ? 1180 : 1480;
   const nodeWidth = isCompact ? 270 : 260;
-  const nodeHeight = isCompact ? 126 : 128;
+  const nodeHeight = 176;
   const columns = isCompact ? 4 : 5;
   const gapX = isCompact ? 16 : 20;
   const gapY = isCompact ? 34 : 40;
@@ -496,6 +419,7 @@ function FlowChart({
   };
 
   return (
+    <div className="realtime-flow-scroll" role="region" aria-label={ariaLabel[language]} tabIndex={0}>
     <svg
       aria-label={ariaLabel[language]}
       className="realtime-flow-chart"
@@ -515,11 +439,6 @@ function FlowChart({
       </text>
       {steps.map((step, index) => {
         const { x, y } = getPosition(index);
-        const titleMaxUnits = language === "zh" ? (isCompact ? 10.6 : 10.2) : isCompact ? 12.4 : 11.2;
-        const detailMaxUnits = language === "zh" ? (isCompact ? 14.1 : 12.4) : isCompact ? 15.6 : 14.2;
-        const titleLines = splitFlowText(step.title[language], titleMaxUnits, 2);
-        const detailLines = splitFlowText(step.detail[language], detailMaxUnits, 3);
-        const detailY = detailLines.length > 2 ? 71 : detailLines.length > 1 ? 73 : 84;
 
         return (
           <g key={`${id}-${step.title.en}`}>
@@ -531,12 +450,9 @@ function FlowChart({
               x={x}
               y={y}
             />
-            <text className="realtime-flow-node-title" x={x + 18} y={y + (titleLines.length > 1 ? 25 : 31)}>
-              {renderFlowTextLines(titleLines, x + 18, isCompact ? 23 : 25)}
-            </text>
-            <text className="realtime-flow-node-detail" x={x + 18} y={y + detailY}>
-              {renderFlowTextLines(detailLines, x + 18, isCompact ? 18 : 20)}
-            </text>
+            <foreignObject x={x + 14} y={y + 12} width={nodeWidth - 28} height={nodeHeight - 24}>
+              <div className="realtime-flow-node-copy"><strong>{step.title[language]}</strong><span>{step.detail[language]}</span></div>
+            </foreignObject>
             {index < steps.length - 1 ? (
               <path
                 className="realtime-flow-arrow"
@@ -548,6 +464,7 @@ function FlowChart({
         );
       })}
     </svg>
+    </div>
   );
 }
 
@@ -556,9 +473,9 @@ function SocAecDiagram({ language }: { language: Language }) {
     { id: "remote", title: { zh: "远端音频", en: "Remote audio" }, x: 60, y: 110, type: "codec" },
     { id: "adec", title: { zh: "ADEC", en: "ADEC" }, x: 260, y: 110, type: "codec" },
     { id: "mixer", title: { zh: "AO / Mixer", en: "AO / Mixer" }, x: 460, y: 110, type: "process" },
-    { id: "dac", title: { zh: "Codec DAC / I2S", en: "Codec DAC / I2S" }, x: 660, y: 110, type: "hardware" },
+    { id: "dac", title: { zh: "I2S → Codec DAC", en: "I2S → Codec DAC" }, x: 660, y: 110, type: "hardware" },
     { id: "speaker", title: { zh: "功放 / 扬声器", en: "Amp / speaker" }, x: 880, y: 110, type: "hardware" },
-    { id: "ref", title: { zh: "AEC reference buffer", en: "AEC reference buffer" }, x: 460, y: 270, type: "buffer" },
+    { id: "ref", title: { zh: "AEC 参考 PCM", en: "Reference PCM" }, x: 460, y: 270, type: "buffer" },
     { id: "mic", title: { zh: "麦克风", en: "Microphone" }, x: 60, y: 430, type: "hardware" },
     { id: "ai", title: { zh: "AI / DMA", en: "AI / DMA" }, x: 260, y: 430, type: "driver" },
     { id: "aec", title: { zh: "AEC", en: "AEC" }, x: 460, y: 430, type: "process" },
@@ -579,7 +496,7 @@ function SocAecDiagram({ language }: { language: Language }) {
     { d: "M 620 140 L 650 140" },
     { d: "M 820 140 L 870 140" },
     { d: "M 540 170 L 540 260" },
-    { d: "M 540 350 L 540 420" },
+    { d: "M 540 330 L 540 420" },
     { d: "M 220 460 L 250 460" },
     { d: "M 420 460 L 450 460" },
     { d: "M 620 460 L 650 460" },
@@ -588,6 +505,7 @@ function SocAecDiagram({ language }: { language: Language }) {
   ];
 
   return (
+    <div className="realtime-flow-scroll" role="region" aria-label={language === "zh" ? "SoC AEC 流程图" : "SoC AEC flow diagram"} tabIndex={0}>
     <svg
       aria-label={language === "zh" ? "典型 SoC AEC 和 3A 处理框图" : "Typical SoC AEC and 3A processing block diagram"}
       className="realtime-flow-chart realtime-soc-aec-chart"
@@ -610,8 +528,9 @@ function SocAecDiagram({ language }: { language: Language }) {
       <text className="realtime-soc-lane-label" x="60" y="408">
         {language === "zh" ? "麦克风采集链路" : "Microphone capture path"}
       </text>
-      <text className="realtime-soc-note" x="650" y="300">
-        {language === "zh" ? "AEC 需要播放参考和麦克风输入时间对齐" : "AEC needs time-aligned playback reference and mic input"}
+      <text className="realtime-soc-note" x="650" y="290">
+        <tspan x="650">{language === "zh" ? "AEC：播放参考与麦克风输入" : "AEC: playback reference and mic input"}</tspan>
+        <tspan x="650" dy="24">{language === "zh" ? "必须时间对齐" : "must be time-aligned"}</tspan>
       </text>
       <text className="realtime-soc-note" x="590" y="366">
         {language === "zh" ? "回采信号用于 AEC" : "Loopback signal feeds AEC"}
@@ -621,13 +540,14 @@ function SocAecDiagram({ language }: { language: Language }) {
       ))}
       {nodes.map((node) => (
         <g key={node.id}>
-          <rect className={`realtime-flow-node ${node.type}`} height="60" rx="9" width={node.id === "aenc" ? 120 : 160} x={node.x} y={node.y} />
-          <text className="realtime-soc-node-title" x={node.x + (node.id === "aenc" ? 60 : 80)} y={node.y + 31}>
+          <rect className={`realtime-flow-node ${node.type}`} height="60" rx="9" width={node.id === "aenc" ? 120 : node.id === "agc" ? 140 : 160} x={node.x} y={node.y} />
+          <text className="realtime-soc-node-title" x={node.x + (node.id === "aenc" ? 60 : node.id === "agc" ? 70 : 80)} y={node.y + 31}>
             {node.title[language]}
           </text>
         </g>
       ))}
     </svg>
+    </div>
   );
 }
 
@@ -681,9 +601,9 @@ export function RealtimeAudioLab({ language, onBack, onBackToDetails }: Realtime
                 : `${formatFrameMs(periodMs)} frame: ${samples} samples / ${bytes} bytes`}
             </strong>
             <strong>{language === "zh" ? `采集 period：${formatMs(periodMs)}` : `Capture period: ${formatMs(periodMs)}`}</strong>
-            <strong>{language === "zh" ? `Deadline：${formatMs(periodMs)}` : `Deadline: ${formatMs(periodMs)}`}</strong>
-            <strong>{language === "zh" ? `最坏处理耗时：${formatMs(worstProcessingMs)}` : `Worst processing time: ${formatMs(worstProcessingMs)}`}</strong>
-            <strong>{language === "zh" ? `估算采集到编码延迟：${formatMs(latencyMs)}` : `Estimated capture-to-encode latency: ${formatMs(latencyMs)}`}</strong>
+            <strong>{language === "zh" ? `每块处理预算：${formatMs(periodMs)}` : `Per-block budget: ${formatMs(periodMs)}`}</strong>
+            <strong>{language === "zh" ? `假设处理耗时上限：${formatMs(worstProcessingMs)}` : `Assumed processing bound: ${formatMs(worstProcessingMs)}`}</strong>
+            <strong>{language === "zh" ? `首帧样本攒齐时间：${formatMs(firstFrameReadyMs)}` : `First-frame samples available: ${formatMs(firstFrameReadyMs)}`}</strong>
             <strong className="realtime-status stable">{statusLabel}</strong>
           </div>
 
@@ -691,8 +611,8 @@ export function RealtimeAudioLab({ language, onBack, onBackToDetails }: Realtime
             <strong>{language === "zh" ? `DSP 耗时：${formatMs(dspMs)}` : `DSP time: ${formatMs(dspMs)}`}</strong>
             <span>
               {language === "zh"
-                ? "当前示例留有充足处理余量，filter 处理加 CPU 抖动仍明显小于 32 ms deadline。"
-                : "The current example has enough processing headroom; filter time plus CPU jitter stays well below the 32 ms deadline."}
+                ? "这是固定参数教学例子，不是实测：每 32 ms 交付 512 点，首帧需 576 点，64 ms 时样本才攒齐；尚未计入处理、编码器前视和传输延迟。实际 XRUN 还取决于队列水位与调度。"
+                : "This is a fixed teaching example, not a measurement: 512 samples arrive every 32 ms; the first 576-sample frame is available at 64 ms, before processing, codec lookahead, or transport delay. Actual XRUN risk also depends on queue occupancy and scheduling."}
             </span>
           </div>
 
