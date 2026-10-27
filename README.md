@@ -15,7 +15,7 @@
   <img alt="App" src="https://img.shields.io/badge/app-React%20%2B%20Vite-1f9d8a">
   <img alt="Language" src="https://img.shields.io/badge/language-English%20%7C%20Chinese-brightgreen">
   <img alt="Project Type" src="https://img.shields.io/badge/type-Audio%20Technology%20Sharing-purple">
-  <img alt="Status" src="https://img.shields.io/badge/status-planning-orange">
+  <img alt="Status" src="https://img.shields.io/badge/status-active%20development-green">
 </p>
 
 ---
@@ -25,6 +25,18 @@
 Audio Technology Sharing is a content-first repository and web app for organizing audio technology concepts into searchable cards, diagrams, articles, and interactive learning labs.
 
 The website provides a simple way to browse audio fundamentals, hardware, software, signal processing, AI audio algorithms, and real-world applications. Topic cards can open detailed explanations and focused labs for visual or interactive learning.
+
+**[Explore the website](https://cpw640530.github.io/audio-technology-sharing/)** · English and Chinese supported.
+
+## Interface and Reading Path
+
+- **Find a topic:** use the knowledge outline on the left, or search and filter the topic cards in the main area. Small screens use a single-column layout.
+- **Read the details:** open a topic page with a section outline, diagrams, engineering context, and links to adjacent topics.
+- **Try the lab:** follow the lab entry to explore the topic through interactive controls or guided visual explanations. Return to the detailed article or the knowledge base afterward.
+- **Explore further:** technical notes form a separate section for work-related learning; reference websites at the bottom of the homepage provide further reading.
+- **Choose your language:** the site starts in English and remembers your language choice. A slowly moving 3D waveform surface forms a non-interactive background, with a static reduced-motion mode and a plain-background fallback when WebGL is unavailable.
+
+The screenshots below are earlier interface examples; navigation and visual styling may differ from the current version. Local changes appear on the published site only after deployment.
 
 <p align="center">
   <img alt="Audio Technology Sharing website overview" src="./public/images/audio_technology_sharing.png" width="900">
@@ -58,12 +70,12 @@ It is designed for:
 
 | Area | Topics |
 | --- | --- |
-| Audio fundamentals | Sound, acoustics, sampling, bit depth, audio formats, listening perception |
-| Audio hardware | Microphones, ADC, DAC, codecs, amplifiers, speakers, headphones, embedded audio |
-| Audio software | Drivers, system audio architecture, audio data flow, codecs, real-time processing |
-| Traditional algorithms | FFT, filters, EQ, dynamics, noise suppression, echo cancellation, beamforming |
-| AI audio algorithms | ASR, TTS, AI denoising, source separation, voice cloning, music generation |
-| Applications | Conferencing, in-car acoustics, IoT, content creation, medical and industrial audio |
+| Audio fundamentals | Sound, audio units, sampling, quantization, encoding, listening perception and metrics |
+| Audio hardware | Microphones, ADC / DAC / Codec, digital audio interfaces, amplifiers and speakers |
+| Audio software | System audio architecture, ALSA, real-time processing, audio codecs |
+| Traditional algorithms | Core signal processing (FFT/STFT, filters, EQ, dynamics), speech enhancement, spatial audio |
+| AI audio | Overall processing flow, ASR, TTS, generation, event detection, enhancement, neural audio coding |
+| Applications | Bluetooth audio, conferencing, robots, in-car acoustics, IoT and content creation |
 
 ## Quick Start
 
@@ -75,7 +87,7 @@ Start from the main knowledge outline:
 
 - [Audio Technology Sharing Knowledge Outline](docs/audio_technology_knowledge_outline.md)
 
-The outline is the source document for future content expansion. Each section can later become a website category, article series, diagram page, or interactive explanation.
+The outline provides a content overview. Current topic metadata lives in `src/content/knowledge.ts`; detailed pages and labs are implemented under `src/components/`.
 
 To run the web app locally:
 
@@ -109,12 +121,12 @@ npm run build
     └── audio_technology_knowledge_outline.md
 ```
 
-## Website Content Plan
+## Learning Examples
 
-The current outline is intended to evolve into these web content modules:
+The articles and labs connect concepts to practical questions:
 
 - **Beginner guides**: sample rate, bit depth, frequency response, audio formats, Bluetooth latency.
-- **Hardware explainers**: microphones, DACs, amplifiers, TWS audio chains, embedded audio systems.
+- **Hardware explainers**: microphones, ADC/DAC conversion, digital interfaces, amplifiers and speakers.
 - **Algorithm visualizations**: FFT, filtering, noise suppression, echo cancellation, beamforming.
 - **AI audio series**: speech recognition, speech synthesis, AI denoising, voice cloning, audio generation.
 - **Application case studies**: conferencing systems, smart speakers, in-car voice interaction, live streaming audio.
