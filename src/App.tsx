@@ -1,4 +1,5 @@
 import { RelatedTopics } from "./components/RelatedTopics";
+import { ReferenceSites } from "./components/ReferenceSites";
 import { getTopicKey, type TopicKey } from "./content/relatedTopics";
 import { useEffect, useMemo, useState } from "react";
 import { AiAudioLab } from "./components/AiAudioLab";
@@ -1198,6 +1199,7 @@ export default function App() {
             />
           ) : null}
         </div>
+        <ReferenceSites language={language} />
       </main>
       <footer className="site-footer">
         <span>{interfaceCopy.footer[language]}</span>

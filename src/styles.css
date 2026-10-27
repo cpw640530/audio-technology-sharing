@@ -7360,6 +7360,26 @@ body.details-open {
   margin-top: 10px;
 }
 
+.reference-sites {
+  position: relative;
+  margin: 0 clamp(18px, 4vw, 56px);
+  padding: 32px 0;
+  border-top: 1px solid rgba(23, 33, 31, 0.12);
+}
+
+.reference-sites h2 { margin: 0 0 20px; font-size: 1.25rem; color: #17211f; }
+.reference-sites ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; margin: 0; padding: 0; list-style: none; }
+.reference-sites li { min-width: 0; padding: 16px 0; border-top: 1px solid rgba(23, 33, 31, 0.08); }
+.reference-sites a { display: inline-flex; align-items: baseline; gap: 8px; color: #1f7569; font-weight: 650; line-height: 1.5; text-decoration: none; overflow-wrap: anywhere; }
+.reference-sites a svg { flex-shrink: 0; align-self: center; }
+.reference-sites a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.reference-sites a:focus-visible { outline: 2px solid #1f7569; outline-offset: 4px; }
+.reference-sites p { margin: 6px 0 0; color: #52645f; font-size: .875rem; line-height: 1.6; }
+.reference-sites-sr { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 700px) {
+  .reference-sites ul { grid-template-columns: minmax(0, 1fr); }
+}
+
 .site-footer {
   align-items: center;
   border-top: 1px solid rgba(23, 33, 31, 0.1);

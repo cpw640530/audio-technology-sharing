@@ -11,6 +11,33 @@ describe("Audio knowledge app", () => {
     window.localStorage.setItem("audio-technology-language", "zh");
   });
 
+  it("shows seven external references on the homepage and switches their language", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const references = screen.getByRole("region", { name: "参考与延伸阅读" });
+    const links = within(references).getAllByRole("link");
+    expect(links).toHaveLength(7);
+    expect(links.map(link => link.getAttribute("href"))).toEqual([
+      "https://ciechanow.ski/sound/",
+      "https://learningsynths.ableton.com/",
+      "https://musiclab.chromeexperiments.com/",
+      "https://soundlab.sciencemusic.org/",
+      "https://www.whyyouhearwhatyouhear.com/",
+      "https://asp.virtual-acoustics.org/",
+      "https://www.soundonsound.com/techniques"
+    ]);
+    for (const link of links) {
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    }
+    expect(within(references).getByText(/通过交互图解理解空气振动/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "English" }));
+    expect(screen.getByRole("region", { name: "References and Further Reading" })).toBeInTheDocument();
+    expect(screen.getByText(/Interactive explanations of air vibration/)).toBeInTheDocument();
+    await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /What Sound Is/ }));
+    expect(screen.queryByRole("region", { name: "References and Further Reading" })).not.toBeInTheDocument();
+  });
+
   it("defines bounded, unique and resolvable related knowledge for every topic", () => {
     const topics = categories.flatMap(category => category.topics);
     const keys = topics.map(getTopicKey);
