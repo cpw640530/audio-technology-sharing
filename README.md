@@ -36,10 +36,18 @@ The website provides a simple way to browse audio fundamentals, hardware, softwa
 - **Explore further:** technical notes form a separate section for work-related learning; reference websites at the bottom of the homepage provide further reading.
 - **Choose your language:** the site starts in English and remembers your language choice. A slowly moving 3D waveform surface forms a non-interactive background, with a static reduced-motion mode and a plain-background fallback when WebGL is unavailable.
 
-The screenshots below are earlier interface examples; navigation and visual styling may differ from the current version. Local changes appear on the published site only after deployment.
+The screenshots below were captured from the production build on October 28, 2026, with background motion paused for readability. Local changes appear on the published site only after deployment.
 
 <p align="center">
   <img alt="Audio Technology Sharing website overview" src="./public/images/audio_technology_sharing.png" width="900">
+</p>
+
+## Detailed Articles
+
+Topic pages connect concepts, engineering boundaries, and practical experiments. The section outline on the left helps navigate the article, while the lab entry continues the learning path.
+
+<p align="center">
+  <img alt="What Sound Is article with section navigation and lab entry" src="./public/images/topic-detail.png" width="900">
 </p>
 
 ## Interactive Labs
