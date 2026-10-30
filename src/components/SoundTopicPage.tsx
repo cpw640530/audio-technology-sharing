@@ -4,6 +4,7 @@ import { ArrowLeft, BookOpen, Waves } from "lucide-react";
 import { categories, type Language } from "../content/knowledge";
 import { SoundWaveDiagram } from "./TopicDetails";
 import { TopicPager } from "./TopicPager";
+import { SoundPropagationDiagram } from "./SoundPropagationDiagram";
 
 type SoundTopicPageProps = {
   relatedTopics?: ReactNode;
@@ -24,9 +25,6 @@ if (!soundTopic) {
 export function SoundTopicPage({ relatedTopics, language, onBack, onOpenLab, onOpenNext }: SoundTopicPageProps) {
   const detail = soundTopic.detail;
   const terms = detail.termExplanations ?? [];
-  const flow = language === "zh"
-    ? ["声源振动", "空气压力 Δp", "麦克风膜片", "模拟电压", "ADC 采样与量化", "PCM 样本"]
-    : ["Source vibration", "Air pressure Δp", "Microphone diaphragm", "Analog voltage", "ADC sampling and quantization", "PCM samples"];
 
   return (
     <main className="sound-topic-page" aria-labelledby="sound-topic-title">
@@ -80,14 +78,7 @@ export function SoundTopicPage({ relatedTopics, language, onBack, onOpenLab, onO
               <p>{language === "zh" ? "每一步都改变信号的表达方式，但物理量和数字量不能混为一谈。" : "Each step changes the representation, but physical and digital quantities must not be conflated."}</p>
             </div>
           </div>
-          <ol className="sound-topic-flow" aria-label={language === "zh" ? "声音采集工程链路" : "Sound capture engineering chain"}>
-            {flow.map((step, index) => (
-              <li key={step}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <strong>{step}</strong>
-              </li>
-            ))}
-          </ol>
+          <SoundPropagationDiagram language={language} />
           <p className="sound-topic-note">{terms.find((term) => term.name.en === "From pressure to PCM")?.explanation[language]}</p>
         </section>
 

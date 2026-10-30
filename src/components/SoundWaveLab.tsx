@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Pause, Play } from "lucide-react";
+import { ArrowLeft, Pause, Play, RotateCcw } from "lucide-react";
 import type { Language } from "../content/knowledge";
 
 type WaveformType = "sine" | "square" | "triangle";
@@ -31,10 +31,10 @@ function createLabWavePath(
   const width = 680;
   const midY = 160;
   const drawAmplitude = amplitude * 110;
-  const cycles = Math.max(0.75, frequency / 220);
+  const cycles = frequency * 0.01;
   const phaseRadians = phase * Math.PI;
-  const points = Array.from({ length: 220 }, (_, index) => {
-    const ratio = index / 219;
+  const points = Array.from({ length: 801 }, (_, index) => {
+    const ratio = index / 800;
     const angle = ratio * Math.PI * 2 * cycles + phaseRadians;
     const x = 40 + ratio * width;
     let value = Math.sin(angle);
@@ -59,6 +59,7 @@ export function SoundWaveLab({ language, onBack, onBackToDetails }: SoundWaveLab
   const [amplitude, setAmplitude] = useState(0.6);
   const [frequency, setFrequency] = useState(440);
   const [phase, setPhase] = useState(0);
+  const [compare, setCompare] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<{
     context: AudioContext;
@@ -72,10 +73,10 @@ export function SoundWaveLab({ language, onBack, onBackToDetails }: SoundWaveLab
   );
   const phaseTerm = `${phase.toFixed(2)}π`;
   const formula = waveform === "sine"
-    ? `Δp(t) = ${amplitude.toFixed(2)} · sin(2π · ${frequency}t + ${phaseTerm})`
+    ? `x(t) = ${amplitude.toFixed(2)} · sin(2π · ${frequency}t + ${phaseTerm})`
     : waveform === "square"
-      ? `Δp(t) = ${amplitude.toFixed(2)} · sgn(sin(2π · ${frequency}t + ${phaseTerm}))`
-      : `Δp(t) = ${amplitude.toFixed(2)} · (2/π)asin(sin(2π · ${frequency}t + ${phaseTerm}))`;
+      ? `x(t) = ${amplitude.toFixed(2)} · sgn(sin(2π · ${frequency}t + ${phaseTerm}))`
+      : `x(t) = ${amplitude.toFixed(2)} · (2/π)asin(sin(2π · ${frequency}t + ${phaseTerm}))`;
   const periodMs = 1000 / frequency;
   const wavelengthM = 343 / frequency;
   const currentWaveLabel = waveformLabels[waveform][language];
@@ -229,31 +230,26 @@ export function SoundWaveLab({ language, onBack, onBackToDetails }: SoundWaveLab
             <line className="lab-axis" x1="40" x2="720" y1="160" y2="160" />
             <line className="lab-axis faint" x1="40" x2="720" y1="50" y2="50" />
             <line className="lab-axis faint" x1="40" x2="720" y1="270" y2="270" />
+            {compare && <path className="sound-lab-reference" d={createLabWavePath("sine", 0.6, 440, 0)} />}
             <path className="lab-wave-path" d={path} />
+            {[1, 0, -1].map(value => <text key={value} className="lab-label" x="32" y={164 - value * 110} textAnchor="end">{value}</text>)}
+            {[0, 2, 4, 6, 8, 10].map(ms => <text key={ms} className="lab-label" x={40 + ms * 68} y="290" textAnchor="middle">{ms}</text>)}
             <line
               className="lab-measure"
-              x1="112"
-              x2="112"
-              y1={(160 - amplitude * 110).toFixed(2)}
-              y2="160"
-            />
-            <text className="lab-label" x="126" y="112">
-              {language === "zh" ? "A 振幅" : "A amplitude"}
-            </text>
-            <line
-              className="lab-measure"
-              x1="140"
-              x2={(140 + 680 / Math.max(0.75, frequency / 220)).toFixed(2)}
+              x1="40"
+              x2={(40 + 68 * periodMs).toFixed(2)}
               y1="300"
               y2="300"
             />
-            <text className="lab-label" x="148" y="324">
+            <text className="lab-label" x="40" y="328">
               {language === "zh" ? "周期 T（时间）" : "Period T (time)"}
             </text>
-            <text className="lab-chip" x="520" y="66">{`f = ${frequency} Hz`}</text>
-            <text className="lab-chip" x="520" y="98">{`φ = ${phase.toFixed(2)}π`}</text>
-            <text className="lab-chip" x="520" y="130">{`A = ${amplitude.toFixed(2)}`}</text>
           </svg>
+          <div className="sound-lab-comparison">
+            <p>{language === "zh" ? "横轴：时间（ms），固定 0–10 ms；纵轴：归一化幅度 x(t)，不是实测 Pa 或 dBSPL。" : "Horizontal: time (ms), fixed at 0–10 ms. Vertical: normalized amplitude x(t), not measured Pa or dBSPL."}</p>
+            <label><input type="checkbox" checked={compare} onChange={event => setCompare(event.target.checked)} />{language === "zh" ? "显示原始状态（虚线）：正弦波 · 440 Hz · A 0.60 · φ 0" : "Original (dashed): sine · 440 Hz · A 0.60 · φ 0"}</label>
+            <p>{language === "zh" ? `当前：${(frequency * 0.01).toFixed(1)} 个周期 / 10 ms；峰值 ±${amplitude.toFixed(2)}。实线为当前状态。` : `Current: ${(frequency * 0.01).toFixed(1)} cycles / 10 ms; peak ±${amplitude.toFixed(2)}. Solid line shows the current state.`}</p>
+          </div>
         </div>
 
         <div className="sound-lab-panel">
@@ -282,6 +278,9 @@ export function SoundWaveLab({ language, onBack, onBackToDetails }: SoundWaveLab
             <button className="sine-button" type="button" onClick={() => stopAudio()}>
               <Pause size={16} aria-hidden="true" />
               {language === "zh" ? "停止" : "Stop"}
+            </button>
+            <button className="sine-button" type="button" onClick={() => { stopAudio(); setWaveform("sine"); setAmplitude(0.6); setFrequency(440); setPhase(0); }}>
+              <RotateCcw size={16} aria-hidden="true" />{language === "zh" ? "重置" : "Reset"}
             </button>
             <span className={isPlaying ? "sine-status playing" : "sine-status"}>
               {isPlaying ? (language === "zh" ? "播放中" : "Playing") : language === "zh" ? "未播放" : "Stopped"}

@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RotateCcw } from "lucide-react";
 import type { Language } from "../content/knowledge";
+import { combinedResponse, filterSignal, filterTones, type FilterType } from "./filterModel";
+import { compressedOutputDb, dynamicsFrame } from "./dynamicsModel";
+import { StftWorkbench } from "./StftWorkbench";
 
 type CoreSignalProcessingLabProps = {
   language: Language;
@@ -9,7 +12,6 @@ type CoreSignalProcessingLabProps = {
 };
 
 type SignalMode = "stft" | "filter" | "dynamics";
-type FilterType = "lowpass" | "highpass" | "bandpass" | "notch";
 type FlowStep = {
   label: Record<Language, string>;
   detail: Record<Language, string>;
@@ -42,7 +44,7 @@ const flowSteps: Record<SignalMode, FlowStep[]> = {
   stft: [
     {
       label: { zh: "输入 PCM", en: "Input PCM" },
-      detail: { zh: "连续采样值", en: "Continuous samples" }
+      detail: { zh: "按时间排列的离散样本", en: "Discrete samples over time" }
     },
     {
       label: { zh: "分帧/加窗", en: "Frame/window" },
@@ -133,8 +135,8 @@ const processingRoles: Record<SignalMode, ProcessingRole> = {
       en: "Usually after PCM exists: in real-time voice it feeds enhancement, denoise, and AEC features; in tools it powers spectrum displays, frequency-domain filtering, or feature extraction."
     },
     summary: {
-      zh: "FFT 把一帧 PCM 从时间域转成频率能量；STFT 是连续分帧后反复做 FFT，得到随时间变化的能量图。它本身通常不直接改善声音，后面接滤波、估计、增强或特征算法才会改变结果。",
-      en: "FFT converts one PCM frame from time to frequency energy; STFT repeats FFT over frames to show energy over time. By itself it mostly analyzes; filtering, estimation, enhancement, or feature algorithms change the result."
+      zh: "FFT 快速计算一帧的离散傅里叶变换，输出包含幅度和相位的复数频谱；STFT 对连续分帧加窗后反复做变换，再取模平方得到时频功率图。分析本身不改善声音，修改频谱并重建才会改变声音。",
+      en: "FFT efficiently computes a frame's DFT, yielding complex coefficients with magnitude and phase. STFT transforms successive windowed frames; squared magnitudes form a time-frequency power map. Analysis alone does not improve sound; modifying and reconstructing it does."
     }
   },
   filter: {
@@ -162,25 +164,6 @@ const processingRoles: Record<SignalMode, ProcessingRole> = {
 };
 
 const sampleRate = 16000;
-const stftInputComponents = [
-  { amplitude: 0.62, cycles: 2.2, phase: 0 },
-  { amplitude: 0.28, cycles: 7.4, phase: 0.55 },
-  { amplitude: 0.16, cycles: 17.6, phase: 1.15 }
-] as const;
-const filterWaveComponents = [
-  { amplitude: 0.72, cycles: 2.2, frequency: 300, phase: 0 },
-  { amplitude: 0.34, cycles: 7.5, frequency: 1600, phase: 0.45 },
-  { amplitude: 0.22, cycles: 22, frequency: 5200, phase: 1.1 }
-] as const;
-const filterOutputBands = [
-  { baseHeight: 42, frequency: 250 },
-  { baseHeight: 66, frequency: 700 },
-  { baseHeight: 82, frequency: 1600 },
-  { baseHeight: 70, frequency: null },
-  { baseHeight: 58, frequency: 3600 },
-  { baseHeight: 36, frequency: 6500 }
-] as const;
-
 function formatDb(value: number) {
   return `${value > 0 ? "+" : ""}${value} dB`;
 }
@@ -203,177 +186,9 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function createFrameEnvelopePath(windowSize: number, originX = 84, originY = 158, maxWidth = 230, amplitude = 44) {
-  const frameWidth = Math.max(maxWidth * 0.45, Math.min(maxWidth, (windowSize / 1024) * maxWidth));
-  const points = Array.from({ length: 80 }, (_, index) => {
-    const ratio = index / 79;
-    const x = originX + ratio * frameWidth;
-    const envelope = 0.5 - 0.5 * Math.cos(2 * Math.PI * ratio);
-    const carrier = Math.sin(ratio * Math.PI * 10);
-    const y = originY - carrier * envelope * amplitude;
-    return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
-  });
-
-  return points.join(" ");
-}
-
-function createStftInputValue(ratio: number) {
-  return stftInputComponents.reduce(
-    (sum, component) =>
-      sum + Math.sin(ratio * Math.PI * component.cycles + component.phase) * component.amplitude,
-    0
-  );
-}
-
-function createPcmSamples(originX = 44, originY = 226, width = 152, amplitude = 40) {
-  return Array.from({ length: 25 }, (_, index) => {
-    const ratio = index / 24;
-    const x = originX + ratio * width;
-    const value = createStftInputValue(ratio);
-    const y = originY - value * amplitude;
-
-    return { x, y };
-  });
-}
-
-function createSpectrumBars(windowSize: number) {
-  const windowFactor = Math.min(1, Math.max(0, (windowSize - 256) / 768));
-  const count = Math.round(10 + windowFactor * 12);
-
-  return Array.from({ length: count }, (_, index) => {
-    const ratio = count === 1 ? 0 : index / (count - 1);
-    const peakWidth = 0.018 + (1 - windowFactor) * 0.035;
-    const lowBand = Math.exp(-((ratio - 0.24) ** 2) / peakWidth) * 94;
-    const midBand = Math.exp(-((ratio - 0.55) ** 2) / (peakWidth * 1.25)) * 54;
-    const highBand = Math.exp(-((ratio - 0.78) ** 2) / (peakWidth * 0.9)) * 32;
-    const floor = 10 + Math.sin(index * 1.7) * 4;
-    const height = Math.max(9, Math.min(104, lowBand + midBand + highBand + floor));
-
-    return { height };
-  });
-}
-
-function createFeatureVectorBars(windowSize: number) {
-  const windowFactor = Math.min(1, Math.max(0, (windowSize - 256) / 768));
-  const baseValues = [0.72, 0.92, 0.66, 0.48, 0.58, 0.76, 0.42, 0.34, 0.28];
-
-  return baseValues.map((value, index) => ({
-    height: 10 + value * 38 + Math.sin(index * 1.4 + windowFactor * 2.2) * 5
-  }));
-}
-
-function getStftGridShape(windowSize: number, hopSize: number) {
-  const windowFactor = Math.min(1, Math.max(0, (windowSize - 256) / 768));
-  const hopDensity = Math.min(1, Math.max(0, (512 - hopSize) / 384));
-
-  return {
-    columns: Math.round(10 + hopDensity * 26),
-    rows: Math.round(8 + windowFactor * 8)
-  };
-}
-
-function mixColor(start: [number, number, number], end: [number, number, number], ratio: number) {
-  const clamped = Math.max(0, Math.min(1, ratio));
-
-  return start.map((value, index) => Math.round(value + (end[index] - value) * clamped));
-}
-
-function energyColor(value: number) {
-  const clamped = Math.max(0, Math.min(1, value));
-  const stops: Array<{ color: [number, number, number]; stop: number }> = [
-    { stop: 0, color: [19, 29, 50] },
-    { stop: 0.28, color: [31, 88, 125] },
-    { stop: 0.52, color: [43, 171, 147] },
-    { stop: 0.76, color: [246, 197, 87] },
-    { stop: 1, color: [235, 92, 72] }
-  ];
-  const nextIndex = Math.max(1, stops.findIndex((item) => clamped <= item.stop));
-  const previous = stops[nextIndex - 1];
-  const next = stops[nextIndex];
-  const ratio = (clamped - previous.stop) / (next.stop - previous.stop);
-  const [red, green, blue] = mixColor(previous.color, next.color, ratio);
-
-  return `rgb(${red}, ${green}, ${blue})`;
-}
-
-function createSpectrogramCells(windowSize: number, hopSize: number) {
-  const { columns, rows } = getStftGridShape(windowSize, hopSize);
-  const windowFactor = Math.min(1, Math.max(0, (windowSize - 512) / 512));
-  const spectralSpread = 0.02 + (1 - windowFactor) * 0.02;
-
-  return Array.from({ length: columns * rows }, (_, index) => {
-    const column = index % columns;
-    const row = Math.floor(index / columns);
-    const time = column / (columns - 1);
-    const freq = 1 - row / (rows - 1);
-    const fundamental = Math.exp(-((freq - (0.22 + Math.sin(time * Math.PI * 1.5) * 0.04)) ** 2) / spectralSpread);
-    const harmonic = Math.exp(-((freq - (0.48 + Math.cos(time * Math.PI * 1.8) * 0.08)) ** 2) / (spectralSpread * 1.18));
-    const transient = Math.exp(-((time - 0.66) ** 2) / 0.006) * Math.exp(-((freq - 0.72) ** 2) / (spectralSpread * 2.4));
-    const noiseFloor = 0.1 + Math.sin((column + row) * 1.9) * 0.035;
-    const timeTexture = 0.78 + Math.sin(time * Math.PI * 4.2) * 0.16;
-    const resolutionBoost = windowFactor * (row % 2 === 0 ? 0.08 : -0.02);
-    const energy = Math.max(
-      0.05,
-      Math.min(1, (fundamental * 0.82 + harmonic * 0.5 + transient * 0.7 + noiseFloor + resolutionBoost) * timeTexture)
-    );
-
-    return {
-      color: energyColor(energy),
-      column,
-      energy,
-      row
-    };
-  });
-}
 
 function logFrequencyPosition(frequency: number, min = 80, max = 8000) {
   return (Math.log10(frequency) - Math.log10(min)) / (Math.log10(max) - Math.log10(min));
-}
-
-function getEffectiveQ(q: number) {
-  return Math.max(0.25, q);
-}
-
-function getBandwidthOctaves(q: number) {
-  return clamp(2.6 / getEffectiveQ(q), 0.16, 3.2);
-}
-
-function getBellInfluence(frequency: number, centerFrequency: number, q: number) {
-  const distanceOctaves = Math.log2(frequency / centerFrequency);
-  const bandwidthOctaves = getBandwidthOctaves(q);
-
-  return Math.exp(-0.5 * (distanceOctaves / bandwidthOctaves) ** 2);
-}
-
-function getFilterMagnitude(filterType: FilterType, frequency: number, cutoff: number, q: number) {
-  const slope = 1.45 + clamp(q / 20, 0, 1) * 2.6;
-
-  if (filterType === "lowpass") {
-    return 1 / Math.sqrt(1 + (frequency / cutoff) ** (2 * slope));
-  }
-
-  if (filterType === "highpass") {
-    return 1 / Math.sqrt(1 + (cutoff / frequency) ** (2 * slope));
-  }
-
-  const bell = getBellInfluence(frequency, cutoff, q);
-
-  if (filterType === "bandpass") {
-    return clamp(0.06 + bell * 0.94, 0.06, 1);
-  }
-
-  return clamp(1 - bell * 0.88, 0.08, 1);
-}
-
-function getEqMagnitude(frequency: number, centerFrequency: number, q: number, eqGain: number) {
-  if (eqGain === 0) {
-    return 1;
-  }
-
-  const linearGain = 10 ** (eqGain / 20);
-  const bell = getBellInfluence(frequency, centerFrequency, Math.max(0.8, q));
-
-  return 1 + (linearGain - 1) * bell;
 }
 
 function getCombinedFilterGain(
@@ -383,7 +198,7 @@ function getCombinedFilterGain(
   q: number,
   eqGain: number
 ) {
-  return getFilterMagnitude(filterType, frequency, cutoff, q) * getEqMagnitude(frequency, cutoff, q, eqGain);
+  return combinedResponse(filterType, frequency, cutoff, q, eqGain).magnitude;
 }
 
 function createFilterWavePath(
@@ -395,29 +210,14 @@ function createFilterWavePath(
   y: number,
   width: number,
   amplitude: number,
-  filtered: boolean
+  filtered: boolean,
+  scale: number
 ) {
-  const gains = filterWaveComponents.map((component) =>
-    filtered ? getCombinedFilterGain(filterType, component.frequency, cutoff, q, eqGain) : 1
-  );
-  const peakEstimate = filterWaveComponents.reduce(
-    (sum, component, index) => sum + component.amplitude * gains[index],
-    0
-  );
-  const displayScale = Math.min(1, 1.18 / peakEstimate);
-  const points = Array.from({ length: 96 }, (_, index) => {
-    const ratio = index / 95;
-    const value = filterWaveComponents.reduce((sum, component, componentIndex) => {
-      const partial =
-        Math.sin(ratio * Math.PI * component.cycles + component.phase) *
-        component.amplitude *
-        gains[componentIndex];
-
-      return sum + partial;
-    }, 0) * displayScale;
-
+  const points = Array.from({ length: 161 }, (_, index) => {
+    const ratio = index / 160;
+    const value = filterSignal(index / sampleRate, filterType, cutoff, q, eqGain, filtered);
     const pointX = x + ratio * width;
-    const pointY = y - clamp(value, -1.35, 1.35) * amplitude;
+    const pointY = y - value / scale * amplitude;
     return `${index === 0 ? "M" : "L"} ${pointX.toFixed(1)} ${pointY.toFixed(1)}`;
   });
 
@@ -434,12 +234,12 @@ function createFilterResponsePath(
   width = 620,
   height = 176
 ) {
-  const points = Array.from({ length: 72 }, (_, index) => {
-    const ratio = index / 71;
-    const frequency = 80 * (8000 / 80) ** ratio;
+  const frequencies = [...Array.from({ length: 401 }, (_, index) => 80 * 100 ** (index / 400)), cutoff].sort((a, b) => a - b);
+  const points = frequencies.map((frequency, index) => {
+    const ratio = logFrequencyPosition(frequency);
     const gain = getCombinedFilterGain(filterType, frequency, cutoff, q, eqGain);
-    const gainDb = 20 * Math.log10(Math.max(0.06, gain));
-    const normalizedGain = clamp((gainDb + 24) / 36, 0, 1);
+    const gainDb = 20 * Math.log10(Math.max(0.001, gain));
+    const normalizedGain = clamp((gainDb + 60) / 100, 0, 1);
     const pointX = x + ratio * width;
     const pointY = y - normalizedGain * height;
 
@@ -457,21 +257,6 @@ function createDynamicsCurvePath(threshold: number, ratio: number, x = 92, y = 2
   return `M ${x} ${y} L ${thresholdX.toFixed(1)} ${thresholdY.toFixed(1)} L ${x + width} ${Math.max(y - height, endY).toFixed(1)}`;
 }
 
-function calculateCompressedOutputDb(inputDb: number, threshold: number, ratio: number) {
-  return inputDb <= threshold ? inputDb : threshold + (inputDb - threshold) / ratio;
-}
-
-function createEnvelopeLevel(ratio: number) {
-  return Math.max(
-    0.02,
-    Math.abs(Math.sin(ratio * Math.PI * 4.5)) * (0.45 + 0.55 * Math.sin(ratio * Math.PI))
-  );
-}
-
-function levelToDb(level: number) {
-  return 20 * Math.log10(Math.max(0.02, level));
-}
-
 function dbToDisplayY(db: number, bottomY: number, height: number) {
   const normalized = (clamp(db, -48, 0) + 48) / 48;
 
@@ -479,10 +264,10 @@ function dbToDisplayY(db: number, bottomY: number, height: number) {
 }
 
 function createInputEnvelopePath(x = 92, bottomY = 330, width = 598, height = 70) {
-  const points = Array.from({ length: 80 }, (_, index) => {
-    const ratio = index / 79;
+  const points = Array.from({ length: 101 }, (_, index) => {
+    const ratio = index / 100;
     const pointX = x + ratio * width;
-    const pointY = dbToDisplayY(levelToDb(createEnvelopeLevel(ratio)), bottomY, height);
+    const pointY = dbToDisplayY(dynamicsFrame(ratio * 1000, -18, 1).inputDb, bottomY, height);
 
     return `${index === 0 ? "M" : "L"} ${pointX.toFixed(1)} ${pointY.toFixed(1)}`;
   });
@@ -491,11 +276,10 @@ function createInputEnvelopePath(x = 92, bottomY = 330, width = 598, height = 70
 }
 
 function createOutputEnvelopePath(threshold: number, ratio: number, x = 92, bottomY = 330, width = 598, height = 70) {
-  const points = Array.from({ length: 80 }, (_, index) => {
-    const ratioPosition = index / 79;
+  const points = Array.from({ length: 101 }, (_, index) => {
+    const ratioPosition = index / 100;
     const pointX = x + ratioPosition * width;
-    const inputDb = levelToDb(createEnvelopeLevel(ratioPosition));
-    const outputDb = inputDb <= threshold ? inputDb : threshold + (inputDb - threshold) / ratio;
+    const outputDb = dynamicsFrame(ratioPosition * 1000, threshold, ratio).outputDb;
     const pointY = dbToDisplayY(outputDb, bottomY, height);
 
     return `${index === 0 ? "M" : "L"} ${pointX.toFixed(1)} ${pointY.toFixed(1)}`;
@@ -559,43 +343,10 @@ function ProcessingStageOverview({ language, mode }: { language: Language; mode:
           <h2>{activeRole.title[language]}</h2>
           <p>{activeRole.stage[language]}</p>
           <p>{activeRole.summary[language]}</p>
+          {mode === "stft" && <p>{language === "zh" ? "上方是功能位置示意，不是必经的串行链路。时域 EQ 和压缩器可直接处理 PCM；若在 STFT 域修改频谱，通常需逆变换与重叠相加重建，再交给时域模块。" : "The stages show functional placement, not a mandatory serial chain. Time-domain EQ and compressors can process PCM directly. Modified STFT spectra normally need an inverse transform and overlap-add reconstruction before time-domain modules."}</p>}
         </article>
       </div>
     </section>
-  );
-}
-
-function FlowNode({
-  detail,
-  index,
-  label,
-  x,
-  y
-}: {
-  detail: string;
-  index: number;
-  label: string;
-  x: number;
-  y: number;
-}) {
-  const detailLines = detail.length > 14
-    ? [detail.slice(0, 14), detail.slice(14, 26)]
-    : [detail];
-
-  return (
-    <g className="core-flow-node">
-      <rect height="72" rx="12" width="142" x={x} y={y} />
-      <circle cx={x + 20} cy={y + 21} r="12" />
-      <text className="core-flow-node-index" x={x + 20} y={y + 25}>{index + 1}</text>
-      <text className="core-flow-node-title" x={x + 72} y={y + 25}>{label}</text>
-      <text className="core-flow-node-detail" x={x + 72} y={y + 47}>
-        {detailLines.map((line, lineIndex) => (
-          <tspan key={line} x={x + 72} dy={lineIndex === 0 ? 0 : 13}>
-            {line}
-          </tspan>
-        ))}
-      </text>
-    </g>
   );
 }
 
@@ -634,240 +385,6 @@ function SliderControl({
   );
 }
 
-function StftChart({
-  hopSize,
-  language,
-  windowSize
-}: {
-  hopSize: number;
-  language: Language;
-  windowSize: number;
-}) {
-  const pcmSamples = createPcmSamples();
-  const framePath = createFrameEnvelopePath(windowSize, 226, 228, 150, 32);
-  const bars = createSpectrumBars(windowSize);
-  const featureBars = createFeatureVectorBars(windowSize);
-  const hopOffset = Math.max(18, Math.min(74, (hopSize / 512) * 74));
-  const windowBlockWidth = Math.max(56, Math.min(118, (windowSize / 1024) * 118));
-  const spectrogramCells = createSpectrogramCells(windowSize, hopSize);
-  const heatmapX = 116;
-  const heatmapY = 404;
-  const { columns: heatmapColumns, rows: heatmapRows } = getStftGridShape(windowSize, hopSize);
-  const heatmapGap = 3;
-  const heatmapWidth = 460;
-  const heatmapCellWidth = (heatmapWidth - (heatmapColumns - 1) * heatmapGap) / heatmapColumns;
-  const heatmapHeight = 165;
-  const heatmapCellHeight = (heatmapHeight - (heatmapRows - 1) * heatmapGap) / heatmapRows;
-  const hopFrameMs = (hopSize / sampleRate) * 1000;
-  const steps = flowSteps.stft;
-
-  return (
-    <svg
-      aria-label={language === "zh" ? "STFT 流程对应图" : "STFT flow-linked diagram"}
-      className="core-signal-chart"
-      role="img"
-      viewBox="0 0 760 680"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <linearGradient id="coreSignalLine" x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0%" stopColor="#7ee7d8" />
-          <stop offset="100%" stopColor="#f0b46a" />
-        </linearGradient>
-      </defs>
-      <rect className="lab-diagram-bg" height="680" rx="16" width="760" />
-      {steps.map((step, index) => {
-        const x = 44 + index * 184;
-        return (
-          <g key={step.label.en}>
-            <FlowNode
-              detail={step.detail[language]}
-              index={index}
-              label={step.label[language]}
-              x={x}
-              y={34}
-            />
-            {index < steps.length - 1 ? <FlowArrow x1={x + 148} x2={x + 174} y={70} /> : null}
-          </g>
-        );
-      })}
-      <line className="lab-axis" x1="44" x2="196" y1="226" y2="226" />
-      <path
-        className="core-mini-wave"
-        d={`M ${pcmSamples.map((sample) => `${sample.x.toFixed(1)} ${sample.y.toFixed(1)}`).join(" L ")}`}
-      />
-      {pcmSamples.map((sample, index) => (
-        <g key={`pcm-${index}`}>
-          <line className="core-pcm-stem" x1={sample.x} x2={sample.x} y1="226" y2={sample.y} />
-          <circle className="core-sample-dot" cx={sample.x} cy={sample.y} data-testid="stft-pcm-sample" r="3.6" />
-        </g>
-      ))}
-      <text className="core-diagram-caption small" x="118" y="154">
-        {language === "zh" ? "低/中/高频成分叠加" : "Low/mid/high components mixed"}
-      </text>
-      <text className="core-diagram-caption small" x="118" y="286">{language === "zh" ? "离散采样点" : "Discrete samples"}</text>
-      <text className="core-diagram-caption" x="90" y="318">{steps[0].label[language]}</text>
-      <rect
-        className="core-signal-window"
-        data-testid="stft-window-block"
-        height="104"
-        rx="12"
-        width={windowBlockWidth}
-        x="226"
-        y="174"
-      />
-      <rect
-        className="core-overlap-window"
-        data-testid="stft-overlap-frame"
-        height="104"
-        rx="12"
-        width={windowBlockWidth}
-        x={226 + hopOffset}
-        y="184"
-      />
-      <line className="lab-axis" x1="218" x2="396" y1="228" y2="228" />
-      <path className="lab-wave-path" d={framePath} />
-      <path className="core-hann-window" d="M 226 276 C 246 176 306 176 376 276" />
-      <path className="core-signal-hop" d={`M 226 304 H ${226 + hopOffset}`} />
-      <text className="interface-tdm-note" x="226" y="320">hop</text>
-      <text className="core-diagram-caption small" x="278" y="294">
-        {language === "zh" ? `窗口 ${windowSize} 点` : `${windowSize}-point window`}
-      </text>
-      <text className="core-diagram-caption" x="278" y="350">{steps[1].label[language]}</text>
-      <text className="core-diagram-caption small" x="350" y="314">{language === "zh" ? "Hann 窗" : "Hann window"}</text>
-      <text className="core-diagram-caption small" x="310" y="334">{language === "zh" ? "重叠帧" : "Overlap frame"}</text>
-      <rect className="core-fft-box" height="104" rx="12" width="116" x="424" y="174" />
-      <path className="core-fft-symbol" d="M 448 248 L 478 190 L 508 248" />
-      <text className="core-diagram-caption" x="482" y="318">{steps[2].label[language]}</text>
-      <text className="core-diagram-caption small" x="482" y="342">{language === "zh" ? "频率格 / bin" : "Frequency bins"}</text>
-      <line className="lab-axis" x1="574" x2="720" y1="286" y2="286" />
-      <line className="lab-axis faint" x1="574" x2="720" y1="188" y2="188" />
-      <text className="core-axis-label" x="580" y="170">{language === "zh" ? "纵轴：能量" : "Y: energy"}</text>
-      <text className="core-axis-label" x="642" y="306">{language === "zh" ? "横轴：频率格" : "X: frequency bin"}</text>
-      {bars.map((bar, index) => (
-        <rect
-          className="core-spectrum-bar"
-          height={bar.height * 0.55}
-          key={`bar-${index}`}
-          rx="4"
-          width={Math.max(3, 116 / bars.length - 2)}
-          x={582 + index * (124 / bars.length)}
-          y={286 - bar.height * 0.55}
-        />
-      ))}
-      <text className="core-diagram-caption small" x="642" y="324">
-        {language === "zh" ? `图中示意：${bars.length} 个频率格` : `Diagram: ${bars.length} bins shown`}
-      </text>
-      <text className="core-diagram-caption small" x="642" y="350">
-        {language === "zh" ? "峰值来自同一段 PCM 的频率成分" : "Peaks come from the same PCM segment"}
-      </text>
-      <text className="core-diagram-caption small" x="642" y="154">
-        {language === "zh" ? "hop 不改变单帧频谱" : "Hop does not change one-frame spectrum"}
-      </text>
-      <text className="core-diagram-caption" x="644" y="366">{steps[3].label[language]}</text>
-
-      <text className="core-diagram-caption" x={heatmapX + heatmapWidth / 2} y="376">
-        {language === "zh" ? "STFT 频谱图" : "STFT spectrogram"}
-      </text>
-      <text className="core-hop-note" x={heatmapX + heatmapWidth / 2} y="394">
-        {language === "zh" ? `hop ${hopSize} 点 = ${hopFrameMs.toFixed(1)} ms/帧；只改变横向时间帧` : `hop ${hopSize} = ${hopFrameMs.toFixed(1)} ms/frame; changes time-frame density only`}
-      </text>
-      <rect
-        className="core-spectrogram-panel"
-        data-testid="stft-energy-plot"
-        height={heatmapHeight + 24}
-        rx="12"
-        width={heatmapWidth + 24}
-        x={heatmapX - 12}
-        y={heatmapY - 12}
-      />
-      <line className="lab-axis" x1={heatmapX - 8} x2={heatmapX - 8} y1={heatmapY} y2={heatmapY + heatmapHeight} />
-      <line className="lab-axis" x1={heatmapX} x2={heatmapX + heatmapWidth} y1={heatmapY + heatmapHeight + 8} y2={heatmapY + heatmapHeight + 8} />
-      <text
-        className="core-axis-label"
-        transform={`rotate(-90 ${heatmapX - 72} ${heatmapY + heatmapHeight / 2})`}
-        x={heatmapX - 72}
-        y={heatmapY + heatmapHeight / 2}
-      >
-        {language === "zh" ? "纵轴：频率" : "Y: frequency"}
-      </text>
-      <text className="core-axis-label" x={heatmapX + heatmapWidth / 2} y={heatmapY + heatmapHeight + 30}>
-        {language === "zh" ? "横轴：时间帧" : "X: time frame"}
-      </text>
-      <text className="core-axis-tick" x={heatmapX - 52} y={heatmapY + 8}>{language === "zh" ? "高频" : "High"}</text>
-      <text className="core-axis-tick" x={heatmapX - 52} y={heatmapY + heatmapHeight}>{language === "zh" ? "低频" : "Low"}</text>
-      {Array.from({ length: heatmapColumns }, (_, index) => (
-        <line
-          className="core-spectrogram-guide vertical"
-          key={`time-guide-${index}`}
-          x1={heatmapX + index * (heatmapCellWidth + heatmapGap) + heatmapCellWidth / 2}
-          x2={heatmapX + index * (heatmapCellWidth + heatmapGap) + heatmapCellWidth / 2}
-          y1={heatmapY}
-          y2={heatmapY + heatmapHeight}
-        />
-      ))}
-      {Array.from({ length: heatmapRows }, (_, index) => (
-        <line
-          className="core-spectrogram-guide horizontal"
-          key={`freq-guide-${index}`}
-          x1={heatmapX}
-          x2={heatmapX + heatmapWidth}
-          y1={heatmapY + index * (heatmapCellHeight + heatmapGap) + heatmapCellHeight / 2}
-          y2={heatmapY + index * (heatmapCellHeight + heatmapGap) + heatmapCellHeight / 2}
-        />
-      ))}
-      <g className="core-spectrogram-grid">
-        {spectrogramCells.map((cell) => (
-          <rect
-            className="core-spectrogram-cell"
-            data-testid="stft-energy-cell"
-            fill={cell.color}
-            height={heatmapCellHeight}
-            key={`${cell.column}-${cell.row}`}
-            rx="2"
-            width={heatmapCellWidth}
-            x={heatmapX + cell.column * (heatmapCellWidth + heatmapGap)}
-            y={heatmapY + cell.row * (heatmapCellHeight + heatmapGap)}
-          />
-        ))}
-      </g>
-      <text className="core-diagram-caption small" x={heatmapX + heatmapWidth / 2} y={heatmapY + heatmapHeight + 48}>
-        {language === "zh" ? `图中示意：${heatmapColumns} 个时间帧；${heatmapRows} 个频率格` : `Diagram: ${heatmapColumns} time frames; ${heatmapRows} frequency bins`}
-      </text>
-      <g className="core-energy-legend">
-        <text className="core-axis-label" x="620" y="440">{language === "zh" ? "颜色：能量" : "Color: energy"}</text>
-        <rect fill={energyColor(1)} height="16" rx="3" width="26" x="622" y="456" />
-        <text className="interface-tdm-note" x="656" y="468">{language === "zh" ? "亮 = 能量高" : "Bright = high energy"}</text>
-        <rect fill={energyColor(0.55)} height="16" rx="3" width="26" x="622" y="486" />
-        <text className="interface-tdm-note" x="656" y="498">{language === "zh" ? "中等能量" : "Mid energy"}</text>
-        <rect fill={energyColor(0.12)} height="16" rx="3" width="26" x="622" y="516" />
-        <text className="interface-tdm-note" x="656" y="528">{language === "zh" ? "暗 = 能量低" : "Dark = low energy"}</text>
-      </g>
-      <g className="core-feature-vector" aria-label={language === "zh" ? "频谱特征向量示意" : "Spectrum feature vector"}>
-        <text className="core-axis-label" x="620" y="568">{language === "zh" ? "特征向量" : "Feature vector"}</text>
-        {featureBars.map((bar, index) => (
-          <rect
-            className="core-feature-bar"
-            data-testid="stft-feature-bar"
-            height={bar.height}
-            key={`feature-${index}`}
-            rx="3"
-            width="8"
-            x={622 + index * 11}
-            y={626 - bar.height}
-          />
-        ))}
-        <text className="interface-tdm-note" x="622" y="646">
-          {language === "zh" ? "Mel / MFCC / embedding" : "Mel / MFCC / embedding"}
-        </text>
-        <text className="interface-tdm-note" x="622" y="664">
-          {language === "zh" ? "由频谱压缩或重排得到" : "Compressed or remapped from spectra"}
-        </text>
-      </g>
-    </svg>
-  );
-}
-
 function FilterChart({
   cutoff,
   eqGain,
@@ -882,30 +399,23 @@ function FilterChart({
   q: number;
 }) {
   const responsePath = createFilterResponsePath(filterType, cutoff, q, eqGain, 414, 282, 164, 110);
-  const originalWavePath = createFilterWavePath(filterType, cutoff, q, eqGain, 48, 374, 300, 26, false);
-  const filteredWavePath = createFilterWavePath(filterType, cutoff, q, eqGain, 410, 374, 300, 26, true);
+  const outputBars = filterTones.map(tone => {
+    const response = combinedResponse(filterType, tone.frequency, cutoff, q, eqGain);
+    return { ...tone, output: tone.amplitude * response.magnitude, gainDb: 20 * Math.log10(Math.max(1e-12, response.magnitude)) };
+  });
+  const scale = Math.max(1, ...Array.from({ length: 161 }, (_, i) => Math.abs(filterSignal(i / sampleRate, filterType, cutoff, q, eqGain, true))));
+  const originalWavePath = createFilterWavePath(filterType, cutoff, q, eqGain, 48, 374, 300, 26, false, scale);
+  const filteredWavePath = createFilterWavePath(filterType, cutoff, q, eqGain, 410, 374, 300, 26, true, scale);
   const cutoffX = 90 + logFrequencyPosition(cutoff) * 560;
   const visibleCutoffX = Math.max(414, Math.min(578, 414 + (cutoffX - 90) * (164 / 560)));
-  const qBandWidth = Math.max(10, 118 - getEffectiveQ(q) * 5);
-  const eqGainLineY = Math.max(172, Math.min(282, 238 - eqGain * 4.5));
-  const outputBars = filterOutputBands.map((band) => {
-    const frequency = band.frequency ?? cutoff;
-
-    return {
-      frequency,
-      height: clamp(
-        band.baseHeight * getCombinedFilterGain(filterType, frequency, cutoff, q, eqGain),
-        7,
-        106
-      )
-    };
-  });
+  const barHeight = (amplitude: number) => clamp((20 * Math.log10(Math.max(0.001, amplitude)) + 60) / 100, 0, 1) * 110;
   const steps = flowSteps.filter;
 
   return (
+    <>
     <svg
       aria-label={language === "zh" ? "滤波器流程对应图" : "Filter flow-linked diagram"}
-      className="core-signal-chart"
+      className="core-signal-chart filter-comparison-chart"
       role="img"
       viewBox="0 0 760 480"
       xmlns="http://www.w3.org/2000/svg"
@@ -915,49 +425,30 @@ function FilterChart({
         const x = 44 + index * 184;
         return (
           <g key={step.label.en}>
-            <FlowNode
-              detail={step.detail[language]}
-              index={index}
-              label={step.label[language]}
-              x={x}
-              y={34}
-            />
+            <g className="core-flow-node">
+              <rect x={x} y="34" width="148" height="72" rx="8" />
+              <text className="core-flow-node-title" x={x + 74} y="70">{step.label[language]}</text>
+            </g>
             {index < steps.length - 1 ? <FlowArrow x1={x + 148} x2={x + 174} y={70} /> : null}
           </g>
         );
       })}
       <line className="lab-axis" x1="54" x2="206" y1="282" y2="282" />
-      {[28, 58, 88, 118].map((height, index) => (
-        <rect className="core-spectrum-bar muted" height={height} key={`input-${index}`} rx="4" width="14" x={76 + index * 28} y={282 - height} />
+      {filterTones.map((tone, index) => (
+        <g key={tone.frequency}>
+          <rect className="core-spectrum-bar muted" data-testid="filter-input-bar" data-frequency={tone.frequency} height={barHeight(tone.amplitude)} width="14" x={76 + index * 44} y={282 - barHeight(tone.amplitude)} />
+          <text className="interface-tdm-note" x={83 + index * 44} y="305" textAnchor="middle">{tone.frequency / 1000}</text>
+        </g>
       ))}
-      <text className="core-diagram-caption" x="64" y="332">{steps[0].label[language]}</text>
+      <text className="core-diagram-caption" x="130" y="332">{steps[0].label[language]} (kHz)</text>
       <rect className="core-filter-type-box" height="112" rx="12" width="138" x="240" y="174" />
       <text className="core-filter-type-label" x="309" y="224">{filterLabels[filterType][language]}</text>
-      <text className="core-diagram-caption" x="246" y="332">{steps[1].label[language]}</text>
+      <text className="core-diagram-caption" x="309" y="332">{steps[1].label[language]}</text>
       <line className="lab-axis" x1="414" x2="578" y1="282" y2="282" />
-      <line className="lab-axis faint" x1="414" x2="578" y1="194" y2="194" />
-      <line
-        className="core-eq-gain-line"
-        data-testid="filter-eq-gain-line"
-        x1="414"
-        x2="578"
-        y1={eqGainLineY}
-        y2={eqGainLineY}
-      />
-      <text className="interface-tdm-note" x="418" y={eqGainLineY - 8}>
-        {language === "zh" ? `EQ ${formatDb(eqGain)}` : `EQ ${formatDb(eqGain)}`}
-      </text>
-      <rect
-        className="core-q-band"
-        data-testid="filter-q-band"
-        height="112"
-        rx="8"
-        width={qBandWidth}
-        x={Math.max(414, Math.min(578 - qBandWidth, visibleCutoffX - qBandWidth / 2))}
-        y="170"
-      />
+      <line className="lab-axis faint" x1="414" x2="578" y1="216" y2="216" />
+      <text className="interface-tdm-note" x="414" y="160">+40 / 0 / −60 dB</text>
       <path className="core-filter-fill" d={`${responsePath} L 578 282 L 414 282 Z`} />
-      <path className="lab-wave-path" d={responsePath} />
+      <path className="lab-wave-path filter-response-path" data-testid="filter-response-path" d={responsePath} />
       <line
         className="core-cutoff-marker"
         data-testid="filter-cutoff-marker"
@@ -966,30 +457,46 @@ function FilterChart({
         y1="170"
         y2="292"
       />
-      <text className="core-diagram-caption" x="420" y="332">{steps[2].label[language]}</text>
+      <text className="interface-tdm-note" x="414" y="305">80</text>
+      <text className="interface-tdm-note" x="578" y="305" textAnchor="end">8000 Hz</text>
+      <text className="core-diagram-caption" x="496" y="332">{steps[2].label[language]}</text>
       <line className="lab-axis" x1="624" x2="716" y1="282" y2="282" />
       {outputBars.map((band, index) => (
-        <rect
+        <g key={`output-${index}`}><rect
           className="core-spectrum-bar"
           data-frequency={band.frequency}
           data-testid="filter-output-bar"
-          height={band.height}
-          key={`output-${index}`}
-          rx="4"
+          height={barHeight(band.output)}
           width="11"
-          x={626 + index * 15}
-          y={282 - band.height}
-        />
+          x={626 + index * 36}
+          y={282 - barHeight(band.output)}
+        /><text className="interface-tdm-note" x={632 + index * 36} y="305" textAnchor="middle">{band.frequency / 1000}</text></g>
       ))}
-      <text className="core-diagram-caption" x="626" y="332">{steps[3].label[language]}</text>
+      <text className="core-diagram-caption" x="670" y="332">{steps[3].label[language]} (kHz)</text>
       <line className="lab-axis faint" x1="48" x2="348" y1="374" y2="374" />
       <path className="core-original-wave" d={originalWavePath} />
-      <text className="core-diagram-caption small" x="112" y="428">{language === "zh" ? "原始波形" : "Original waveform"}</text>
+      <text className="core-diagram-caption small" x="198" y="428">{language === "zh" ? "原始波形" : "Original waveform"}</text>
       <line className="lab-axis faint" x1="410" x2="710" y1="374" y2="374" />
       <path className="core-filtered-wave" data-testid="filtered-wave-path" d={filteredWavePath} />
-      <text className="core-diagram-caption small" x="490" y="428">{language === "zh" ? "滤波后波形" : "Filtered waveform"}</text>
-      <text className="interface-tdm-note" x="52" y="454">{language === "zh" ? "波形对比：低通会让高频纹理变少；高通会削弱低频起伏；EQ 增益会改变滤波后振幅。" : "Waveform comparison: low-pass removes high-frequency texture, high-pass reduces slow movement, and EQ gain changes filtered amplitude."}</text>
+      <text className="core-diagram-caption small" x="560" y="428">{language === "zh" ? "滤波后波形" : "Filtered waveform"}</text>
+      {[48, 410].map(x => <g key={x}>
+        <text className="interface-tdm-note" x={x} y="401">0</text>
+        <text className="interface-tdm-note" x={x + 300} y="401" textAnchor="end">10 ms</text>
+      </g>)}
     </svg>
+    <div className="filter-result-note">
+      <p>{language === "zh" ? `同一输入：300、1600、5200 Hz 三音，16 kHz 采样。两幅波形均为 0–10 ms，共用纵轴 ±${scale.toFixed(2)}，不分别归一化；输出包含滤波器相移。` : `One input: 300, 1600 and 5200 Hz tones sampled at 16 kHz. Both waveforms span 0–10 ms and share ±${scale.toFixed(2)} vertically, without separate normalization. Output includes filter phase shift.`}</p>
+      <table>
+        <caption>{language === "zh" ? "同一频率分量的输入与输出（线性峰值幅度）" : "Input and output of each tone (linear peak amplitude)"}</caption>
+        <thead><tr><th>Hz</th><th>{language === "zh" ? "输入" : "Input"}</th><th>{language === "zh" ? "输出" : "Output"}</th><th>{language === "zh" ? "变化" : "Change"}</th></tr></thead>
+        <tbody>{outputBars.map(tone => <tr key={tone.frequency}><td>{tone.frequency}</td><td>{tone.amplitude.toFixed(3)}</td><td>{tone.output.toFixed(3)}</td><td>{tone.gainDb < -60 ? "< −60 dB" : formatDbValue(tone.gainDb)}</td></tr>)}</tbody>
+      </table>
+      <p>{language === "zh" ? "柱图为这三个分量的峰值幅度谱，单位 dB re 1，统一范围 −60 至 +40；频率按三档排列，非等间距频率轴。响应图横轴为对数 Hz，纵轴为增益 dB（同范围），0 dB 表示不增不减。" : "Bars show peak-amplitude spectra of these three tones in dB re 1, sharing −60 to +40. Frequency positions are categorical, not equally spaced Hz. Response uses logarithmic Hz and gain dB (same range); 0 dB is unity gain."}</p>
+      <p>{language === "zh" ? "二阶滤波器后串联同中心频率/Q 的峰值 EQ。Q=0 按 0.1 计算，避免无定义；Q 不改变阶数。这里是解析稳态结果，不含启动瞬态、削波或新增谐波。方波纹理不应凭空出现。" : "A second-order filter is followed by peaking EQ at the same center/Q. Q=0 uses 0.1 to avoid an undefined filter; Q does not change order. This analytic steady-state result excludes startup transients, clipping and new harmonics."}</p>
+      {scale > 1 && <p role="status">{language === "zh" ? "输出峰值超过 1：实际定点输出前需预留余量或降低增益，图中没有自动限幅。" : "Output exceeds 1: leave headroom or reduce gain before fixed-point output. No automatic limiter is applied here."}</p>}
+      <a href="https://www.w3.org/TR/audio-eq-cookbook/" target="_blank" rel="noreferrer">W3C Audio EQ Cookbook</a>
+    </div>
+    </>
   );
 }
 
@@ -1002,6 +509,8 @@ function DynamicsChart({
   ratio: number;
   threshold: number;
 }) {
+  const [timeMs, setTimeMs] = useState(250);
+  const frame = dynamicsFrame(timeMs, threshold, ratio);
   const curvePath = createDynamicsCurvePath(threshold, ratio, 430, 286, 136, 108);
   const envelopeBottomY = 286;
   const envelopeHeight = 92;
@@ -1009,10 +518,10 @@ function DynamicsChart({
   const detectorEnvelope = createInputEnvelopePath(250, envelopeBottomY, 132, envelopeHeight);
   const outputEnvelope = createOutputEnvelopePath(threshold, ratio, 620, envelopeBottomY, 92, envelopeHeight);
   const thresholdLineY = dbToDisplayY(threshold, envelopeBottomY, envelopeHeight);
-  const exampleInputDb = -6;
+  const exampleInputDb = frame.inputDb;
   const exampleOverThresholdDb = Math.max(0, exampleInputDb - threshold);
   const exampleKeptOverDb = exampleOverThresholdDb / ratio;
-  const exampleOutputDb = calculateCompressedOutputDb(exampleInputDb, threshold, ratio);
+  const exampleOutputDb = compressedOutputDb(exampleInputDb, threshold, ratio);
   const exampleGainDb = exampleOutputDb - exampleInputDb;
   const curveX = 430;
   const curveY = 286;
@@ -1022,34 +531,42 @@ function DynamicsChart({
   const inputReferenceY = dbToDisplayY(exampleInputDb, curveY, curveHeight);
   const compressedOutputY = dbToDisplayY(exampleOutputDb, curveY, curveHeight);
   const steps = flowSteps.dynamics;
+  const gainPath = Array.from({ length: 101 }, (_, i) => {
+    const gainDb = dynamicsFrame(i * 10, threshold, ratio).gainDb;
+    return `${i ? "L" : "M"} ${60 + i * 6.4} ${30 - gainDb * 2}`;
+  }).join(" ");
 
   return (
+    <>
     <svg
       aria-label={language === "zh" ? "动态处理流程对应图" : "Dynamics flow-linked diagram"}
-      className="core-signal-chart"
+      className="core-signal-chart dynamics-comparison-chart"
       role="img"
-      viewBox="0 0 760 460"
+      viewBox="0 0 760 365"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <rect className="lab-diagram-bg" height="460" rx="16" width="760" />
+      <rect className="lab-diagram-bg" height="365" rx="16" width="760" />
       {steps.map((step, index) => {
         const x = 44 + index * 184;
         return (
           <g key={step.label.en}>
-            <FlowNode
-              detail={step.detail[language]}
-              index={index}
-              label={step.label[language]}
-              x={x}
-              y={34}
-            />
+            <g className="core-flow-node">
+              <rect x={x} y="34" width="148" height="72" rx="8" />
+              <text className="core-flow-node-title" x={x + 74} y="70">{step.label[language]}</text>
+            </g>
             {index < steps.length - 1 ? <FlowArrow x1={x + 148} x2={x + 174} y={70} /> : null}
           </g>
         );
       })}
-      <path className="core-dynamics-input" d={inputEnvelope} />
-      <text className="core-diagram-caption" x="58" y="332">{steps[0].label[language]}</text>
-      <text className="interface-tdm-note" x="58" y="354">{language === "zh" ? "数字样本幅度 -> dBFS" : "PCM amplitude -> dBFS"}</text>
+      {[{ x: 54, width: 140, db: frame.inputDb }, { x: 250, width: 132, db: frame.inputDb }, { x: 620, width: 92, db: frame.outputDb }].map(plot => <g key={plot.x}>
+        <line className="lab-axis" x1={plot.x} x2={plot.x + plot.width} y1="286" y2="286" />
+        <line className="core-cutoff-marker" x1={plot.x + timeMs / 1000 * plot.width} x2={plot.x + timeMs / 1000 * plot.width} y1="194" y2="286" />
+        <circle className="core-gain-point" cx={plot.x + timeMs / 1000 * plot.width} cy={dbToDisplayY(plot.db, envelopeBottomY, envelopeHeight)} r="4" />
+        <text className="interface-tdm-note" x={plot.x} y="310">0</text>
+        <text className="interface-tdm-note" x={plot.x + plot.width} y="310" textAnchor="end">1 s</text>
+      </g>)}
+      <path className="core-dynamics-input" data-testid="dynamics-input-envelope" d={inputEnvelope} />
+      <text className="core-diagram-caption" x="124" y="342">{steps[0].label[language]}</text>
       <line
         className="lab-axis faint"
         data-testid="dynamics-threshold-line"
@@ -1058,13 +575,13 @@ function DynamicsChart({
         y1={thresholdLineY}
         y2={thresholdLineY}
       />
-      <text className="interface-tdm-note" x="246" y={Math.max(186, thresholdLineY - 8)}>Threshold {threshold} dBFS</text>
+      <text className="interface-tdm-note" x="250" y="170">T = {threshold} dBFS</text>
       <path className="core-dynamics-input" d={detectorEnvelope} />
-      <text className="core-diagram-caption" x="238" y="332">{steps[1].label[language]}</text>
+      <text className="core-diagram-caption" x="316" y="342">{steps[1].label[language]}</text>
       <line className="lab-axis" x1="430" x2="566" y1="286" y2="286" />
       <line className="lab-axis" x1="430" x2="430" y1="176" y2="286" />
       <path className="core-dynamics-guide" d="M 430 286 L 566 178" />
-      <path className="lab-wave-path" d={curvePath} />
+      <path className="lab-wave-path dynamics-transfer-path" d={curvePath} />
       <line
         className="core-gain-reference"
         x1="430"
@@ -1088,46 +605,48 @@ function DynamicsChart({
         y2={compressedOutputY}
       />
       <circle className="core-gain-point" cx={gainMarkerX} cy={compressedOutputY} r="4" />
-      <text className="core-axis-label" x="490" y="308">{language === "zh" ? "横轴：输入电平 dBFS" : "X: input level dBFS"}</text>
-      <text
-        className="core-axis-label"
-        transform="rotate(-90 414 242)"
-        x="414"
-        y="242"
-      >
-        {language === "zh" ? "纵轴：输出电平 dBFS" : "Y: output level dBFS"}
-      </text>
-      <text className="interface-tdm-note" x={gainMarkerX + 8} y={inputReferenceY - 5}>
-        {language === "zh" ? "未压缩输出=输入" : "Unity output"}
-      </text>
-      <text className="interface-tdm-note" x={gainMarkerX + 8} y={compressedOutputY + 13}>
-        {language === "zh" ? `增益衰减 ${formatDbValue(exampleGainDb)}` : `Gain reduction ${formatDbValue(exampleGainDb)}`}
-      </text>
-      <text className="core-diagram-caption" x="430" y="332">{steps[2].label[language]}</text>
-      <g className="core-gain-formula">
-        <rect height="76" rx="8" width="318" x="402" y="342" />
-        <text x="420" y="365">{language === "zh" ? "超过阈值：输出 = T + (输入 - T) / Ratio" : "Above threshold: output = T + (input - T) / Ratio"}</text>
-        <text data-testid="dynamics-over-threshold" x="420" y="384">
+      <text className="interface-tdm-note" x="430" y="310">−48</text><text className="interface-tdm-note" x="566" y="310" textAnchor="end">0 dBFS</text>
+      <text className="core-diagram-caption" x="498" y="342">{steps[2].label[language]}</text>
+      <path className="core-dynamics-output" data-testid="dynamics-output-envelope" d={outputEnvelope} />
+      <text className="core-diagram-caption" x="666" y="342">{steps[3].label[language]}</text>
+    </svg>
+    <div className="dynamics-result-note">
+      <p>{language === "zh" ? "输入、检测与输出图：横轴 0–1 s，纵轴统一 −48 至 0 dBFS，显示电平包络而非有正负的 PCM 波形。增益计算图：横轴为输入、纵轴为输出（均 −48 至 0 dBFS）；虚线表示未压缩输出=输入。" : "Input, detector and output: 0–1 s horizontally, −48 to 0 dBFS vertically. These are level envelopes, not signed PCM waveforms. Transfer plot: input vs output (both −48 to 0 dBFS); dashed diagonal is unity output."}</p>
+      <label className="dynamics-time-control">{language === "zh" ? "观察时刻" : "Observation time"} · {timeMs} ms
+        <input aria-label={language === "zh" ? "观察时刻" : "Observation time"} type="range" min="0" max="1000" step="10" value={timeMs} onChange={event => setTimeMs(Number(event.target.value))} />
+      </label>
+      <svg className="dynamics-gain-chart" viewBox="0 0 760 145" role="img" aria-label={language === "zh" ? "增益变化随时间" : "Gain change over time"}>
+        {[0, -18, -36].map(db => <g key={db}><line className="lab-axis faint" x1="60" x2="700" y1={30 - db * 2} y2={30 - db * 2} /><text className="lab-label" x="50" y={36 - db * 2} textAnchor="end">{db}</text></g>)}
+        <path className="core-dynamics-output" data-testid="dynamics-gain-history" d={gainPath} />
+        <line className="core-cutoff-marker" x1={60 + timeMs * 0.64} x2={60 + timeMs * 0.64} y1="30" y2="102" />
+        <circle className="core-gain-point" cx={60 + timeMs * 0.64} cy={30 - frame.gainDb * 2} r="4" />
+        <text className="lab-label" x="60" y="133">0</text><text className="lab-label" x="380" y="133" textAnchor="middle">500</text><text className="lab-label" x="700" y="133" textAnchor="end">1000 ms</text>
+      </svg>
+      <p>{language === "zh" ? "增益曲线纵轴为 dB：0 表示不改变，负值表示衰减；横轴为时间。它不是输出电平，也不是频率响应。" : "Gain curve: vertical dB, with 0 meaning unchanged and negative values attenuation; horizontal time. It is neither output level nor frequency response."}</p>
+      <div className="dynamics-calculation">
+        <p>{language === "zh" ? "超过阈值：输出 = T + (输入 - T) / Ratio" : "Above threshold: output = T + (input - T) / Ratio"}</p>
+        <p>{language === "zh" ? "低于或等于阈值：输出 = 输入，增益为 0 dB。" : "At or below threshold: output = input, gain = 0 dB."}</p>
+        <p data-testid="dynamics-over-threshold">
           {language === "zh"
-            ? `超出量：${formatDbfs(exampleInputDb)} - ${formatDbfs(threshold)} = ${formatDbValue(exampleOverThresholdDb)}`
-            : `Above: ${formatDbfs(exampleInputDb)} - ${formatDbfs(threshold)} = ${formatDbValue(exampleOverThresholdDb)}`}
-        </text>
-        <text data-testid="dynamics-ratio-kept" x="420" y="401">
+            ? `超出量：max(0, ${formatDbfs(exampleInputDb)} - ${formatDbfs(threshold)}) = ${formatDbValue(exampleOverThresholdDb)}`
+            : `Excess: max(0, ${formatDbfs(exampleInputDb)} - ${formatDbfs(threshold)}) = ${formatDbValue(exampleOverThresholdDb)}`}
+        </p>
+        <p data-testid="dynamics-ratio-kept">
           {language === "zh"
             ? `Ratio：${formatDbValue(exampleOverThresholdDb)} / ${ratio} = ${formatDbValue(exampleKeptOverDb)}`
             : `Ratio: ${formatDbValue(exampleOverThresholdDb)} / ${ratio} = ${formatDbValue(exampleKeptOverDb)}`}
-        </text>
-        <text data-testid="dynamics-gain-db" x="420" y="418">
+        </p>
+        <p data-testid="dynamics-gain-db">
           {language === "zh"
             ? `输出：${formatDbfs(exampleOutputDb)}；增益变化 ${formatDbValue(exampleGainDb)}`
             : `Output: ${formatDbfs(exampleOutputDb)}; gain change ${formatDbValue(exampleGainDb)}`}
-        </text>
-      </g>
-      <path className="core-dynamics-output" d={outputEnvelope} />
-      <text className="core-diagram-caption" x="618" y="332">{steps[3].label[language]}</text>
-      <text className="interface-tdm-note" x="52" y="430">{language === "zh" ? "Threshold 改变超出量；ratio 改变超出阈值部分保留多少，二者共同决定增益衰减。" : "Threshold changes how far above the line the signal is; ratio decides how much of that excess remains."}</text>
-      <text className="interface-tdm-note" x="52" y="448">{language === "zh" ? "这里的压缩是动态范围压缩，不是 MP3/AAC 这类编码压缩。" : "This is dynamic range compression, not MP3/AAC-style codec compression."}</text>
-    </svg>
+        </p>
+        <p>{language === "zh" ? `衰减量：${(-exampleGainDb).toFixed(1)} dB；线性增益 g = ${frame.linearGain.toFixed(3)}，应用到 PCM 时 y[n] = g[n] · x[n]。` : `Reduction: ${(-exampleGainDb).toFixed(1)} dB; linear gain g = ${frame.linearGain.toFixed(3)}, applied to PCM as y[n] = g[n] · x[n].`}</p>
+      </div>
+      <p>{language === "zh" ? "Threshold 改变超出量；ratio 改变超出阈值部分保留多少，二者共同决定增益衰减。" : "Threshold changes how far above the line the signal is; ratio decides how much of that excess remains."}</p>
+      <p>{language === "zh" ? "模型边界：使用合成检测包络与硬拐点静态映射，没有 attack/release、软拐点、补偿增益或前瞻。真实压缩器的增益有时间响应，不能把这里的结果当作完整压缩器波形或砖墙限幅器。" : "Model limits: synthetic detector envelope and hard-knee static mapping; no attack/release, soft knee, makeup gain or lookahead. Real gain has a time response; this is not a complete compressor waveform or a brick-wall limiter."}</p>
+    </div>
+    </>
   );
 }
 
@@ -1143,7 +662,7 @@ export function CoreSignalProcessingLab({ language, onBack, onBackToDetails }: C
   const [ratio, setRatio] = useState(3);
 
   const stftMetrics = useMemo(() => {
-    const frequencyResolution = sampleRate / windowSize;
+    const frequencyResolution = sampleRate / (2 ** Math.ceil(Math.log2(windowSize)));
     const frameDuration = (windowSize / sampleRate) * 1000;
     const overlap = Math.max(0, 1 - hopSize / windowSize) * 100;
 
@@ -1170,8 +689,8 @@ export function CoreSignalProcessingLab({ language, onBack, onBackToDetails }: C
   }[filterType];
   const activeChangeNote = {
     stft: {
-      zh: "窗口越长，频率分辨率越细但时间定位越粗；hop 越小，帧重叠越多、能量图时间轴越密且计算量更高；颜色越亮表示该帧频段能量越强。",
-      en: "A longer window gives finer frequency resolution but coarser timing; a smaller hop adds overlap, denser time frames, and more compute; brighter cells mean more energy in that frame/bin."
+      zh: "窗口越长，通常越能区分相邻频率，但时间定位越粗；hop 越小，时间帧更密、计算量更高。颜色越亮表示该帧频带的功率谱密度越高。",
+      en: "Longer windows usually distinguish closer frequencies but give coarser timing; smaller hops add time frames and computation. Brighter cells mean higher power spectral density in that frame/band."
     },
     filter: {
       zh: "这一步变化：截止频率、Q 和 EQ 增益共同改变频率响应，输出频谱会随各频段保留比例变化。",
@@ -1226,14 +745,12 @@ export function CoreSignalProcessingLab({ language, onBack, onBackToDetails }: C
           ))}
         </div>
 
-        <ProcessingStageOverview language={language} mode={mode} />
+        {mode !== "stft" && <><ProcessingStageOverview language={language} mode={mode} /><FlowSteps language={language} mode={mode} /></>}
 
-        <FlowSteps language={language} mode={mode} />
-
-        <div className="core-signal-layout">
+        <div className={mode === "stft" ? "core-signal-layout core-stft-layout" : "core-signal-layout"}>
           <div className="sound-lab-visual core-signal-visual">
             {mode === "stft" ? (
-              <StftChart hopSize={hopSize} language={language} windowSize={windowSize} />
+              <StftWorkbench hopSize={hopSize} language={language} windowSize={windowSize} />
             ) : null}
             {mode === "filter" ? (
               <FilterChart
@@ -1273,7 +790,7 @@ export function CoreSignalProcessingLab({ language, onBack, onBackToDetails }: C
                   onChange={setHopSize}
                 />
                 <div className="core-signal-metrics">
-                  <strong>{language === "zh" ? `频率分辨率：${stftMetrics.frequencyResolution.toFixed(2)} Hz/bin` : `Frequency resolution: ${stftMetrics.frequencyResolution.toFixed(2)} Hz/bin`}</strong>
+                  <strong>{language === "zh" ? `频率格间距：${stftMetrics.frequencyResolution.toFixed(2)} Hz/bin` : `Bin spacing: ${stftMetrics.frequencyResolution.toFixed(2)} Hz/bin`}</strong>
                   <strong>{language === "zh" ? `每帧时长：${stftMetrics.frameDuration.toFixed(1)} ms` : `Frame duration: ${stftMetrics.frameDuration.toFixed(1)} ms`}</strong>
                   <strong>{language === "zh" ? `重叠率：${stftMetrics.overlap.toFixed(1)}%` : `Overlap: ${stftMetrics.overlap.toFixed(1)}%`}</strong>
                 </div>
@@ -1301,7 +818,7 @@ export function CoreSignalProcessingLab({ language, onBack, onBackToDetails }: C
                 </div>
                 <SliderControl
                   label={language === "zh" ? "截止频率" : "Cutoff frequency"}
-                  max={8000}
+                  max={7900}
                   min={200}
                   step={100}
                   value={cutoff}
@@ -1321,6 +838,7 @@ export function CoreSignalProcessingLab({ language, onBack, onBackToDetails }: C
                   <strong>{language === "zh" ? `EQ 增益：${formatDb(eqGain)}` : `EQ gain: ${formatDb(eqGain)}`}</strong>
                 </div>
                 <p className="core-signal-change-note">{activeChangeNote[language]}</p>
+                <button className="sine-button" type="button" onClick={() => { setFilterType("lowpass"); setCutoff(2400); setQ(1.2); setEqGain(0); }}><RotateCcw size={16} aria-hidden="true" />{language === "zh" ? "重置滤波参数" : "Reset filter"}</button>
               </>
             ) : null}
 
@@ -1349,6 +867,11 @@ export function CoreSignalProcessingLab({ language, onBack, onBackToDetails }: C
           </aside>
         </div>
 
+        {mode === "stft" && <details className="stft-reading-notes">
+          <summary>{language === "zh" ? "处理流程与应用位置" : "Processing flow and placement"}</summary>
+          <ProcessingStageOverview language={language} mode={mode} />
+          <FlowSteps language={language} mode={mode} />
+        </details>}
       </section>
     </main>
   );

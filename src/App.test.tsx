@@ -8,6 +8,7 @@ import { MeetingCommunicationLab } from "./components/MeetingCommunicationLab";
 
 describe("Audio knowledge app", () => {
   beforeEach(() => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     window.localStorage.setItem("audio-technology-language", "zh");
   });
 
@@ -1392,6 +1393,8 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("heading", { name: "语音增强实验室" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
     const lab = screen.getByRole("region", { name: "语音增强实验台" });
+    await user.click(screen.getByText("查看完整处理链路"));
+    await user.click(screen.getByText("SoC SDK 与工程参考"));
     const flowDiagram = within(lab).getByRole("img", { name: "语音增强处理流程图" });
     expect(flowDiagram).toBeInTheDocument();
     expect(within(lab).getByRole("img", { name: "语音增强前后波形对比" })).toBeInTheDocument();
@@ -1439,6 +1442,14 @@ describe("Audio knowledge app", () => {
     expect(within(lab).queryByRole("slider", { name: "混响拖尾" })).not.toBeInTheDocument();
     expect(within(lab).getByRole("img", { name: "语音增强算法链路波形变化图" })).toBeInTheDocument();
     expect(within(lab).getByTestId("speech-stage-raw")).toBeInTheDocument();
+    expect(within(lab).getByTestId("speech-pcm-to-ao")).toHaveAttribute("d", "M 543 460 V 490");
+    expect(within(lab).getByTestId("speech-pcm-to-ao")).toHaveClass("speech-lab-flow-link");
+    expect(within(lab).getByTestId("speech-playback-to-ao")).toHaveClass("speech-lab-reference-link");
+    expect(within(lab).getByTestId("speech-pcm-to-encode")).toBeInTheDocument();
+    expect(within(lab).getByText(/不必先编码/)).toBeInTheDocument();
+    expect(within(lab).getByTestId("speech-stage-beamforming")).toBeInTheDocument();
+    expect(within(lab).getByRole("region", { name: "当前阶段分量对比" })).toBeInTheDocument();
+    expect(within(lab).getByTestId("speech-component-speech")).toHaveTextContent("0.0");
     expect(within(lab).getByTestId("speech-stage-aec")).toBeInTheDocument();
     expect(within(lab).getByTestId("speech-stage-ns")).toBeInTheDocument();
     expect(within(lab).getByTestId("speech-stage-dereverb")).toBeInTheDocument();
@@ -1498,10 +1509,17 @@ describe("Audio knowledge app", () => {
       agc: getStagePath("agc")
     };
     await user.click(screen.getByRole("button", { name: "AEC 回声消除" }));
+    expect(screen.getByRole("heading", { name: "AEC：减掉扬声器传回来的声音" })).toBeInTheDocument();
+    const aoReference = screen.getByTestId("aec-track-ao").getAttribute("d");
+    const aiCapture = screen.getByTestId("aec-track-ai").getAttribute("d");
+    const aecResult = screen.getByTestId("aec-track-output").getAttribute("d");
     fireEvent.change(screen.getByRole("slider", { name: "处理强度" }), {
       target: { value: "30" }
     });
     expect(screen.getByText("当前模块强度：30%")).toBeInTheDocument();
+    expect(screen.getByTestId("aec-track-ao")).toHaveAttribute("d", aoReference);
+    expect(screen.getByTestId("aec-track-ai")).toHaveAttribute("d", aiCapture);
+    expect(screen.getByTestId("aec-track-output").getAttribute("d")).not.toEqual(aecResult);
     expect(getStagePath("raw")).toEqual(stageBeforeAec.raw);
     expect(getStagePath("aec")).not.toEqual(stageBeforeAec.aec);
     expect(getStagePath("ns")).not.toEqual(stageBeforeAec.ns);
@@ -1577,6 +1595,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
     const lab = screen.getByRole("region", { name: "基础信号处理实验台" });
+    await user.click(screen.getByText("处理流程与应用位置"));
     const stageFlow = within(lab).getByRole("list", { name: "音频处理阶段流程图" });
     expect(within(stageFlow).getByText("输入源")).toBeInTheDocument();
     expect(within(stageFlow).getByText("PCM 音频")).toBeInTheDocument();
@@ -1586,88 +1605,38 @@ describe("Audio knowledge app", () => {
     expect(within(stageFlow).getByText("输出去向")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "FFT / STFT：主要是分析和变换域入口" })).toBeInTheDocument();
     expect(screen.getByText(/常放在 PCM 之后/)).toBeInTheDocument();
-    expect(screen.getByText(/FFT 把一帧 PCM 从时间域转成频率能量/)).toBeInTheDocument();
+    expect(screen.getByText(/FFT 快速计算一帧的离散傅里叶变换/)).toBeInTheDocument();
     const stftFlow = within(lab).getByRole("list", { name: "STFT 流程节点" });
-    const stftChart = within(lab).getByRole("img", { name: "STFT 流程对应图" });
-    expect(within(stftFlow).getByText("输入 PCM")).toBeInTheDocument();
-    expect(within(stftFlow).getByText("分帧/加窗")).toBeInTheDocument();
-    expect(within(stftFlow).getByText("FFT")).toBeInTheDocument();
-    expect(within(stftFlow).getByText("频谱/特征")).toBeInTheDocument();
-    expect(within(stftChart).getAllByText("输入 PCM").length).toBeGreaterThan(0);
-    expect(within(stftChart).getAllByText("分帧/加窗").length).toBeGreaterThan(0);
-    expect(within(stftChart).getAllByText("FFT").length).toBeGreaterThan(0);
-    expect(within(stftChart).getAllByText("频谱/特征").length).toBeGreaterThan(0);
-    expect(within(stftChart).getByText("Hann 窗")).toBeInTheDocument();
-    expect(within(stftChart).getByText("重叠帧")).toBeInTheDocument();
-    expect(within(stftChart).getByText("频率格 / bin")).toBeInTheDocument();
-    expect(within(stftChart).getByText("STFT 频谱图")).toBeInTheDocument();
-    expect(within(stftChart).getByText("横轴：时间帧")).toBeInTheDocument();
-    expect(within(stftChart).getByText("纵轴：频率")).toBeInTheDocument();
-    expect(within(stftChart).getByText("横轴：频率格")).toBeInTheDocument();
-    expect(within(stftChart).getByText("纵轴：能量")).toBeInTheDocument();
-    expect(within(stftChart).getByText("亮 = 能量高")).toBeInTheDocument();
-    expect(within(stftChart).getByText("暗 = 能量低")).toBeInTheDocument();
-    expect(within(stftChart).getByTestId("stft-energy-plot")).toBeInTheDocument();
-    expect(within(stftChart).getByText("高频")).toBeInTheDocument();
-    expect(within(stftChart).getByText("低频")).toBeInTheDocument();
-    expect(within(stftChart).getAllByTestId("stft-pcm-sample")).toHaveLength(25);
-    expect(within(stftChart).getByText("低/中/高频成分叠加")).toBeInTheDocument();
-    expect(within(stftChart).getByText("离散采样点")).toBeInTheDocument();
-    expect(within(stftChart).getByText("图中示意：14 个频率格")).toBeInTheDocument();
-    expect(within(stftChart).getByText("峰值来自同一段 PCM 的频率成分")).toBeInTheDocument();
-    expect(within(stftChart).getAllByTestId("stft-feature-bar")).toHaveLength(9);
-    expect(within(stftChart).getByText("Mel / MFCC / embedding")).toBeInTheDocument();
-    expect(within(stftChart).getByText("由频谱压缩或重排得到")).toBeInTheDocument();
-    expect(within(stftChart).getByText("hop 不改变单帧频谱")).toBeInTheDocument();
-    expect(within(stftChart).getByText("hop 256 点 = 16.0 ms/帧；只改变横向时间帧")).toBeInTheDocument();
-    expect(within(stftChart).getByText("图中示意：27 个时间帧；11 个频率格")).toBeInTheDocument();
-    const energyColors = new Set(
-      within(stftChart)
-        .getAllByTestId("stft-energy-cell")
-        .map((cell) => cell.getAttribute("fill"))
-    );
-    expect(energyColors.size).toBeGreaterThan(8);
-    expect(screen.queryByRole("region", { name: "窗口长度、hop size 和能量图怎么理解" })).not.toBeInTheDocument();
-    expect(screen.getByText(/窗口越长，频率分辨率越细但时间定位越粗/)).toBeInTheDocument();
-    expect(screen.getByText(/颜色越亮表示该帧频段能量越强/)).toBeInTheDocument();
-    expect(screen.getByText("频率分辨率：31.25 Hz/bin")).toBeInTheDocument();
-    expect(screen.getByText("每帧时长：32.0 ms")).toBeInTheDocument();
-    const initialWindowWidth = Number(screen.getByTestId("stft-window-block").getAttribute("width"));
-    const initialHopOffset = Number(screen.getByTestId("stft-overlap-frame").getAttribute("x"));
-    const initialEnergyPlotHeight = Number(screen.getByTestId("stft-energy-plot").getAttribute("height"));
-    const initialEnergyPlotWidth = Number(screen.getByTestId("stft-energy-plot").getAttribute("width"));
-    const initialEnergyCellHeight = Number(screen.getAllByTestId("stft-energy-cell")[0].getAttribute("height"));
-    const initialEnergyCellCount = screen.getAllByTestId("stft-energy-cell").length;
-    const initialSpectrumBarCount = document.querySelectorAll(".core-spectrum-bar:not(.muted)").length;
-
-    fireEvent.change(screen.getByRole("slider", { name: "Hop size" }), {
-      target: { value: "128" }
-    });
-    expect(screen.getByText("hop 128 点 = 8.0 ms/帧；只改变横向时间帧")).toBeInTheDocument();
-    expect(screen.getByText("图中示意：36 个时间帧；11 个频率格")).toBeInTheDocument();
-    expect(screen.getAllByTestId("stft-energy-cell").length).toBeGreaterThan(initialEnergyCellCount);
-    expect(document.querySelectorAll(".core-spectrum-bar:not(.muted)").length).toBe(initialSpectrumBarCount);
-    expect(Number(screen.getByTestId("stft-energy-plot").getAttribute("height"))).toBe(initialEnergyPlotHeight);
-    expect(Number(screen.getByTestId("stft-energy-plot").getAttribute("width"))).toBe(initialEnergyPlotWidth);
-    expect(Number(screen.getByTestId("stft-overlap-frame").getAttribute("x"))).toBeLessThan(initialHopOffset);
-
-    const hopOnlyEnergyCellHeight = Number(screen.getAllByTestId("stft-energy-cell")[0].getAttribute("height"));
-    const hopOnlyEnergyCellCount = screen.getAllByTestId("stft-energy-cell").length;
-    fireEvent.change(screen.getByRole("slider", { name: "窗口长度" }), {
-      target: { value: "1024" }
-    });
-    expect(screen.getByText("频率分辨率：15.63 Hz/bin")).toBeInTheDocument();
-    expect(screen.getByText("重叠率：87.5%")).toBeInTheDocument();
-    expect(Number(screen.getByTestId("stft-window-block").getAttribute("width"))).toBeGreaterThan(initialWindowWidth);
-    expect(screen.getByText("图中示意：22 个频率格")).toBeInTheDocument();
-    expect(screen.getByText("图中示意：36 个时间帧；16 个频率格")).toBeInTheDocument();
-    expect(Number(screen.getByTestId("stft-energy-plot").getAttribute("height"))).toBe(initialEnergyPlotHeight);
-    expect(Number(screen.getByTestId("stft-energy-plot").getAttribute("width"))).toBe(initialEnergyPlotWidth);
-    expect(Number(screen.getAllByTestId("stft-energy-cell")[0].getAttribute("height"))).toBeLessThan(hopOnlyEnergyCellHeight);
-    expect(screen.getAllByTestId("stft-energy-cell").length).toBeGreaterThan(hopOnlyEnergyCellCount);
-    expect(document.querySelectorAll(".core-spectrum-bar:not(.muted)").length).toBeGreaterThan(initialSpectrumBarCount);
-    expect(Number(screen.getAllByTestId("stft-energy-cell")[0].getAttribute("height"))).toBeLessThan(initialEnergyCellHeight);
-    expect(screen.getByText(/hop 越小，帧重叠越多、能量图时间轴越密且计算量更高/)).toBeInTheDocument();
+    for (const label of ["输入 PCM", "分帧/加窗", "FFT", "频谱/特征"]) expect(within(stftFlow).getByText(label)).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "完整 PCM 波形" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /STFT 时频图：横轴时间/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "纯音" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByTestId("stft-feature-bar")).not.toBeInTheDocument();
+    expect(screen.getByText("频率格间距：31.25 Hz/bin")).toBeInTheDocument();
+    const waveform = screen.getByTestId("stft-full-wave").getAttribute("d");
+    const spectrum = () => screen.getByTestId("stft-spectrum-path").getAttribute("d");
+    const initialSpectrum = spectrum();
+    const initialWidth = screen.getByTestId("stft-frame-span").style.width;
+    fireEvent.change(screen.getByRole("slider", { name: "Hop size" }), { target: { value: "128" } });
+    expect(screen.getByRole("slider", { name: "观察帧" })).toHaveAttribute("max", "28");
+    expect(spectrum()).toEqual(initialSpectrum);
+    expect(screen.getByTestId("stft-full-wave").getAttribute("d")).toBe(waveform);
+    await user.click(screen.getByRole("button", { name: "扫频" }));
+    const chirpSpectrum = spectrum();
+    const windowed = screen.getByTestId("stft-windowed-wave").getAttribute("d");
+    fireEvent.change(screen.getByRole("slider", { name: "观察帧" }), { target: { value: "18" } });
+    expect(spectrum()).not.toEqual(chirpSpectrum);
+    expect(screen.getByTestId("stft-windowed-wave").getAttribute("d")).not.toBe(windowed);
+    expect(screen.getByTestId("stft-frame-readout")).toHaveTextContent("144.0–176.0 ms");
+    fireEvent.change(screen.getByRole("slider", { name: "窗口长度" }), { target: { value: "1024" } });
+    expect(screen.getByText("频率格间距：15.63 Hz/bin")).toBeInTheDocument();
+    expect(screen.getByTestId("stft-frame-span").style.width).not.toBe(initialWidth);
+    fireEvent.change(screen.getByRole("slider", { name: "窗口长度" }), { target: { value: "768" } });
+    expect(screen.getByText("每帧时长：48.0 ms")).toBeInTheDocument();
+    for (const label of ["短脉冲", "混合信号"]) {
+      await user.click(screen.getByRole("button", { name: label }));
+      expect(screen.getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true");
+    }
 
     await user.click(screen.getByRole("button", { name: "滤波器 / EQ" }));
     expect(screen.getByRole("heading", { name: "EQ / 滤波：主要是频段能量塑形" })).toBeInTheDocument();
@@ -1692,12 +1661,14 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("slider", { name: "Q" })).toHaveAttribute("max", "20");
     const getOutputBarHeights = () =>
       screen.getAllByTestId("filter-output-bar").map((bar) => Number(bar.getAttribute("height")));
-    const initialQWidth = Number(screen.getByTestId("filter-q-band").getAttribute("width"));
+    const initialResponse = screen.getByTestId("filter-response-path").getAttribute("d");
+    expect(screen.getAllByTestId("filter-input-bar").map(bar => bar.getAttribute("data-frequency"))).toEqual(["300", "1600", "5200"]);
+    expect(screen.getAllByTestId("filter-output-bar").map(bar => bar.getAttribute("data-frequency"))).toEqual(["300", "1600", "5200"]);
     fireEvent.change(screen.getByRole("slider", { name: "Q" }), {
       target: { value: "20" }
     });
     expect(screen.getByText("Q：20.0")).toBeInTheDocument();
-    expect(Number(screen.getByTestId("filter-q-band").getAttribute("width"))).toBeLessThan(initialQWidth);
+    expect(screen.getByTestId("filter-response-path").getAttribute("d")).not.toEqual(initialResponse);
     const lowpassOutputBarsBeforeCutoff = getOutputBarHeights();
     const initialCutoffX = Number(screen.getByTestId("filter-cutoff-marker").getAttribute("x1"));
     fireEvent.change(screen.getByRole("slider", { name: "截止频率" }), {
@@ -1722,15 +1693,19 @@ describe("Audio knowledge app", () => {
     expect(getOutputBarHeights()).not.toEqual(wideBandpassOutputBars);
     expect(screen.getByTestId("filtered-wave-path").getAttribute("d")).not.toEqual(wideBandpassWave);
 
-    const initialEqGainY = Number(screen.getByTestId("filter-eq-gain-line").getAttribute("y1"));
+    const initialEqResponse = screen.getByTestId("filter-response-path").getAttribute("d");
     const initialOutputBarMaxHeight = Math.max(...getOutputBarHeights());
     fireEvent.change(screen.getByRole("slider", { name: "EQ 增益" }), {
       target: { value: "9" }
     });
     expect(screen.getByText("EQ 增益：+9 dB")).toBeInTheDocument();
-    expect(Number(screen.getByTestId("filter-eq-gain-line").getAttribute("y1"))).toBeLessThan(initialEqGainY);
+    expect(screen.getByTestId("filter-response-path").getAttribute("d")).not.toEqual(initialEqResponse);
     expect(Math.max(...getOutputBarHeights())).toBeGreaterThan(initialOutputBarMaxHeight);
     expect(screen.getByText("这一步变化：截止频率、Q 和 EQ 增益共同改变频率响应，输出频谱会随各频段保留比例变化。")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "重置滤波参数" }));
+    expect(screen.getByRole("slider", { name: "Q" })).toHaveValue("1.2");
+    expect(screen.getByRole("slider", { name: "截止频率" })).toHaveValue("2400");
+    expect(screen.getByRole("slider", { name: "EQ 增益" })).toHaveValue("0");
 
     await user.click(screen.getByRole("button", { name: "动态处理" }));
     expect(screen.getByRole("heading", { name: "动态处理：主要是电平和峰值控制" })).toBeInTheDocument();
@@ -1746,16 +1721,20 @@ describe("Audio knowledge app", () => {
     expect(within(dynamicsChart).getAllByText("电平检测").length).toBeGreaterThan(0);
     expect(within(dynamicsChart).getAllByText("增益计算").length).toBeGreaterThan(0);
     expect(within(dynamicsChart).getAllByText("输出电平").length).toBeGreaterThan(0);
-    expect(within(dynamicsChart).getByText("数字样本幅度 -> dBFS")).toBeInTheDocument();
-    expect(within(dynamicsChart).getByText("超过阈值：输出 = T + (输入 - T) / Ratio")).toBeInTheDocument();
-    expect(within(dynamicsChart).getByText("超出量：-6 dBFS - -18 dBFS = +12 dB")).toBeInTheDocument();
-    expect(within(dynamicsChart).getByText("Ratio：+12 dB / 3 = +4 dB")).toBeInTheDocument();
-    expect(within(dynamicsChart).getByText("输出：-14 dBFS；增益变化 -8 dB")).toBeInTheDocument();
+    expect(screen.getByText("超过阈值：输出 = T + (输入 - T) / Ratio")).toBeInTheDocument();
+    expect(screen.getByText("超出量：max(0, -6 dBFS - -18 dBFS) = +12 dB")).toBeInTheDocument();
+    expect(screen.getByText("Ratio：+12 dB / 3 = +4 dB")).toBeInTheDocument();
+    expect(screen.getByText("输出：-14 dBFS；增益变化 -8 dB")).toBeInTheDocument();
     expect(within(dynamicsChart).getByTestId("dynamics-gain-reduction")).toBeInTheDocument();
-    expect(within(dynamicsChart).getByText("横轴：输入电平 dBFS")).toBeInTheDocument();
-    expect(within(dynamicsChart).getByText("纵轴：输出电平 dBFS")).toBeInTheDocument();
-    expect(within(dynamicsChart).getByText("未压缩输出=输入")).toBeInTheDocument();
-    expect(within(dynamicsChart).getByText("增益衰减 -8 dB")).toBeInTheDocument();
+    expect(screen.getByText(/虚线表示未压缩输出=输入/)).toBeInTheDocument();
+    expect(screen.getByText(/衰减量：8.0 dB；线性增益 g = 0.398/)).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "增益变化随时间" })).toBeInTheDocument();
+    const fixedInputEnvelope = screen.getByTestId("dynamics-input-envelope").getAttribute("d");
+    const fixedGainHistory = screen.getByTestId("dynamics-gain-history").getAttribute("d");
+    fireEvent.change(screen.getByRole("slider", { name: "观察时刻" }), { target: { value: "0" } });
+    expect(screen.getByTestId("dynamics-gain-db")).toHaveTextContent("输出：-36 dBFS；增益变化 0 dB");
+    expect(screen.getByTestId("dynamics-gain-history").getAttribute("d")).toEqual(fixedGainHistory);
+    fireEvent.change(screen.getByRole("slider", { name: "观察时刻" }), { target: { value: "250" } });
     expect(screen.getByText("超过阈值后按 ratio 收缩，峰值被压低")).toBeInTheDocument();
     expect(screen.getByText("Threshold：-18 dBFS")).toBeInTheDocument();
     const initialThresholdY = Number(screen.getByTestId("dynamics-threshold-line").getAttribute("y1"));
@@ -1773,6 +1752,10 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("Ratio：6:1")).toBeInTheDocument();
     expect(screen.getByTestId("dynamics-ratio-kept").textContent).not.toEqual(initialRatioKept);
     expect(screen.getByTestId("dynamics-gain-db").textContent).not.toEqual(initialGainDb);
+    expect(screen.getByTestId("dynamics-input-envelope").getAttribute("d")).toEqual(fixedInputEnvelope);
+    expect(screen.getByTestId("dynamics-gain-history").getAttribute("d")).not.toEqual(fixedGainHistory);
+    fireEvent.change(screen.getByRole("slider", { name: "Ratio" }), { target: { value: "1" } });
+    expect(screen.getByTestId("dynamics-gain-db")).toHaveTextContent("增益变化 0 dB");
     expect(screen.getByText("Threshold 改变超出量；ratio 改变超出阈值部分保留多少，二者共同决定增益衰减。")).toBeInTheDocument();
   });
 
@@ -1844,7 +1827,10 @@ describe("Audio knowledge app", () => {
 
     const page = screen.getByRole("main", { name: "什么是声音" });
     expect(within(page).getByRole("heading", { name: "从振动到 PCM：一条工程链路" })).toBeInTheDocument();
-    expect(within(page).getByRole("list", { name: "声音采集工程链路" })).toBeInTheDocument();
+    expect(within(page).getByRole("img", { name: "振膜、空气疏密和固定观察点" })).toBeInTheDocument();
+    const pressurePlot = within(page).getByRole("img", { name: "归一化观察点声压随时间变化" });
+    const voltagePlot = within(page).getByRole("img", { name: "归一化麦克风电压随时间变化" });
+    expect(pressurePlot.querySelectorAll("path")[1].getAttribute("d")).toEqual(voltagePlot.querySelectorAll("path")[1].getAttribute("d"));
     expect(within(page).getByRole("heading", { name: "核心概念词典" })).toBeInTheDocument();
     expect(within(page).getByRole("heading", { name: "声压级 dBSPL" })).toBeInTheDocument();
     expect(within(page).getByRole("button", { name: "打开声音波形实验室" })).toBeInTheDocument();
@@ -1885,7 +1871,7 @@ describe("Audio knowledge app", () => {
     );
 
     expect(screen.getByRole("img", { name: "当前声音波形图" })).toBeInTheDocument();
-    expect(screen.getByText(/Δp\(t\) = 0.60 · sin\(2π · 440t \+ 0.00π\)/)).toBeInTheDocument();
+    expect(screen.getByText(/x\(t\) = 0.60 · sin\(2π · 440t \+ 0.00π\)/)).toBeInTheDocument();
     expect(screen.getByText(/T = 2.27 ms · λ ≈ 0.780 m/)).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole("slider", { name: "频率" }), {
@@ -1898,11 +1884,25 @@ describe("Audio knowledge app", () => {
       target: { value: "0.5" }
     });
 
-    expect(screen.getByText(/Δp\(t\) = 0.80 · sin\(2π · 880t \+ 0.50π\)/)).toBeInTheDocument();
+    expect(screen.getByText(/x\(t\) = 0.80 · sin\(2π · 880t \+ 0.50π\)/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "三角波" }));
 
     expect(screen.getByText("当前波形：三角波")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "重置" }));
+    expect(screen.getByRole("slider", { name: "频率" })).toHaveValue("440");
+    expect(screen.getByRole("slider", { name: "振幅" })).toHaveValue("0.6");
+    expect(screen.getByRole("slider", { name: "相位" })).toHaveValue("0");
+    const plot = screen.getByRole("img", { name: "当前声音波形图" });
+    const reference = plot.querySelector(".sound-lab-reference")?.getAttribute("d");
+    expect(plot.querySelector(".lab-wave-path")?.getAttribute("d")).toEqual(reference);
+    fireEvent.change(screen.getByRole("slider", { name: "频率" }), { target: { value: "110" } });
+    const path = plot.querySelector(".lab-wave-path")?.getAttribute("d") ?? "";
+    // Fixed 10 ms means 1.1 cycles at 110 Hz, including the exact endpoint.
+    expect(path).toContain(`L 720.00 ${(160 - 0.6 * 110 * Math.sin(2 * Math.PI * 1.1)).toFixed(2)}`);
+    expect(plot.querySelector(".sound-lab-reference")?.getAttribute("d")).toEqual(reference);
+    await user.click(screen.getByRole("checkbox", { name: /显示原始状态/ }));
+    expect(plot.querySelector(".sound-lab-reference")).toBeNull();
   });
 
   it("replaces the active sound when switching waveforms during playback", async () => {
@@ -2073,7 +2073,7 @@ describe("Audio knowledge app", () => {
       await user.click(screen.getByRole("button", { name: new RegExp(topicTitle) }));
       const page = screen.getByRole("main", { name: topicTitle });
       const labButton = within(page).getByRole("button", { name: labLabel });
-      const firstFlow = page.querySelector(".sound-topic-flow");
+      const firstFlow = page.querySelector(".sound-topic-flow, .sound-propagation");
 
       expect(firstFlow).not.toBeNull();
       expect(labButton.compareDocumentPosition(firstFlow as Element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

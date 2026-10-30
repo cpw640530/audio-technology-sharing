@@ -1,6 +1,8 @@
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import type { Language } from "../content/knowledge";
+import { getSelectedProcessing, residualScales, speechComponents } from "./speechEnhancementModel";
+import { EnhancementStageFocus } from "./EnhancementStageFocus";
 
 type SpeechEnhancementLabProps = {
   language: Language;
@@ -31,6 +33,32 @@ const flowModes: EnhancementMode[] = ["beamforming", "aec", "ns", "dereverb", "a
 const demoNoiseLevel = 45;
 const demoEchoLevel = 55;
 const demoReverbLevel = 35;
+const enhancementGuides = {
+  aec: {
+    title: { zh: "AEC：减掉扬声器传回来的声音", en: "AEC: remove the sound returning from the speaker" },
+    sections: [
+      { zh: ["输入是什么", "一路是 AI 采集的混合信号，包含近端人声、扬声器回声和噪声；另一路是 AO 播放参考。两路必须正确对齐，参考还要能代表实际送播的信号。"], en: ["Inputs", "AI captures near-end voice, speaker echo and noise. A separate AO playback reference describes what is being played. Correct timing and a representative playback reference are essential."] },
+      { zh: ["如何抵消", "扬声器、房间和麦克风共同改变播放声音的延迟、幅度和频响。自适应滤波器估计这条回声路径，用播放参考生成估计回声，再执行：输出 = 采集信号 − 估计回声，而不是直接减掉 AO。"], en: ["Cancellation", "The speaker, room and microphone change delay, level and frequency response. An adaptive filter models this echo path and generates an echo estimate from the reference. Output = capture − estimated echo, not capture − AO."] },
+      { zh: ["怎样看结果", "先看 AO 与 AI 中回声的对应关系，再看 AEC 输出是否保留近端语音。双讲时不能把近端人声当作回声消掉；延迟漂移、削波或路径突变都会影响收敛。下方三路图是已知路径教学模拟，不是运行自适应算法。"], en: ["Reading the result", "Compare AO with its echo in AI, then check that near-end voice remains in AEC output. Double-talk, timing drift, clipping and path changes complicate adaptation. The three tracks below model a known path rather than running an adaptive filter."] }
+    ]
+  },
+  ns: {
+    title: { zh: "ANR / NS：压低背景噪声，保留人声", en: "ANR / NS: reduce background noise while preserving speech" },
+    sections: [
+      { zh: ["输入是什么", "输入通常是经过 AEC 的 PCM。AEC 减少的是与播放参考相关的回声；风扇、电流声等独立背景噪声仍然可能存在。ANR/NS 不等于 AEC，也不是耳机的主动降噪 ANC。"], en: ["Inputs", "The input is typically PCM after AEC. Independent fan or electrical noise may remain after playback-correlated echo is reduced. ANR/NS is not AEC or headphone ANC."] },
+      { zh: ["如何处理", "典型传统方法将 PCM 分帧加窗，估计各频带噪声功率，计算随时间和频率变化的增益，再重建波形。不是把整段声音统一调小：语音占优势的频带尽量保留，噪声占优势的频带适当衰减。"], en: ["Processing", "A typical traditional method windows PCM frames, estimates noise power by frequency band, applies time-varying spectral gains, then reconstructs the waveform. Speech-dominant bands are preserved rather than turning the entire signal down."] },
+      { zh: ["怎样看结果", "观察噪声分量 RMS 是否降低，同时检查近端语音有没有被削弱。真实语音与噪声会重叠，抑制过强可能造成辅音丢失、音乐噪声或抽吸。下方模型已知干净分量，所以不代表真实算法能无损分离。"], en: ["Reading the result", "Noise RMS should decrease while voice remains. Real speech overlaps noise; excessive suppression can remove consonants or cause musical noise and pumping. Known clean components below do not imply lossless real-world separation."] }
+    ]
+  },
+  agc: {
+    title: { zh: "AGC：稳定电平，不是继续降噪", en: "AGC: stabilize level, not remove more noise" },
+    sections: [
+      { zh: ["输入是什么", "输入是前级处理后的 PCM，通常仍包含少量残留噪声。数字信号也有电平：可通过峰值或 RMS 衡量，常以相对满刻度的 dBFS 表示。"], en: ["Inputs", "PCM from upstream stages may still contain residual noise. Digital signals have levels measured by peak or RMS, often expressed relative to full scale in dBFS."] },
+      { zh: ["如何处理", "先检测电平，再与目标电平比较，计算并平滑增益：输出样本 = 增益 × 输入样本。attack/release 控制跟随速度，最大增益和限幅等约束避免过度放大与过载；AGC 不必然包含限幅器。"], en: ["Processing", "Detect level, compare with a target, then calculate and smooth gain: output sample = gain × input sample. Attack/release set tracking speed; gain limits and optional limiting control overload. An AGC does not necessarily include a limiter."] },
+      { zh: ["怎样看结果", "轻声可能被抬高，大声可能被压低，但同一时刻的语音和残余噪声都乘以相同增益。不要把噪声变大误认为降噪失效。下方是即时包络教学模型，未模拟真实 attack/release 或静音门控。"], en: ["Reading the result", "Quiet passages may rise and loud passages may fall. Voice and residual noise receive the same gain at each instant, so louder noise does not imply failed denoising. This instantaneous envelope model omits attack/release and silence gating."] }
+    ]
+  }
+};
 const defaultProcessingStrengths: ProcessingStrengths = {
   beamforming: 65,
   aec: 65,
@@ -65,8 +93,8 @@ const modeDescriptions: Record<EnhancementMode, Record<Language, string>> = {
     en: "Beamforming is enabled only with 2-mic or 4-mic arrays. It first uses arrival-time or phase differences for DOA localization, then applies directional pickup toward the target."
   },
   dereverb: {
-    zh: "去混响减弱房间后期反射造成的拖尾，让语音更近；强度滑块主要改变反射尾巴长度和密度。",
-    en: "Dereverberation reduces late room-reflection tails so speech sounds closer; the slider mainly changes tail length and density."
+      zh: "去混响减弱房间后期反射造成的拖尾；此教学滑块仅压低拖尾幅度，不改变模拟房间的延迟或衰减常数。",
+      en: "Dereverberation reduces late reflection tails. This teaching slider lowers tail amplitude only, not the modeled room delay or decay constant."
   }
 };
 
@@ -250,50 +278,6 @@ const socFlows: SocFlow[] = [
   }
 ];
 
-function clamp(value: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function getSelectedProcessing(mode: EnhancementMode, strength: number, micCount: number): WaveProcessing {
-  if (mode === "beamforming" && micCount <= 1) {
-    return {};
-  }
-
-  return { [mode]: strength / 100 };
-}
-
-function gaussian(value: number, center: number, width: number) {
-  return Math.exp(-((value - center) ** 2) / width);
-}
-
-function residualScales(processing: WaveProcessing, micCount: number) {
-  const beam = micCount > 1 ? (processing.beamforming ?? 0) * (micCount === 4 ? 1 : 0.72) : 0;
-  return {
-    noise: (1 - (processing.ns ?? 0) * 0.93) * (1 - beam * 0.48),
-    echo: 1 - (processing.aec ?? 0) * 0.94,
-    reverb: (1 - (processing.dereverb ?? 0) * 0.9) * (1 - beam * 0.18)
-  };
-}
-
-function speechEnvelopeAt(ratio: number) {
-  return clamp(
-    0.18 +
-      gaussian(ratio, 0.18, 0.006) * 0.58 +
-      gaussian(ratio, 0.38, 0.014) * 0.92 +
-      gaussian(ratio, 0.62, 0.01) * 0.72 +
-      gaussian(ratio, 0.82, 0.018) * 0.46,
-    0.16,
-    1
-  );
-}
-
-function speechCarrierAt(ratio: number) {
-  return (
-    Math.sin(ratio * Math.PI * 9.2) * 0.68 +
-    Math.sin(ratio * Math.PI * 18.6 + 0.54) * 0.24 +
-    Math.sin(ratio * Math.PI * 31.2 + 1.15) * 0.1
-  );
-}
 
 function createSpeechWavePath({
   centerY,
@@ -320,45 +304,12 @@ function createSpeechWavePath({
   startX?: number;
   strength: number;
 }) {
-  const points = 512;
   const y = centerY ?? (enhanced ? 282 : 150);
-  const activeProcessing = enhanced ? (processing ?? getSelectedProcessing(mode, strength, micCount)) : {};
-  const noise = noiseLevel / 100;
-  const echo = echoLevel / 100;
-  const reverb = reverbLevel / 100;
-  const isMultiMic = micCount > 1;
-  const beamformingAmount = isMultiMic ? (activeProcessing.beamforming ?? 0) * (micCount === 4 ? 1 : 0.72) : 0;
-  const agcAmount = activeProcessing.agc ?? 0;
-  const residual = residualScales(activeProcessing, micCount);
-  const noiseScale = noise * residual.noise;
-  const echoScale = echo * residual.echo;
-  const reverbScale = reverb * residual.reverb;
-  const targetEnvelope = 0.58;
-  const speechPresenceBoost = 1 + beamformingAmount * 0.14;
-
-  return Array.from({ length: points }, (_, index) => {
-    const ratio = index / (points - 1);
-    const pointX = startX + ratio * pathWidth;
-    const speechEnvelope = speechEnvelopeAt(ratio);
-    const leveledEnvelope = speechEnvelope + (targetEnvelope - speechEnvelope) * agcAmount * 0.9;
-    const speech = speechCarrierAt(ratio);
-    const noiseTexture =
-      Math.sin(ratio * Math.PI * 92 + 0.4) * 0.52 +
-      Math.sin(ratio * Math.PI * 143 + 1.3) * 0.3 +
-      Math.sin(ratio * Math.PI * 211 + 0.2) * 0.14;
-    const delayedRatio = Math.max(0, ratio - 0.12);
-    const echoTail = delayedRatio === 0 ? 0 : Math.sin(delayedRatio * Math.PI * 14 + 0.3) * (0.6 + 0.3 * Math.sin(delayedRatio * Math.PI * 3));
-    const lateRatio = Math.max(0, ratio - 0.18);
-    const reverbTail = ratio <= 0.18 ? 0 : speechCarrierAt(lateRatio) * speechEnvelopeAt(lateRatio) * Math.exp(-lateRatio * 1.55);
-    const value =
-      speech * speechEnvelope * speechPresenceBoost +
-      noiseTexture * noiseScale * 0.52 +
-      echoTail * echoScale * 0.92 +
-      reverbTail * reverbScale * 0.58;
-    const agcGain = leveledEnvelope / speechEnvelope;
-    const pointY = y - value * agcGain * 20;
-
-    return `${index === 0 ? "M" : "L"} ${pointX.toFixed(1)} ${pointY.toFixed(1)}`;
+  const active = enhanced ? (processing ?? getSelectedProcessing(mode, strength, micCount)) : {};
+  return Array.from({ length: 512 }, (_, index) => {
+    const ratio = index / 511;
+    const value = speechComponents(ratio, active, micCount, noiseLevel, echoLevel, reverbLevel).total;
+    return `${index === 0 ? "M" : "L"} ${(startX + ratio * pathWidth).toFixed(1)} ${(y - value * 20).toFixed(1)}`;
   }).join(" ");
 }
 
@@ -394,15 +345,18 @@ function EnhancementFlowChart({
     { id: "ns", label: "NS / ANR", sub: { zh: "降噪", en: "denoise" }, x: 192, y: 220 },
     { id: "dereverb", label: "Dereverb", sub: { zh: "去混响", en: "tail reduce" }, x: 338, y: 220 },
     { id: "agc", label: "AGC", sub: { zh: "自动增益", en: "auto gain" }, x: 484, y: 220 },
-    { id: "out", label: "AENC / ASR", sub: { zh: "编码或识别", en: "encode or ASR" }, x: 484, y: 350 }
+    { id: "out", label: "PCM", sub: { zh: "增强后数据", en: "enhanced samples" }, x: 484, y: 350 },
+    { id: "encode", label: "AENC / ASR", sub: { zh: "编码或识别", en: "encode or ASR" }, x: 338, y: 490 },
+    { id: "play", label: "AO", sub: { zh: "本地播放", en: "local playback" }, x: 484, y: 490 }
   ] as const;
 
   return (
+    <>
     <svg
       aria-label={language === "zh" ? "语音增强处理流程图" : "Speech enhancement processing flow"}
       className="speech-enhancement-flow-chart"
       role="img"
-      viewBox="0 0 720 470"
+      viewBox="0 0 720 650"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
@@ -410,7 +364,7 @@ function EnhancementFlowChart({
           <path d="M0 0 8 4 0 8Z" fill="#dcece8" />
         </marker>
       </defs>
-      <rect className="lab-diagram-bg" height="470" rx="16" width="720" />
+      <rect className="lab-diagram-bg" height="650" rx="16" width="720" />
       <text className="speech-lab-chart-title" x="44" y="42">
         {language === "zh" ? "SoC SDK 风格：采集侧 VQE / 3A 处理链路" : "SoC SDK style: capture-side VQE / 3A chain"}
       </text>
@@ -429,15 +383,15 @@ function EnhancementFlowChart({
       <path className="speech-lab-flow-link" d="M 310 261 H 338" />
       <path className="speech-lab-flow-link" d="M 456 261 H 484" />
       <path className="speech-lab-flow-link" d="M 550 302 V 350" />
+      <path className="speech-lab-flow-link" data-testid="speech-pcm-to-encode" d="M 543 432 V 460 H 397 V 490" />
+      <path className="speech-lab-flow-link" data-testid="speech-pcm-to-ao" d="M 543 460 V 490" />
+      <path className="speech-lab-reference-link" data-testid="speech-playback-to-ao" d="M 127 426 V 592 H 650 V 531 H 602" />
       <g className="speech-lab-reference">
         <rect height="76" rx="12" width="170" x="42" y="350" />
-        <text x="127" y="382">AO / Mixer</text>
+        <text x="127" y="382">Playback / Mixer</text>
         <text x="127" y="406">{language === "zh" ? "播放 reference" : "playback reference"}</text>
       </g>
-      <path className="speech-lab-reference-link" d="M 212 386 C 352 386 388 144 484 116" />
-      <text className="speech-lab-note" x="238" y="380">
-        {language === "zh" ? "AEC 对齐播放参考和麦克风输入" : "AEC aligns reference and mic input"}
-      </text>
+      <path className="speech-lab-reference-link" d="M 42 388 H 20 V 58 H 543 V 76" />
       <g className="speech-lab-mic-array" aria-hidden="true">
         {Array.from({ length: micCount }, (_, index) => (
           <circle
@@ -467,10 +421,15 @@ function EnhancementFlowChart({
           <text className="speech-lab-node-sub" x={node.x + 59} y={node.y + 56}>{node.sub[language]}</text>
         </g>
       ))}
-      <text className="speech-lab-sdk-label" x="44" y="452">
+      <text className="speech-lab-sdk-label" x="44" y="624">
         {language === "zh" ? "Rockchip VQE / SigmaStar Audio Process / Ingenic IMP Audio：命名不同，边界类似" : "Rockchip VQE / SigmaStar Audio Process / Ingenic IMP Audio: different names, similar boundaries"}
       </text>
     </svg>
+    <p className="speech-mic-note">{language === "zh" ? "实线：PCM 主数据通路。虚线：播放信号与 AEC 参考的关联，不是另一条必须串行经过的处理链。" : "Solid: primary PCM data path. Dashed: association between playback and the AEC reference, not an additional mandatory serial processing chain."}</p>
+    <p className="speech-mic-note">{language === "zh"
+      ? "AGC 后仍是 PCM，可按应用选择编码、识别、录音或直接送 AO。AO 再经驱动、数字接口、DAC/Codec 与功放到扬声器，不必先编码。AEC 对齐播放参考和麦克风输入：参考应来自实际送往扬声器的播放信号，不是把 AGC 输出无条件回接 AEC。麦克风直通扬声器还需防止声反馈啸叫。"
+      : "AGC still outputs PCM: route it to encoding, recognition, recording or directly to AO. AO feeds the driver, digital interface, DAC/Codec and amplifier/speaker; encoding is not required. AEC aligns reference and mic input: the reference must represent actual speaker playback, not an unconditional loop from AGC. Mic-to-speaker monitoring also requires acoustic-feedback control."}</p>
+    </>
   );
 }
 
@@ -603,6 +562,14 @@ function AlgorithmStageWaveChart({
       x: 54,
       y: 86
     },
+    ...(micCount > 1 ? [{
+      id: "beamforming",
+      label: { zh: "多麦合成后", en: "After array" },
+      processing: {},
+      enhanced: true,
+      x: 54,
+      y: 154
+    }] : []),
     {
       id: "aec",
       label: { zh: "AEC 后", en: "After AEC" },
@@ -642,14 +609,16 @@ function AlgorithmStageWaveChart({
       aria-label={language === "zh" ? "语音增强算法链路波形变化图" : "Speech enhancement algorithm-stage waveform chart"}
       className="speech-stage-wave-chart"
       role="img"
-      viewBox="0 0 740 430"
+      viewBox={`0 0 740 ${micCount > 1 ? 498 : 430}`}
       xmlns="http://www.w3.org/2000/svg"
     >
-      <rect className="lab-diagram-bg" height="430" rx="16" width="740" />
+      <rect className="lab-diagram-bg" height={micCount > 1 ? 498 : 430} rx="16" width="740" />
       <text className="speech-lab-chart-title" x="44" y="42">
         {language === "zh" ? "算法链路中波形如何逐步变化" : "How the waveform changes through the algorithm chain"}
       </text>
-      {stages.map((stage) => (
+      {stages.map((entry, index) => {
+        const stage = { ...entry, y: 86 + index * 68 };
+        return (
         <g className="speech-stage-row" key={stage.id}>
           <line className="lab-axis" x1="176" x2="700" y1={stage.y} y2={stage.y} />
           <text className="speech-lab-axis-label" x={stage.x} y={stage.y + 5}>{stage.label[language]}</text>
@@ -671,8 +640,8 @@ function AlgorithmStageWaveChart({
             })}
           />
         </g>
-      ))}
-      <text className="speech-lab-note" x="54" y="410">
+      );})}
+      <text className="speech-lab-note" x="54" y={micCount > 1 ? 478 : 410}>
         {language === "zh"
           ? "累计示意：多麦预处理 → AEC → NS/ANR → 去混响 → AGC；单麦跳过多麦预处理。"
           : "Cumulative: array (if present) → AEC → NS/ANR → dereverb → AGC."}
@@ -738,7 +707,10 @@ export function SpeechEnhancementLab({ language, onBack, onBackToDetails }: Spee
       >
         <div className="speech-enhancement-layout">
           <div className="speech-enhancement-flow-area">
-            <EnhancementFlowChart language={language} micCount={micCount} mode={mode} />
+            <details className="speech-supplement">
+              <summary>{language === "zh" ? "查看完整处理链路" : "Full processing chain"}</summary>
+              <EnhancementFlowChart language={language} micCount={micCount} mode={mode} />
+            </details>
             <div className="waveform-tabs speech-enhancement-tabs speech-enhancement-flow-tabs" role="group" aria-label={language === "zh" ? "语音增强模块" : "Speech enhancement modules"}>
               {availableModes.map((item) => (
                 <button className={mode === item ? "active" : ""} key={item} type="button" onClick={() => setMode(item)}>
@@ -750,6 +722,14 @@ export function SpeechEnhancementLab({ language, onBack, onBackToDetails }: Spee
 
           <div className="speech-enhancement-wave-control-row">
             <div className="speech-enhancement-visuals">
+              {(mode === "aec" || mode === "ns" || mode === "agc") && <section className="speech-module-guide" aria-label={language === "zh" ? "重点原理说明" : "Core principle explanation"}>
+                <h2>{enhancementGuides[mode].title[language]}</h2>
+                <div>{enhancementGuides[mode].sections.map((section, index) => <section key={index}>
+                  <h3><span>{index + 1}</span>{section[language][0]}</h3>
+                  <p>{section[language][1]}</p>
+                </section>)}</div>
+              </section>}
+              <EnhancementStageFocus language={language} mode={mode} strengths={strengths} micCount={micCount} />
               <WaveComparison
                 echoLevel={echoLevel}
                 language={language}
@@ -841,6 +821,8 @@ export function SpeechEnhancementLab({ language, onBack, onBackToDetails }: Spee
           </div>
         </div>
 
+        <details className="speech-supplement">
+        <summary>{language === "zh" ? "SoC SDK 与工程参考" : "SoC SDK and engineering references"}</summary>
         <section className="speech-sdk-table" aria-label={language === "zh" ? "SDK 模块对照" : "SDK module mapping"}>
           {sdkRows.map((row) => (
             <article key={row.module}>
@@ -884,6 +866,7 @@ export function SpeechEnhancementLab({ language, onBack, onBackToDetails }: Spee
             ))}
           </div>
         </section>
+        </details>
       </section>
     </main>
   );
