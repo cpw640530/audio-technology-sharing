@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowRight, Headphones, Pause, Play } from "lucide-react";
 import type { Language } from "../content/knowledge";
+import { WelcomeMusic } from "./WelcomeMusic";
 
 export function WelcomePage({ language, onToggleLanguage }: {
   language: Language;
@@ -26,6 +27,7 @@ export function WelcomePage({ language, onToggleLanguage }: {
             <a className="welcome-enter" href="#top">{zh ? "进入音频知识库" : "Explore audio knowledge"}<ArrowRight size={20} aria-hidden="true" /></a>
           </div>
           <div className="welcome-motion">
+            <WelcomeMusic language={language} />
             <div className="welcome-equalizer" aria-hidden="true">{[12, 22, 36, 18, 42, 28, 16, 32, 46, 24, 14, 30].map((height, index) => <i key={index} style={{ height, animationDelay: `${index * -0.17}s` }} />)}</div>
             <button type="button" aria-pressed={paused} onClick={() => setPaused(value => !value)}
               aria-label={zh ? "暂停背景动画" : "Pause background animation"}

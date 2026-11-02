@@ -10444,6 +10444,11 @@ body:has(.home-intro) {
 .welcome-page :is(a, button):focus-visible { outline: 3px solid var(--accent); outline-offset: 6px; }
 .welcome-motion { position: absolute; bottom: 32px; right: 5%; display: flex; align-items: center; gap: 24px; }
 .welcome-motion button { display: grid; place-items: center; width: 40px; height: 40px; }
+.welcome-music, .welcome-music label { display: flex; align-items: center; gap: 8px; }
+.welcome-music input { width: 72px; accent-color: #245c50; }
+.welcome-music { position: relative; }
+.welcome-music [role="alert"] { position: absolute; bottom: 48px; right: 0; width: 200px; background: #f5f2eb; padding: 8px; color: #822b29; font-size: 14px; }
+.welcome-music button:disabled { opacity: .5; cursor: wait; }
 .welcome-motion button:hover, .welcome-header button:hover { background: #d2e3da; }
 .welcome-equalizer { display: flex; align-items: center; gap: 4px; height: 48px; }
 .welcome-equalizer i { width: 3px; background: #245c50; border-radius: 2px; animation: welcome-level 1800ms cubic-bezier(.45,0,.55,1) infinite alternate; }
@@ -10472,6 +10477,8 @@ body:has(.home-intro) {
   .welcome-footer { padding: 24px; flex-direction: column; gap: 4px; }
 }
 @media (max-width: 360px) {
+  .welcome-motion { right: 16px; gap: 12px; }
+  .welcome-equalizer { gap: 2px; }
   .welcome-header { padding-inline: 16px; }
   .welcome-brand { font-size: 11px; }
   .welcome-brand svg { display: none; }
