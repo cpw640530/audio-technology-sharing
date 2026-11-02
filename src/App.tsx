@@ -1,5 +1,6 @@
 import { RelatedTopics } from "./components/RelatedTopics";
 import { WelcomePage } from "./components/WelcomePage";
+import { WelcomeMusic } from "./components/WelcomeMusic";
 import { ReferenceSites } from "./components/ReferenceSites";
 import { getTopicKey, type TopicKey } from "./content/relatedTopics";
 import { useEffect, useMemo, useState } from "react";
@@ -125,6 +126,24 @@ function topicMatchesSearch(topic: DisplayTopic, query: string): boolean {
 }
 
 export default function App() {
+  const [autoplayMusic] = useState(() => ["", "#welcome"].includes(window.location.hash));
+  const [language, setLanguage] = useState<Language>(getInitialLanguage);
+  function toggleLanguage() {
+    setLanguage(current => {
+      const next = current === "zh" ? "en" : "zh";
+      window.localStorage.setItem(languageStorageKey, next);
+      return next;
+    });
+  }
+  return <>
+    <AppContent language={language} toggleLanguage={toggleLanguage} />
+    <aside className="welcome-motion site-music" aria-label={language === "zh" ? "背景音乐" : "Background music"}>
+      <WelcomeMusic language={language} autoplay={autoplayMusic} />
+    </aside>
+  </>;
+}
+
+function AppContent({ language, toggleLanguage }: { language: Language; toggleLanguage: () => void }) {
   const [showWelcome, setShowWelcome] = useState(() => ["", "#welcome"].includes(window.location.hash));
   const [showNotes, setShowNotes] = useState(() => window.location.hash === "#technical-notes");
   useEffect(() => {
@@ -139,7 +158,6 @@ export default function App() {
     window.addEventListener("hashchange", syncNotes);
     return () => window.removeEventListener("hashchange", syncNotes);
   }, []);
-  const [language, setLanguage] = useState<Language>(getInitialLanguage);
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeView, setActiveView] = useState<
     | "knowledge"
@@ -251,14 +269,6 @@ export default function App() {
     : -1;
   const traditionalTopicIndex = (topic: DisplayTopic | undefined) =>
     topic ? traditionalTopics.findIndex((item) => item.title.en === topic.title.en) : -1;
-
-  function toggleLanguage() {
-    setLanguage((current) => {
-      const nextLanguage = current === "zh" ? "en" : "zh";
-      window.localStorage.setItem(languageStorageKey, nextLanguage);
-      return nextLanguage;
-    });
-  }
 
   function returnToFundamentals() {
     setQuery("");
