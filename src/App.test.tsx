@@ -1378,6 +1378,7 @@ describe("Audio knowledge app", () => {
   });
 
   it("opens the speech enhancement lab with SDK flow and enhancement controls", async () => {
+    vi.spyOn(window, "scrollTo").mockImplementation(() => {});
     const user = userEvent.setup();
     render(<App />);
 
@@ -1390,192 +1391,14 @@ describe("Audio knowledge app", () => {
       })
     );
 
-    expect(screen.getByRole("heading", { name: "语音增强实验室" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("AEC");
     expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
-    const lab = screen.getByRole("region", { name: "语音增强实验台" });
-    await user.click(screen.getByText("查看完整处理链路"));
-    await user.click(screen.getByText("SoC SDK 与工程参考"));
-    const flowDiagram = within(lab).getByRole("img", { name: "语音增强处理流程图" });
-    expect(flowDiagram).toBeInTheDocument();
-    expect(within(lab).getByRole("img", { name: "语音增强前后波形对比" })).toBeInTheDocument();
-    expect(within(lab).getByText(/Rockchip VQE \/ SigmaStar Audio Process \/ Ingenic IMP Audio/)).toBeInTheDocument();
-    expect(within(lab).getAllByText("VQE / 3A").length).toBeGreaterThan(0);
-    expect(within(lab).getByText(/语音增强模块，常包含波束成形、AEC、NS\/ANR、去混响和 AGC/)).toBeInTheDocument();
-    const moduleTabs = within(lab).getByRole("group", { name: "语音增强模块" });
-    const flowArea = lab.querySelector(".speech-enhancement-flow-area");
-    expect(flowArea).not.toBeNull();
-    expect(within(flowArea as HTMLElement).getByRole("group", { name: "语音增强模块" })).toBe(moduleTabs);
-    expect((flowDiagram.compareDocumentPosition(moduleTabs) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(true);
-    expect(within(moduleTabs).getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "多麦波束成形",
-      "AEC 回声消除",
-      "NS / ANR 降噪",
-      "去混响",
-      "AGC 自动增益"
-    ]);
-    expect(within(flowDiagram).getAllByText("2 Mic 阵列").length).toBeGreaterThan(0);
-    expect(within(lab).getByText(/至少需要两路同步麦克风/)).toBeInTheDocument();
-    expect(within(lab).getAllByText(/DOA 声源定位/).length).toBeGreaterThan(0);
-    expect(within(lab).getAllByText(/定向拾音/).length).toBeGreaterThan(0);
-    expect(within(lab).getByText(/当前模块强度：只保存到选中的算法/)).toBeInTheDocument();
-    const visualArea = lab.querySelector(".speech-enhancement-visuals");
-    const controlPanel = lab.querySelector(".speech-enhancement-panel");
-    expect(visualArea).not.toBeNull();
-    expect(controlPanel).not.toBeNull();
-    expect(within(visualArea as HTMLElement).getByText(/波形如何变化/)).toBeInTheDocument();
-    expect(within(controlPanel as HTMLElement).queryByText(/波形如何变化/)).not.toBeInTheDocument();
-    expect(
-      (within(controlPanel as HTMLElement).getByRole("group", { name: "麦克风数量" }).compareDocumentPosition(
-        within(controlPanel as HTMLElement).getByRole("slider", { name: "处理强度" })
-      ) &
-        Node.DOCUMENT_POSITION_FOLLOWING) !==
-        0
-    ).toBe(true);
-    expect(within(visualArea as HTMLElement).getByRole("region", { name: "当前模式边界" })).toBeInTheDocument();
-    expect(within(controlPanel as HTMLElement).queryByRole("region", { name: "当前模式边界" })).not.toBeInTheDocument();
-    expect(within(lab).queryByRole("region", { name: "核心算法数学形式" })).not.toBeInTheDocument();
-    expect(within(lab).queryByRole("region", { name: "滑块和波形关系说明" })).not.toBeInTheDocument();
-    expect(within(lab).getByText(/演示输入固定包含噪声、回声和混响/)).toBeInTheDocument();
-    expect(within(lab).getByText(/前级算法强度会传递到后级波形/)).toBeInTheDocument();
-    expect(within(lab).queryByRole("slider", { name: "噪声强度" })).not.toBeInTheDocument();
-    expect(within(lab).queryByRole("slider", { name: "回声强度" })).not.toBeInTheDocument();
-    expect(within(lab).queryByRole("slider", { name: "混响拖尾" })).not.toBeInTheDocument();
-    expect(within(lab).getByRole("img", { name: "语音增强算法链路波形变化图" })).toBeInTheDocument();
-    expect(within(lab).getByTestId("speech-stage-raw")).toBeInTheDocument();
-    expect(within(lab).getByTestId("speech-pcm-to-ao")).toHaveAttribute("d", "M 543 460 V 490");
-    expect(within(lab).getByTestId("speech-pcm-to-ao")).toHaveClass("speech-lab-flow-link");
-    expect(within(lab).getByTestId("speech-playback-to-ao")).toHaveClass("speech-lab-reference-link");
-    expect(within(lab).getByTestId("speech-pcm-to-encode")).toBeInTheDocument();
-    expect(within(lab).getByText(/不必先编码/)).toBeInTheDocument();
-    expect(within(lab).getByTestId("speech-stage-beamforming")).toBeInTheDocument();
-    expect(within(lab).getByRole("region", { name: "当前阶段分量对比" })).toBeInTheDocument();
-    expect(within(lab).getByTestId("speech-component-speech")).toHaveTextContent("0.0");
-    expect(within(lab).getByTestId("speech-stage-aec")).toBeInTheDocument();
-    expect(within(lab).getByTestId("speech-stage-ns")).toBeInTheDocument();
-    expect(within(lab).getByTestId("speech-stage-dereverb")).toBeInTheDocument();
-    expect(within(lab).getByTestId("speech-stage-agc")).toBeInTheDocument();
-    expect(within(lab).getByText(/累计示意：多麦预处理/)).toBeInTheDocument();
-    const stageRaw = within(lab).getByTestId("speech-stage-raw").getAttribute("d");
-    const stageAec = within(lab).getByTestId("speech-stage-aec").getAttribute("d");
-    const stageNs = within(lab).getByTestId("speech-stage-ns").getAttribute("d");
-    const stageDereverb = within(lab).getByTestId("speech-stage-dereverb").getAttribute("d");
-    const stageAgc = within(lab).getByTestId("speech-stage-agc").getAttribute("d");
-    expect(stageAec).not.toEqual(stageRaw);
-    expect(stageNs).not.toEqual(stageAec);
-    expect(stageDereverb).not.toEqual(stageNs);
-    expect(stageAgc).not.toEqual(stageDereverb);
-    expect(within(lab).getByRole("region", { name: "算法源码参考" })).toBeInTheDocument();
-    expect(within(lab).getByText(/AEC 源码关键词：NLMS adaptive filter/)).toBeInTheDocument();
-    expect(within(lab).getByText(/NS \/ ANR 源码关键词：STFT spectral subtraction/)).toBeInTheDocument();
-    expect(within(lab).getByText("Rockchip RK Media / VQE")).toBeInTheDocument();
-    expect(within(lab).getByText("SigmaStar MI Audio")).toBeInTheDocument();
-    expect(within(lab).getByText("Ingenic IMP Audio")).toBeInTheDocument();
-    expect(within(lab).getByRole("img", { name: "Rockchip RK Media / VQE 音频处理流程图" })).toBeInTheDocument();
-    expect(within(lab).getByRole("img", { name: "SigmaStar MI Audio 音频处理流程图" })).toBeInTheDocument();
-    expect(within(lab).getByRole("img", { name: "Ingenic IMP Audio 音频处理流程图" })).toBeInTheDocument();
-    expect(within(lab).getByText("RV1103B / RV1106B")).toBeInTheDocument();
-    expect(within(lab).getByText("SSC338Q / SSC338G")).toBeInTheDocument();
-    expect(within(lab).getByText("T41")).toBeInTheDocument();
-    expect(within(lab).queryByText(/VAD/)).not.toBeInTheDocument();
-    const rawWave = within(lab).getByTestId("speech-raw-wave").getAttribute("d");
-    const enhancedWave = within(lab).getByTestId("speech-enhanced-wave").getAttribute("d");
-    expect(rawWave).not.toEqual(enhancedWave);
-
-    const getStagePath = (id: string) => within(lab).getByTestId(`speech-stage-${id}`).getAttribute("d");
-    const stageBeforeNs = {
-      raw: getStagePath("raw"),
-      aec: getStagePath("aec"),
-      ns: getStagePath("ns"),
-      dereverb: getStagePath("dereverb"),
-      agc: getStagePath("agc")
-    };
-    await user.click(screen.getByRole("button", { name: "NS / ANR 降噪" }));
-    expect(screen.getByText(/NS\/ANR 估计背景噪声频谱/)).toBeInTheDocument();
-    fireEvent.change(screen.getByRole("slider", { name: "处理强度" }), {
-      target: { value: "100" }
-    });
-    expect(screen.getByText("当前模块强度：100%")).toBeInTheDocument();
-    expect(getStagePath("raw")).toEqual(stageBeforeNs.raw);
-    expect(getStagePath("aec")).toEqual(stageBeforeNs.aec);
-    expect(getStagePath("ns")).not.toEqual(stageBeforeNs.ns);
-    expect(getStagePath("dereverb")).not.toEqual(stageBeforeNs.dereverb);
-    expect(getStagePath("agc")).not.toEqual(stageBeforeNs.agc);
-
-    const stageBeforeAec = {
-      raw: getStagePath("raw"),
-      aec: getStagePath("aec"),
-      ns: getStagePath("ns"),
-      dereverb: getStagePath("dereverb"),
-      agc: getStagePath("agc")
-    };
-    await user.click(screen.getByRole("button", { name: "AEC 回声消除" }));
-    expect(screen.getByRole("heading", { name: "AEC：减掉扬声器传回来的声音" })).toBeInTheDocument();
-    const aoReference = screen.getByTestId("aec-track-ao").getAttribute("d");
-    const aiCapture = screen.getByTestId("aec-track-ai").getAttribute("d");
-    const aecResult = screen.getByTestId("aec-track-output").getAttribute("d");
-    fireEvent.change(screen.getByRole("slider", { name: "处理强度" }), {
-      target: { value: "30" }
-    });
-    expect(screen.getByText("当前模块强度：30%")).toBeInTheDocument();
-    expect(screen.getByTestId("aec-track-ao")).toHaveAttribute("d", aoReference);
-    expect(screen.getByTestId("aec-track-ai")).toHaveAttribute("d", aiCapture);
-    expect(screen.getByTestId("aec-track-output").getAttribute("d")).not.toEqual(aecResult);
-    expect(getStagePath("raw")).toEqual(stageBeforeAec.raw);
-    expect(getStagePath("aec")).not.toEqual(stageBeforeAec.aec);
-    expect(getStagePath("ns")).not.toEqual(stageBeforeAec.ns);
-    expect(getStagePath("dereverb")).not.toEqual(stageBeforeAec.dereverb);
-    expect(getStagePath("agc")).not.toEqual(stageBeforeAec.agc);
-
-    const stageBeforeDereverb = {
-      raw: getStagePath("raw"),
-      aec: getStagePath("aec"),
-      ns: getStagePath("ns"),
-      dereverb: getStagePath("dereverb"),
-      agc: getStagePath("agc")
-    };
-    await user.click(screen.getByRole("button", { name: "去混响" }));
-    fireEvent.change(screen.getByRole("slider", { name: "处理强度" }), {
-      target: { value: "80" }
-    });
-    expect(screen.getByText("当前模块强度：80%")).toBeInTheDocument();
-    expect(getStagePath("raw")).toEqual(stageBeforeDereverb.raw);
-    expect(getStagePath("aec")).toEqual(stageBeforeDereverb.aec);
-    expect(getStagePath("ns")).toEqual(stageBeforeDereverb.ns);
-    expect(getStagePath("dereverb")).not.toEqual(stageBeforeDereverb.dereverb);
-    expect(getStagePath("agc")).not.toEqual(stageBeforeDereverb.agc);
-
-    await user.click(screen.getByRole("button", { name: "AGC 自动增益" }));
-    const stageBeforeAgc = {
-      raw: getStagePath("raw"),
-      aec: getStagePath("aec"),
-      ns: getStagePath("ns"),
-      dereverb: getStagePath("dereverb"),
-      agc: getStagePath("agc")
-    };
-    const agcEnhancedWave = within(lab).getByTestId("speech-enhanced-wave").getAttribute("d");
-    fireEvent.change(screen.getByRole("slider", { name: "处理强度" }), {
-      target: { value: "20" }
-    });
-    expect(screen.getByText("当前模块强度：20%")).toBeInTheDocument();
-    expect(getStagePath("raw")).toEqual(stageBeforeAgc.raw);
-    expect(getStagePath("aec")).toEqual(stageBeforeAgc.aec);
-    expect(getStagePath("ns")).toEqual(stageBeforeAgc.ns);
-    expect(getStagePath("dereverb")).toEqual(stageBeforeAgc.dereverb);
-    expect(getStagePath("agc")).not.toEqual(stageBeforeAgc.agc);
-    expect(within(lab).getByTestId("speech-enhanced-wave").getAttribute("d")).not.toEqual(agcEnhancedWave);
-    await user.click(screen.getByRole("button", { name: "4 Mic" }));
-    expect(within(flowDiagram).getAllByText("4 Mic 阵列").length).toBeGreaterThan(0);
-    expect(screen.queryByText(/算法延迟：约/)).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "1 Mic" }));
-    expect(within(moduleTabs).getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "AEC 回声消除",
-      "NS / ANR 降噪",
-      "去混响",
-      "AGC 自动增益"
-    ]);
-    expect(within(flowDiagram).getAllByText("1 Mic 单麦").length).toBeGreaterThan(0);
-    expect(within(flowDiagram).getByText("单麦跳过")).toBeInTheDocument();
-    expect(within(flowDiagram).getByText("单麦无空间信息，跳过多麦增强")).toBeInTheDocument();
+    expect(screen.getByTestId("aec-track-output")).toBeInTheDocument();
+    const nav = screen.getByRole("navigation", { name: "语音增强算法" });
+    await user.click(within(nav).getByRole("button", { name: /NS/ }));
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("NS");
+    expect(screen.queryByTestId("aec-track-output")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("slider", { name: "处理强度" })).toHaveLength(1);
   });
 
   it("opens the core signal processing lab with FFT filters and dynamics views", async () => {

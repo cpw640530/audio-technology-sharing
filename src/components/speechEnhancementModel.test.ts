@@ -2,6 +2,32 @@ import { describe, expect, it } from "vitest";
 import { playbackReference, processingThrough, speechComponents, type ProcessingStrengths } from "./speechEnhancementModel";
 const strengths: ProcessingStrengths = { beamforming: 65, aec: 65, ns: 65, dereverb: 65, agc: 65 };
 describe("speech enhancement component model", () => {
+  it("keeps displayed components within fixed axes across slider extremes", () => {
+    for (const count of [1, 2, 4]) for (const strength of [0, 0.5, 1]) {
+      for (let i = 0; i < 512; i++) {
+        const s = speechComponents(i / 511, { beamforming: strength, aec: strength, ns: strength, dereverb: strength, agc: strength }, count);
+        expect(Number.isFinite(s.total)).toBe(true);
+        expect(Math.abs(s.total)).toBeLessThan(2);
+        expect(s.gain).toBeGreaterThan(0);
+        expect(s.gain).toBeLessThan(3.4);
+        const raw = speechComponents(i / 511, {}, count);
+        expect(Math.abs(raw.noise)).toBeLessThan(0.25);
+        expect(Math.abs(raw.reverb)).toBeLessThan(0.25);
+      }
+    }
+  });
+  it("matches component RMS attenuation to the model and bypasses zero strength", () => {
+    for (const [mode, component, residual] of [["aec", "echo", 0.06], ["ns", "noise", 0.07], ["dereverb", "reverb", 0.1]] as const) {
+      let inputPower = 0, outputPower = 0;
+      for (let i = 0; i < 512; i++) {
+        const raw = speechComponents(i / 511, {}, 2);
+        expect(speechComponents(i / 511, { [mode]: 0 }, 2)).toEqual(raw);
+        inputPower += raw[component] ** 2;
+        outputPower += speechComponents(i / 511, { [mode]: 1 }, 2)[component] ** 2;
+      }
+      expect(10 * Math.log10(outputPower / inputPower)).toBeCloseTo(20 * Math.log10(residual), 10);
+    }
+  });
   it("derives speaker echo from the delayed AO reference and subtracts only that estimate", () => {
     for (let i = 0; i < 512; i++) {
       const t = i / 511, ai = speechComponents(t, {}, 2);

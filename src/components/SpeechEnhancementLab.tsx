@@ -1,8 +1,8 @@
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import type { Language } from "../content/knowledge";
-import { getSelectedProcessing, residualScales, speechComponents } from "./speechEnhancementModel";
 import { EnhancementStageFocus } from "./EnhancementStageFocus";
+import { SpatialSpectralDemo } from "./SpatialSpectralDemo";
 
 type SpeechEnhancementLabProps = {
   language: Language;
@@ -11,7 +11,6 @@ type SpeechEnhancementLabProps = {
 };
 
 type EnhancementMode = "aec" | "ns" | "agc" | "beamforming" | "dereverb";
-type WaveProcessing = Partial<Record<EnhancementMode, number>>;
 type ProcessingStrengths = Record<EnhancementMode, number>;
 type SocFlow = {
   name: string;
@@ -30,9 +29,6 @@ type SocFlow = {
 };
 
 const flowModes: EnhancementMode[] = ["beamforming", "aec", "ns", "dereverb", "agc"];
-const demoNoiseLevel = 45;
-const demoEchoLevel = 55;
-const demoReverbLevel = 35;
 const enhancementGuides = {
   aec: {
     title: { zh: "AEC：减掉扬声器传回来的声音", en: "AEC: remove the sound returning from the speaker" },
@@ -47,7 +43,7 @@ const enhancementGuides = {
     sections: [
       { zh: ["输入是什么", "输入通常是经过 AEC 的 PCM。AEC 减少的是与播放参考相关的回声；风扇、电流声等独立背景噪声仍然可能存在。ANR/NS 不等于 AEC，也不是耳机的主动降噪 ANC。"], en: ["Inputs", "The input is typically PCM after AEC. Independent fan or electrical noise may remain after playback-correlated echo is reduced. ANR/NS is not AEC or headphone ANC."] },
       { zh: ["如何处理", "典型传统方法将 PCM 分帧加窗，估计各频带噪声功率，计算随时间和频率变化的增益，再重建波形。不是把整段声音统一调小：语音占优势的频带尽量保留，噪声占优势的频带适当衰减。"], en: ["Processing", "A typical traditional method windows PCM frames, estimates noise power by frequency band, applies time-varying spectral gains, then reconstructs the waveform. Speech-dominant bands are preserved rather than turning the entire signal down."] },
-      { zh: ["怎样看结果", "观察噪声分量 RMS 是否降低，同时检查近端语音有没有被削弱。真实语音与噪声会重叠，抑制过强可能造成辅音丢失、音乐噪声或抽吸。下方模型已知干净分量，所以不代表真实算法能无损分离。"], en: ["Reading the result", "Noise RMS should decrease while voice remains. Real speech overlaps noise; excessive suppression can remove consonants or cause musical noise and pumping. Known clean components below do not imply lossless real-world separation."] }
+      { zh: ["怎样看结果", "观察噪声分量 RMS 是否降低，同时检查近端语音有没有被削弱。真实语音与噪声会重叠，抑制过强可能造成辅音丢失、音乐噪声或抽吸。下方示例从开头的纯噪声段估计频谱，再对混合信号计算增益；不能无损分离重叠的语音和噪声。"], en: ["Reading the result", "Noise RMS should decrease while voice remains. Real speech overlaps noise; excessive suppression can remove consonants or cause musical noise and pumping. The example estimates noise from an initial noise-only segment, then filters the mixture; overlapping speech and noise cannot be separated losslessly."] }
     ]
   },
   agc: {
@@ -89,8 +85,8 @@ const modeDescriptions: Record<EnhancementMode, Record<Language, string>> = {
     en: "AGC slowly adjusts gain from the speech-level envelope, raising quiet speech and limiting loud speech; the slider mainly changes envelope stability."
   },
   beamforming: {
-    zh: "多麦波束成形只在 2 Mic 或 4 Mic 阵列下启用，先用到达时间差或相位差做 DOA 声源定位，再做定向拾音增强目标方向。",
-    en: "Beamforming is enabled only with 2-mic or 4-mic arrays. It first uses arrival-time or phase differences for DOA localization, then applies directional pickup toward the target."
+    zh: "多麦波束成形对同步麦克风信号进行延迟与加权合成，增强目标方向；方向可固定，也可由 DOA 定位提供。单麦时旁路此处理。",
+    en: "Beamforming delays and weights synchronized microphone signals toward a fixed or DOA-estimated direction. This processing is bypassed with one microphone."
   },
   dereverb: {
       zh: "去混响减弱房间后期反射造成的拖尾；此教学滑块仅压低拖尾幅度，不改变模拟房间的延迟或衰减常数。",
@@ -120,50 +116,6 @@ const modeLimits: Record<EnhancementMode, Record<Language, string>> = {
     en: "Limit: dereverb mainly reduces late tails; aggressive settings can remove natural resonance and word endings, making speech thin and dry."
   }
 };
-
-const sourceReferenceRows = [
-  {
-    title: "AEC",
-    keyword: "NLMS adaptive filter",
-    pseudo: "e = mic - dot(w, ref); w += mu * e * ref / (epsilon + dot(ref, ref))",
-    note: {
-      zh: "源码关键词：NLMS adaptive filter、delay estimation、double-talk detection。重点看播放 reference 如何对齐麦克风回声。",
-      en: "Source keywords: NLMS adaptive filter, delay estimation, double-talk detection. Focus on how playback reference is aligned to mic echo."
-    }
-  },
-  {
-    title: "NS / ANR",
-    keyword: "STFT spectral subtraction",
-    pseudo: "X[k] = STFT(x); G[k] = max(floor, 1 - N[k] / |X[k]|); y = ISTFT(G * X)",
-    note: {
-      zh: "源码关键词：STFT spectral subtraction、Wiener filter、noise estimator。重点看噪声谱估计和最小增益地板。",
-      en: "Source keywords: STFT spectral subtraction, Wiener filter, noise estimator. Focus on noise spectrum estimation and gain floor."
-    }
-  },
-  {
-    title: "AGC",
-    keyword: "envelope follower gain smoothing",
-    pseudo: "rms = sqrt(mean(x^2)); targetGain = target / rms; gain = smooth(targetGain)",
-    note: {
-      zh: "源码关键词：envelope follower、attack/release、limiter。重点看增益平滑，避免抽吸和削波。",
-      en: "Source keywords: envelope follower, attack/release, limiter. Focus on gain smoothing to avoid pumping and clipping."
-    }
-  },
-  {
-    title: "EQ / Filter",
-    keyword: "biquad filter",
-    pseudo: "y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]",
-    note: {
-      zh: "源码关键词：biquad filter、IIR、frequency response。重点看系数如何决定低通、高通、峰值 EQ。",
-      en: "Source keywords: biquad filter, IIR, frequency response. Focus on how coefficients set low-pass, high-pass, and peaking EQ."
-    }
-  }
-] satisfies Array<{
-  keyword: string;
-  note: Record<Language, string>;
-  pseudo: string;
-  title: string;
-}>;
 
 const sdkRows = [
   {
@@ -278,40 +230,6 @@ const socFlows: SocFlow[] = [
   }
 ];
 
-
-function createSpeechWavePath({
-  centerY,
-  echoLevel,
-  enhanced,
-  micCount,
-  mode,
-  noiseLevel,
-  processing,
-  reverbLevel,
-  pathWidth = 656,
-  startX = 42,
-  strength
-}: {
-  centerY?: number;
-  echoLevel: number;
-  enhanced: boolean;
-  micCount: number;
-  mode: EnhancementMode;
-  noiseLevel: number;
-  pathWidth?: number;
-  processing?: WaveProcessing;
-  reverbLevel: number;
-  startX?: number;
-  strength: number;
-}) {
-  const y = centerY ?? (enhanced ? 282 : 150);
-  const active = enhanced ? (processing ?? getSelectedProcessing(mode, strength, micCount)) : {};
-  return Array.from({ length: 512 }, (_, index) => {
-    const ratio = index / 511;
-    const value = speechComponents(ratio, active, micCount, noiseLevel, echoLevel, reverbLevel).total;
-    return `${index === 0 ? "M" : "L"} ${(startX + ratio * pathWidth).toFixed(1)} ${(y - value * 20).toFixed(1)}`;
-  }).join(" ");
-}
 
 function EnhancementFlowChart({
   language,
@@ -489,338 +407,71 @@ function SocFlowDiagram({
   );
 }
 
-function WaveComparison({
-  echoLevel,
-  language,
-  micCount,
-  mode,
-  noiseLevel,
-  reverbLevel,
-  strength
-}: {
-  echoLevel: number;
-  language: Language;
-  micCount: number;
-  mode: EnhancementMode;
-  noiseLevel: number;
-  reverbLevel: number;
-  strength: number;
-}) {
-  const rawPath = createSpeechWavePath({ echoLevel, enhanced: false, micCount, mode, noiseLevel, reverbLevel, strength });
-  const enhancedPath = createSpeechWavePath({ echoLevel, enhanced: true, micCount, mode, noiseLevel, reverbLevel, strength });
-
-  return (
-    <svg
-      aria-label={language === "zh" ? "语音增强前后波形对比" : "Speech enhancement waveform comparison"}
-      className="speech-enhancement-wave-chart"
-      role="img"
-      viewBox="0 0 740 360"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect className="lab-diagram-bg" height="360" rx="16" width="740" />
-      <line className="lab-axis" x1="42" x2="698" y1="150" y2="150" />
-      <line className="lab-axis" x1="42" x2="698" y1="282" y2="282" />
-      <text className="speech-lab-chart-title" x="44" y="44">
-        {language === "zh" ? "原始采集 vs 增强后 PCM" : "Raw capture vs enhanced PCM"}
-      </text>
-      <path className="speech-raw-wave" data-testid="speech-raw-wave" d={rawPath} />
-      <path className="speech-enhanced-wave" data-testid="speech-enhanced-wave" d={enhancedPath} />
-      <text className="speech-lab-axis-label" x="54" y="112">{language === "zh" ? "原始：近端语音 + 噪声 + 回声 + 混响" : "Raw: speech + noise + echo + reverb"}</text>
-      <text className="speech-lab-axis-label" x="54" y="244">{language === "zh" ? "增强后：保留语音，压低干扰" : "Enhanced: speech preserved, interference reduced"}</text>
-      <text className="speech-lab-note" x="54" y="328">
-        {language === "zh" ? "示意图表达趋势，不代表具体算法输出" : "Model trends, not real algorithm output"}
-      </text>
-    </svg>
-  );
-}
-
-function AlgorithmStageWaveChart({
-  echoLevel,
-  language,
-  micCount,
-  noiseLevel,
-  reverbLevel,
-  strengths
-}: {
-  echoLevel: number;
-  language: Language;
-  micCount: number;
-  noiseLevel: number;
-  reverbLevel: number;
-  strengths: ProcessingStrengths;
-}) {
-  const aecStrength = strengths.aec / 100;
-  const nsStrength = strengths.ns / 100;
-  const dereverbStrength = strengths.dereverb / 100;
-  const agcStrength = strengths.agc / 100;
-  const stages = [
-    {
-      id: "raw",
-      label: { zh: "原始采集", en: "Raw capture" },
-      processing: {},
-      enhanced: false,
-      x: 54,
-      y: 86
-    },
-    ...(micCount > 1 ? [{
-      id: "beamforming",
-      label: { zh: "多麦合成后", en: "After array" },
-      processing: {},
-      enhanced: true,
-      x: 54,
-      y: 154
-    }] : []),
-    {
-      id: "aec",
-      label: { zh: "AEC 后", en: "After AEC" },
-      processing: { aec: aecStrength },
-      enhanced: true,
-      x: 54,
-      y: 154
-    },
-    {
-      id: "ns",
-      label: { zh: "NS / ANR 后", en: "After NS / ANR" },
-      processing: { aec: aecStrength, ns: nsStrength },
-      enhanced: true,
-      x: 54,
-      y: 222
-    },
-    {
-      id: "dereverb",
-      label: { zh: "去混响后", en: "After dereverb" },
-      processing: { aec: aecStrength, ns: nsStrength, dereverb: dereverbStrength },
-      enhanced: true,
-      x: 54,
-      y: 290
-    },
-    {
-      id: "agc",
-      label: { zh: "AGC 后", en: "After AGC" },
-      processing: { aec: aecStrength, ns: nsStrength, dereverb: dereverbStrength, agc: agcStrength },
-      enhanced: true,
-      x: 54,
-      y: 358
-    }
-  ] as const;
-
-  return (
-    <svg
-      aria-label={language === "zh" ? "语音增强算法链路波形变化图" : "Speech enhancement algorithm-stage waveform chart"}
-      className="speech-stage-wave-chart"
-      role="img"
-      viewBox={`0 0 740 ${micCount > 1 ? 498 : 430}`}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect className="lab-diagram-bg" height={micCount > 1 ? 498 : 430} rx="16" width="740" />
-      <text className="speech-lab-chart-title" x="44" y="42">
-        {language === "zh" ? "算法链路中波形如何逐步变化" : "How the waveform changes through the algorithm chain"}
-      </text>
-      {stages.map((entry, index) => {
-        const stage = { ...entry, y: 86 + index * 68 };
-        return (
-        <g className="speech-stage-row" key={stage.id}>
-          <line className="lab-axis" x1="176" x2="700" y1={stage.y} y2={stage.y} />
-          <text className="speech-lab-axis-label" x={stage.x} y={stage.y + 5}>{stage.label[language]}</text>
-          <path
-            className={`speech-stage-wave ${stage.id}`}
-            data-testid={`speech-stage-${stage.id}`}
-            d={createSpeechWavePath({
-              centerY: stage.y,
-              echoLevel,
-              enhanced: stage.enhanced,
-              micCount,
-              mode: "aec",
-              noiseLevel,
-              pathWidth: 524,
-              processing: stage.enhanced ? { beamforming: micCount > 1 ? strengths.beamforming / 100 : 0, ...stage.processing } : {},
-              reverbLevel,
-              startX: 176,
-              strength: strengths.aec
-            })}
-          />
-        </g>
-      );})}
-      <text className="speech-lab-note" x="54" y={micCount > 1 ? 478 : 410}>
-        {language === "zh"
-          ? "累计示意：多麦预处理 → AEC → NS/ANR → 去混响 → AGC；单麦跳过多麦预处理。"
-          : "Cumulative: array (if present) → AEC → NS/ANR → dereverb → AGC."}
-      </text>
-    </svg>
-  );
-}
-
 export function SpeechEnhancementLab({ language, onBack, onBackToDetails }: SpeechEnhancementLabProps) {
-  const [mode, setMode] = useState<EnhancementMode>("beamforming");
+  const [page, setPage] = useState<EnhancementMode>("aec");
   const [strengths, setStrengths] = useState<ProcessingStrengths>(() => ({ ...defaultProcessingStrengths }));
   const [micCount, setMicCount] = useState(2);
-  const strength = strengths[mode];
-  const noiseLevel = demoNoiseLevel;
-  const echoLevel = demoEchoLevel;
-  const reverbLevel = demoReverbLevel;
-  const availableModes = flowModes.filter((item) => item !== "beamforming" || micCount > 1);
-
-  const residual = residualScales(getSelectedProcessing(mode, strength, micCount), micCount);
-  const attenuation = (scale: number) => (-20 * Math.log10(scale)).toFixed(1);
-
-  function handleMicCountChange(count: number) {
-    setMicCount(count);
-    if (count === 1 && mode === "beamforming") {
-      setMode("aec");
-    }
+  const [steering, setSteering] = useState(30);
+  const index = flowModes.indexOf(page);
+  const guide = page === "aec" || page === "ns" || page === "agc" ? enhancementGuides[page] : null;
+  const extraPrinciple = page === "beamforming"
+    ? (language === "zh"
+      ? "同一个声源到达不同麦克风的时间和相位不同。波束成形对各路信号施加延迟和权重后相加，让目标方向的声音尽量同相叠加，其他方向的干扰受到抑制。目标方向可以预先设定，也可以由 DOA 定位结果提供；并非所有波束成形都必须先做定位。这里按理想远场模型计算延迟求和，未模拟房间反射。"
+      : "A source reaches different microphones with different delays and phases. Beamforming delays and weights the channels before summing them, aligning the target direction while reducing other directions. Steering can be fixed or supplied by DOA estimation; localization is not mandatory. This demo calculates delay-and-sum for ideal far-field waves, without room reflections.")
+    : (language === "zh"
+      ? "房间反射使直达声之后仍有衰减的声音尾巴，多个音节因此互相叠加。去混响利用信号的时间相关性、频谱或房间模型，估计并减弱后期反射，尽量保留直达声及有用的早期反射。它不是简单删掉某个时间点之后的声音；本演示仅降低已知拖尾分量的幅度。"
+      : "Room reflections produce decaying tails after direct sound, smearing successive syllables. Dereverberation uses temporal correlation, spectral information or room models to estimate and reduce late reflections while preserving direct sound and useful early reflections. It does not simply delete everything after a time point; this demo only attenuates a known tail component.");
+  const inputs = {
+    beamforming: { zh: "麦克风采集；单麦时旁路多麦处理", en: "Microphone capture; array processing is bypassed with one microphone" },
+    aec: { zh: "麦克风采集，包含已启用的多麦预处理", en: "Microphone capture, including enabled array preprocessing" },
+    ns: { zh: "AEC 输出", en: "AEC output" },
+    dereverb: { zh: "AEC → ANR/NS 后的 PCM", en: "PCM after AEC → ANR/NS" },
+    agc: { zh: "AEC → ANR/NS → 去混响后的 PCM", en: "PCM after AEC → ANR/NS → dereverberation" }
+  };
+  const input = inputs[page][language];
+  function openAlgorithm(next: EnhancementMode) {
+    setPage(next);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }
-
-  function handleStrengthChange(value: number) {
-    setStrengths((current) => ({
-      ...current,
-      [mode]: value
-    }));
-  }
-
-  return (
-    <main className="speech-enhancement-page">
-      <section className="sound-lab-hero" aria-labelledby="speech-enhancement-title">
+  const pageNavigation = <nav className="waveform-tabs speech-enhancement-tabs" aria-label={language === "zh" ? "语音增强算法" : "Speech enhancement algorithms"}>
+    {flowModes.map(item => <button key={item} type="button" className={item === page ? "active" : ""} aria-current={item === page ? "page" : undefined} onClick={() => openAlgorithm(item)}>{modeLabels[item][language]}</button>)}
+  </nav>;
+    return <main className="speech-enhancement-page">
+      <section className="sound-lab-hero">
         <div className="sound-lab-back-actions">
-          <button className="sound-lab-back" type="button" onClick={onBack}>
-            <ArrowLeft size={18} aria-hidden="true" />
-            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
-          </button>
-          {onBackToDetails ? <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
-            <ArrowLeft size={18} aria-hidden="true" />
-            {language === "zh" ? "返回详细内容" : "Back to detailed content"}
-          </button> : null}
+          <button type="button" className="sound-lab-back" onClick={onBack}>{language === "zh" ? "返回知识库" : "Back to knowledge base"}</button>
+          {onBackToDetails && <button type="button" className="sound-lab-back" onClick={onBackToDetails}>{language === "zh" ? "返回详细内容" : "Back to detailed content"}</button>}
         </div>
-        <div>
-          <span className="section-kicker">{language === "zh" ? "传统 DSP 实验" : "Traditional DSP lab"}</span>
-          <h1 id="speech-enhancement-title">{language === "zh" ? "语音增强实验室" : "Speech Enhancement Lab"}</h1>
-          <p>
-            {language === "zh"
-              ? "按嵌入式 SoC SDK 的模块边界理解波束成形、AEC、NS/ANR、去混响和 AGC 如何串成一条低延迟语音处理链。"
-              : "Understand beamforming, AEC, NS/ANR, dereverberation, and AGC as a low-latency voice chain using embedded SoC SDK boundaries."}
-          </p>
-        </div>
+        <h1>{modeLabels[page][language]}</h1>
+        <p>{modeDescriptions[page][language]}</p>
+        {pageNavigation}
       </section>
-
-      <section
-        aria-label={language === "zh" ? "语音增强实验台" : "Speech enhancement workbench"}
-        className="speech-enhancement-workbench"
-      >
-        <div className="speech-enhancement-layout">
-          <div className="speech-enhancement-flow-area">
-            <details className="speech-supplement">
-              <summary>{language === "zh" ? "查看完整处理链路" : "Full processing chain"}</summary>
-              <EnhancementFlowChart language={language} micCount={micCount} mode={mode} />
-            </details>
-            <div className="waveform-tabs speech-enhancement-tabs speech-enhancement-flow-tabs" role="group" aria-label={language === "zh" ? "语音增强模块" : "Speech enhancement modules"}>
-              {availableModes.map((item) => (
-                <button className={mode === item ? "active" : ""} key={item} type="button" onClick={() => setMode(item)}>
-                  {modeLabels[item][language]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="speech-enhancement-wave-control-row">
-            <div className="speech-enhancement-visuals">
-              {(mode === "aec" || mode === "ns" || mode === "agc") && <section className="speech-module-guide" aria-label={language === "zh" ? "重点原理说明" : "Core principle explanation"}>
-                <h2>{enhancementGuides[mode].title[language]}</h2>
-                <div>{enhancementGuides[mode].sections.map((section, index) => <section key={index}>
-                  <h3><span>{index + 1}</span>{section[language][0]}</h3>
-                  <p>{section[language][1]}</p>
-                </section>)}</div>
-              </section>}
-              <EnhancementStageFocus language={language} mode={mode} strengths={strengths} micCount={micCount} />
-              <WaveComparison
-                echoLevel={echoLevel}
-                language={language}
-                micCount={micCount}
-                mode={mode}
-                noiseLevel={noiseLevel}
-                reverbLevel={reverbLevel}
-                strength={strength}
-              />
-              <AlgorithmStageWaveChart
-                echoLevel={echoLevel}
-                language={language}
-                micCount={micCount}
-                noiseLevel={noiseLevel}
-                reverbLevel={reverbLevel}
-                strengths={strengths}
-              />
-              <section className="speech-wave-explain-card" aria-label={language === "zh" ? "强度如何影响波形" : "How strength affects the waveform"}>
-                <h2>{language === "zh" ? "波形如何变化" : "How the waveform changes"}</h2>
-                <ul>
-                  <li>
-                    {language === "zh"
-                      ? "当前模块强度：只保存到选中的算法。上方对比图展示选中算法单独处理的趋势，链路图按 AEC、NS/ANR、去混响、AGC 的顺序累计显示。"
-                      : "Current module strength is stored only for the selected algorithm. The comparison chart shows that selected module alone, while the chain chart accumulates AEC, NS/ANR, dereverb, then AGC."}
-                  </li>
-                  <li>
-                    {language === "zh"
-                      ? "演示输入固定包含噪声、回声和混响，用来观察各模块负责的干扰类型：AEC 处理延迟回声，NS/ANR 处理细碎噪声，去混响处理衰减拖尾。"
-                      : "The demo input always contains noise, echo, and reverb so each module has a stable target: AEC handles delayed echo, NS/ANR handles fine noise, and dereverb handles decaying tails."}
-                  </li>
-                  <li>
-                    {language === "zh"
-                      ? "前级算法强度会传递到后级波形；后级算法强度不会回头改变前级波形。例如提高 NS/ANR 不会改变 AEC 后波形，但会改变 NS/ANR 后、去混响后和 AGC 后波形。"
-                      : "Upstream strength propagates downstream; downstream strength never changes earlier rows. For example, raising NS/ANR leaves the AEC row unchanged but changes the NS/ANR, dereverb, and AGC rows."}
-                  </li>
-                </ul>
-              </section>
-              <section className="speech-principle-card" aria-label={language === "zh" ? "当前模式边界" : "Current-mode limits"}>
-                <h2>{language === "zh" ? "当前模式边界" : "Current-mode limits"}</h2>
-                <p>{modeLimits[mode][language]}</p>
-              </section>
-              <section className="speech-source-reference-card" aria-label={language === "zh" ? "算法源码参考" : "Algorithm source-code references"}>
-                <h2>{language === "zh" ? "算法源码参考" : "Algorithm source references"}</h2>
-                <div className="speech-source-reference-grid">
-                  {sourceReferenceRows.map((row) => (
-                    <article key={row.title}>
-                      <h3>{row.title}</h3>
-                      <strong>{`${row.title} ${language === "zh" ? "源码关键词" : "source keywords"}：${row.keyword}`}</strong>
-                      <code>{row.pseudo}</code>
-                      <p>{row.note[language]}</p>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            </div>
-
-            <aside className="speech-enhancement-panel">
-              <div className="codec-mode-concepts-header">
-                <span>{modeLabels[mode][language]}</span>
-                <strong>{modeDescriptions[mode][language]}</strong>
-              </div>
-              <div className="speech-mic-selector" role="group" aria-label={language === "zh" ? "麦克风数量" : "Microphone count"}>
-                {[1, 2, 4].map((count) => (
-                  <button className={micCount === count ? "active" : ""} key={count} type="button" onClick={() => handleMicCountChange(count)}>
-                    {count} Mic
-                  </button>
-                ))}
-              </div>
-              <p className="speech-mic-note">
-                {language === "zh"
-                  ? micCount === 1
-                    ? "当前是单麦模式：流程图会跳过多麦波束成形，只保留 AEC、NS/ANR、去混响和 AGC。"
-                    : `当前是 ${micCount} Mic 阵列：启用 DOA 声源定位和定向拾音，阵列通道越多，空间抑制能力和延迟/算力开销通常越高。`
-                  : micCount === 1
-                    ? "Single-mic mode: the flow bypasses beamforming and keeps AEC, NS/ANR, dereverb, and AGC."
-                    : `${micCount}-mic array: the flow enables DOA localization and directional pickup; more channels usually mean better spatial suppression plus more latency and CPU cost.`}
-              </p>
-              <label className="sound-lab-control">
-                <span>{language === "zh" ? `当前模块强度：${strength}%` : `Current module strength: ${strength}%`}</span>
-                <input aria-label={language === "zh" ? "处理强度" : "Processing strength"} max="100" min="0" step="5" type="range" value={strength} onChange={(event) => handleStrengthChange(Number(event.target.value))} />
-              </label>
-              <div className="speech-enhancement-metrics">
-                <strong>{language === "zh" ? `模型噪声分量衰减：${attenuation(residual.noise)} dB` : `Model noise attenuation: ${attenuation(residual.noise)} dB`}</strong>
-                <strong>{language === "zh" ? `模型回声分量衰减：${attenuation(residual.echo)} dB` : `Model echo attenuation: ${attenuation(residual.echo)} dB`}</strong>
-                <strong>{language === "zh" ? `模型混响分量衰减：${attenuation(residual.reverb)} dB` : `Model reverb attenuation: ${attenuation(residual.reverb)} dB`}</strong>
-              </div>
-              <p className="traditional-model-note">{language === "zh" ? "已知分量的教学模型，不是运行真实 AEC / NS 或测量 SoC 性能。回声来自独立远端信号，混响是本地语音的延迟副本；AGC 对整路信号施加相同增益，也会抬高残留噪声。图中幅度/时间为归一化示意，未模拟收敛与 attack/release。" : "A known-component teaching model, not a running AEC/NS engine or SoC benchmark. Echo comes from an independent remote signal; reverb is delayed local speech. AGC applies the same gain to the whole signal, including residual noise. Axes are normalized; adaptation and attack/release are not simulated."}</p>
-            </aside>
-          </div>
+      <section className="speech-enhancement-workbench" aria-label={language === "zh" ? "算法独立实验页" : "Individual algorithm workbench"}>
+        <p className="speech-mic-note">{page === "beamforming" || page === "ns"
+          ? (language === "zh" ? "当前为独立算法示例，不串接其他页面的波形。空间参数和频谱增益只影响本页。" : "Standalone algorithm example, not connected to other pages' waveforms. Spatial parameters and spectral gain affect this page only.")
+          : (language === "zh" ? `当前输入：${input}；${micCount} Mic。此页仍使用简化链路模型，不采用独立波束/频谱实验的输出。` : `Input: ${input}; ${micCount} microphones. This page retains the simplified chain model, not the outputs of the standalone spatial/spectral experiments.`)}</p>
+        {page === "beamforming" && <div className="speech-mic-selector" role="group" aria-label={language === "zh" ? "麦克风数量" : "Microphone count"}>
+          {[1, 2, 4].map(count => <button key={count} type="button" className={micCount === count ? "active" : ""} onClick={() => setMicCount(count)}>{count} Mic</button>)}
+        </div>}
+        <div className="speech-enhancement-visuals">
+          <section className="speech-module-guide" aria-label={language === "zh" ? "基本原理" : "Basic principle"}>
+            <h2>{language === "zh" ? "基本原理" : "Basic principle"}</h2>
+            {guide ? <div>{guide.sections.map((item, i) => <section key={i}><h3>{item[language][0]}</h3><p>{item[language][1]}</p></section>)}</div> : <p>{extraPrinciple}</p>}
+          </section>
+          <label className="sound-lab-control speech-live-strength">
+            <span>{page === "beamforming" ? `${language === "zh" ? "指向角度" : "Steering angle"} · ${steering}°` : `${modeLabels[page][language]} · ${strengths[page]}%`}</span>
+            {page === "beamforming" ? <input type="range" min="-90" max="90" step="5" value={steering} aria-label={language === "zh" ? "指向角度" : "Steering angle"} onChange={event => setSteering(Number(event.target.value))} />
+              : <input type="range" min="0" max="100" step="5" value={strengths[page]} aria-label={language === "zh" ? "处理强度" : "Processing strength"} onChange={event => setStrengths(current => ({ ...current, [page]: Number(event.target.value) }))} />}
+          </label>
+          {page === "beamforming" || page === "ns" ? <SpatialSpectralDemo language={language} mode={page} micCount={micCount} steering={steering} strength={strengths[page]} />
+            : <EnhancementStageFocus language={language} mode={page} strengths={{ ...strengths, ns: defaultProcessingStrengths.ns, beamforming: defaultProcessingStrengths.beamforming }} micCount={micCount} />}
+          <section className="speech-principle-card"><h2>{language === "zh" ? "工程限制" : "Engineering limits"}</h2><p>{modeLimits[page][language]}</p></section>
         </div>
-
+        <nav className="sound-lab-back-actions" aria-label={language === "zh" ? "相邻算法" : "Adjacent algorithms"}>
+          {index > 0 && <button type="button" className="sine-button" onClick={() => openAlgorithm(flowModes[index - 1])}>{language === "zh" ? "上一算法" : "Previous"} · {modeLabels[flowModes[index - 1]][language]}</button>}
+          {index < flowModes.length - 1 && <button type="button" className="sine-button" onClick={() => openAlgorithm(flowModes[index + 1])}>{language === "zh" ? "下一算法" : "Next"} · {modeLabels[flowModes[index + 1]][language]}</button>}
+        </nav>
+        <details className="speech-supplement"><summary>{language === "zh" ? "完整链路参考" : "Full chain reference"}</summary><EnhancementFlowChart language={language} micCount={micCount} mode={page} /></details>
         <details className="speech-supplement">
         <summary>{language === "zh" ? "SoC SDK 与工程参考" : "SoC SDK and engineering references"}</summary>
         <section className="speech-sdk-table" aria-label={language === "zh" ? "SDK 模块对照" : "SDK module mapping"}>
@@ -868,6 +519,6 @@ export function SpeechEnhancementLab({ language, onBack, onBackToDetails }: Spee
         </section>
         </details>
       </section>
-    </main>
-  );
+    </main>;
+
 }

@@ -4225,6 +4225,13 @@ body.details-open {
   padding-left: 18px;
 }
 
+.speech-principle-card p {
+  color: #dbe8e4;
+  font-weight: 400;
+  line-height: 1.7;
+  margin: 0;
+}
+
 .speech-source-reference-grid {
   display: grid;
   gap: 12px;
@@ -10262,3 +10269,51 @@ body:has(.home-intro) {
 .speech-supplement { color: #dcece8; border-top: 1px solid #435953; padding: 18px 0; }
 .speech-supplement > summary { cursor: pointer; font-size: 16px; }
 .speech-supplement > summary + * { margin-top: 18px; }
+.speech-live-strength {
+  position: sticky;
+  top: 12px;
+  z-index: 5;
+  margin: 0;
+  padding: 14px 18px;
+  background: #25332f;
+  color: #eef7f4;
+  border: 1px solid #526b64;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px #0003;
+}
+.speech-live-strength span { color: inherit; }
+.aec-track-legend { display: flex; flex-wrap: wrap; gap: 10px 24px; margin: 10px 0; font-size: 14px; }
+.aec-track-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.aec-track-legend i { display: inline-block; width: 24px; border-top: 2px solid #7ee7d8; }
+.aec-track-legend .aec-key-input { border-color: #b8c4ce; border-top-style: dashed; }
+.aec-track-legend .aec-key-echo { border-color: #f1bb72; border-top-style: dashed; }
+.aec-plot-row { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px; }
+.aec-y-axis { display: flex; flex-direction: column; justify-content: space-between; text-align: right; font-size: 13px; }
+.speech-enhancement-visuals .aec-plot-row svg { height: 160px; min-height: 0; }
+.aec-plot-row path { vector-effect: non-scaling-stroke; }
+.aec-x-axis { display: flex; justify-content: space-between; margin: 8px 0 0 38px; font-size: 13px; }
+.aec-axis-caption { color: #bfd1ca; font-size: 12px; margin: 8px 0; }
+.algorithm-signal-plot { margin: 24px 0; }
+.algorithm-signal-plot h3 { color: #eef7f4; font-size: 17px; }
+.enhancement-stage-focus a { color: #7ee7d8; }
+.spectral-frame-select { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.spectral-frame-select select { padding: 8px; background: #25332f; color: #eef7f4; border: 1px solid #526b64; border-radius: 4px; }
+.speech-enhancement-page .sound-lab-hero .speech-enhancement-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.speech-enhancement-page .sound-lab-hero .speech-enhancement-tabs button {
+  background: #e5eeea;
+  border: 1px solid #9fb8ae;
+  color: #24483e;
+  min-height: 44px;
+}
+.speech-enhancement-page .sound-lab-hero .speech-enhancement-tabs button.active {
+  background: #245c50;
+  border-color: #245c50;
+  color: #fff;
+}
+@media (max-width: 600px) {
+  .speech-enhancement-page .sound-lab-hero .speech-enhancement-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
