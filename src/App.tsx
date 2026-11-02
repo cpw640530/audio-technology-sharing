@@ -1,4 +1,5 @@
 import { RelatedTopics } from "./components/RelatedTopics";
+import { WelcomePage } from "./components/WelcomePage";
 import { ReferenceSites } from "./components/ReferenceSites";
 import { getTopicKey, type TopicKey } from "./content/relatedTopics";
 import { useEffect, useMemo, useState } from "react";
@@ -124,12 +125,15 @@ function topicMatchesSearch(topic: DisplayTopic, query: string): boolean {
 }
 
 export default function App() {
+  const [showWelcome, setShowWelcome] = useState(() => ["", "#welcome"].includes(window.location.hash));
   const [showNotes, setShowNotes] = useState(() => window.location.hash === "#technical-notes");
   useEffect(() => {
     const syncNotes = () => {
-      if (!["", "#top", "#technical-notes"].includes(window.location.hash)) return;
+      if (!["", "#welcome", "#top", "#technical-notes"].includes(window.location.hash)) return;
+      setShowWelcome(["", "#welcome"].includes(window.location.hash));
       setShowNotes(window.location.hash === "#technical-notes");
       setActiveView("knowledge");
+      setSelectedTopic(null);
       if (!window.navigator.userAgent.toLowerCase().includes("jsdom")) window.scrollTo({ top: 0, behavior: "auto" });
     };
     window.addEventListener("hashchange", syncNotes);
@@ -471,6 +475,10 @@ export default function App() {
     target.focus({ preventScroll: true });
     setOutlineTargetId(null);
   }, [outlineTargetId]);
+
+  if (showWelcome) {
+    return <WelcomePage language={language} onToggleLanguage={toggleLanguage} />;
+  }
 
   if (showNotes) {
     return <div className="app-shell">

@@ -1,4 +1,4 @@
-import { Github, LibraryBig, NotebookPen } from "lucide-react";
+import { Github, Home, LibraryBig, NotebookPen } from "lucide-react";
 import type { Language } from "../content/knowledge";
 import { interfaceCopy } from "../content/knowledge";
 import { BackgroundWave } from "./BackgroundWave";
@@ -22,6 +22,7 @@ export function Header({ language, onToggleLanguage }: HeaderProps) {
           <span>Audio Technology Sharing</span>
         </a>
         <nav className="header-actions" aria-label="Primary navigation">
+          <a href="#welcome" aria-label={language === "zh" ? "返回欢迎页" : "Back to welcome page"} title={language === "zh" ? "返回欢迎页" : "Back to welcome page"}><Home size={18} aria-hidden="true" /></a>
           <a href="#technical-notes">
             <NotebookPen size={18} aria-hidden="true" />
             <span>{language === "zh" ? "技术笔记" : "Technical notes"}</span>

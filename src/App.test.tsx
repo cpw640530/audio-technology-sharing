@@ -8,6 +8,7 @@ import { MeetingCommunicationLab } from "./components/MeetingCommunicationLab";
 
 describe("Audio knowledge app", () => {
   beforeEach(() => {
+    window.history.replaceState(null, "", "#top");
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     window.localStorage.setItem("audio-technology-language", "zh");
   });
