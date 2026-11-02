@@ -19,8 +19,8 @@ const modeLabels: Record<SpatialMode, Record<Language, string>> = {
 
 const modeDescriptions: Record<SpatialMode, Record<Language, string>> = {
   cues: {
-    zh: "观察声源角度、距离和房间反射如何影响 ITD、ILD、HRTF 频谱线索和距离感。",
-    en: "Observe how source angle, distance, and room reflections affect ITD, ILD, HRTF spectral cues, and distance."
+    zh: "观察声源相对方向如何改变 ITD/ILD，以及距离和反射如何改变到达时间与能量；这里不计算真实 HRTF 频谱。",
+    en: "Observe directional ITD/ILD trends and how distance and reflections change arrival time and energy; actual HRTF spectra are not computed here."
   },
   binaural: {
     zh: "耳机空间音频通常把每个虚拟声源与对应方向的 HRIR 卷积，得到左耳和右耳 PCM。",
@@ -141,6 +141,8 @@ function SpatialScene({
   const showHeadTracking = mode === "headTracking";
 
   return (
+    <figure className="spatial-response-figure">
+    <h2 className="spatial-plot-heading">{language === "zh" ? "俯视图：声源与头部朝向" : "Top view: source and head direction"}</h2>
     <svg
       aria-label={language === "zh" ? "空间音频声源定位图" : "Spatial audio source localization diagram"}
       className="spatial-audio-scene"
@@ -154,9 +156,6 @@ function SpatialScene({
         </marker>
       </defs>
       <rect className="lab-diagram-bg" height="500" rx="16" width="720" />
-      <text className="spatial-chart-title" x="34" y="42">
-        {language === "zh" ? "俯视图：世界声源、头部朝向和耳朵相对方向" : "Top view: world source, head direction, and ear-relative direction"}
-      </text>
       <circle className="spatial-room-ring" cx={center.x} cy={center.y} r="190" />
       <circle className="spatial-room-ring faint" cx={center.x} cy={center.y} r="118" />
       <line className="spatial-axis" x1={center.x} x2={center.x} y1="72" y2="432" />
@@ -225,20 +224,49 @@ function SpatialScene({
         <circle cx={source.x} cy={source.y} r="14" />
         <text x={source.x + 20} y={source.y + 5}>{language === "zh" ? "声源" : "source"}</text>
       </g>
-      <g className="spatial-relative-cue">
-        <text className="spatial-cue-chip" x="34" y="418">
+    </svg>
+      <figcaption className="spatial-scene-caption">
+        <p>
           {language === "zh"
             ? `当前双耳线索：${Math.abs(lateral) < 0.08 ? "左右耳接近同时" : lateral < 0 ? "左耳先到 / 左侧更强" : "右耳先到 / 右侧更强"}`
             : `Current binaural cue: ${Math.abs(lateral) < 0.08 ? "ears nearly aligned" : lateral < 0 ? "left ear first / stronger left" : "right ear first / stronger right"}`}
-        </text>
-        <text x="34" y="462">
+        </p>
+        <p>
           {language === "zh"
             ? `相对耳朵方向：${formatSignedDegrees(relativeAngle)}；世界声源角度：${formatSignedDegrees(sourceAngle)}；头部朝向：${formatSignedDegrees(headYaw)}`
             : `Ear-relative direction: ${formatSignedDegrees(relativeAngle)}; world source: ${formatSignedDegrees(sourceAngle)}; head yaw: ${formatSignedDegrees(headYaw)}`}
-        </text>
-      </g>
-    </svg>
+        </p>
+      </figcaption>
+    </figure>
   );
+}
+
+function BinauralCues({ language, relativeAngle, itdMs, ildDb, distance }: {
+  language: Language; relativeAngle: number; itdMs: number; ildDb: number; distance: number;
+}) {
+  const zh = language === "zh";
+  const rightFirst = Math.sin(relativeAngle * Math.PI / 180) > 0;
+  return <section className="spatial-ear-response" aria-label={zh ? "双耳到达与电平" : "Ear arrival and level"}>
+    <h2 className="spatial-plot-heading">{zh ? "双耳线索：何时到达、有多强" : "Binaural cues: arrival and level"}</h2>
+    {["L", "R"].map(ear => {
+      const far = ear === "L" ? rightFirst : !rightFirst;
+      const delay = far ? itdMs : 0;
+      const gain = 10 ** (-(far ? ildDb : 0) / 20) / distance;
+      const x = 20 + delay * 360;
+      return <div key={ear}>
+        <p>{zh ? (ear === "L" ? "左耳" : "右耳") : ear} · {delay.toFixed(2)} ms · {gain.toFixed(3)} {zh ? "相对幅度" : "relative amplitude"}</p>
+        <svg role="img" aria-label={zh ? `${ear === "L" ? "左耳" : "右耳"}到达示意` : `${ear} arrival diagram`} viewBox="0 0 400 100" preserveAspectRatio="none">
+          {[10, 50, 90].map(y => <line key={y} x1="20" x2="380" y1={y} y2={y} stroke="#536c64" />)}
+          <path data-testid={`spatial-ear-${ear}`} data-delay={delay} data-gain={gain} d={`M ${x} 90 V ${90 - gain * 80}`} stroke={ear === "L" ? "#7ee7d8" : "#f1bb72"} strokeWidth="3" />
+        </svg>
+      </div>;
+    })}
+    <p>{zh ? "时间 0–1 ms · 相对幅度 0–1 · 到达/增益示意" : "Time 0–1 ms · Relative amplitude 0–1 · Arrival/gain"}</p>
+    <details className="spatial-explanation"><summary>{zh ? "双耳图说明" : "About the ear plots"}</summary>
+    <p>{zh ? "横轴固定 0–1 ms，以先到耳为 0；纵轴固定相对幅度 0–1（上/中/下网格为 1/0.5/0），参照 1 m 近侧耳。竖线只表示到达与增益，不是声波或 HRIR。距离加倍，两耳幅度减半；转头改变相对方向。" : "X: fixed 0–1 ms from the first ear; Y: fixed relative amplitude 0–1 (top/middle/bottom grid: 1/0.5/0), referenced to the near ear at 1 m. Stems represent arrival and gain, not waveforms or HRIRs. Doubling distance halves both amplitudes; turning changes relative direction."}</p>
+    <p>{zh ? "这里只用方向趋势展示 ITD/ILD，不做真实双耳卷积。真实 ILD 随频率变化；前后对称方向可能产生相同线索，还需要耳廓频谱和头部运动来区分。" : "These directional ITD/ILD trends are not real binaural convolution. Actual ILD is frequency-dependent; front/back directions can share cues and need pinna spectra and head motion to disambiguate."}</p>
+    </details>
+  </section>;
 }
 
 function RoomReflectionResponse({
@@ -253,29 +281,33 @@ function RoomReflectionResponse({
   const reflectionAmount = reflection / 100;
   const arrivalMs = distance / 343 * 1000;
   const directX = 54 + arrivalMs / 160 * 612;
-  const directHeight = 120 / (distance * distance);
+  const energyHeight = (energy: number) => Math.max(0, 60 + 10 * Math.log10(Math.max(1e-12, energy))) * 2;
+  const directEnergy = 1 / (distance * distance);
+  const directHeight = energyHeight(directEnergy);
   const directPeak = 214 - directHeight;
-  const earlyPeaks = [
-    { x: directX + 12 / 160 * 612, height: reflectionAmount * 48 },
-    { x: directX + 28 / 160 * 612, height: reflectionAmount * 32 },
-    { x: directX + 48 / 160 * 612, height: reflectionAmount * 20 }
-  ];
+  // Fixed excess path lengths are a teaching model, not a solved room geometry.
+  const earlyPeaks = [12, 28, 48].map((delay, index) => ({
+    x: directX + delay / 160 * 612,
+    height: energyHeight(reflectionAmount ** (index + 1) / (distance + delay * 343 / 1000) ** 2)
+  }));
   const tailStart = directX + 60 / 160 * 612;
   const tailLength = 60 / 160 * 612;
-  const tailHeight = reflectionAmount * 36;
-  const tailPath = Array.from({ length: 61 }, (_, i) => `${i ? "L" : "M"} ${(tailStart + i / 60 * tailLength).toFixed(1)} ${(214 - tailHeight * Math.exp(-i / (5 + reflectionAmount * 15))).toFixed(1)}`).join(" ");
+  const tailHeight = reflectionAmount ** 3 / (distance + 0.060 * 343) ** 2;
+  const tailEnvelope = (ratio: number) => tailHeight * Math.exp(-ratio * 60 / (5 + reflectionAmount * 15));
+  const tailPath = Array.from({ length: 61 }, (_, i) => `${i ? "L" : "M"} ${(tailStart + i / 60 * tailLength).toFixed(1)} ${(214 - energyHeight(tailEnvelope(i / 60))).toFixed(1)}`).join(" ");
   const tailFillPath = `${tailPath} L ${(tailStart + tailLength).toFixed(1)} 214 L ${tailStart.toFixed(1)} 214 Z`;
   const tailTexture = Array.from({ length: 18 }, (_, index) => {
     const ratio = index / 17;
     const x = tailStart + ratio * tailLength;
-    const decay = Math.exp(-ratio * (1.35 + (1 - reflectionAmount) * 1.4));
-    const height = tailHeight * decay * (0.28 + ((index * 7) % 5) * 0.08);
+    const height = energyHeight(tailEnvelope(ratio) * (0.28 + ((index * 7) % 5) * 0.08));
 
     return { height, x };
   });
 
   return (
     <figure className="spatial-response-figure">
+    <h2 className="spatial-plot-heading">{language === "zh" ? "相对能量：直达声、反射、拖尾" : "Relative energy: direct, reflections, tail"}</h2>
+    <div className="spatial-response-legend"><span>{language === "zh" ? "直达声" : "Direct"}</span><span>{language === "zh" ? "早期反射" : "Early reflections"}</span><span>{language === "zh" ? "混响尾巴" : "Reverb tail"}</span></div>
     <svg
       aria-label={language === "zh" ? "房间反射时间响应图" : "Room reflection time response"}
       className="spatial-reflection-response"
@@ -284,13 +316,11 @@ function RoomReflectionResponse({
       xmlns="http://www.w3.org/2000/svg"
     >
       <rect className="lab-diagram-bg" height="260" rx="16" width="720" />
-      <text className="spatial-chart-title" x="34" y="38">
-        {language === "zh" ? "相对能量响应：直达声、反射、拖尾" : "Relative energy: direct sound, reflections, tail"}
-      </text>
       <line className="spatial-response-axis" x1="54" x2="666" y1="214" y2="214" />
       <line className="spatial-response-axis" x1="54" x2="54" y1="62" y2="214" />
       <text className="spatial-axis-label" x="320" y="254">{language === "zh" ? "时间 ms" : "time ms"}</text>
-      <text className="spatial-axis-label" x="28" y="72">{language === "zh" ? "相对能量" : "relative energy"}</text>
+      <text className="spatial-axis-label" x="28" y="72">dB</text>
+      {[0, -20, -40, -60].map(db => <g key={db}><line x1="54" x2="666" y1={214 - (db + 60) * 2} y2={214 - (db + 60) * 2} stroke="#536c64" opacity="0.4" /><text x="44" y={218 - (db + 60) * 2} textAnchor="end" className="spatial-axis-label">{db}</text></g>)}
       {[0, 40, 80, 120, 160].map(ms => <text className="spatial-axis-label" key={ms} x={54 + ms / 160 * 612} y="233" textAnchor="middle">{ms}</text>)}
       <path className="spatial-reverb-tail-fill" d={tailFillPath} opacity={0.1 + reflectionAmount * 0.28} />
       <path className="spatial-reverb-tail-line" d={tailPath} opacity={0.35 + reflectionAmount * 0.52} />
@@ -305,29 +335,18 @@ function RoomReflectionResponse({
           y2={214 - item.height}
         />
       ))}
-      <path className="spatial-direct-impulse" d={`M ${(directX - 3).toFixed(1)} 214 L ${directX.toFixed(1)} ${directPeak.toFixed(1)} L ${(directX + 3).toFixed(1)} 214`} />
-      <text className="spatial-response-label" x={directX - 32} y={directPeak - 12}>
-        {language === "zh" ? "直达声" : "direct"}
-      </text>
-      {earlyPeaks.map((peak, index) => (
+      <path className="spatial-direct-impulse" data-energy={directEnergy} d={`M ${(directX - 3).toFixed(1)} 214 L ${directX.toFixed(1)} ${directPeak.toFixed(1)} L ${(directX + 3).toFixed(1)} 214`} />
+      {earlyPeaks.map((peak) => (
         <g key={peak.x}>
           <path
             className="spatial-early-impulse"
             d={`M ${(peak.x - 2.6).toFixed(1)} 214 L ${peak.x.toFixed(1)} ${(214 - peak.height).toFixed(1)} L ${(peak.x + 2.6).toFixed(1)} 214`}
             opacity={0.22 + reflectionAmount * 0.68}
           />
-          {index === 0 ? (
-            <text className="spatial-response-label" x={peak.x - 44} y={196 - peak.height}>
-              {language === "zh" ? "早期反射" : "early reflections"}
-            </text>
-          ) : null}
         </g>
       ))}
-      <text className="spatial-response-label" x={tailStart + 72} y={188 - tailHeight}>
-        {language === "zh" ? "混响尾巴" : "reverb tail"}
-      </text>
     </svg>
-    <figcaption className="traditional-model-note">{language === "zh" ? "示意能量包络，不是带正负振幅的真实房间脉冲响应。直达声到达时间 d/343，能量按 1/d² 衰减（相对 1 m）；反射采用固定额外延时和简化扩散尾部，反射为 0 时无反射能量。未由房间几何求解，不对应实测 RT60。" : "An illustrative energy envelope, not a signed room impulse response. Direct arrival is d/343; energy follows 1/d² relative to 1 m. Reflections use fixed excess delays and a simplified diffuse tail; zero reflection means no reflected energy. This is not a room-geometry solution or measured RT60."}</figcaption>
+    <figcaption><details className="spatial-explanation"><summary>{language === "zh" ? "能量图说明（非实测）" : "Energy model (not measured)"}</summary><p className="traditional-model-note">{language === "zh" ? "示意能量包络，不是真实房间脉冲响应。纵轴 10 log10(E/E₁ₘ)，显示下限 −60 dB，不是 dB SPL；直达声按 1/d² 衰减。反射保留比例 r = 滑块/100，三条假想反射使用 rⁿ/(d + 343Δt)²，额外延时 12/28/48 ms；尾部从额外 60 ms 开始。反射为 0 时无反射能量。上方曲线只是路径概念，不与这些延时逐条对应；未求解房间几何，不对应实测 RT60。" : "Illustrative energy envelope, not a real room impulse response. Y = 10 log10(E/E at 1 m), floored at −60 dB, not dB SPL. Direct energy follows 1/d². Retention r = slider/100; three hypothetical reflections use rⁿ/(d + 343Δt)² with excess delays of 12/28/48 ms. The tail starts 60 ms after direct arrival. Zero reflection means zero reflected energy. Curved paths above are conceptual, not matched to these delays; no room geometry or measured RT60 is claimed."}</p></details></figcaption>
     </figure>
   );
 }
@@ -415,14 +434,13 @@ export function SpatialAudioLab({ language, onBack, onBackToDetails }: SpatialAu
               reflection={reflection}
               sourceAngle={sourceAngle}
             />
+            <BinauralCues language={language} relativeAngle={metrics.relativeAngle} itdMs={metrics.itdMs} ildDb={metrics.ildDb} distance={distance} />
             <RoomReflectionResponse distance={distance} language={language} reflection={reflection} />
-            <SpatialPipeline language={language} mode={mode} />
           </div>
 
           <aside className="spatial-audio-panel">
             <div className="codec-mode-concepts-header">
               <span>{modeLabels[mode][language]}</span>
-              <strong>{modeDescriptions[mode][language]}</strong>
             </div>
             <label className="sound-lab-control">
               <span>{language === "zh" ? `声源角度：${formatSignedDegrees(sourceAngle)}` : `Source angle: ${formatSignedDegrees(sourceAngle)}`}</span>
@@ -446,10 +464,14 @@ export function SpatialAudioLab({ language, onBack, onBackToDetails }: SpatialAu
               <strong>{language === "zh" ? `ILD：约 ${metrics.ildDb.toFixed(1)} dB` : `ILD: about ${metrics.ildDb.toFixed(1)} dB`}</strong>
               <strong>{language === "zh" ? `距离衰减：${formatSignedDb(metrics.distanceGain)}` : `Distance loss: ${formatSignedDb(metrics.distanceGain)}`}</strong>
             </div>
-            <p className="traditional-model-note">{language === "zh" ? "ITD/ILD 是方向趋势模型，不是个人 HRTF：实际值还随频率、头型和距离变化。HRTF 需测量或选取数据库，延迟取决于渲染实现，不能由角度和反射强度直接推算。俯视图位置非等比例，曲线仅表示反射路径概念。" : "ITD/ILD are directional trend models, not personal HRTFs; actual cues depend on frequency, head geometry, and distance. HRTFs require measurements or a database; latency depends on the renderer, not just angle and reflection strength. The top view is not to scale; curves are conceptual reflection paths."}</p>
+            <details className="spatial-explanation"><summary>{language === "zh" ? "模型边界" : "Model limits"}</summary><p className="traditional-model-note">{language === "zh" ? "ITD/ILD 是方向趋势模型，不是个人 HRTF：实际值还随频率、头型和距离变化。HRTF 需测量或选取数据库，延迟取决于渲染实现，不能由角度和反射强度直接推算。俯视图位置非等比例，曲线仅表示反射路径概念。" : "ITD/ILD are directional trend models, not personal HRTFs; actual cues depend on frequency, head geometry, and distance. HRTFs require measurements or a database; latency depends on the renderer, not just angle and reflection strength. The top view is not to scale; curves are conceptual reflection paths."}</p></details>
           </aside>
         </div>
-
+        <details className="spatial-explanation spatial-flow-details">
+          <summary>{language === "zh" ? "原理与渲染流程" : "Principles and rendering flow"}</summary>
+          <p>{modeDescriptions[mode][language]}</p>
+          <SpatialPipeline language={language} mode={mode} />
+        </details>
       </section>
     </main>
   );

@@ -455,8 +455,9 @@ export function SpeechEnhancementLab({ language, onBack, onBackToDetails }: Spee
         </div>}
         <div className="speech-enhancement-visuals">
           <section className="speech-module-guide" aria-label={language === "zh" ? "基本原理" : "Basic principle"}>
-            <h2>{language === "zh" ? "基本原理" : "Basic principle"}</h2>
+            <details className="speech-explanation"><summary>{language === "zh" ? "基本原理" : "Basic principle"}</summary>
             {guide ? <div>{guide.sections.map((item, i) => <section key={i}><h3>{item[language][0]}</h3><p>{item[language][1]}</p></section>)}</div> : <p>{extraPrinciple}</p>}
+            </details>
           </section>
           <label className="sound-lab-control speech-live-strength">
             <span>{page === "beamforming" ? `${language === "zh" ? "指向角度" : "Steering angle"} · ${steering}°` : `${modeLabels[page][language]} · ${strengths[page]}%`}</span>
@@ -465,7 +466,7 @@ export function SpeechEnhancementLab({ language, onBack, onBackToDetails }: Spee
           </label>
           {page === "beamforming" || page === "ns" ? <SpatialSpectralDemo language={language} mode={page} micCount={micCount} steering={steering} strength={strengths[page]} />
             : <EnhancementStageFocus language={language} mode={page} strengths={{ ...strengths, ns: defaultProcessingStrengths.ns, beamforming: defaultProcessingStrengths.beamforming }} micCount={micCount} />}
-          <section className="speech-principle-card"><h2>{language === "zh" ? "工程限制" : "Engineering limits"}</h2><p>{modeLimits[page][language]}</p></section>
+          <details className="speech-explanation"><summary>{language === "zh" ? "工程限制" : "Engineering limits"}</summary><p>{modeLimits[page][language]}</p></details>
         </div>
         <nav className="sound-lab-back-actions" aria-label={language === "zh" ? "相邻算法" : "Adjacent algorithms"}>
           {index > 0 && <button type="button" className="sine-button" onClick={() => openAlgorithm(flowModes[index - 1])}>{language === "zh" ? "上一算法" : "Previous"} · {modeLabels[flowModes[index - 1]][language]}</button>}

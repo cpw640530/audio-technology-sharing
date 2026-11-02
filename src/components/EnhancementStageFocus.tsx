@@ -29,7 +29,7 @@ export function EnhancementStageFocus({ language, mode, strengths, micCount }: {
         { id: "ao", label: zh ? "AO · 播放参考" : "AO · playback reference", values: before.map((_, i) => playbackReference(i / 511)) },
         { id: "ai", label: zh ? "AI · 采集信号（含扬声器回声）" : "AI · capture including speaker echo", values: before.map(s => s.total) },
         { id: "output", label: zh ? "AEC · 输出信号" : "AEC · output signal", values: after.map(s => s.total) }
-      ].map((track, index) => <div key={track.id}>
+      ].map((track, index) => <div className="aec-track" key={track.id}>
         <h3>{index + 1}. {track.label}</h3>
         <div className="aec-track-legend">
           <span><i className={track.id === "ai" ? "aec-key-input" : "aec-key-output"} />{track.id === "ao" ? (zh ? "送往扬声器的信号" : "Signal sent to speaker") : (zh ? "完整混合信号" : "Full mixture")}</span>
@@ -52,8 +52,10 @@ export function EnhancementStageFocus({ language, mode, strengths, micCount }: {
           ? (zh ? "播放参考从 t = 0 开始；黄虚线标出起点。" : "Playback starts at t = 0; the yellow marker indicates its onset.")
           : (zh ? `黄虚线：${track.id === "ai" ? "输入中的回声分量" : "处理后的残余回声"}；回声从 t = 0.12 开始，与 AO 相比延迟 0.12。` : `Yellow dashed: ${track.id === "ai" ? "echo in the input" : "residual echo"}; onset at t = 0.12, delayed by 0.12 relative to AO.`)}</p>
       </div>)}
+      <details className="speech-explanation"><summary>{zh ? "AEC 图解说明" : "About the AEC plots"}</summary>
       <p>{zh ? "三图共用归一化时间 0–1、幅度刻度 ±2（中心为 0）。AI 一行表示送入 AEC 的采集路，包含已启用的多麦预处理。" : "All three share normalized time 0–1 and amplitude ticks ±2, centered at 0. AI is the capture stream entering AEC, including enabled array preprocessing."}</p>
       <p>{zh ? "AI = 近端语音 + 扬声器回声 + 噪声 + 混响；AEC 输出 = AI − 估计回声。演示中，回声是 AO 参考延迟 0.12 个归一化时间单位后乘以 0.506。强度改变估计回声的抵消比例，不改变 AO 或 AI 输入；真实 AEC 还需自适应估计传播路径，不能直接用 AI − AO。" : "AI = near-end voice + speaker echo + noise + reverb; AEC output = AI − estimated echo. Here echo is AO delayed by 0.12 normalized time units and scaled by 0.506. Strength changes cancellation, not AO or AI. Real AEC must adaptively estimate the acoustic path; it is not simply AI − AO."}</p>
+      </details>
     </div> : <>
     <div className="aec-track-legend"><span><i className="aec-key-input" />{zh ? "本级输入（灰虚线）" : "Stage input (gray dashed)"}</span><span><i className="aec-key-output" />{zh ? "本级输出（绿实线）" : "Stage output (green solid)"}</span></div>
     <div className="aec-plot-row"><div className="aec-y-axis"><span>+{range}</span><span>0</span><span>−{range}</span></div>
@@ -66,6 +68,7 @@ export function EnhancementStageFocus({ language, mode, strengths, micCount }: {
     <p className="enhancement-focus-axis">{zh ? `横轴：归一化时间 0–1（不是秒）；纵轴：${mode === "agc" ? "混合信号" : "已知干扰分量"}幅度 ±${range}，不是 dBFS 或声压。前后共用固定刻度，不随强度自动放大。` : `X: normalized time 0–1 (not seconds); Y: ${mode === "agc" ? "mixture" : "known interference"} amplitude ±${range}, not dBFS or sound pressure. Input and output share a fixed scale, without strength-dependent zoom.`}</p>
     {mode === "agc" && <p>{zh ? "本段瞬时增益范围" : "Instantaneous gain range"}: {Math.min(...after.map(s => s.gain)).toFixed(2)}–{Math.max(...after.map(s => s.gain)).toFixed(2)}×{zh ? "；依据已知语音包络调节，不是测量混合信号 RMS 的真实 AGC。" : "; driven by the known voice envelope, not a real AGC measuring mixture RMS."}</p>}
     </>}
+    <details className="speech-explanation"><summary>{zh ? "分量 RMS 与模型说明" : "Component RMS and model notes"}</summary>
     <div className="enhancement-component-table" role="table" aria-label={zh ? "已知分量 RMS 对比" : "Known-component RMS comparison"}>
       <div role="row"><strong role="columnheader">{zh ? "分量" : "Component"}</strong><strong role="columnheader">{zh ? "输入 RMS" : "Input RMS"}</strong><strong role="columnheader">{zh ? "输出 RMS" : "Output RMS"}</strong><strong role="columnheader">Δ dB</strong></div>
       {(Object.keys(labels) as (keyof typeof labels)[]).map(component => {
@@ -86,5 +89,6 @@ export function EnhancementStageFocus({ language, mode, strengths, micCount }: {
       : mode === "agc"
         ? (zh ? "AGC 对整路信号施加同一时变增益，弱语音和残余噪声都可能被放大；这不是降噪。此处未模拟 attack/release。" : "AGC applies one time-varying gain to the entire mixture. Quiet voice and residual noise may both increase; this is not denoising. Attack/release is not modeled.")
         : (zh ? "这里单独画出本级负责的已知干扰分量，避免总波形把效果掩盖。灰线已包含前级处理，绿线只增加当前一级；真实录音不能直接拆出这些干净分量。" : "The plot isolates the known interference targeted by this stage. Gray includes upstream processing; green adds only this stage. Real recordings do not expose these clean components directly.")}</p>
+    </details>
   </section>;
 }

@@ -44,3 +44,22 @@ it("reports a failed asset request", async () => {
   render(<AiDenoiseWalkthrough language="zh" />);
   expect(await screen.findByRole("alert")).toHaveTextContent("数据加载失败");
 });
+
+it("reproduces saved convolution and mask values across the displayed interior", () => {
+  let activationError = 0, maskError = 0;
+  for (let bin = 1; bin < 63; bin++) for (let frame = 1; frame < 63; frame++) {
+    let logit = demo.headBias;
+    for (let channel = 0; channel < 4; channel++) {
+      let sum = demo.bias[channel];
+      for (let f = 0; f < 3; f++) for (let t = 0; t < 3; t++) {
+        sum += demo.kernels[channel][f][t] * demo.input[bin + f - 1][frame + t - 1];
+      }
+      activationError = Math.max(activationError, Math.abs(Math.max(0, sum) - demo.activations[channel][bin][frame]));
+      logit += demo.head[channel] * demo.activations[channel][bin][frame];
+    }
+    maskError = Math.max(maskError, Math.abs(1 / (1 + Math.exp(-logit)) - demo.mask[bin][frame]));
+  }
+  // Exported features/weights are rounded; compare within their quantization error.
+  expect(activationError).toBeLessThan(0.00003);
+  expect(maskError).toBeLessThan(0.00002);
+});

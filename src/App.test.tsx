@@ -521,12 +521,13 @@ describe("Audio knowledge app", () => {
 
     const lab = screen.getByRole("main", { name: "AI 音频事件识别实验室" });
     expect(within(lab).getByRole("heading", { name: "AI 音频事件识别实验室" })).toBeInTheDocument();
-    expect(within(lab).getByRole("heading", { name: "全面概述" })).toBeInTheDocument();
     expect(within(lab).getByRole("heading", { name: "基本原理" })).toBeInTheDocument();
-    expect(within(lab).getByRole("heading", { name: "核心技术" })).toBeInTheDocument();
-    expect(within(lab).getByRole("heading", { name: "应用场景" })).toBeInTheDocument();
-    expect(within(lab).getByRole("heading", { name: "挑战" })).toBeInTheDocument();
-    expect(within(lab).getByRole("heading", { name: "未来趋势" })).toBeInTheDocument();
+    for (const title of ["全面概述", "核心技术", "应用场景", "挑战", "未来趋势"]) {
+      const summary = within(lab).getByText(title, { selector: "summary" });
+      expect(summary.closest("details")).not.toHaveAttribute("open");
+      await user.click(summary);
+      expect(summary.closest("details")).toHaveAttribute("open");
+    }
     expect(within(lab).getByRole("list", { name: "AI 音频事件识别图解流程" })).toBeInTheDocument();
     expect(within(lab).getByText("环境 PCM 片段")).toBeInTheDocument();
     expect(within(lab).getByText("log-mel 频谱图")).toBeInTheDocument();
@@ -559,14 +560,14 @@ describe("Audio knowledge app", () => {
 
     const details = screen.getByRole("main", { name: "语音识别 ASR" });
     expect(within(details).getByText(/PCM 只是连续的压力变化数字/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "分帧加窗" })).toBeInTheDocument();
+    await user.click(within(details).getByText("分帧加窗", { selector: "summary" }));
     expect(within(details).getByText(/例如 10 ms 或 20 ms/)).toBeInTheDocument();
     expect(within(details).getAllByText("log-mel / MFCC").length).toBeGreaterThan(0);
     expect(within(details).getByText(/把每帧语音变成更接近人耳听感的频率能量图/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "Encoder 编码器" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "CTC / Attention / Transducer" })).toBeInTheDocument();
+    await user.click(within(details).getByText("Encoder 编码器", { selector: "summary" }));
+    await user.click(within(details).getByText("CTC / Attention / Transducer", { selector: "summary" }));
     expect(within(details).getByText(/CTC 适合把很多帧对齐到较短 token 序列/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "解码与后处理" })).toBeInTheDocument();
+    await user.click(within(details).getByText("解码与后处理", { selector: "summary" }));
     expect(within(details).getByText(/热词、标点、时间戳和说话人信息/)).toBeInTheDocument();
 
     await user.click(within(details).getByRole("button", { name: "打开语音识别 ASR 实验室" }));
@@ -576,10 +577,11 @@ describe("Audio knowledge app", () => {
     expect(within(lab).getByRole("region", { name: "注意力 ASR 图解" })).toBeInTheDocument();
     expect(within(lab).getByRole("list", { name: "语音识别 ASR 图解流程" })).toBeInTheDocument();
     expect(within(lab).getByText("PCM 输入")).toBeInTheDocument();
-    expect(within(lab).getByText("分帧加窗")).toBeInTheDocument();
-    expect(within(lab).getByText("log-mel / MFCC")).toBeInTheDocument();
+    expect(within(lab).getByText("模型前端")).toBeInTheDocument();
+    expect(within(lab).getByText("声学表示")).toBeInTheDocument();
+    expect(within(lab).getByText(/25 ms 窗、10 ms 步长/)).toBeInTheDocument();
     expect(within(lab).getByText("Encoder 编码器")).toBeInTheDocument();
-    expect(within(lab).getByText("CTC / RNNT")).toBeInTheDocument();
+    expect(within(lab).getByText("识别头 / Decoder")).toBeInTheDocument();
     expect(within(lab).getByText("文本后处理")).toBeInTheDocument();
     expect(within(lab).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
     expect(within(lab).getByText("WER = (S + D + I) / N")).toBeInTheDocument();
@@ -607,7 +609,7 @@ describe("Audio knowledge app", () => {
     const details = screen.getByRole("main", { name: "AI 音频总流程" });
     expect(within(details).getByText(/先采集得到 PCM 数字音频/)).toBeInTheDocument();
     expect(within(details).getByText(/PCM 只是数字波形/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "FFT / STFT / Mel / MFCC" })).toBeInTheDocument();
+    await user.click(within(details).getByText("FFT / STFT / Mel / MFCC", { selector: "summary" }));
     expect(within(details).getByText(/声音分类常把频谱图作为二维特征/)).toBeInTheDocument();
     expect(within(details).getByText(/这不是所有 AI 音频的统一前端/)).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开 AI 音频总流程实验室" })).toBeInTheDocument();
@@ -650,7 +652,7 @@ describe("Audio knowledge app", () => {
     await user.click(within(details).getByRole("button", { name: "打开 AI 音频编码实验室" }));
 
     const lab = screen.getByRole("main", { name: "AI 音频编码实验室" });
-    expect(within(lab).getByText("R = Ftoken · Q · log2(K) bit/s")).toBeInTheDocument();
+    expect(within(lab).getByText("R = Ftoken · Q · ceil(log2(K)) bit/s")).toBeInTheDocument();
     expect(within(lab).getByText(/编码端与解码端必须严格匹配/)).toBeInTheDocument();
     const modelSection = within(lab).getByRole("region", { name: "代表模型与工程定位" });
     expect(within(modelSection).getByText("SoundStream")).toBeInTheDocument();
@@ -1317,6 +1319,7 @@ describe("Audio knowledge app", () => {
     const lab = screen.getByRole("region", { name: "空间音频实验台" });
     expect(within(lab).getByRole("img", { name: "空间音频声源定位图" })).toBeInTheDocument();
     expect(within(lab).getByRole("img", { name: "房间反射时间响应图" })).toBeInTheDocument();
+    await user.click(within(lab).getByText("原理与渲染流程"));
     expect(within(lab).getByRole("list", { name: "空间音频渲染流程" })).toBeInTheDocument();
     expect(within(lab).getAllByText("ITD / ILD").length).toBeGreaterThan(0);
     expect(within(lab).queryByRole("region", { name: "空间音频关键解释" })).not.toBeInTheDocument();
@@ -1346,11 +1349,11 @@ describe("Audio knowledge app", () => {
     expect(within(lab).getByText(/头部追踪让声源固定在外部世界/)).toBeInTheDocument();
     expect(within(lab).getByText("坐标变换")).toBeInTheDocument();
     expect(within(lab).getByText("外部化声像")).toBeInTheDocument();
-    const directPeak = () => Number(lab.querySelector(".spatial-direct-impulse")!.getAttribute("d")!.split(" ")[5]);
+    const directEnergy = () => Number(lab.querySelector(".spatial-direct-impulse")!.getAttribute("data-energy"));
     fireEvent.change(within(lab).getByRole("slider", { name: "距离" }), { target: { value: "1" } });
-    const atOneMetre = 214 - directPeak();
+    const atOneMetre = directEnergy();
     fireEvent.change(within(lab).getByRole("slider", { name: "距离" }), { target: { value: "2" } });
-    expect(214 - directPeak()).toBeCloseTo(atOneMetre / 4, 1);
+    expect(directEnergy()).toBeCloseTo(atOneMetre / 4, 8);
     fireEvent.change(within(lab).getByRole("slider", { name: "房间反射" }), { target: { value: "0" } });
     for (const peak of lab.querySelectorAll(".spatial-early-impulse")) {
       expect(Number(peak.getAttribute("d")!.split(" ")[5])).toBe(214);

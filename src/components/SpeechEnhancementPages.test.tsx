@@ -29,6 +29,12 @@ it.each(["zh", "en"] as const)("keeps strengths across independent 3A pages (%s)
   for (const button of within(nav()).getAllByRole("button")) {
     fireEvent.click(button);
     const principle = screen.getByRole("region", { name: language === "zh" ? "基本原理" : "Basic principle" });
+    const details = principle.querySelector("details")!;
+    if (details.open) fireEvent.click(details.querySelector("summary")!);
+    expect(details).not.toHaveAttribute("open");
+    fireEvent.click(details.querySelector("summary")!);
+    expect(details).toHaveAttribute("open");
+    fireEvent.click(details.querySelector("summary")!);
     expect(principle.textContent!.length).toBeGreaterThan(80);
     expect(principle.compareDocumentPosition(slider()) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
     expect(screen.getAllByRole("slider")).toHaveLength(1);

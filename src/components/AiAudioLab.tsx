@@ -270,24 +270,24 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
         detail: { zh: "16 kHz 单声道语音常见", en: "16 kHz mono speech is common" }
       },
       {
-        title: { zh: "分帧加窗", en: "Frame and window" },
-        detail: { zh: "10 ms / 20 ms 短帧", en: "10 ms / 20 ms short frames" }
+        title: { zh: "模型前端", en: "Model front end" },
+        detail: { zh: "频谱路线常用 25 ms 窗、10 ms 步长；按模型配置", en: "Spectral routes often use 25 ms windows / 10 ms hops; match the model" }
       },
       {
-        title: { zh: "log-mel / MFCC", en: "log-mel / MFCC" },
-        detail: { zh: "提取频率能量结构", en: "Extract frequency-energy structure" }
+        title: { zh: "声学表示", en: "Acoustic representation" },
+        detail: { zh: "log-Mel、MFCC 或波形学习前端，不是依次必经", en: "Log-Mel, MFCC, or learned waveform features; alternatives, not mandatory sequential steps" }
       },
       {
         title: { zh: "Encoder 编码器", en: "Encoder" },
         detail: { zh: "建模上下文声学表示", en: "Models contextual acoustic states" }
       },
       {
-        title: { zh: "CTC / RNNT", en: "CTC / RNNT" },
-        detail: { zh: "把帧序列对齐到 token", en: "Aligns frames to tokens" }
+        title: { zh: "识别头 / Decoder", en: "Recognition head / decoder" },
+        detail: { zh: "CTC、RNN-T 或 Attention 等路线输出 token", en: "CTC, RNN-T, or attention-based routes emit tokens" }
       },
       {
         title: { zh: "文本后处理", en: "Text post-processing" },
-        detail: { zh: "标点、热词、时间戳", en: "Punctuation, hotwords, timestamps" }
+        detail: { zh: "规范化；按需补标点与对齐。热词也可在解码时介入", en: "Normalization; optional punctuation/alignment. Hotwords can also guide decoding" }
       }
     ],
     technical: {
@@ -408,8 +408,8 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
       {
         title: sectionTitles.principle,
         body: {
-          zh: "系统先把语音切成短帧，提取 log-mel 或 MFCC，再由 Encoder 建模前后文。CTC 或 RNNT 把大量声学帧压缩成较短 token 序列，解码器和后处理再补标点、热词和时间戳。",
-          en: "The system slices speech into short frames, extracts log-mel or MFCC features, then uses an encoder to model context. CTC or RNNT compresses many acoustic frames into a shorter token sequence; decoding and post-processing add punctuation, hotwords, and timestamps."
+          zh: "先按模型选择前端：可提取 log-Mel/MFCC，也可直接从 PCM 学习表示；不是所有模型都需要傅里叶变换。频谱路线要区分窗长与步长，例如 25 ms 窗每 10 ms 移动一次。Encoder 建模上下文，CTC、RNN-T 或 Attention Decoder 按各自规则生成 token。标点可能由模型直接输出，也可后处理；热词可参与解码，时间戳通常需要专门输出或对齐。",
+          en: "Choose the model front end: log-Mel/MFCC or features learned directly from PCM; Fourier transforms are not mandatory. Distinguish window length from hop, e.g. a 25 ms window every 10 ms. An encoder supplies context and CTC, RNN-T, or an attention decoder emits tokens under different rules. Punctuation may be generated or post-processed; hotwords may guide decoding, while timestamps require dedicated outputs or alignment."
         }
       },
       {
@@ -468,8 +468,8 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
         detail: { zh: "预测 Mel 谱或 codec token", en: "Predicts Mel spectra or codec tokens" }
       },
       {
-        title: { zh: "神经声码器", en: "Neural vocoder" },
-        detail: { zh: "合成可播放波形", en: "Synthesizes playable waveform" }
+        title: { zh: "波形重建", en: "Waveform reconstruction" },
+        detail: { zh: "Mel → 声码器；codec token → 匹配的 codec 解码器", en: "Mel → vocoder; codec tokens → matching codec decoder" }
       }
     ],
     technical: {
@@ -484,12 +484,12 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
       {
         expression: "Tmel ≈ Σᵢ dᵢ",
         title: { zh: "时长展开", en: "Duration expansion" },
-        explanation: { zh: "每个音素预测 dᵢ 个声学帧，所有时长之和决定生成语音的大致长度和节奏。", en: "Each phoneme predicts dᵢ acoustic frames; their sum controls approximate utterance length and rhythm." }
+        explanation: { zh: "以 FastSpeech 类显式时长模型为例：每个音素展开为 dᵢ 个声学帧，时长之和决定帧数；并非所有 TTS 都有独立时长预测器。", en: "For explicit-duration models such as FastSpeech, each phoneme expands to dᵢ acoustic frames; the sum determines frame count. Not every TTS uses a separate duration predictor." }
       },
       {
         expression: "L = ||M - M̂||₁ + λdLduration + λf0Lpitch + λeLenergy",
         title: { zh: "声学模型训练目标", en: "Acoustic-model objective" },
-        explanation: { zh: "M 是目标 Mel 谱；时长、基频和能量损失共同约束发音节奏、语调和轻重。", en: "M is the target Mel spectrum; duration, pitch, and energy losses constrain timing, intonation, and emphasis." }
+        explanation: { zh: "这是 FastSpeech 2 类路线的示意目标：M 为目标 Mel 谱。自回归 token、扩散与 flow matching 模型使用不同目标，不能套用同一公式。", en: "An illustrative FastSpeech 2-style objective, with target Mel spectrum M. Autoregressive-token, diffusion, and flow-matching models use different objectives; this formula is not universal." }
       },
       {
         expression: "x̂ = Gθ(M, es, p)",
@@ -671,7 +671,7 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
       {
         expression: "Ldiff = E[||ε - εθ(zt, t, c)||²]",
         title: { zh: "扩散模型训练", en: "Diffusion training" },
-        explanation: { zh: "模型学习估计第 t 步加入的噪声 ε，再通过多步去噪从随机变量生成音频表示。", en: "The model estimates noise ε added at step t, then iteratively denoises random variables into an audio representation." }
+        explanation: { zh: "噪声预测参数化的一种目标：zₜ = √ᾱₜ z₀ + √(1−ᾱₜ) ε，模型预测构造 zₜ 时的整体噪声 ε。t 是扩散步，不是音频采样时刻；并非所有生成模型都预测 ε。", en: "One noise-prediction objective: zₜ = √ᾱₜ z₀ + √(1−ᾱₜ) ε, predicting the total noise used to construct zₜ. Here t is a diffusion step, not an audio sample time; not all generative models predict ε." }
       }
     ],
     models: [
@@ -834,7 +834,7 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
     technical: {
       input: { zh: "连续环境 PCM，按重叠窗口切片并保留时间位置", en: "Continuous scene PCM segmented into overlapping windows with timing retained" },
       representation: { zh: "log-mel patch 或预训练音频 embedding", en: "Log-mel patches or pretrained audio embeddings" },
-      output: { zh: "每类独立概率，以及事件起止时间和告警状态", en: "Independent class probabilities plus event onset, offset, and alert state" },
+      output: { zh: "类别分数；片段分类只说明是否出现，起止时间需要帧级检测或额外时序后处理", en: "Class scores; clip tagging indicates presence, while onset/offset times require frame-level detection or temporal post-processing" },
       objective: { zh: "多标签 sigmoid + BCE；类别极不均衡时可用加权 BCE 或 focal loss", en: "Multi-label sigmoid plus BCE; weighted BCE or focal loss for severe class imbalance" },
       metrics: { zh: "Precision、Recall、F1、mAP、事件错误率、每小时误报数和检测延迟", en: "Precision, recall, F1, mAP, event error rate, false alarms per hour, and detection latency" },
       deployment: { zh: "连续监听需设置阈值、迟滞、去抖和设备域校准，同时控制功耗与隐私", en: "Continuous listening needs thresholds, hysteresis, debounce, and device-domain calibration under power and privacy constraints" }
@@ -843,7 +843,7 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
       {
         expression: "pc = sigmoid(zc)",
         title: { zh: "多标签概率", en: "Multi-label probability" },
-        explanation: { zh: "每个类别独立输出概率，因此哭声和警报声可以同时成立，不需要强制只选一个类别。", en: "Each class has an independent probability, so a cry and alarm may both be present rather than forcing one class." }
+        explanation: { zh: "各类单独做 sigmoid，分数不要求相加为 1，多种声音可同时出现；这不代表事件在统计上独立。未经校准的分数也不能当作告警正确率。", en: "Each class has its own sigmoid; scores need not sum to one and multiple sounds can coexist. This does not imply statistical independence, and uncalibrated scores are not alert accuracy." }
       },
       {
         expression: "LBCE = -Σc[yc log pc + (1-yc)log(1-pc)]",
@@ -1210,14 +1210,14 @@ const aiArticles: Record<AiAudioLabId, AiArticle> = {
     },
     equations: [
       {
-        expression: "q(z) = arg minₖ ||z - eₖ||²",
+        expression: "k* = arg minₖ ||z - eₖ||²; q(z) = eₖ*",
         title: { zh: "矢量量化", en: "Vector quantization" },
         explanation: { zh: "连续向量 z 被替换为最近码本向量 eₖ，并只传输索引 k；RVQ 会逐级量化前一级残差。", en: "Continuous vector z is replaced by nearest codebook vector eₖ and only index k is sent; RVQ quantizes residuals stage by stage." }
       },
       {
-        expression: "R = Ftoken · Q · log2(K) bit/s",
+        expression: "R = Ftoken · Q · ceil(log2(K)) bit/s",
         title: { zh: "原始 token 码率", en: "Raw token bitrate" },
-        explanation: { zh: "Ftoken 是每秒帧数，Q 是码本级数，K 是每个码本大小；熵编码和边信息会改变实际传输码率。", en: "Ftoken is frames per second, Q codebook stages, and K entries per codebook; entropy coding and side information change actual transport rate." }
+        explanation: { zh: "等大码本、固定长度索引：Ftoken 是每秒帧数，Q 是级数，K 是码本大小。K 为 2 的整数次幂时不需取整，例如 50 帧/s × 8 级 × 10 bit = 4 kbps。熵编码、封包和边信息会改变实际码率。", en: "Equal-sized codebooks with fixed-length indices: Ftoken is frames/s, Q stages, K entries. No rounding is needed for power-of-two K: 50 frames/s × 8 stages × 10 bits = 4 kbps. Entropy coding, packets, and side information change transport rate." }
       },
       {
         expression: "L = λtLwave + λfLSTFT + λqLVQ + λaLadv",
@@ -1397,13 +1397,9 @@ function AiModelCards({
       </div>
       <div className="ai-model-grid">
         {article.models.map((model) => (
-          <article className="ai-model-card" key={model.name}>
-            <h3>{model.name}</h3>
+          <details className="ai-model-card" key={model.name}>
+            <summary><h3>{model.name}</h3><span>{model.task[language]}</span></summary>
             <dl>
-              <div>
-                <dt>{language === "zh" ? "适合任务" : "Task"}</dt>
-                <dd>{model.task[language]}</dd>
-              </div>
               <div>
                 <dt>{language === "zh" ? "基本原理" : "Principle"}</dt>
                 <dd>{model.principle[language]}</dd>
@@ -1417,7 +1413,7 @@ function AiModelCards({
                 <dd>{model.caution[language]}</dd>
               </div>
             </dl>
-          </article>
+          </details>
         ))}
       </div>
     </section>
@@ -1477,9 +1473,9 @@ function AiArticleSections({
 }) {
   return (
     <section className="ai-article-body" aria-label={language === "zh" ? "AI 音频文章内容" : "AI audio article content"}>
-      {article.sections.map((section) => (
-        <article className="ai-article-card" key={section.title.en}>
-          <h2>{section.title[language]}</h2>
+      {article.sections.filter(section => section.title.en !== "Principles").map((section) => (
+        <details className="ai-article-card" key={section.title.en}>
+          <summary>{section.title[language]}</summary>
           <p>{section.body[language]}</p>
           {section.points ? (
             <ul>
@@ -1488,7 +1484,7 @@ function AiArticleSections({
               ))}
             </ul>
           ) : null}
-        </article>
+        </details>
       ))}
     </section>
   );
@@ -1496,6 +1492,16 @@ function AiArticleSections({
 
 export function AiAudioLab({ labId = "event", language, onBack, onBackToDetails, onOpen }: AiAudioLabProps) {
   const article = aiArticles[labId] ?? aiArticles.event;
+  const principle = article.sections.find(section => section.title.en === "Principles");
+  const interactive = labId === "asr" || labId === "enhancement";
+  const chapters = [
+    ["ai-principle", language === "zh" ? "基本原理" : "Principle"],
+    ["ai-flow", language === "zh" ? "处理流程" : "Flow"],
+    ...(interactive ? [["ai-demo", language === "zh" ? "交互演示" : "Walkthrough"]] : []),
+    ["ai-engineering", language === "zh" ? "指标与公式" : "Metrics and equations"],
+    ["ai-models", language === "zh" ? "模型选型" : "Model selection"],
+    ["ai-reading", language === "zh" ? "延伸阅读" : "Further reading"]
+  ];
 
   return (
     <main className="ai-audio-page ai-article-page" aria-label={article.title[language]}>
@@ -1514,12 +1520,29 @@ export function AiAudioLab({ labId = "event", language, onBack, onBackToDetails,
         </div>
       </section>
 
-      {labId === "overview" ? <AiAudioOverview language={language} onOpen={onOpen} /> : <AiArticleFlow article={article} language={language} />}
-      {labId === "enhancement" && <AiDenoiseWalkthrough language={language} />}
-      {labId === "asr" && <AsrWalkthrough language={language} />}
-      {labId === "overview" ? <details><summary>{language === "zh" ? "延伸阅读：工程指标与代表模型" : "Further reading: engineering metrics and models"}</summary><AiTechnicalSection article={article} language={language} /><AiModelCards article={article} language={language} /></details> : <><AiTechnicalSection article={article} language={language} />
-      <AiModelCards article={article} language={language} />
-      <AiArticleSections article={article} language={language} /></>}
+      {labId === "overview" ? <>
+        <AiAudioOverview language={language} onOpen={onOpen} />
+        <details className="ai-further-reading"><summary>{language === "zh" ? "延伸阅读：工程指标与代表模型" : "Further reading: engineering metrics and models"}</summary><AiTechnicalSection article={article} language={language} /><AiModelCards article={article} language={language} /></details>
+      </> : <>
+        <nav className="ai-reading-nav" aria-label={language === "zh" ? "AI 实验室章节" : "AI lab chapters"}>
+          {chapters.map(([id, label], index) => <a key={id} href={`#${id}`}>{String(index + 1).padStart(2, "0")} · {label}</a>)}
+        </nav>
+        <section className="ai-principle-intro ai-reading-section" id="ai-principle" aria-labelledby="ai-principle-title">
+          <h2 id="ai-principle-title">{language === "zh" ? "基本原理" : "Basic principle"}</h2>
+          <p>{principle?.body[language]}</p>
+          {principle?.points && <ul>{principle.points.map(point => <li key={point.en}>{point[language]}</li>)}</ul>}
+        </section>
+        <div className="ai-reading-section" id="ai-flow"><AiArticleFlow article={article} language={language} /></div>
+        {interactive && <div className="ai-reading-section" id="ai-demo">
+          {labId === "enhancement" ? <AiDenoiseWalkthrough language={language} /> : <AsrWalkthrough language={language} />}
+        </div>}
+        <div className="ai-reading-section" id="ai-engineering"><AiTechnicalSection article={article} language={language} /></div>
+        <div className="ai-reading-section" id="ai-models"><AiModelCards article={article} language={language} /></div>
+        <section className="ai-reading-section" id="ai-reading" aria-labelledby="ai-reading-title">
+          <h2 id="ai-reading-title">{language === "zh" ? "延伸阅读" : "Further reading"}</h2>
+          <AiArticleSections article={article} language={language} />
+        </section>
+      </>}
     </main>
   );
 }

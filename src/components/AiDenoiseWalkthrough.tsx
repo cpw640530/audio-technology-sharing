@@ -67,6 +67,7 @@ export function AiDenoiseWalkthrough({ language }: { language: Language }) {
   return <section className="ai-denoise-walkthrough" aria-label={t("模型逐步可视化","Model walkthrough")}>
     <h2>{t("从频谱到降噪：看见模型计算","From spectrum to denoising: inspect the computation")}</h2>
     <p>{t("教学 CNN：用 24 段合成谐波与白噪声训练，展示独立测试片段的真实中间结果；不是经过真实语音验证的降噪产品。结构为 3×3 卷积（4 通道）→ ReLU → 1×1 卷积 → Sigmoid。", "Teaching CNN: trained on 24 synthetic harmonic signals with white noise. These are real intermediate results on a held-out clip, not a validated speech denoiser. Architecture: 3×3 convolution (4 channels) → ReLU → 1×1 convolution → sigmoid.")}</p>
+    <p>{t("时序边界：这是离线预计算。STFT 窗以帧时间为中心、两端补零；3×3 卷积还读取下一帧。以帧中心计，特征窗需 16 ms 未来样本，再加 16 ms 下一帧上下文，掩码至少需 32 ms 前视；这还不是端到端延迟。", "Timing boundary: results are precomputed offline. STFT windows are centered with zero-padded boundaries; the 3×3 convolution also reads the next frame. Relative to the frame center, the feature window needs 16 ms of future samples plus 16 ms for the next frame: at least 32 ms of lookahead for the mask, not total end-to-end latency.")}</p>
     <div className="robot-buttons">{names.map((s,i)=><button key={s} onClick={()=>setStep(i)} aria-pressed={step===i}>{i+1}. {s}</button>)}</div>
     {failed ? <p role="alert">{t("数据加载失败，请刷新重试。","Data failed to load. Reload to retry.")}</p> : !data ? <p role="status">{t("加载计算结果…","Loading results…")}</p> : <>
       <h3>{names[step]}</h3><p>{descriptions[step]}</p>

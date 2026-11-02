@@ -25,16 +25,16 @@ const flows: Record<AiAudioLabId, Array<{ title: Record<Language, string>; detai
     { title: { zh: "后处理", en: "Post-process" }, detail: { zh: "把模型输出变成文字、类别、PCM 或码流。", en: "Turn model outputs into text, labels, PCM, or bitstreams." } }
   ],
   asr: [
-    { title: { zh: "PCM 分帧", en: "Frame PCM" }, detail: { zh: "16 kHz 语音按 10 到 20 ms 切成短帧。", en: "Split 16 kHz speech into 10-20 ms frames." } },
-    { title: { zh: "log-mel / MFCC", en: "log-mel / MFCC" }, detail: { zh: "提取每帧的频率能量结构。", en: "Extract frequency-energy structure from each frame." } },
+    { title: { zh: "PCM 与前端", en: "PCM and front end" }, detail: { zh: "匹配模型采样率；频谱路线常用 25 ms 窗、10 ms 步长，两者不同。", en: "Match the model sample rate; spectral routes often use 25 ms windows and 10 ms hops, which are different quantities." } },
+    { title: { zh: "声学表示", en: "Acoustic representation" }, detail: { zh: "可选 log-Mel/MFCC，或从波形学习表示；并非都必须先做 FFT。", en: "Use log-Mel/MFCC or learned waveform features; an FFT is not always required." } },
     { title: { zh: "Encoder 与识别头", en: "Encoder and head" }, detail: { zh: "Encoder 建立上下文，CTC、RNNT 或 Attention 预测 token。", en: "The encoder builds context while CTC, RNNT, or attention predicts tokens." } },
-    { title: { zh: "文本后处理", en: "Text post-processing" }, detail: { zh: "解码、标点、热词和时间戳形成最终文本。", en: "Decoding, punctuation, hotwords, and timestamps form final text." } }
+    { title: { zh: "解码与文本处理", en: "Decoding and text processing" }, detail: { zh: "热词可参与解码；标点与时间戳由模型或专门后处理提供。", en: "Hotwords may guide decoding; punctuation and timestamps come from the model or dedicated post-processing." } }
   ],
   tts: [
     { title: { zh: "文本规范化", en: "Normalize text" }, detail: { zh: "数字、单位和缩写先转换为可朗读形式。", en: "Convert numbers, units, and abbreviations into speakable text." } },
     { title: { zh: "读音与韵律", en: "Pronunciation and prosody" }, detail: { zh: "预测音素、停顿、重音、语速和音高。", en: "Predict phonemes, pauses, stress, speaking rate, and pitch." } },
     { title: { zh: "声学表示", en: "Acoustic representation" }, detail: { zh: "生成 Mel 频谱或神经 codec 表示。", en: "Generate a Mel spectrogram or neural-codec representation." } },
-    { title: { zh: "声码器输出", en: "Vocoder output" }, detail: { zh: "声码器把声学表示还原为 PCM 波形。", en: "The vocoder reconstructs a PCM waveform from acoustic features." } }
+    { title: { zh: "波形重建", en: "Waveform reconstruction" }, detail: { zh: "Mel 走声码器；codec token 走匹配的 codec 解码器，输出 PCM。", en: "Mel uses a vocoder; codec tokens use a matching codec decoder to produce PCM." } }
   ],
   generation: [
     { title: { zh: "声音条件", en: "Audio condition" }, detail: { zh: "输入文本、参考音色、音乐提示或环境条件。", en: "Provide text, reference voice, music prompts, or scene conditions." } },
@@ -82,9 +82,9 @@ export function AiAudioTopicPage({ relatedTopics, language, topic, mode, onBack,
         <section className="sound-topic-section sound-topic-intro"><div><h2>{language === "zh" ? "先明确任务，再选择模型" : "Define the task before choosing the model"}</h2>{detail.explanation[language].split("\n\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></section>
         <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{language === "zh" ? "这张卡片的 AI 音频链路" : "The AI audio path for this topic"}</h2><p>{language === "zh" ? "输入表示、模型输出和工程后处理会随任务变化，不能把所有 AI 音频都当成频谱图像分类。" : "Input representations, model outputs, and engineering post-processing vary by task; not all AI audio is spectrogram classification."}</p></div></div><ol className="ai-topic-flow" aria-label={language === "zh" ? "AI 音频处理流程" : "AI audio processing flow"}>{steps.map((step, index) => <li key={step.title.en}><span>{String(index + 1).padStart(2, "0")}</span><h3>{step.title[language]}</h3><p>{step.detail[language]}</p></li>)}</ol></section>
         <section className="sound-topic-section ai-topic-lab-entry" aria-label={language === "zh" ? "当前主题实验室入口" : "Current topic lab entry"}><div className="sound-topic-cta"><CircuitBoard size={22} aria-hidden="true" /><h2>{detail.lab?.title[language]}</h2><p>{detail.lab?.description[language]}</p><button className="diagram-open-button" type="button" onClick={onOpenLab}>{detail.lab?.buttonLabel[language]}</button></div></section>
-        <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{language === "zh" ? "核心知识点" : "Core concepts"}</h2><p>{language === "zh" ? "先掌握任务边界，再深入实验室中的公式、模型和案例。" : "Understand the task boundary before diving into formulas, models, and cases in the lab."}</p></div></div><div className="sound-topic-glossary">{detail.keyConcepts.map((concept) => <article key={concept.en}><p>{concept[language]}</p></article>)}</div></section>
-        <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{language === "zh" ? "相关术语" : "Related terms"}</h2><p>{language === "zh" ? "这些术语说明数据如何表示、模型如何工作以及结果如何评价。" : "These terms explain data representation, model behavior, and result evaluation."}</p></div></div><div className="sound-topic-glossary">{detail.termExplanations?.map((term) => <article key={term.name.en}><h3>{term.name[language]}</h3><p>{term.explanation[language]}</p></article>)}</div></section>
+        <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{language === "zh" ? "核心知识点" : "Core concepts"}</h2><p>{language === "zh" ? "先掌握任务边界，再深入实验室中的公式、模型和案例。" : "Understand the task boundary before diving into formulas, models, and cases in the lab."}</p></div></div><ul className="ai-topic-concepts">{detail.keyConcepts.map((concept) => <li key={concept.en}>{concept[language]}</li>)}</ul></section>
         <section className="sound-topic-section"><div><h2>{language === "zh" ? "工程边界" : "Engineering boundary"}</h2><p>{detail.misconception[language]}</p></div></section>
+        <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{language === "zh" ? "相关术语" : "Related terms"}</h2></div></div><div className="ai-topic-terms">{detail.termExplanations?.map((term) => <details key={term.name.en}><summary>{term.name[language]}</summary><p>{term.explanation[language]}</p></details>)}</div></section>
       </TopicReadingLayout>
       {relatedTopics}
       <TopicPager language={language} onBack={onBack} onPrevious={onOpenPrevious} onNext={onOpenNext} />
