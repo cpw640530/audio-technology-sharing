@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
-import { categories } from "./content/knowledge";
+import { categories, interfaceCopy } from "./content/knowledge";
 import { getTopicKey, relatedTopics } from "./content/relatedTopics";
 import { MeetingCommunicationLab } from "./components/MeetingCommunicationLab";
 
@@ -11,6 +11,20 @@ describe("Audio knowledge app", () => {
     window.history.replaceState(null, "", "#top");
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     window.localStorage.setItem("audio-technology-language", "zh");
+  });
+
+  it.each(["ja", "ko"] as const)("searches translated content and switches an open article in place (%s)", async language => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), language);
+    const topic = categories[0].topics[0];
+    await user.type(screen.getByRole("searchbox"), topic.title[language]);
+    const grid = within(screen.getByTestId("topic-grid"));
+    await user.click(grid.getByRole("button", { name: new RegExp(topic.title[language]) }));
+    expect(screen.getByRole("heading", { level: 1, name: topic.title[language] })).toBeInTheDocument();
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    expect(screen.getByRole("heading", { level: 1, name: topic.title.en })).toBeInTheDocument();
+    expect(screen.queryByRole("searchbox", { name: interfaceCopy.searchLabel.en })).not.toBeInTheDocument();
   });
 
   it("shows seven external references on the homepage and switches their language", async () => {
@@ -33,7 +47,7 @@ describe("Audio knowledge app", () => {
       expect(link).toHaveAttribute("rel", "noopener noreferrer");
     }
     expect(within(references).getByText(/通过交互图解理解空气振动/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "English" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
     expect(screen.getByRole("region", { name: "References and Further Reading" })).toBeInTheDocument();
     expect(screen.getByText(/Interactive explanations of air vibration/)).toBeInTheDocument();
     await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /What Sound Is/ }));
@@ -96,7 +110,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("heading", { name: "Audio Technology Sharing" })).toBeInTheDocument();
     expect(screen.getByRole("complementary", { name: "Knowledge Outline" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Topic Cards" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "中文" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: /Language/ })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "音频技术分享" })).not.toBeInTheDocument();
   });
 
@@ -229,7 +243,7 @@ describe("Audio knowledge app", () => {
       await user.click(screen.getByRole("button", { name: "上一张卡片" }));
       expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
     }
-    await user.click(screen.getByRole("button", { name: "English" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
     expect(screen.getByRole("button", { name: "Previous topic" })).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "Back to topics" }));
     expect(screen.getByRole("region", { name: "Topic Cards" })).toBeInTheDocument();
@@ -278,7 +292,7 @@ describe("Audio knowledge app", () => {
     expect(within(diagram).getByRole("button", { name: "1. 声孔" })).toHaveAttribute("aria-pressed", "true");
     await user.click(within(diagram).getByRole("button", { name: "3. ASIC" }));
     expect(within(diagram).getByText(/PDM 需后端抽取为 PCM/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "English" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
     expect(screen.getByRole("img", { name: "Digital MEMS cross-section schematic" })).toBeInTheDocument();
     expect(screen.getByText(/PDM needs downstream decimation/)).toBeInTheDocument();
   });
@@ -331,7 +345,7 @@ describe("Audio knowledge app", () => {
     expect(scroll).toHaveBeenCalledWith({ block: "start", behavior: "instant" });
     expect(window.location.hash).toBe(hash);
     expect(within(contents).getByRole("link", { name: "再确认系统接口" })).toHaveAttribute("aria-current", "location");
-    await user.click(screen.getByRole("button", { name: "English" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
     expect(screen.getByRole("navigation", { name: "Page contents" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Next topic" }));
     const nextContents = screen.getByRole("navigation", { name: "Page contents" });
@@ -346,7 +360,7 @@ describe("Audio knowledge app", () => {
     const user = userEvent.setup();
     render(<App />);
     for (const zh of [true, false]) {
-      if (!zh) await user.click(screen.getByRole("button", { name: "English" }));
+      if (!zh) await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
       await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: zh ? /^音频硬件 麦克风/ : /Microphones/ }));
       const titles = zh
         ? ["麦克风", "ADC / DAC / Codec", "数字音频接口 / 传输协议", "功放与扬声器"]
@@ -388,7 +402,7 @@ describe("Audio knowledge app", () => {
     await user.click(within(lab).getByRole("checkbox", { name: "播报状态（示意）" }));
     await user.click(within(lab).getByRole("button", { name: /2 AEC/ }));
     expect(within(lab).getByText(/播报已开启/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "English" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
     expect(screen.getByRole("main", { name: "Robot Audio Lab" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Back to detailed content" }));
     expect(screen.getByRole("main", { name: "Robot Audio" })).toBeInTheDocument();
@@ -415,7 +429,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByTestId("bluetooth-latency")).toHaveTextContent("200 ms");
     await user.selectOptions(screen.getByRole("combobox", { name: "蓝牙编码器" }), "LDAC");
     expect(screen.getByTestId("bluetooth-payload")).toHaveTextContent("825.0 B");
-    await user.click(screen.getByRole("button", { name: "English" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
     expect(screen.getByRole("heading", { name: "Bluetooth Audio Link Lab" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Bluetooth codec" })).toHaveValue("LDAC");
     await user.click(screen.getByRole("button", { name: "Back to detailed content" }));
@@ -456,7 +470,7 @@ describe("Audio knowledge app", () => {
     expect(within(outline).getByText("IoT 与内容创作")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "主题卡片" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "English" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
 
     expect(screen.getByRole("heading", { name: "Audio Technology Sharing" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Content Roadmap" })).not.toBeInTheDocument();
@@ -469,7 +483,7 @@ describe("Audio knowledge app", () => {
     expect(within(englishOutline).getByText("What Sound Is")).toBeInTheDocument();
     expect(within(englishOutline).getByText("IoT and Content Creation")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Topic Cards" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "中文" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: /Language/ })).toBeInTheDocument();
   });
 
   it("filters topics by category", async () => {
@@ -777,7 +791,7 @@ describe("Audio knowledge app", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "English" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
     const categoriesRegion = screen.getByRole("region", { name: "Knowledge Areas" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /Applications/ }));
     await user.click(screen.getByRole("button", { name: /Conferencing and Communication/ }));
@@ -922,7 +936,7 @@ describe("Audio knowledge app", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "English" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
     const categoriesRegion = screen.getByRole("region", { name: "Knowledge Areas" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /Applications/ }));
     await user.click(screen.getByRole("button", { name: /In-Car Acoustics/ }));
@@ -1261,7 +1275,7 @@ describe("Audio knowledge app", () => {
     expect(within(xrunPanel).getByText(/overrun/)).toBeInTheDocument();
     expect(within(xrunPanel).getByText(/调用 snd_pcm_prepare/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "English" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
     expect(screen.getByRole("main", { name: "ALSA Framework Lab" })).toBeInTheDocument();
     expect(screen.queryByRole("img", { name: "Linux ALSA layered framework diagram" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "PCM Playback" })).toBeInTheDocument();
@@ -1593,7 +1607,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByTestId("animated-signal-panel")).toHaveAttribute("aria-hidden", "true");
     expect(screen.getByTestId("hero-signal-map")).toBeInTheDocument();
     expect(screen.queryByText("声音波形实验室预览")).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "English" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
     expect(screen.queryByText("Sound Wave Lab preview")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Explore topics" })).toBeInTheDocument();
   });
@@ -1621,7 +1635,7 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("heading", { name: "工程边界" })).toBeInTheDocument();
     expect(within(details).getByText(/识别率高不等于在所有噪声、口音和设备上都稳定/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "English" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
 
     const englishDetails = screen.getByRole("main", { name: "Speech Recognition ASR" });
     expect(
@@ -1676,7 +1690,7 @@ describe("Audio knowledge app", () => {
       ["What Sound Is", "Sound and Audio Units", "Digital Audio Basics", "Listening Perception and Metrics"]
     ]) {
       const chinese = titles[0] === "什么是声音";
-      if (!chinese) await user.click(screen.getByRole("button", { name: "English" }));
+      if (!chinese) await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
       for (const title of titles) {
         await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: new RegExp(title) }));
         expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
@@ -1929,7 +1943,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByTestId("digital-bit-depth-guide")).toBeInTheDocument();
     expect(screen.getAllByTestId("digital-bit-depth-level")).toHaveLength(16);
 
-    fireEvent.change(screen.getByRole("slider", { name: "采样率" }), {
+    fireEvent.change(screen.getByRole("slider", { name: "采样点数" }), {
       target: { value: "12" }
     });
     fireEvent.change(screen.getByRole("slider", { name: "位深" }), {

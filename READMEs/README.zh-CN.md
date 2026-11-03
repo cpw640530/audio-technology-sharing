@@ -1,19 +1,21 @@
 <p align="center">
   <h1 align="center">音频技术分享</h1>
   <p align="center">
-    面向音频技术学习的双语知识库，结合详细文章、信号图解和交互式实验室。
+    动手调参数，看波形如何变化，再结合四语工程文章理解声音背后的原理。
   </p>
 </p>
 
 <p align="center">
   <a href="../README.md">English</a> ·
-  <a href="./README.zh-CN.md">简体中文</a>
+  <a href="./README.zh-CN.md">简体中文</a> ·
+  <a href="./README.ja.md">日本語</a> ·
+  <a href="./README.ko.md">한국어</a>
 </p>
 
 <p align="center">
   <img alt="Docs" src="https://img.shields.io/badge/docs-Markdown-blue">
   <img alt="App" src="https://img.shields.io/badge/app-React%20%2B%20Vite-1f9d8a">
-  <img alt="Language" src="https://img.shields.io/badge/language-English%20%7C%20Chinese-brightgreen">
+  <img alt="Languages" src="https://img.shields.io/badge/languages-English%20%7C%20Chinese%20%7C%20Japanese%20%7C%20Korean-brightgreen">
   <img alt="Project Type" src="https://img.shields.io/badge/type-Audio%20Technology%20Sharing-purple">
   <img alt="Status" src="https://img.shields.io/badge/status-active%20development-green">
 </p>
@@ -26,6 +28,27 @@
 当前网页可用于浏览音频基础、硬件、软件、信号处理、AI 音频算法和真实应用场景。主题卡片可以打开详细解释和对应实验室，方便用图解或交互方式理解关键概念。
 
 **[在线访问网站](https://cpw640530.github.io/audio-technology-sharing/)** · 支持中文和英文。
+
+## 交互式实验室：让原理变成看得见的变化
+
+位深增加，量化误差为什么会变小？窗口变长，频谱图为什么不同？回声消除到底减掉了什么？通过参数调节与对照实验理解这些问题，而不只是记住定义。
+
+| 实验室 | 可以动手做什么 | 重点看懂什么 |
+| --- | --- | --- |
+| 声音波形 | 调节频率、振幅、相位，并播放信号 | 将正弦模型、波形变化和听感联系起来 |
+| 采样、量化与 PCM | 比较疏密采样、2-bit/8-bit 量化，查看样本码字 | 区分时间采样与幅度精度，追踪量化值如何变成二进制 |
+| FFT / STFT | 对比单音与相邻双音、长短窗口、Hop 大小和短脉冲 | 跟随选中 PCM 窗口观察频谱，区分频率格间距与分开相邻频率的能力 |
+| AEC 回声消除 | 用 0%、50%、100% 模型强度对比四轨信号 | 串起播放参考、采集输入、估计回声与输出，理解为什么不能直接用采集减播放 |
+
+**体验路径：**[进入知识库](https://cpw640530.github.io/audio-technology-sharing/#top) → 打开主题详细内容 → 进入对应实验室。遇到不懂的概念，可随时返回文章。硬件、ALSA、空间音频及应用场景也提供图解或交互探索。
+
+<p align="center">
+  <img alt="声音波形实验室：调节信号参数，结合波形与播放理解声音" src="../public/images/Sound%20Wave%20Lab.png" width="900">
+</p>
+
+**用于学习，不替代测量仪器。** 实验室区分概念示意、数值仿真和音频演示，并非每个实验都有试听。AEC 使用已知合成分量，不是生产级自适应消除器；满强度残余只是模型设定，不代表真实设备性能上限。进行听感对比前，请暂停背景音乐。
+
+截图展示的是较早界面；近期新增的对照预设需部署后才会出现在在线网站。
 
 ## 界面与阅读路径
 
@@ -47,14 +70,6 @@
 
 <p align="center">
   <img alt="什么是声音详细文章：章节目录与实验室入口" src="../public/images/topic-detail.png" width="900">
-</p>
-
-## 交互式实验室
-
-实验室将知识点与可观察的变化联系起来。例如，声音波形实验室通过参数调节，帮助理解频率、振幅和相位与波形、听感之间的关系。
-
-<p align="center">
-  <img alt="声音波形实验室示例" src="../public/images/Sound%20Wave%20Lab.png" width="900">
 </p>
 
 ## 为什么建立这个仓库
@@ -116,7 +131,9 @@ npm run build
 .
 ├── README.md
 ├── READMEs/
-│   └── README.zh-CN.md
+│   ├── README.zh-CN.md
+│   ├── README.ja.md
+│   └── README.ko.md
 ├── index.html
 ├── package.json
 ├── src/
@@ -140,10 +157,12 @@ npm run build
 
 ## 语言
 
-本仓库提供独立的双语 README：
+README、网页界面、详细文章和实验室支持中文、英文、日语和韩语。使用网页的语言选择框即可原地切换，网站会记住选择。标准模型名称、代码、公式及参考图片内的原始文字保持不变。
 
 - [English](../README.md)
 - [简体中文](./README.zh-CN.md)
+- [日本語](./README.ja.md)
+- [한국어](./README.ko.md)
 
 GitHub README 不支持运行 JavaScript，因此语言切换使用普通 Markdown 链接实现。
 

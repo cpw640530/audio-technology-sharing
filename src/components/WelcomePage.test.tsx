@@ -7,6 +7,32 @@ afterEach(() => {
   window.history.replaceState(null, "", window.location.pathname);
 });
 
+it.each([
+  ["ja", "オーディオ技術共有サイト", "オーディオ知識を探る"],
+  ["ko", "오디오 기술공유 사이트", "오디오 지식 살펴보기"]
+] as const)("switches to %s and remembers it after reload", (language, heading, link) => {
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+  window.localStorage.setItem("audio-technology-language", "en");
+  const view = render(<App />);
+  fireEvent.change(screen.getByRole("combobox", { name: /Language/ }), { target: { value: language } });
+  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(heading);
+  expect(screen.getByRole("link", { name: link })).toBeInTheDocument();
+  expect(document.documentElement.lang).toBe(language);
+  expect(window.localStorage.getItem("audio-technology-language")).toBe(language);
+  view.unmount();
+  render(<App />);
+  expect(screen.getByRole("combobox", { name: /Language/ })).toHaveValue(language);
+  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(heading);
+});
+
+it("uses English when the stored language is unsupported", () => {
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+  window.localStorage.setItem("audio-technology-language", "__proto__");
+  render(<App />);
+  expect(screen.getByRole("combobox", { name: /Language/ })).toHaveValue("en");
+  expect(document.documentElement.lang).toBe("en");
+});
+
 it.each(["zh", "en"] as const)("opens the welcome page and preserves library navigation (%s)", language => {
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
   window.history.replaceState(null, "", window.location.pathname);
@@ -28,6 +54,6 @@ it.each(["zh", "en"] as const)("opens the welcome page and preserves library nav
   fireEvent(window, new HashChangeEvent("hashchange"));
   expect(screen.queryByTestId("topic-grid")).not.toBeInTheDocument();
   expect(container.querySelector(".welcome-music")).toBe(music);
-  fireEvent.click(screen.getByRole("button", { name: language === "zh" ? "English" : "中文" }));
+  fireEvent.change(screen.getByRole("combobox", { name: /Language/ }), { target: { value: language === "zh" ? "en" : "zh" } });
   expect(screen.getByRole("link", { name: language === "zh" ? "Explore audio knowledge" : "进入音频知识库" })).toBeInTheDocument();
 });

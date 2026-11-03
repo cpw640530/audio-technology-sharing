@@ -8,6 +8,19 @@ it.each(["zh", "en"] as const)("keeps strengths across independent 3A pages (%s)
   const nav = () => screen.getByRole("navigation", { name: language === "zh" ? "语音增强算法" : "Speech enhancement algorithms" });
   fireEvent.click(within(nav()).getByRole("button", { name: /AEC/ }));
   const slider = () => screen.getByRole("slider");
+  const inputPath = screen.getByTestId("aec-track-ai").getAttribute("d");
+  const referencePath = screen.getByTestId("aec-track-ao").getAttribute("d");
+  for (const value of [0, 50, 100]) {
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: String(value) } });
+    expect(slider()).toHaveValue(String(value));
+    expect(screen.getByTestId("aec-track-ai")).toHaveAttribute("d", inputPath);
+    expect(screen.getByTestId("aec-track-ao")).toHaveAttribute("d", referencePath);
+    const ys = (id: string) => screen.getByTestId(id).getAttribute("d")!.split(/ [ML] /).map(point => Number(point.trim().split(" ").pop()));
+    const input = ys("aec-track-ai"), estimate = ys("aec-track-estimate"), output = ys("aec-track-output");
+    input.forEach((y, i) => expect(output[i]).toBeCloseTo(y - estimate[i] + 110, 10));
+    if (value === 0) expect(screen.getByTestId("aec-track-output")).toHaveAttribute("d", inputPath);
+    expect(screen.getByTestId("aec-cancellation-readout")).toHaveTextContent(`${(100 - value * 0.94).toFixed(1)}%`);
+  }
   fireEvent.change(slider(), { target: { value: "25" } });
   expect(screen.getByTestId("aec-track-output")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "增强总览" })).not.toBeInTheDocument();

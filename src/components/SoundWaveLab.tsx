@@ -1,3 +1,4 @@
+import { text } from "../content/language";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Pause, Play, RotateCcw } from "lucide-react";
 import type { Language } from "../content/knowledge";
@@ -17,9 +18,9 @@ declare global {
 }
 
 const waveformLabels: Record<WaveformType, Record<Language, string>> = {
-  sine: { zh: "正弦波", en: "Sine wave" },
-  square: { zh: "方波", en: "Square wave" },
-  triangle: { zh: "三角波", en: "Triangle wave" }
+  sine: { zh: "正弦波", en: "Sine wave", ja: "正弦波", ko: "정현파" },
+  square: { zh: "方波", en: "Square wave", ja: "矩形波", ko: "구형파" },
+  triangle: { zh: "三角波", en: "Triangle wave", ja: "三角波", ko: "삼각파" }
 };
 
 function createLabWavePath(
@@ -179,43 +180,41 @@ export function SoundWaveLab({ language, onBack, onBackToDetails }: SoundWaveLab
       <section className="sound-lab-hero" aria-labelledby="sound-lab-title">
         <div className="sound-lab-back-actions">
           <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
-            {language === "zh" ? "返回知识库" : "Back to knowledge base"}
+            {text(language, "返回知识库", "Back to knowledge base", "知識ベースに戻る", "지식 모음으로 돌아가기")}
           </button>
           {onBackToDetails ? <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
             <ArrowLeft size={18} aria-hidden="true" />
-            {language === "zh" ? "返回详细内容" : "Back to detailed guide"}
+            {text(language, "返回详细内容", "Back to detailed guide", "詳しい解説に戻る", "상세 설명으로 돌아가기")}
           </button> : null}
         </div>
         <div>
           <span className="section-kicker">
-            {language === "zh" ? "交互实验" : "Interactive lab"}
+            {text(language, "交互实验", "Interactive lab", "インタラクティブ実験", "인터랙티브 실험")}
           </span>
           <h1 id="sound-lab-title">
-            {language === "zh" ? "声音波形实验室" : "Sound Wave Lab"}
+            {text(language, "声音波形实验室", "Sound Wave Lab", "音の波形実験室", "소리 파형 실험실")}
           </h1>
           <p>
-            {language === "zh"
-              ? "对照当前公式与波形，观察频率、振幅和相位分别改变什么。"
-              : "Compare the current formula and waveform to observe what frequency, amplitude, and phase each change."}
+            {text(language, "对照当前公式与波形，观察频率、振幅和相位分别改变什么。", "Compare the current formula and waveform to observe what frequency, amplitude, and phase each change.", "式と波形を見比べ、周波数・振幅・位相がそれぞれ何を変えるか確かめましょう。", "현재 수식과 파형을 비교하며 주파수, 진폭, 위상이 각각 무엇을 바꾸는지 관찰하세요.")}
           </p>
         </div>
       </section>
 
       <section
-        aria-label={language === "zh" ? "声音波形实验台" : "Sound waveform workbench"}
+        aria-label={text(language, "声音波形实验台", "Sound waveform workbench", "音の波形実験台", "소리 파형 실험대")}
         className="sound-lab-workbench"
       >
         <div className="sound-lab-visual">
           <div className="sound-lab-formula">
             <strong>
-              {language === "zh" ? "当前波形：" : "Current waveform: "}
+              {text(language, "当前波形：", "Current waveform: ", "現在の波形：", "현재 파형: ")}
               {currentWaveLabel}
             </strong>
             <code>{formula}</code>
             <span className="sound-lab-derived">T = {periodMs.toFixed(2)} ms · λ ≈ {wavelengthM.toFixed(3)} m</span>
           </div>
           <svg
-            aria-label={language === "zh" ? "当前声音波形图" : "Current sound waveform"}
+            aria-label={text(language, "当前声音波形图", "Current sound waveform", "現在の音の波形", "현재 소리 파형")}
             role="img"
             viewBox="0 0 760 340"
             xmlns="http://www.w3.org/2000/svg"
@@ -242,19 +241,24 @@ export function SoundWaveLab({ language, onBack, onBackToDetails }: SoundWaveLab
               y2="300"
             />
             <text className="lab-label" x="40" y="328">
-              {language === "zh" ? "周期 T（时间）" : "Period T (time)"}
+              {text(language, "周期 T（时间）", "Period T (time)", "周期 T（時間）", "주기 T (시간)")}
             </text>
           </svg>
           <div className="sound-lab-comparison">
-            <p>{language === "zh" ? "横轴：时间（ms），固定 0–10 ms；纵轴：归一化幅度 x(t)，不是实测 Pa 或 dBSPL。" : "Horizontal: time (ms), fixed at 0–10 ms. Vertical: normalized amplitude x(t), not measured Pa or dBSPL."}</p>
-            <label><input type="checkbox" checked={compare} onChange={event => setCompare(event.target.checked)} />{language === "zh" ? "显示原始状态（虚线）：正弦波 · 440 Hz · A 0.60 · φ 0" : "Original (dashed): sine · 440 Hz · A 0.60 · φ 0"}</label>
-            <p>{language === "zh" ? `当前：${(frequency * 0.01).toFixed(1)} 个周期 / 10 ms；峰值 ±${amplitude.toFixed(2)}。实线为当前状态。` : `Current: ${(frequency * 0.01).toFixed(1)} cycles / 10 ms; peak ±${amplitude.toFixed(2)}. Solid line shows the current state.`}</p>
+            <p>{text(language, "横轴：时间（ms），固定 0–10 ms；纵轴：归一化幅度 x(t)，不是实测 Pa 或 dBSPL。", "Horizontal: time (ms), fixed at 0–10 ms. Vertical: normalized amplitude x(t), not measured Pa or dBSPL.", "横軸は時間（ms）で 0–10 ms に固定。縦軸は正規化振幅 x(t) で、実測の Pa や dBSPL ではありません。", "가로축은 시간(ms)이며 0–10 ms로 고정됩니다. 세로축은 정규화 진폭 x(t)이며 실측 Pa 또는 dBSPL이 아닙니다.")}</p>
+            <label><input type="checkbox" checked={compare} onChange={event => setCompare(event.target.checked)} />{text(language, "显示原始状态（虚线）：正弦波 · 440 Hz · A 0.60 · φ 0", "Original (dashed): sine · 440 Hz · A 0.60 · φ 0", "初期状態（破線）：正弦波 · 440 Hz · A 0.60 · φ 0", "초기 상태(점선): 정현파 · 440 Hz · A 0.60 · φ 0")}</label>
+            <p>{text(language,
+              `当前：${(frequency * 0.01).toFixed(1)} 个周期 / 10 ms；峰值 ±${amplitude.toFixed(2)}。实线为当前状态。`,
+              `Current: ${(frequency * 0.01).toFixed(1)} cycles / 10 ms; peak ±${amplitude.toFixed(2)}. Solid line shows the current state.`,
+              `現在：10 ms に ${(frequency * 0.01).toFixed(1)} 周期、ピーク ±${amplitude.toFixed(2)}。実線は現在の状態です。`,
+              `현재: 10 ms에 ${(frequency * 0.01).toFixed(1)}주기, 최댓값 ±${amplitude.toFixed(2)}. 실선은 현재 상태입니다.`
+            )}</p>
           </div>
         </div>
 
         <div className="sound-lab-panel">
           <div
-            aria-label={language === "zh" ? "波形类型" : "Waveform type"}
+            aria-label={text(language, "波形类型", "Waveform type", "波形の種類", "파형 종류")}
             className="waveform-tabs"
             role="group"
           >
@@ -273,28 +277,28 @@ export function SoundWaveLab({ language, onBack, onBackToDetails }: SoundWaveLab
           <div className="sound-lab-actions">
             <button className="sine-button" type="button" onClick={() => playAudio()}>
               <Play size={16} aria-hidden="true" />
-              {language === "zh" ? "播放" : "Play"}
+              {text(language, "播放", "Play", "再生", "재생")}
             </button>
             <button className="sine-button" type="button" onClick={() => stopAudio()}>
               <Pause size={16} aria-hidden="true" />
-              {language === "zh" ? "停止" : "Stop"}
+              {text(language, "停止", "Stop", "停止", "정지")}
             </button>
             <button className="sine-button" type="button" onClick={() => { stopAudio(); setWaveform("sine"); setAmplitude(0.6); setFrequency(440); setPhase(0); }}>
-              <RotateCcw size={16} aria-hidden="true" />{language === "zh" ? "重置" : "Reset"}
+              <RotateCcw size={16} aria-hidden="true" />{text(language, "重置", "Reset", "リセット", "초기화")}
             </button>
             <span className={isPlaying ? "sine-status playing" : "sine-status"}>
-              {isPlaying ? (language === "zh" ? "播放中" : "Playing") : language === "zh" ? "未播放" : "Stopped"}
+              {isPlaying ? (text(language, "播放中", "Playing", "再生中", "재생 중")) : text(language, "未播放", "Stopped", "停止中", "정지됨")}
             </span>
           </div>
 
           <div className="lab-sliders">
             <label>
               <span>
-                {language === "zh" ? "频率" : "Frequency"}
+                {text(language, "频率", "Frequency", "周波数", "주파수")}
                 <strong>{frequency} Hz</strong>
               </span>
               <input
-                aria-label={language === "zh" ? "频率" : "Frequency"}
+                aria-label={text(language, "频率", "Frequency", "周波数", "주파수")}
                 max="880"
                 min="110"
                 step="10"
@@ -305,11 +309,11 @@ export function SoundWaveLab({ language, onBack, onBackToDetails }: SoundWaveLab
             </label>
             <label>
               <span>
-                {language === "zh" ? "振幅" : "Amplitude"}
+                {text(language, "振幅", "Amplitude", "振幅", "진폭")}
                 <strong>{amplitude.toFixed(2)}</strong>
               </span>
               <input
-                aria-label={language === "zh" ? "振幅" : "Amplitude"}
+                aria-label={text(language, "振幅", "Amplitude", "振幅", "진폭")}
                 max="1"
                 min="0.1"
                 step="0.05"
@@ -320,11 +324,11 @@ export function SoundWaveLab({ language, onBack, onBackToDetails }: SoundWaveLab
             </label>
             <label>
               <span>
-                {language === "zh" ? "相位" : "Phase"}
+                {text(language, "相位", "Phase", "位相", "위상")}
                 <strong>{phase.toFixed(2)}π</strong>
               </span>
               <input
-                aria-label={language === "zh" ? "相位" : "Phase"}
+                aria-label={text(language, "相位", "Phase", "位相", "위상")}
                 max="2"
                 min="-2"
                 step="0.05"
@@ -336,9 +340,12 @@ export function SoundWaveLab({ language, onBack, onBackToDetails }: SoundWaveLab
           </div>
 
           <div className="lab-live-note">
-            {language === "zh"
-              ? `当前周期 ${periodMs.toFixed(2)} ms，空气中波长约 ${wavelengthM.toFixed(3)} m。频率与振幅彼此独立；相位滑块只移动图中的起点，单独持续纯音通常听不出绝对相位变化。`
-              : `The current period is ${periodMs.toFixed(2)} ms and the wavelength in air is about ${wavelengthM.toFixed(3)} m. Frequency and amplitude are independent; the phase slider shifts the plotted start, while absolute phase is usually inaudible for one sustained tone.`}
+            {text(language,
+              `当前周期 ${periodMs.toFixed(2)} ms，空气中波长约 ${wavelengthM.toFixed(3)} m。频率与振幅彼此独立；相位滑块只移动图中的起点，单独持续纯音通常听不出绝对相位变化。`,
+              `The current period is ${periodMs.toFixed(2)} ms and the wavelength in air is about ${wavelengthM.toFixed(3)} m. Frequency and amplitude are independent; the phase slider shifts the plotted start, while absolute phase is usually inaudible for one sustained tone.`,
+              `周期は ${periodMs.toFixed(2)} ms、空気中の波長は約 ${wavelengthM.toFixed(3)} m です。周波数と振幅は独立です。位相スライダーは図の開始位置を変えますが、持続する単一の純音では通常、絶対位相の違いは聴き分けられません。`,
+              `현재 주기는 ${periodMs.toFixed(2)} ms, 공기 중 파장은 약 ${wavelengthM.toFixed(3)} m입니다. 주파수와 진폭은 서로 독립적입니다. 위상 슬라이더는 그래프 시작 위치만 바꾸며, 하나의 지속적인 순음에서는 보통 절대 위상 차이를 구별할 수 없습니다.`
+            )}
           </div>
         </div>
       </section>

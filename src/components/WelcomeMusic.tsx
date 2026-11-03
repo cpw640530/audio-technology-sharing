@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Music2, Pause, Volume2 } from "lucide-react";
 import type { Language } from "../content/knowledge";
+import { text } from "../content/language";
 
 export function WelcomeMusic({ language, autoplay = true }: { language: Language; autoplay?: boolean }) {
   const audio = useRef<{ context: AudioContext; gain: GainNode; analyser: AnalyserNode; media: HTMLAudioElement } | null>(null);
@@ -11,7 +12,6 @@ export function WelcomeMusic({ language, autoplay = true }: { language: Language
   const [volume, setVolume] = useState(15);
   const [error, setError] = useState(false);
   const [blocked, setBlocked] = useState(false);
-  const zh = language === "zh";
 
   useEffect(() => {
     const pen = canvas.current?.getContext("2d");
@@ -118,20 +118,20 @@ export function WelcomeMusic({ language, autoplay = true }: { language: Language
     }
   }
 
-  const label = zh ? (playing ? "暂停背景音乐" : "播放背景音乐") : (playing ? "Pause background music" : "Play background music");
+  const label = playing ? text(language, "暂停背景音乐", "Pause background music", "BGM を一時停止", "배경 음악 일시 정지") : text(language, "播放背景音乐", "Play background music", "BGM を再生", "배경 음악 재생");
   return <div className="welcome-music">
     <button type="button" onClick={() => void toggle()} disabled={busy} aria-label={label} title={label}>
       {playing ? <Pause size={18} aria-hidden="true" /> : <Music2 size={18} aria-hidden="true" />}
     </button>
     <label><Volume2 size={16} aria-hidden="true" /><input type="range" min="0" max="50" step="1" value={volume}
-      aria-label={zh ? "背景音乐音量" : "Background music volume"}
+      aria-label={text(language, "背景音乐音量", "Background music volume", "BGM の音量", "배경 음악 음량")}
       onChange={event => {
         const next = Number(event.target.value);
         setVolume(next);
         if (audio.current) audio.current.gain.gain.setTargetAtTime(next / 100, audio.current.context.currentTime, 0.05);
       }} /></label>
     <canvas ref={canvas} className="welcome-music-wave" width="160" height="80" aria-hidden="true" />
-    {error && <span role="alert">{zh ? "播放失败，请重试。" : "Playback failed. Please retry."}</span>}
-    {blocked && <span className="welcome-music-notice" role="status">{zh ? "点击音乐按钮开始播放" : "Click the music button to play"}</span>}
+    {error && <span role="alert">{text(language, "播放失败，请重试。", "Playback failed. Please retry.", "再生できませんでした。もう一度お試しください。", "재생하지 못했습니다. 다시 시도해 주세요.")}</span>}
+    {blocked && <span className="welcome-music-notice" role="status">{text(language, "点击音乐按钮开始播放", "Click the music button to play", "音楽ボタンを押して再生", "음악 버튼을 눌러 재생하세요")}</span>}
   </div>;
 }

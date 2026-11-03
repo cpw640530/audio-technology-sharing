@@ -76,7 +76,7 @@ export function TopicGrid({ language, topics, selectedTopicKey, onSelectTopic }:
               </div>
               <h3>{topic.title[language]}</h3>
               <p>{topic.summary[language]}</p>
-              <span className="topic-card-entry">{language === "zh" ? "阅读与探索" : "Read and explore"}<ArrowUpRight size={16} aria-hidden="true" /></span>
+              <span className="topic-card-entry">{{ zh: "阅读与探索", en: "Read and explore", ja: "読んで探る", ko: "읽고 탐구하기" }[language]}<ArrowUpRight size={16} aria-hidden="true" /></span>
             </button>
             );
           })}

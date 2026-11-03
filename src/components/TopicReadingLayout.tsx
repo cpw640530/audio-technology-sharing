@@ -69,8 +69,8 @@ export function TopicReadingLayout({ language, children }: { language: Language;
     <div className="topic-reading-layout">
     <aside className="topic-contents">
       <details open={open} onToggle={event => setOpen(event.currentTarget.open)}>
-        <summary>{language === "zh" ? "本页目录" : "On this page"}</summary>
-        <nav aria-label={language === "zh" ? "章节目录" : "Page contents"}>
+        <summary>{{ zh: "本页目录", en: "On this page", ja: "このページの目次", ko: "이 페이지의 목차" }[language]}</summary>
+        <nav aria-label={{ zh: "章节目录", en: "Page contents", ja: "目次", ko: "목차" }[language]}>
           {chapters.map(chapter => (
             <a key={chapter.id} href={`#${chapter.id}`}
               aria-current={active === chapter.id ? "location" : undefined}

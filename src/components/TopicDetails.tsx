@@ -93,21 +93,23 @@ export function SoundWaveDiagram({
           y1="60"
           y2="110"
         />
-        <text className="diagram-label" x="70" y="48">{language === "zh" ? "A 振幅" : "A amplitude"}</text>
+        <text className="diagram-label" x="70" y="48">{({zh:"A 振幅",en:"A amplitude",ja:"A 振幅",ko:"A 진폭"})[language]}</text>
         <line className="diagram-arrow" markerEnd="url(#arrow)" markerStart="url(#arrow)" x1="40" x2="232" y1="236" y2="236" />
-        <text className="diagram-label" textAnchor="middle" x="136" y="264">{language === "zh" ? "周期 T（时间）" : "Period T (time)"}</text>
-        <text className="diagram-chip" textAnchor="middle" x="136" y="92">{language === "zh" ? "低频：1 周期" : "Low: 1 cycle"}</text>
-        <text className="diagram-chip" textAnchor="middle" x="360" y="92">{language === "zh" ? "中频：2 周期" : "Mid: 2 cycles"}</text>
-        <text className="diagram-chip" textAnchor="middle" x="584" y="92">{language === "zh" ? "高频：4 周期" : "High: 4 cycles"}</text>
-        <text className="diagram-label" x="46" y="22">{language === "zh" ? "Δp 声压变化" : "Δp pressure"}</text>
-        <text className="diagram-label" textAnchor="end" x="680" y="216">{language === "zh" ? "t 时间" : "t time"}</text>
-        <text className="diagram-chip" textAnchor="middle" x="520" y="266">{language === "zh" ? "频率改变，振幅保持相同" : "Frequency changes; amplitude stays equal"}</text>
+        <text className="diagram-label" textAnchor="middle" x="136" y="264">{({zh:"周期 T（时间）",en:"Period T (time)",ja:"周期 T（時間）",ko:"주기 T (시간)"})[language]}</text>
+        <text className="diagram-chip" textAnchor="middle" x="136" y="92">{({zh:"低频：1 周期",en:"Low: 1 cycle",ja:"低周波：1 周期",ko:"저주파: 1주기"})[language]}</text>
+        <text className="diagram-chip" textAnchor="middle" x="360" y="92">{({zh:"中频：2 周期",en:"Mid: 2 cycles",ja:"中周波：2 周期",ko:"중간 주파수: 2주기"})[language]}</text>
+        <text className="diagram-chip" textAnchor="middle" x="584" y="92">{({zh:"高频：4 周期",en:"High: 4 cycles",ja:"高周波：4 周期",ko:"고주파: 4주기"})[language]}</text>
+        <text className="diagram-label" x="46" y="22">{({zh:"Δp 声压变化",en:"Δp pressure",ja:"Δp 音圧変化",ko:"Δp 음압 변화"})[language]}</text>
+        <text className="diagram-label" textAnchor="end" x="680" y="216">{({zh:"t 时间",en:"t time",ja:"t 時間",ko:"t 시간"})[language]}</text>
+        <text className="diagram-chip" textAnchor="middle" x="520" y="266">{({zh:"频率改变，振幅保持相同",en:"Frequency changes; amplitude stays equal",ja:"周波数は変化し、振幅は一定",ko:"주파수는 변하고 진폭은 일정"})[language]}</text>
       </svg>
-      <ol className="sound-signal-chain" aria-label={language === "zh" ? "声音转为 PCM 的流程" : "Sound-to-PCM flow"}>
-        {(language === "zh"
-          ? ["声源振动", "空气声压 Δp", "麦克风电压", "ADC 采样量化", "PCM 样本"]
-          : ["Source vibration", "Air pressure Δp", "Microphone voltage", "ADC sampling", "PCM samples"]
-        ).map((step) => <li key={step}>{step}</li>)}
+      <ol className="sound-signal-chain" aria-label={({zh:"声音转为 PCM 的流程",en:"Sound-to-PCM flow",ja:"音から PCM への流れ",ko:"소리에서 PCM으로의 흐름"})[language]}>
+        {({
+          zh: ["声源振动", "空气声压 Δp", "麦克风电压", "ADC 采样量化", "PCM 样本"],
+          en: ["Source vibration", "Air pressure Δp", "Microphone voltage", "ADC sampling", "PCM samples"],
+          ja: ["音源の振動", "空気の音圧 Δp", "マイクの電圧", "ADC 標本化・量子化", "PCM サンプル"],
+          ko: ["음원의 진동", "공기의 음압 Δp", "마이크 전압", "ADC 샘플링·양자화", "PCM 샘플"]
+        })[language].map((step) => <li key={step}>{step}</li>)}
       </ol>
       <figcaption>{caption[language]}</figcaption>
     </figure>
@@ -291,15 +293,15 @@ export function TopicDetails({
         <div className="details-scroll">
           <p className="details-summary">{topic.summary[language]}</p>
           {topic.detail.chainContext ? (
-            <section className="details-chain-context" aria-label={language === "zh" ? "当前模块在音频链路中的位置" : "Current module in the audio chain"}>
+            <section className="details-chain-context" aria-label={({zh:"当前模块在音频链路中的位置",en:"Current module in the audio chain",ja:"音声処理経路での位置",ko:"오디오 처리 경로에서의 위치"})[language]}>
               <div className="details-chain-heading">
-                <strong>{language === "zh" ? "它在整条音频链路中的位置" : "Where this module fits"}</strong>
+                <strong>{({zh:"它在整条音频链路中的位置",en:"Where this module fits",ja:"このモジュールの役割",ko:"이 모듈의 역할"})[language]}</strong>
                 <span>{topic.detail.chainContext.stage[language]}</span>
               </div>
               <div className="details-chain-grid">
-                <div><small>{language === "zh" ? "输入" : "Input"}</small><p>{topic.detail.chainContext.input[language]}</p></div>
-                <div><small>{language === "zh" ? "本模块输出" : "Module output"}</small><p>{topic.detail.chainContext.output[language]}</p></div>
-                <div><small>{language === "zh" ? "下一站" : "Next"}</small><p>{topic.detail.chainContext.next[language]}</p></div>
+                <div><small>{({zh:"输入",en:"Input",ja:"入力",ko:"입력"})[language]}</small><p>{topic.detail.chainContext.input[language]}</p></div>
+                <div><small>{({zh:"本模块输出",en:"Module output",ja:"モジュールの出力",ko:"모듈 출력"})[language]}</small><p>{topic.detail.chainContext.output[language]}</p></div>
+                <div><small>{({zh:"下一站",en:"Next",ja:"次の段階",ko:"다음 단계"})[language]}</small><p>{topic.detail.chainContext.next[language]}</p></div>
               </div>
             </section>
           ) : null}
@@ -327,7 +329,7 @@ export function TopicDetails({
                             ? onOpenDigitalPage
                             : onOpenListeningMetricsPage}
                     >
-                      {language === "zh" ? "阅读详细内容" : "Read detailed content"}
+                      {({zh:"阅读详细内容",en:"Read detailed content",ja:"詳細を読む",ko:"상세 내용 읽기"})[language]}
                     </button>
                   ) : null}
                   <button className="diagram-open-button" type="button" onClick={openTopicLab}>
@@ -338,7 +340,7 @@ export function TopicDetails({
             </div>
           ) : null}
           <div className="details-block">
-            <h3>{language === "zh" ? "关键知识点" : "Key points"}</h3>
+            <h3>{({zh:"关键知识点",en:"Key points",ja:"重要なポイント",ko:"핵심 지식"})[language]}</h3>
             <ul>
               {topic.bullets.map((bullet) => (
                 <li key={bullet.en}>{bullet[language]}</li>

@@ -1,19 +1,21 @@
 <p align="center">
   <h1 align="center">Audio Technology Sharing</h1>
   <p align="center">
-    Audio Technology Sharing: a structured knowledge base and interactive website for learning audio fundamentals, hardware, software, DSP, AI audio, and applications.
+    Learn audio by changing parameters, inspecting waveforms, and connecting interactive experiments with multilingual engineering guides.
   </p>
 </p>
 
 <p align="center">
   <a href="./README.md">English</a> ·
-  <a href="./READMEs/README.zh-CN.md">简体中文</a>
+  <a href="./READMEs/README.zh-CN.md">简体中文</a> ·
+  <a href="./READMEs/README.ja.md">日本語</a> ·
+  <a href="./READMEs/README.ko.md">한국어</a>
 </p>
 
 <p align="center">
   <img alt="Docs" src="https://img.shields.io/badge/docs-Markdown-blue">
   <img alt="App" src="https://img.shields.io/badge/app-React%20%2B%20Vite-1f9d8a">
-  <img alt="Language" src="https://img.shields.io/badge/language-English%20%7C%20Chinese-brightgreen">
+  <img alt="Languages" src="https://img.shields.io/badge/languages-English%20%7C%20Chinese%20%7C%20Japanese%20%7C%20Korean-brightgreen">
   <img alt="Project Type" src="https://img.shields.io/badge/type-Audio%20Technology%20Sharing-purple">
   <img alt="Status" src="https://img.shields.io/badge/status-active%20development-green">
 </p>
@@ -26,7 +28,28 @@ Audio Technology Sharing is a content-first repository and web app for organizin
 
 The website provides a simple way to browse audio fundamentals, hardware, software, signal processing, AI audio algorithms, and real-world applications. Topic cards can open detailed explanations and focused labs for visual or interactive learning.
 
-**[Explore the website](https://cpw640530.github.io/audio-technology-sharing/)** · English and Chinese supported.
+**[Explore the website](https://cpw640530.github.io/audio-technology-sharing/)** · English, Chinese, Japanese, and Korean supported.
+
+## Interactive Labs: See What Changes
+
+Why does a higher bit depth reduce quantization error? How does a longer window change a spectrogram? What does an echo canceller actually subtract? Explore these questions through controlled comparisons, not just definitions.
+
+| Lab | Try it | What to look for |
+| --- | --- | --- |
+| Sound waves | Change frequency, amplitude and phase; play the signal | Connect a sine model with waveform shape and sound |
+| Sampling, quantization and PCM | Compare sparse/dense samples and 2-bit/8-bit quantization; inspect sample words | Separate time sampling from amplitude precision; trace quantized values to binary codes |
+| FFT / STFT | Compare single/nearby tones, short/long windows, hop sizes and impulses | Follow the selected PCM window into its spectrum; distinguish bin spacing from resolving nearby frequencies |
+| AEC echo cancellation | Compare 0%, 50% and 100% model strength across four signal tracks | Follow playback reference, capture, estimated echo and output; see why cancellation is not simply capture minus playback |
+
+**Start here:** [enter the knowledge base](https://cpw640530.github.io/audio-technology-sharing/#top), open a topic's detailed article, then its lab. Return to the article whenever you need the theory. Hardware, ALSA, spatial audio and application topics also include visual or interactive explorations.
+
+<p align="center">
+  <img alt="Sound Wave Lab: adjust signal parameters and compare the waveform with playback" src="./public/images/Sound%20Wave%20Lab.png" width="900">
+</p>
+
+**Learning models, not measurement instruments.** Labs distinguish conceptual illustrations, numerical simulations and audio demonstrations; not every lab has playback. The AEC example uses known synthetic components, not a production adaptive canceller. Its full-strength residual is a model setting, not a real-device performance limit. Pause background music before listening comparisons.
+
+The screenshot shows an earlier interface; recent comparison presets appear online only after deployment.
 
 ## Interface and Reading Path
 
@@ -48,14 +71,6 @@ Topic pages connect concepts, engineering boundaries, and practical experiments.
 
 <p align="center">
   <img alt="What Sound Is article with section navigation and lab entry" src="./public/images/topic-detail.png" width="900">
-</p>
-
-## Interactive Labs
-
-The project includes visual learning labs for key audio concepts. For example, the sound wave lab helps readers connect waveform parameters with what they hear and see.
-
-<p align="center">
-  <img alt="Sound Wave Lab interactive waveform demo" src="./public/images/Sound%20Wave%20Lab.png" width="900">
 </p>
 
 ## Why This Repository Exists
@@ -117,7 +132,9 @@ npm run build
 .
 ├── README.md
 ├── READMEs/
-│   └── README.zh-CN.md
+│   ├── README.zh-CN.md
+│   ├── README.ja.md
+│   └── README.ko.md
 ├── index.html
 ├── package.json
 ├── src/
@@ -145,6 +162,10 @@ This repository provides separate README files for each language:
 
 - [English](./README.md)
 - [简体中文](./READMEs/README.zh-CN.md)
+- [日本語](./READMEs/README.ja.md)
+- [한국어](./READMEs/README.ko.md)
+
+The README, website interface, topic guides, and labs support English, Chinese, Japanese, and Korean. Use the website's language selector to switch in place; your choice is remembered. Standard model names, code, equations, and original text embedded in reference images remain unchanged.
 
 GitHub README files do not run JavaScript, so language switching is implemented with normal Markdown links.
 

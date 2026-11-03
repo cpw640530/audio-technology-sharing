@@ -114,6 +114,9 @@ a {
 }
 
 .language-toggle {
+  font: inherit;
+  max-width: 150px;
+  flex-shrink: 0;
   background: #17211f;
   border: 0;
   border-radius: 8px;
@@ -124,10 +127,14 @@ a {
   transition: background 160ms ease, transform 160ms ease;
 }
 
+.language-toggle:focus-visible {
+  outline: 2px solid var(--accent, #1f7569);
+  outline-offset: 3px;
+}
+
 .language-toggle:hover,
 .language-toggle:focus-visible {
   background: #1f7569;
-  outline: none;
   transform: translateY(-1px);
 }
 
@@ -10426,11 +10433,24 @@ body:has(.home-intro) {
   .speech-enhancement-page .sound-lab-hero .speech-enhancement-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 /* Let the library's body background continue behind the transparent portrait. */
+.digital-study-select { display: grid; gap: 8px; margin-bottom: 16px; color: #edf7f4; }
+.digital-lab-workbench > .digital-lab-visual { align-content: start; }
+.digital-lab-workbench > .digital-lab-visual > p { margin: 0; color: #c5d8d2; font-size: 14px; line-height: 1.7; }
+.digital-lab-metrics > span, .digital-lab-panel .lab-live-note p { color: #c5d8d2; line-height: 1.7; }
+.digital-study-select select { width: 100%; min-width: 0; padding: 10px; font: inherit; color: #edf7f4; background: #192f2c; border: 1px solid #5c7c74; border-radius: 4px; }
+.learning-paths { margin-block: 24px; padding-block: 16px; border-block: 1px solid var(--border); }
+.learning-paths h2 { font-size: 20px; margin: 0 0 16px; }
+.learning-path { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 16px; padding-block: 10px; }
+.learning-path h3 { font-size: 16px; margin: 0; line-height: 28px; }
+.learning-path ol { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0; padding-left: 24px; }
+.learning-path a { display: inline-block; font: inherit; color: var(--accent); padding: 4px 0; text-align: start; text-decoration: underline; text-underline-offset: 4px; }
+.learning-path a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+@media (max-width: 700px) { .learning-path { grid-template-columns: 1fr; gap: 8px; } }
 .welcome-page { color: #17211f; letter-spacing: 0; }
 .welcome-page > main { max-width: none; width: 100%; margin: 0; padding: 0; }
 .welcome-header { position: absolute; z-index: 2; top: 0; left: 0; width: 100%; padding: 24px 5%; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .welcome-brand { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; }
-.welcome-header button, .welcome-motion button { color: #245c50; background: #e5eeea; border: 1px solid #9fb8ae; border-radius: 4px; cursor: pointer; }
+.welcome-header .language-toggle, .welcome-motion button { color: #245c50; background: #e5eeea; border: 1px solid #9fb8ae; border-radius: 4px; cursor: pointer; }
 .welcome-header button { padding: 8px 12px; }
 .welcome-hero { position: relative; isolation: isolate; overflow: hidden; min-height: 640px; height: calc(100svh - 48px); display: flex; align-items: center; }
 .welcome-listener { position: absolute; inset: 32px 0 auto; width: 100%; height: 100%; object-fit: cover; object-position: center top; scale: .95; transform-origin: right bottom; z-index: -1; }
@@ -10462,7 +10482,7 @@ body:has(.app-shell) .site-music :is([role="alert"], .welcome-music-notice) { bo
 .welcome-music-notice { position: absolute; bottom: 48px; right: 0; width: 220px; font-size: 14px; color: #245c50; background: #f5f2eb; padding: 8px; }
 .welcome-music [role="alert"] { position: absolute; bottom: 48px; right: 0; width: 200px; background: #f5f2eb; padding: 8px; color: #822b29; font-size: 14px; }
 .welcome-music button:disabled { opacity: .5; cursor: wait; }
-.welcome-motion button:hover, .welcome-header button:hover { background: #d2e3da; }
+.welcome-motion button:hover, .welcome-header .language-toggle:hover { background: #d2e3da; }
 .welcome-equalizer { display: flex; align-items: center; gap: 4px; height: 48px; }
 .welcome-equalizer i { width: 3px; background: #245c50; border-radius: 2px; }
 .welcome-footer { min-height: 80px; padding: 24px 5%; color: #52635d; display: flex; justify-content: space-between; gap: 16px; font-size: 14px; line-height: 24px; }

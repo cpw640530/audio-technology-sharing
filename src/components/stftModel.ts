@@ -1,11 +1,12 @@
 export const stftSampleRate = 16000;
 export const stftSampleCount = 4096;
-export type StftExample = "tone" | "chirp" | "pulse" | "mixed";
+export type StftExample = "tone" | "two-tone" | "chirp" | "pulse" | "mixed";
 
 export function stftSample(index: number, example: StftExample = "mixed") {
   const t = index / stftSampleRate;
   const burst = Math.exp(-0.5 * ((t - 0.16) / 0.008) ** 2);
   if (example === "tone") return 0.36 * Math.sin(2 * Math.PI * 1000 * t);
+  if (example === "two-tone") return 0.18 * Math.sin(2 * Math.PI * 1000 * t) + 0.18 * Math.sin(2 * Math.PI * 1125 * t);
   if (example === "chirp") return 0.36 * Math.sin(2 * Math.PI * (1000 * t + 10000 * t * t));
   if (example === "pulse") return index === 2560 ? 0.8 : 0;
   return 0.36 * Math.sin(2 * Math.PI * 1000 * t)

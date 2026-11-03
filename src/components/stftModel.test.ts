@@ -2,6 +2,23 @@ import { describe, expect, it } from "vitest";
 import { hannPsd, stftAnalysis, stftSample } from "./stftModel";
 
 describe("shared PCM STFT model", () => {
+  it("resolves known nearby tones with a long Hann window without changing PCM", () => {
+    const short = stftAnalysis(256, 128, "two-tone");
+    const long = stftAnalysis(1024, 128, "two-tone");
+    expect(short.pcm).toEqual(long.pcm);
+    const p = long.frames[0].psd;
+    expect(p[64]).toBeGreaterThan(p[63]);
+    expect(p[72]).toBeGreaterThan(p[71]);
+    expect(p[68]).toBeLessThan(Math.min(p[64], p[72]) / 100);
+    expect(long.pcm.every(v => Math.abs(v) <= 0.36 + 1e-12)).toBe(true);
+  });
+  it("spreads the same impulse across more frame centers with a longer window", () => {
+    const extent = (n: number) => {
+      const frames = stftAnalysis(n, 128, "pulse").frames.filter(f => f.psd.some(p => p > 1e-15));
+      return frames[frames.length - 1].centerMs - frames[0].centerMs;
+    };
+    expect(extent(1024)).toBeGreaterThan(extent(256));
+  });
   it("uses physically distinct tone, chirp and broadband impulse examples", () => {
     const tone = stftAnalysis(512, 256, "tone");
     const chirp = stftAnalysis(512, 256, "chirp");

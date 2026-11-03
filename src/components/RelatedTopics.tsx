@@ -11,7 +11,7 @@ export function RelatedTopics({ topicKey, language, onOpen }: {
 }) {
   return (
     <section className="related-topics" aria-labelledby="related-topics-title">
-      <h2 id="related-topics-title">{language === "zh" ? "相关知识" : "Related knowledge"}</h2>
+      <h2 id="related-topics-title">{{ zh: "相关知识", en: "Related knowledge", ja: "関連知識", ko: "관련 지식" }[language]}</h2>
       <ul>
         {relatedTopics[topicKey].map(relation => {
           const target = topics.find(topic => getTopicKey(topic) === relation.target);

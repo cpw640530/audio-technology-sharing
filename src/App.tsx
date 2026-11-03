@@ -1,4 +1,6 @@
 import { RelatedTopics } from "./components/RelatedTopics";
+import { LanguageContext, languageNames, text } from "./content/language";
+import { LearningPaths } from "./components/LearningPaths";
 import { WelcomePage } from "./components/WelcomePage";
 import { WelcomeMusic } from "./components/WelcomeMusic";
 import { ReferenceSites } from "./components/ReferenceSites";
@@ -70,7 +72,7 @@ function getInitialLanguage(): Language {
 
   const storedLanguage = window.localStorage.getItem(languageStorageKey);
 
-  return storedLanguage === "zh" || storedLanguage === "en" ? storedLanguage : "en";
+  return storedLanguage && Object.prototype.hasOwnProperty.call(languageNames, storedLanguage) ? storedLanguage as Language : "en";
 }
 
 function topicMatchesSearch(topic: DisplayTopic, query: string): boolean {
@@ -80,42 +82,21 @@ function topicMatchesSearch(topic: DisplayTopic, query: string): boolean {
 
   const normalizedQuery = query.trim().toLowerCase();
   const searchableText = [
-    topic.category.title.zh,
-    topic.category.title.en,
-    topic.title.zh,
-    topic.title.en,
-    topic.summary.zh,
-    topic.summary.en,
-    topic.detail.explanation.zh,
-    topic.detail.explanation.en,
-    topic.detail.misconception.zh,
-    topic.detail.misconception.en,
-    topic.detail.contentDirection.zh,
-    topic.detail.contentDirection.en,
-    ...topic.bullets.flatMap((bullet) => [bullet.zh, bullet.en]),
-    ...topic.detail.keyConcepts.flatMap((concept) => [concept.zh, concept.en]),
-    ...(topic.detail.termExplanations?.flatMap((term) => [
-      term.name.zh,
-      term.name.en,
-      term.explanation.zh,
-      term.explanation.en
-    ]) ?? []),
+    ...[topic.category.title, topic.title, topic.summary, topic.detail.explanation,
+      topic.detail.misconception, topic.detail.contentDirection,
+      ...topic.bullets, ...topic.detail.keyConcepts].flatMap(value => Object.values(value)),
+    ...(topic.detail.termExplanations?.flatMap(term => [...Object.values(term.name), ...Object.values(term.explanation)]) ?? []),
     ...(topic.detail.diagram
       ? [
-          topic.detail.diagram.label.zh,
-          topic.detail.diagram.label.en,
-          topic.detail.diagram.caption.zh,
-          topic.detail.diagram.caption.en
+          ...Object.values(topic.detail.diagram.label),
+          ...Object.values(topic.detail.diagram.caption)
         ]
       : []),
     ...(topic.detail.lab
       ? [
-          topic.detail.lab.title.zh,
-          topic.detail.lab.title.en,
-          topic.detail.lab.description.zh,
-          topic.detail.lab.description.en,
-          topic.detail.lab.buttonLabel.zh,
-          topic.detail.lab.buttonLabel.en
+          ...Object.values(topic.detail.lab.title),
+          ...Object.values(topic.detail.lab.description),
+          ...Object.values(topic.detail.lab.buttonLabel)
         ]
       : [])
   ]
@@ -128,22 +109,23 @@ function topicMatchesSearch(topic: DisplayTopic, query: string): boolean {
 export default function App() {
   const [autoplayMusic] = useState(() => ["", "#welcome"].includes(window.location.hash));
   const [language, setLanguage] = useState<Language>(getInitialLanguage);
-  function toggleLanguage() {
-    setLanguage(current => {
-      const next = current === "zh" ? "en" : "zh";
-      window.localStorage.setItem(languageStorageKey, next);
-      return next;
-    });
+  function selectLanguage(next: Language) {
+    setLanguage(next);
+    window.localStorage.setItem(languageStorageKey, next);
   }
-  return <>
-    <AppContent language={language} toggleLanguage={toggleLanguage} />
-    <aside className="welcome-motion site-music" aria-label={language === "zh" ? "背景音乐" : "Background music"}>
+  useEffect(() => {
+    document.documentElement.lang = language === "zh" ? "zh-CN" : language;
+    document.title = interfaceCopy.title[language];
+  }, [language]);
+  return <LanguageContext.Provider value={selectLanguage}>
+    <AppContent language={language} />
+    <aside className="welcome-motion site-music" aria-label={text(language, "背景音乐", "Background music", "BGM", "배경 음악")}>
       <WelcomeMusic language={language} autoplay={autoplayMusic} />
     </aside>
-  </>;
+  </LanguageContext.Provider>;
 }
 
-function AppContent({ language, toggleLanguage }: { language: Language; toggleLanguage: () => void }) {
+function AppContent({ language }: { language: Language }) {
   const [showWelcome, setShowWelcome] = useState(() => ["", "#welcome"].includes(window.location.hash));
   const [showNotes, setShowNotes] = useState(() => window.location.hash === "#technical-notes");
   useEffect(() => {
@@ -487,12 +469,12 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
   }, [outlineTargetId]);
 
   if (showWelcome) {
-    return <WelcomePage language={language} onToggleLanguage={toggleLanguage} />;
+    return <WelcomePage language={language} />;
   }
 
   if (showNotes) {
     return <div className="app-shell">
-      <Header language={language} onToggleLanguage={toggleLanguage} />
+      <Header language={language} />
       <TechnicalNotesPage language={language} />
     </div>;
   }
@@ -502,7 +484,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <SoundWaveLab language={language} onBack={() => setActiveView("knowledge")} onBackToDetails={() => setActiveView("soundTopicPage")} />
         <footer className="site-footer">
@@ -517,7 +498,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <SoundTopicPage
           relatedTopics={renderRelatedTopics("sound-wave")}
@@ -538,7 +518,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
 
     return (
       <div className="app-shell">
-        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <Header language={language} />
         <HardwareTopicPage
           relatedTopics={renderRelatedTopics(getTopicKey(activeHardwareTopic))}
           language={language}
@@ -558,7 +538,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
   if (activeView === "audioUnitsPage") {
     return (
       <div className="app-shell">
-        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <Header language={language} />
         <AudioUnitsPage
           relatedTopics={renderRelatedTopics("audio-units")}
           language={language}
@@ -577,7 +557,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
   if (activeView === "systemAudioPage" && activeSoftwareTopic) {
     return (
       <div className="app-shell">
-        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <Header language={language} />
         <SystemAudioPage
           relatedTopics={renderRelatedTopics(getTopicKey(activeSoftwareTopic))}
           language={language}
@@ -599,7 +579,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <AudioUnitsLab language={language} onBack={() => setActiveView("knowledge")} onBackToDetails={() => setActiveView("audioUnitsPage")} />
         <footer className="site-footer">
@@ -612,7 +591,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
   if (activeView === "digitalTopicPage") {
     return (
       <div className="app-shell">
-        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <Header language={language} />
         <DigitalAudioPage
           relatedTopics={renderRelatedTopics("sampling-quantization")}
           language={language}
@@ -633,7 +612,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <DigitalAudioLab language={language} onBack={() => setActiveView("knowledge")} onBackToDetails={() => setActiveView("digitalTopicPage")} />
         <footer className="site-footer">
@@ -646,7 +624,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
   if (activeView === "listeningTopicPage") {
     return (
       <div className="app-shell">
-        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <Header language={language} />
         <ListeningMetricsPage
           relatedTopics={renderRelatedTopics("listening-metrics")}
           language={language}
@@ -666,7 +644,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <ListeningMetricsLab language={language} onBack={() => setActiveView("knowledge")} onBackToDetails={() => setActiveView("listeningTopicPage")} />
         <footer className="site-footer">
@@ -681,7 +658,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <MicrophoneLab language={language} onBack={returnToHardware} onBackToDetails={activeHardwareTopic ? () => setActiveView("hardwareTopicPage") : undefined} />
         <footer className="site-footer">
@@ -696,7 +672,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <MeetingCommunicationLab language={language} onBack={returnToApplications} onBackToDetails={backFromApplicationLab} />
         <footer className="site-footer">
@@ -711,7 +686,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <AutomotiveAudioLab language={language} onBack={returnToApplications} onBackToDetails={backFromApplicationLab} />
         <footer className="site-footer">
@@ -723,7 +697,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
 
   if (activeView === "robotAudioLab") {
     return <div className="app-shell">
-      <Header language={language} onToggleLanguage={toggleLanguage} />
+      <Header language={language} />
       <RobotAudioLab language={language} onBack={returnToApplications} onBackToDetails={backFromApplicationLab} />
       <footer className="site-footer"><span>{interfaceCopy.footer[language]}</span></footer>
     </div>;
@@ -731,7 +705,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
 
   if (activeView === "bluetoothAudioLab") {
     return <div className="app-shell">
-      <Header language={language} onToggleLanguage={toggleLanguage} />
+      <Header language={language} />
       <BluetoothAudioLab language={language} onBack={returnToApplications} onBackToDetails={backFromApplicationLab} />
       <footer className="site-footer"><span>{interfaceCopy.footer[language]}</span></footer>
     </div>;
@@ -742,7 +716,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <IotContentLab language={language} onBack={returnToApplications} onBackToDetails={backFromApplicationLab} />
         <footer className="site-footer">
@@ -757,7 +730,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <CodecHardwareLab language={language} onBack={returnToHardware} onBackToDetails={activeHardwareTopic ? () => setActiveView("hardwareTopicPage") : undefined} />
         <footer className="site-footer">
@@ -772,7 +744,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <DigitalInterfaceLab language={language} onBack={returnToHardware} onBackToDetails={activeHardwareTopic ? () => setActiveView("hardwareTopicPage") : undefined} />
         <footer className="site-footer">
@@ -787,7 +758,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <AmplifierSpeakerLab language={language} onBack={returnToHardware} onBackToDetails={activeHardwareTopic ? () => setActiveView("hardwareTopicPage") : undefined} />
         <footer className="site-footer">
@@ -802,7 +772,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <SystemAudioLab language={language} onBack={returnToSoftware} onBackToDetails={() => setActiveView("systemAudioPage")} />
         <footer className="site-footer">
@@ -815,7 +784,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
   if (activeView === "alsaPage" && activeSoftwareTopic) {
     return (
       <div className="app-shell">
-        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <Header language={language} />
         <AlsaPage
           relatedTopics={renderRelatedTopics(getTopicKey(activeSoftwareTopic))}
           language={language}
@@ -837,7 +806,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <AlsaLab language={language} onBack={returnToSoftware} onBackToDetails={() => setActiveView("alsaPage")} />
         <footer className="site-footer">
@@ -852,7 +820,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <AudioCodecLab language={language} onBack={returnToSoftware} onBackToDetails={() => setActiveView("audioCodecPage")} />
         <footer className="site-footer">
@@ -865,7 +832,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
   if (activeView === "realtimeAudioPage" && activeSoftwareTopic) {
     return (
       <div className="app-shell">
-        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <Header language={language} />
         <RealtimeAudioPage
           relatedTopics={renderRelatedTopics(getTopicKey(activeSoftwareTopic))}
           language={language}
@@ -887,7 +854,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <RealtimeAudioLab language={language} onBack={returnToSoftware} onBackToDetails={() => setActiveView("realtimeAudioPage")} />
         <footer className="site-footer">
@@ -900,7 +866,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
   if (activeView === "audioCodecPage" && activeSoftwareTopic) {
     return (
       <div className="app-shell">
-        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <Header language={language} />
         <AudioCodecPage
           relatedTopics={renderRelatedTopics(getTopicKey(activeSoftwareTopic))}
           language={language}
@@ -920,7 +886,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
   if (activeView === "coreSignalProcessingPage" && coreSignalProcessingTopic) {
     return (
       <div className="app-shell">
-        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <Header language={language} />
         <CoreSignalProcessingPage
           relatedTopics={renderRelatedTopics("core-signal-processing")}
           language={language}
@@ -939,7 +905,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <CoreSignalProcessingLab
           language={language}
@@ -956,7 +921,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
   if (activeView === "speechEnhancementPage" && speechEnhancementTopic) {
     return (
       <div className="app-shell">
-        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <Header language={language} />
         <SpeechEnhancementPage
           relatedTopics={renderRelatedTopics("speech-enhancement")}
           language={language}
@@ -976,7 +941,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <SpeechEnhancementLab language={language} onBack={returnToTraditionalDsp} onBackToDetails={() => setActiveView("speechEnhancementPage")} />
         <footer className="site-footer">
@@ -989,7 +953,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
   if (activeView === "spatialAudioPage" && spatialAudioTopic) {
     return (
       <div className="app-shell">
-        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <Header language={language} />
         <SpatialAudioPage
           relatedTopics={renderRelatedTopics("spatial-audio")}
           language={language}
@@ -1008,7 +972,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <SpatialAudioLab language={language} onBack={returnToTraditionalDsp} onBackToDetails={() => setActiveView("spatialAudioPage")} />
         <footer className="site-footer">
@@ -1022,7 +985,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
     const mode = activeAiTopic.detail.lab?.initialMode ?? "overview";
     return (
       <div className="app-shell">
-        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <Header language={language} />
         <AiAudioTopicPage
           relatedTopics={renderRelatedTopics(getTopicKey(activeAiTopic))}
           language={language}
@@ -1043,7 +1006,6 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
       <div className="app-shell">
         <Header
           language={language}
-          onToggleLanguage={toggleLanguage}
         />
         <AiAudioLab
           labId={aiAudioLabId}
@@ -1062,7 +1024,7 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
   if (activeView === "applicationTopicPage" && activeApplicationTopic) {
     return (
       <div className="app-shell">
-        <Header language={language} onToggleLanguage={toggleLanguage} />
+        <Header language={language} />
         <ApplicationTopicPage
           relatedTopics={renderRelatedTopics(getTopicKey(activeApplicationTopic))}
           language={language}
@@ -1081,10 +1043,10 @@ function AppContent({ language, toggleLanguage }: { language: Language; toggleLa
     <div className="app-shell">
       <Header
         language={language}
-        onToggleLanguage={toggleLanguage}
       />
       <main>
         <Hero language={language} totalTopics={allTopics.length} />
+        <LearningPaths language={language} onOpen={openTopic} />
         <div className="content-layout" id="knowledge-content">
           <KnowledgeOutline
             categories={categories}

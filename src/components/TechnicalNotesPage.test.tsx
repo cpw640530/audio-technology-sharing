@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import App from "../App";
 
 afterEach(() => {
@@ -8,6 +8,7 @@ afterEach(() => {
 });
 
 it("opens notes by URL, switches categories and returns to audio knowledge", () => {
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
   window.localStorage.setItem("audio-technology-language", "en");
   window.history.replaceState(null, "", "#technical-notes");
   render(<App />);
@@ -15,7 +16,7 @@ it("opens notes by URL, switches categories and returns to audio knowledge", () 
   fireEvent.click(screen.getByRole("button", { name: "Home Assistant" }));
   expect(screen.getByRole("heading", { name: "Home Assistant" })).toBeInTheDocument();
   expect(screen.getByText("No published notes yet.")).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "中文" }));
+  fireEvent.change(screen.getByRole("combobox", { name: /Language/ }), { target: { value: "zh" } });
   expect(screen.getByRole("heading", { name: "HA 智能家居" })).toBeInTheDocument();
   window.history.replaceState(null, "", "#top");
   fireEvent(window, new HashChangeEvent("hashchange"));
