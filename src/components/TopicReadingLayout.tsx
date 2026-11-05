@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { Language } from "../content/knowledge";
 
@@ -69,8 +70,8 @@ export function TopicReadingLayout({ language, children }: { language: Language;
     <div className="topic-reading-layout">
     <aside className="topic-contents">
       <details open={open} onToggle={event => setOpen(event.currentTarget.open)}>
-        <summary>{{ zh: "本页目录", en: "On this page", ja: "このページの目次", ko: "이 페이지의 목차" }[language]}</summary>
-        <nav aria-label={{ zh: "章节目录", en: "Page contents", ja: "目次", ko: "목차" }[language]}>
+        <summary>{{ zh: "本页目录", "zh-Hant": traditional("本页目录"), en: "On this page", ja: "このページの目次", ko: "이 페이지의 목차" }[language]}</summary>
+        <nav aria-label={{ zh: "章节目录", "zh-Hant": traditional("章节目录"), en: "Page contents", ja: "目次", ko: "목차" }[language]}>
           {chapters.map(chapter => (
             <a key={chapter.id} href={`#${chapter.id}`}
               aria-current={active === chapter.id ? "location" : undefined}

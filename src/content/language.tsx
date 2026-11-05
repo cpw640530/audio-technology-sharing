@@ -1,7 +1,8 @@
+import { traditional } from "./traditional";
 import { createContext, useContext } from "react";
 import type { Language } from "./knowledge";
 
-export const languageNames = { en: "English", zh: "简体中文", ja: "日本語", ko: "한국어" };
+export const languageNames = { en: "English", zh: "简体中文", "zh-Hant": "繁體中文", ja: "日本語", ko: "한국어" };
 export const LanguageContext = createContext<((language: Language) => void) | null>(null);
 export function LanguageSelect({ language }: { language: Language }) {
   const change = useContext(LanguageContext);
@@ -11,5 +12,5 @@ export function LanguageSelect({ language }: { language: Language }) {
 }
 
 export function text(language: Language, zh: string, en: string, ja: string, ko: string) {
-  return ({ zh, en, ja, ko })[language];
+  return ({ zh, "zh-Hant": traditional(zh), en, ja, ko })[language];
 }

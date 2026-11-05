@@ -1,4 +1,6 @@
 import { RelatedTopics } from "./components/RelatedTopics";
+import { WaveSpectrumPage } from "./components/WaveSpectrumPage";
+import { WaveSpectrumLab } from "./components/WaveSpectrumLab";
 import { LanguageContext, languageNames, text } from "./content/language";
 import { LearningPaths } from "./components/LearningPaths";
 import { WelcomePage } from "./components/WelcomePage";
@@ -145,6 +147,8 @@ function AppContent({ language }: { language: Language }) {
     | "knowledge"
     | "hardwareTopicPage"
     | "soundTopicPage"
+    | "waveSpectrumPage"
+    | "waveSpectrumLab"
     | "audioUnitsPage"
     | "digitalTopicPage"
     | "listeningTopicPage"
@@ -305,6 +309,7 @@ function AppContent({ language }: { language: Language }) {
     }
     switch (topic.detail.lab?.type) {
       case "sound-wave": setActiveView("soundTopicPage"); break;
+      case "wave-spectrum": setActiveView("waveSpectrumPage"); break;
       case "audio-units": setActiveView("audioUnitsPage"); break;
       case "sampling-quantization": setActiveView("digitalTopicPage"); break;
       case "listening-metrics": setActiveView("listeningTopicPage"); break;
@@ -493,6 +498,16 @@ function AppContent({ language }: { language: Language }) {
     );
   }
 
+  if (activeView === "waveSpectrumPage" || activeView === "waveSpectrumLab") {
+    return <div className="app-shell">
+      <Header language={language} />
+      {activeView === "waveSpectrumPage"
+        ? <WaveSpectrumPage language={language} onBack={returnToFundamentals} onPrevious={() => setActiveView("soundTopicPage")} onNext={() => setActiveView("digitalTopicPage")} onOpenLab={() => setActiveView("waveSpectrumLab")} relatedTopics={renderRelatedTopics("wave-spectrum")} />
+        : <WaveSpectrumLab language={language} onBack={returnToFundamentals} onBackToDetails={() => setActiveView("waveSpectrumPage")} />}
+      <footer className="site-footer"><span>{interfaceCopy.footer[language]}</span></footer>
+    </div>;
+  }
+
   if (activeView === "soundTopicPage") {
     return (
       <div className="app-shell">
@@ -504,7 +519,7 @@ function AppContent({ language }: { language: Language }) {
           language={language}
           onBack={returnToFundamentals}
           onOpenLab={() => setActiveView("soundLab")}
-          onOpenNext={() => setActiveView("audioUnitsPage")}
+          onOpenNext={() => setActiveView("waveSpectrumPage")}
         />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
@@ -544,8 +559,8 @@ function AppContent({ language }: { language: Language }) {
           language={language}
           onBack={returnToFundamentals}
           onOpenLab={() => setActiveView("audioUnitsLab")}
-          onOpenPrevious={() => setActiveView("soundTopicPage")}
-          onOpenNext={() => setActiveView("digitalTopicPage")}
+          onOpenPrevious={() => setActiveView("digitalTopicPage")}
+          onOpenNext={() => setActiveView("listeningTopicPage")}
         />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
@@ -597,8 +612,8 @@ function AppContent({ language }: { language: Language }) {
           language={language}
           onBack={returnToFundamentals}
           onOpenLab={() => setActiveView("digitalLab")}
-          onOpenPrevious={() => setActiveView("audioUnitsPage")}
-          onOpenNext={() => setActiveView("listeningTopicPage")}
+          onOpenPrevious={() => setActiveView("waveSpectrumPage")}
+          onOpenNext={() => setActiveView("audioUnitsPage")}
         />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
@@ -630,7 +645,7 @@ function AppContent({ language }: { language: Language }) {
           language={language}
           onBack={returnToFundamentals}
           onOpenLab={() => setActiveView("listeningLab")}
-          onOpenPrevious={() => setActiveView("digitalTopicPage")}
+          onOpenPrevious={() => setActiveView("audioUnitsPage")}
         />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
@@ -1073,6 +1088,7 @@ function AppContent({ language }: { language: Language }) {
           {selectedTopic ? (
             <TopicDetails
               language={language}
+              onOpenWaveSpectrumLab={() => { setSelectedTopic(null); setActiveView("waveSpectrumLab"); }}
               onClose={() => setSelectedTopic(null)}
               onOpenAmplifierSpeakerLab={() => {
                 setSelectedTopic(null);

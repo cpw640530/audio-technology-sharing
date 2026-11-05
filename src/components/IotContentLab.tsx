@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { ArrowLeft } from "lucide-react";
 import type { Language } from "../content/knowledge";
 
@@ -7,10 +8,10 @@ type IotContentLabProps = {
   onBackToDetails?: () => void;
 };
 
-type Locale = "zh" | "en" | "ja" | "ko";
+type Locale = "zh" | "en" | "ja" | "ko" | "zh-Hant";
 type LocalizedText = Record<Locale, string>;
 
-const l = (zh: string, en: string, ja: string, ko: string): LocalizedText => ({ zh, en, ja, ko });
+const l = (zh: string, en: string, ja: string, ko: string): LocalizedText => ({ zh, "zh-Hant": traditional(zh), en, ja, ko });
 
 const issueCards = [
   {
@@ -43,7 +44,7 @@ const issueCards = [
 ] satisfies Array<{ title: LocalizedText; cause: LocalizedText; checks: LocalizedText[] }>;
 
 function IotContentWorkflowDiagram({ language }: { language: Language }) {
-  const t = (zh: string, en: string, ja: string, ko: string) => ({ zh, en, ja, ko })[language];
+  const t = (zh: string, en: string, ja: string, ko: string) => ({ zh, "zh-Hant": traditional(zh), en, ja, ko })[language];
   return (
     <figure className="iot-content-diagram">
       <svg
@@ -147,7 +148,7 @@ function IotContentWorkflowDiagram({ language }: { language: Language }) {
 }
 
 export function IotContentLab({ language, onBack, onBackToDetails }: IotContentLabProps) {
-  const t = (zh: string, en: string, ja: string, ko: string) => ({ zh, en, ja, ko })[language];
+  const t = (zh: string, en: string, ja: string, ko: string) => ({ zh, "zh-Hant": traditional(zh), en, ja, ko })[language];
   return (
     <main className="iot-content-lab-page" aria-label={t("IoT 与内容创作实验室", "IoT and Content Creation Lab", "IoT とコンテンツ制作ラボ", "IoT 및 콘텐츠 제작 실험실")}>
       <section className="sound-lab-hero iot-content-lab-hero">

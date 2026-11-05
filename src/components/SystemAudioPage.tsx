@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { text } from "../content/language";
 import type { ReactNode } from "react";
 import { TopicReadingLayout } from "./TopicReadingLayout";
@@ -20,41 +21,41 @@ type SystemAudioPageProps = {
 const systemLayers = [
   {
     number: "01",
-    title: { zh: "应用请求", en: "Application request", ja: "アプリケーションの要求", ko: "애플리케이션 요청" },
-    description: { zh: "播放器、会议、录音或语音助手提出播放/采集需求。", en: "A player, meeting app, recorder, or voice assistant requests playback or capture.", ja: "プレーヤー、会議アプリ、録音アプリ、音声アシスタントが再生や収録を要求します。", ko: "플레이어, 회의 앱, 녹음기 또는 음성 비서가 재생이나 캡처를 요청합니다." }
+    title: { zh: "应用请求", "zh-Hant": traditional("应用请求"), en: "Application request", ja: "アプリケーションの要求", ko: "애플리케이션 요청" },
+    description: { zh: "播放器、会议、录音或语音助手提出播放/采集需求。", "zh-Hant": traditional("播放器、会议、录音或语音助手提出播放/采集需求。"), en: "A player, meeting app, recorder, or voice assistant requests playback or capture.", ja: "プレーヤー、会議アプリ、録音アプリ、音声アシスタントが再生や収録を要求します。", ko: "플레이어, 회의 앱, 녹음기 또는 음성 비서가 재생이나 캡처를 요청합니다." }
   },
   {
     number: "02",
-    title: { zh: "策略与会话", en: "Policy and session", ja: "ポリシーとセッション", ko: "정책과 세션" },
-    description: { zh: "系统处理权限、设备选择、路由、混音和格式协商。", en: "The system handles permissions, device choice, routing, mixing, and format negotiation.", ja: "システムが権限、機器選択、ルーティング、ミキシング、形式のネゴシエーションを扱います。", ko: "시스템은 권한, 장치 선택, 라우팅, 믹싱 및 형식 협상을 처리합니다." }
+    title: { zh: "策略与会话", "zh-Hant": traditional("策略与会话"), en: "Policy and session", ja: "ポリシーとセッション", ko: "정책과 세션" },
+    description: { zh: "系统处理权限、设备选择、路由、混音和格式协商。", "zh-Hant": traditional("系统处理权限、设备选择、路由、混音和格式协商。"), en: "The system handles permissions, device choice, routing, mixing, and format negotiation.", ja: "システムが権限、機器選択、ルーティング、ミキシング、形式のネゴシエーションを扱います。", ko: "시스템은 권한, 장치 선택, 라우팅, 믹싱 및 형식 협상을 처리합니다." }
   },
   {
     number: "03",
-    title: { zh: "用户态音频接口", en: "User-space audio interface", ja: "ユーザー空間の音声インターフェース", ko: "사용자 공간 오디오 인터페이스" },
-    description: { zh: "把应用可见的音频流交给平台接口；Linux 中常见 ALSA、PipeWire 等。", en: "Platform interfaces deliver application streams; Linux commonly uses ALSA, PipeWire, and related layers.", ja: "プラットフォームのインターフェースがアプリのストリームを渡します。Linux では ALSA、PipeWire などを使います。", ko: "플랫폼 인터페이스가 앱 스트림을 전달합니다. Linux에서는 ALSA, PipeWire 등의 계층을 사용합니다." }
+    title: { zh: "用户态音频接口", "zh-Hant": traditional("用户态音频接口"), en: "User-space audio interface", ja: "ユーザー空間の音声インターフェース", ko: "사용자 공간 오디오 인터페이스" },
+    description: { zh: "把应用可见的音频流交给平台接口；Linux 中常见 ALSA、PipeWire 等。", "zh-Hant": traditional("把应用可见的音频流交给平台接口；Linux 中常见 ALSA、PipeWire 等。"), en: "Platform interfaces deliver application streams; Linux commonly uses ALSA, PipeWire, and related layers.", ja: "プラットフォームのインターフェースがアプリのストリームを渡します。Linux では ALSA、PipeWire などを使います。", ko: "플랫폼 인터페이스가 앱 스트림을 전달합니다. Linux에서는 ALSA, PipeWire 등의 계층을 사용합니다." }
   },
   {
     number: "04",
-    title: { zh: "驱动与硬件", en: "Driver and hardware", ja: "ドライバーとハードウェア", ko: "드라이버와 하드웨어" },
-    description: { zh: "驱动管理 DMA、时钟和设备寄存器，最后连接 Codec、功放或 ADC。", en: "Drivers manage DMA, clocks, and registers before reaching a Codec, amplifier, or ADC.", ja: "ドライバーが DMA、クロック、レジスターを管理し、Codec、アンプ、ADC へ接続します。", ko: "드라이버는 DMA, 클록, 레지스터를 관리하며 Codec, 앰프, ADC에 연결됩니다." }
+    title: { zh: "驱动与硬件", "zh-Hant": traditional("驱动与硬件"), en: "Driver and hardware", ja: "ドライバーとハードウェア", ko: "드라이버와 하드웨어" },
+    description: { zh: "驱动管理 DMA、时钟和设备寄存器，最后连接 Codec、功放或 ADC。", "zh-Hant": traditional("驱动管理 DMA、时钟和设备寄存器，最后连接 Codec、功放或 ADC。"), en: "Drivers manage DMA, clocks, and registers before reaching a Codec, amplifier, or ADC.", ja: "ドライバーが DMA、クロック、レジスターを管理し、Codec、アンプ、ADC へ接続します。", ko: "드라이버는 DMA, 클록, 레지스터를 관리하며 Codec, 앰프, ADC에 연결됩니다." }
   }
 ];
 
 const systemModes = [
   {
-    title: { zh: "播放", en: "Playback", ja: "再生", ko: "재생" },
-    direction: { zh: "应用 → 设备", en: "App → device", ja: "アプリ → 機器", ko: "앱 → 장치" },
-    description: { zh: "应用提交 PCM，系统完成路由与混音，驱动把数据送到 DAC、功放和扬声器。", en: "The app submits PCM; the system routes and mixes it, and the driver sends it to the DAC, amplifier, and speaker.", ja: "アプリが PCM を渡し、システムがルーティングとミキシングを行い、ドライバー経由で DAC、アンプ、スピーカーへ送ります。", ko: "앱이 PCM을 제출하면 시스템이 라우팅과 믹싱을 하고 드라이버가 DAC, 앰프, 스피커로 전달합니다." }
+    title: { zh: "播放", "zh-Hant": traditional("播放"), en: "Playback", ja: "再生", ko: "재생" },
+    direction: { zh: "应用 → 设备", "zh-Hant": traditional("应用 → 设备"), en: "App → device", ja: "アプリ → 機器", ko: "앱 → 장치" },
+    description: { zh: "应用提交 PCM，系统完成路由与混音，驱动把数据送到 DAC、功放和扬声器。", "zh-Hant": traditional("应用提交 PCM，系统完成路由与混音，驱动把数据送到 DAC、功放和扬声器。"), en: "The app submits PCM; the system routes and mixes it, and the driver sends it to the DAC, amplifier, and speaker.", ja: "アプリが PCM を渡し、システムがルーティングとミキシングを行い、ドライバー経由で DAC、アンプ、スピーカーへ送ります。", ko: "앱이 PCM을 제출하면 시스템이 라우팅과 믹싱을 하고 드라이버가 DAC, 앰프, 스피커로 전달합니다." }
   },
   {
-    title: { zh: "采集", en: "Capture", ja: "収録", ko: "캡처" },
-    direction: { zh: "设备 → 应用", en: "Device → app", ja: "機器 → アプリ", ko: "장치 → 앱" },
-    description: { zh: "麦克风和 ADC 产生 PCM，驱动与系统完成输入选择、权限检查，再交给应用。", en: "The microphone and ADC produce PCM; the driver and system handle input selection and permission before delivering it to the app.", ja: "マイクと ADC が PCM を生成し、ドライバーとシステムが入力選択や権限確認を行ってアプリへ渡します。", ko: "마이크와 ADC가 PCM을 생성하고 드라이버와 시스템이 입력 선택 및 권한 확인 후 앱으로 전달합니다." }
+    title: { zh: "采集", "zh-Hant": traditional("采集"), en: "Capture", ja: "収録", ko: "캡처" },
+    direction: { zh: "设备 → 应用", "zh-Hant": traditional("设备 → 应用"), en: "Device → app", ja: "機器 → アプリ", ko: "장치 → 앱" },
+    description: { zh: "麦克风和 ADC 产生 PCM，驱动与系统完成输入选择、权限检查，再交给应用。", "zh-Hant": traditional("麦克风和 ADC 产生 PCM，驱动与系统完成输入选择、权限检查，再交给应用。"), en: "The microphone and ADC produce PCM; the driver and system handle input selection and permission before delivering it to the app.", ja: "マイクと ADC が PCM を生成し、ドライバーとシステムが入力選択や権限確認を行ってアプリへ渡します。", ko: "마이크와 ADC가 PCM을 생성하고 드라이버와 시스템이 입력 선택 및 권한 확인 후 앱으로 전달합니다." }
   },
   {
-    title: { zh: "全双工", en: "Full duplex", ja: "全二重", ko: "전이중" },
-    direction: { zh: "两条方向相反的流", en: "Two opposite flows", ja: "逆方向の二つの流れ", ko: "서로 반대 방향의 두 흐름" },
-    description: { zh: "通话同时播放和采集；系统要协调两条流的设备、时钟、权限与会话。", en: "A call captures and plays at once; the system coordinates devices, clocks, permissions, and the session for both streams.", ja: "通話では収録と再生を同時に行い、システムが両ストリームの機器、クロック、権限、セッションを調整します。", ko: "통화는 캡처와 재생을 동시에 수행하며 시스템은 두 스트림의 장치, 클록, 권한, 세션을 조정합니다." }
+    title: { zh: "全双工", "zh-Hant": traditional("全双工"), en: "Full duplex", ja: "全二重", ko: "전이중" },
+    direction: { zh: "两条方向相反的流", "zh-Hant": traditional("两条方向相反的流"), en: "Two opposite flows", ja: "逆方向の二つの流れ", ko: "서로 반대 방향의 두 흐름" },
+    description: { zh: "通话同时播放和采集；系统要协调两条流的设备、时钟、权限与会话。", "zh-Hant": traditional("通话同时播放和采集；系统要协调两条流的设备、时钟、权限与会话。"), en: "A call captures and plays at once; the system coordinates devices, clocks, permissions, and the session for both streams.", ja: "通話では収録と再生を同時に行い、システムが両ストリームの機器、クロック、権限、セッションを調整します。", ko: "통화는 캡처와 재생을 동시에 수행하며 시스템은 두 스트림의 장치, 클록, 권한, 세션을 조정합니다." }
   }
 ];
 

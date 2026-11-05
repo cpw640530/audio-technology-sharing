@@ -8,6 +8,7 @@ afterEach(() => {
 });
 
 it.each([
+  ["zh-Hant", "音頻知識分享網站", "進入音頻知識庫"],
   ["ja", "オーディオ技術共有サイト", "オーディオ知識を探る"],
   ["ko", "오디오 기술공유 사이트", "오디오 지식 살펴보기"]
 ] as const)("switches to %s and remembers it after reload", (language, heading, link) => {

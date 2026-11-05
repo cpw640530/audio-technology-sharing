@@ -20,8 +20,8 @@ export function filterCoefficients(type: FilterType | "peaking", cutoff: number,
   return { b, a: [1 + alpha, -2 * c, 1 - alpha] };
 }
 
-export function frequencyResponse(coefficients: Coefficients, frequency: number) {
-  const w = 2 * Math.PI * frequency / filterSampleRate;
+export function frequencyResponse(coefficients: Coefficients, frequency: number, sampleRate = filterSampleRate) {
+  const w = 2 * Math.PI * frequency / sampleRate;
   const evaluate = (values: number[]) => ({
     re: values.reduce((sum, v, i) => sum + v * Math.cos(w * i), 0),
     im: values.reduce((sum, v, i) => sum - v * Math.sin(w * i), 0)

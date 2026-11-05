@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import type { ReactNode } from "react";
 import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
@@ -5,9 +6,9 @@ import type { AiAudioLabId, Category, Language, Topic } from "../content/knowled
 import { TopicPager } from "./TopicPager";
 
 type DisplayTopic = Topic & { category: Category };
-type Locale = "zh" | "en" | "ja" | "ko";
+type Locale = "zh" | "en" | "ja" | "ko" | "zh-Hant";
 type LocalizedText = Record<Locale, string>;
-const l = (zh: string, en: string, ja: string, ko: string): LocalizedText => ({ zh, en, ja, ko });
+const l = (zh: string, en: string, ja: string, ko: string): LocalizedText => ({ zh, "zh-Hant": traditional(zh), en, ja, ko });
 
 type AiAudioTopicPageProps = {
   relatedTopics?: ReactNode;
@@ -78,7 +79,7 @@ const modeLabels: Record<AiAudioLabId, LocalizedText> = {
 export function AiAudioTopicPage({ relatedTopics, language, topic, mode, onBack, onOpenLab, onOpenPrevious, onOpenNext }: AiAudioTopicPageProps) {
   const detail = topic.detail;
   const steps = flows[mode];
-  const t = (zh: string, en: string, ja: string, ko: string) => ({ zh, en, ja, ko })[language];
+  const t = (zh: string, en: string, ja: string, ko: string) => ({ zh, "zh-Hant": traditional(zh), en, ja, ko })[language];
   return (
     <main className="sound-topic-page ai-topic-page" aria-labelledby="ai-topic-title">
       <header className="sound-topic-hero">

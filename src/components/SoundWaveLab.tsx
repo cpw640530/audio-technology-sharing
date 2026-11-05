@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { text } from "../content/language";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Pause, Play, RotateCcw } from "lucide-react";
@@ -18,9 +19,9 @@ declare global {
 }
 
 const waveformLabels: Record<WaveformType, Record<Language, string>> = {
-  sine: { zh: "正弦波", en: "Sine wave", ja: "正弦波", ko: "정현파" },
-  square: { zh: "方波", en: "Square wave", ja: "矩形波", ko: "구형파" },
-  triangle: { zh: "三角波", en: "Triangle wave", ja: "三角波", ko: "삼각파" }
+  sine: { zh: "正弦波", "zh-Hant": traditional("正弦波"), en: "Sine wave", ja: "正弦波", ko: "정현파" },
+  square: { zh: "方波", "zh-Hant": traditional("方波"), en: "Square wave", ja: "矩形波", ko: "구형파" },
+  triangle: { zh: "三角波", "zh-Hant": traditional("三角波"), en: "Triangle wave", ja: "三角波", ko: "삼각파" }
 };
 
 function createLabWavePath(

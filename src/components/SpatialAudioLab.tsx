@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Language } from "../content/knowledge";
@@ -9,36 +10,36 @@ type SpatialAudioLabProps = {
 };
 
 type SpatialMode = "cues" | "binaural" | "object" | "headTracking";
-type Localized = Record<"zh" | "en" | "ja" | "ko", string>;
+type Localized = Record<"zh" | "en" | "ja" | "ko" | "zh-Hant", string>;
 
 const modeLabels: Record<SpatialMode, Localized> = {
-  cues: { zh: "定位线索", en: "Localization cues", ja: "定位手がかり", ko: "위치 단서" },
-  binaural: { zh: "双耳渲染", en: "Binaural rendering", ja: "バイノーラルレンダリング", ko: "바이노럴 렌더링" },
-  object: { zh: "对象 / 声道", en: "Object / channel", ja: "オブジェクト / チャンネル", ko: "오브젝트 / 채널" },
-  headTracking: { zh: "头部追踪", en: "Head tracking", ja: "ヘッドトラッキング", ko: "헤드 트래킹" }
+  cues: { zh: "定位线索", "zh-Hant": traditional("定位线索"), en: "Localization cues", ja: "定位手がかり", ko: "위치 단서" },
+  binaural: { zh: "双耳渲染", "zh-Hant": traditional("双耳渲染"), en: "Binaural rendering", ja: "バイノーラルレンダリング", ko: "바이노럴 렌더링" },
+  object: { zh: "对象 / 声道", "zh-Hant": traditional("对象 / 声道"), en: "Object / channel", ja: "オブジェクト / チャンネル", ko: "오브젝트 / 채널" },
+  headTracking: { zh: "头部追踪", "zh-Hant": traditional("头部追踪"), en: "Head tracking", ja: "ヘッドトラッキング", ko: "헤드 트래킹" }
 };
 
 const modeDescriptions: Record<SpatialMode, Localized> = {
   cues: {
-    zh: "观察声源相对方向如何改变 ITD/ILD，以及距离和反射如何改变到达时间与能量；这里不计算真实 HRTF 频谱。",
+    zh: "观察声源相对方向如何改变 ITD/ILD，以及距离和反射如何改变到达时间与能量；这里不计算真实 HRTF 频谱。", "zh-Hant": traditional("观察声源相对方向如何改变 ITD/ILD，以及距离和反射如何改变到达时间与能量；这里不计算真实 HRTF 频谱。"),
     en: "Observe directional ITD/ILD trends and how distance and reflections change arrival time and energy; actual HRTF spectra are not computed here.",
     ja: "音源の相対方向が ITD/ILD をどう変えるか、距離と反射が到達時間とエネルギーをどう変えるかを観察する。ここでは実際の HRTF スペクトルは計算しない。",
     ko: "음원의 상대 방향이 ITD/ILD를 어떻게 바꾸는지, 거리와 반사가 도달 시간과 에너지를 어떻게 바꾸는지 관찰함. 여기서는 실제 HRTF 스펙트럼을 계산하지 않음."
   },
   binaural: {
-    zh: "耳机空间音频通常把每个虚拟声源与对应方向的 HRIR 卷积，得到左耳和右耳 PCM。",
+    zh: "耳机空间音频通常把每个虚拟声源与对应方向的 HRIR 卷积，得到左耳和右耳 PCM。", "zh-Hant": traditional("耳机空间音频通常把每个虚拟声源与对应方向的 HRIR 卷积，得到左耳和右耳 PCM。"),
     en: "Headphone spatial audio usually convolves each virtual source with direction-specific HRIRs to produce left-ear and right-ear PCM.",
     ja: "ヘッドホンの空間音声では通常、各仮想音源を方向に対応した HRIR と畳み込み、左耳・右耳の PCM を生成する。",
     ko: "헤드폰 공간 오디오는 보통 각 가상 음원을 방향별 HRIR과 컨볼루션하여 왼쪽 귀와 오른쪽 귀 PCM을 생성함."
   },
   object: {
-    zh: "对象音频保存声音和空间元数据，播放端根据耳机、5.1/7.1、Atmos 或车载扬声器重新渲染。",
+    zh: "对象音频保存声音和空间元数据，播放端根据耳机、5.1/7.1、Atmos 或车载扬声器重新渲染。", "zh-Hant": traditional("对象音频保存声音和空间元数据，播放端根据耳机、5.1/7.1、Atmos 或车载扬声器重新渲染。"),
     en: "Object audio stores sound plus spatial metadata, then the playback renderer maps it to headphones, 5.1/7.1, Atmos, or in-car speakers.",
     ja: "オブジェクト音声は音と空間メタデータを保存し、再生側のレンダラーがヘッドホン、5.1/7.1、Atmos、車載スピーカーへ再マッピングする。",
     ko: "오브젝트 오디오는 소리와 공간 메타데이터를 저장하고 재생 렌더러가 헤드폰, 5.1/7.1, Atmos 또는 차량 스피커에 맞게 다시 렌더링함."
   },
   headTracking: {
-    zh: "头部追踪让声源固定在外部世界；转头时渲染器要低延迟更新相对耳朵的方向。",
+    zh: "头部追踪让声源固定在外部世界；转头时渲染器要低延迟更新相对耳朵的方向。", "zh-Hant": traditional("头部追踪让声源固定在外部世界；转头时渲染器要低延迟更新相对耳朵的方向。"),
     en: "Head tracking keeps sources fixed in the outside world; as the head turns, the renderer must update the source direction relative to the ears with low latency.",
     ja: "ヘッドトラッキングは音源を外界に固定する。頭を回すと、レンダラーは耳に対する音源方向を低遅延で更新する必要がある。",
     ko: "헤드 트래킹은 음원을 외부 세계에 고정함. 머리를 돌리면 렌더러가 귀를 기준으로 한 음원 방향을 낮은 지연으로 갱신해야 함."
@@ -47,82 +48,82 @@ const modeDescriptions: Record<SpatialMode, Localized> = {
 
 const pipelineSteps: Record<SpatialMode, Array<{ title: Localized; detail: Localized }>> = {
   cues: [
-    { title: { zh: "声源位置", en: "Source position", ja: "音源位置", ko: "음원 위치" }, detail: { zh: "角度、距离、移动", en: "angle, distance, motion", ja: "角度、距離、移動", ko: "각도, 거리, 이동" } },
-    { title: { zh: "双耳线索", en: "Binaural cues", ja: "両耳の手がかり", ko: "양이 단서" }, detail: { zh: "ITD / ILD", en: "ITD / ILD", ja: "ITD / ILD", ko: "ITD / ILD" } },
-    { title: { zh: "耳廓滤波", en: "Pinna filtering", ja: "耳介フィルタリング", ko: "귓바퀴 필터링" }, detail: { zh: "HRTF 峰谷", en: "HRTF peaks/notches", ja: "HRTF のピーク/ノッチ", ko: "HRTF 피크/노치" } },
-    { title: { zh: "距离与房间", en: "Distance / room", ja: "距離 / 部屋", ko: "거리 / 공간" }, detail: { zh: "反射、混响、衰减", en: "reflections, reverb, loss", ja: "反射、残響、減衰", ko: "반사, 잔향, 감쇠" } }
+    { title: { zh: "声源位置", "zh-Hant": traditional("声源位置"), en: "Source position", ja: "音源位置", ko: "음원 위치" }, detail: { zh: "角度、距离、移动", "zh-Hant": traditional("角度、距离、移动"), en: "angle, distance, motion", ja: "角度、距離、移動", ko: "각도, 거리, 이동" } },
+    { title: { zh: "双耳线索", "zh-Hant": traditional("双耳线索"), en: "Binaural cues", ja: "両耳の手がかり", ko: "양이 단서" }, detail: { zh: "ITD / ILD", "zh-Hant": traditional("ITD / ILD"), en: "ITD / ILD", ja: "ITD / ILD", ko: "ITD / ILD" } },
+    { title: { zh: "耳廓滤波", "zh-Hant": traditional("耳廓滤波"), en: "Pinna filtering", ja: "耳介フィルタリング", ko: "귓바퀴 필터링" }, detail: { zh: "HRTF 峰谷", "zh-Hant": traditional("HRTF 峰谷"), en: "HRTF peaks/notches", ja: "HRTF のピーク/ノッチ", ko: "HRTF 피크/노치" } },
+    { title: { zh: "距离与房间", "zh-Hant": traditional("距离与房间"), en: "Distance / room", ja: "距離 / 部屋", ko: "거리 / 공간" }, detail: { zh: "反射、混响、衰减", "zh-Hant": traditional("反射、混响、衰减"), en: "reflections, reverb, loss", ja: "反射、残響、減衰", ko: "반사, 잔향, 감쇠" } }
   ],
   binaural: [
-    { title: { zh: "对象 / 声源", en: "Object / source", ja: "オブジェクト / 音源", ko: "오브젝트 / 음원" }, detail: { zh: "mono 或多路素材", en: "mono or multi-channel asset", ja: "mono またはマルチチャンネル素材", ko: "mono 또는 다중 채널 소스" } },
-    { title: { zh: "方位参数", en: "Spatial parameters", ja: "空間パラメータ", ko: "공간 파라미터" }, detail: { zh: "方位角、距离、仰角", en: "azimuth, distance, elevation", ja: "方位角、距離、仰角", ko: "방위각, 거리, 고도각" } },
-    { title: { zh: "HRIR 卷积", en: "HRIR convolution", ja: "HRIR 畳み込み", ko: "HRIR 컨볼루션" }, detail: { zh: "生成左右耳信号", en: "left/right ear signals", ja: "左右耳信号を生成", ko: "왼쪽/오른쪽 귀 신호 생성" } },
-    { title: { zh: "双耳 PCM", en: "Binaural PCM", ja: "バイノーラル PCM", ko: "바이노럴 PCM" }, detail: { zh: "适合耳机播放", en: "for headphone playback", ja: "ヘッドホン再生用", ko: "헤드폰 재생용" } }
+    { title: { zh: "对象 / 声源", "zh-Hant": traditional("对象 / 声源"), en: "Object / source", ja: "オブジェクト / 音源", ko: "오브젝트 / 음원" }, detail: { zh: "mono 或多路素材", "zh-Hant": traditional("mono 或多路素材"), en: "mono or multi-channel asset", ja: "mono またはマルチチャンネル素材", ko: "mono 또는 다중 채널 소스" } },
+    { title: { zh: "方位参数", "zh-Hant": traditional("方位参数"), en: "Spatial parameters", ja: "空間パラメータ", ko: "공간 파라미터" }, detail: { zh: "方位角、距离、仰角", "zh-Hant": traditional("方位角、距离、仰角"), en: "azimuth, distance, elevation", ja: "方位角、距離、仰角", ko: "방위각, 거리, 고도각" } },
+    { title: { zh: "HRIR 卷积", "zh-Hant": traditional("HRIR 卷积"), en: "HRIR convolution", ja: "HRIR 畳み込み", ko: "HRIR 컨볼루션" }, detail: { zh: "生成左右耳信号", "zh-Hant": traditional("生成左右耳信号"), en: "left/right ear signals", ja: "左右耳信号を生成", ko: "왼쪽/오른쪽 귀 신호 생성" } },
+    { title: { zh: "双耳 PCM", "zh-Hant": traditional("双耳 PCM"), en: "Binaural PCM", ja: "バイノーラル PCM", ko: "바이노럴 PCM" }, detail: { zh: "适合耳机播放", "zh-Hant": traditional("适合耳机播放"), en: "for headphone playback", ja: "ヘッドホン再生用", ko: "헤드폰 재생용" } }
   ],
   object: [
-    { title: { zh: "声道床", en: "Channel bed", ja: "チャンネルベッド", ko: "채널 베드" }, detail: { zh: "5.1 / 7.1 基础混音", en: "5.1 / 7.1 base mix", ja: "5.1 / 7.1 の基本ミックス", ko: "5.1 / 7.1 기본 믹스" } },
-    { title: { zh: "音频对象", en: "Audio objects", ja: "オーディオオブジェクト", ko: "오디오 오브젝트" }, detail: { zh: "声音 + 空间元数据", en: "audio + spatial metadata", ja: "音声 + 空間メタデータ", ko: "오디오 + 공간 메타데이터" } },
-    { title: { zh: "渲染器", en: "Renderer", ja: "レンダラー", ko: "렌더러" }, detail: { zh: "适配播放设备", en: "adapt to playback device", ja: "再生デバイスに適応", ko: "재생 장치에 맞춤" } },
-    { title: { zh: "耳机 / 扬声器", en: "Headphones / speakers", ja: "ヘッドホン / スピーカー", ko: "헤드폰 / 스피커" }, detail: { zh: "双耳或多扬声器输出", en: "binaural or speaker output", ja: "バイノーラルまたはスピーカー出力", ko: "바이노럴 또는 스피커 출력" } }
+    { title: { zh: "声道床", "zh-Hant": traditional("声道床"), en: "Channel bed", ja: "チャンネルベッド", ko: "채널 베드" }, detail: { zh: "5.1 / 7.1 基础混音", "zh-Hant": traditional("5.1 / 7.1 基础混音"), en: "5.1 / 7.1 base mix", ja: "5.1 / 7.1 の基本ミックス", ko: "5.1 / 7.1 기본 믹스" } },
+    { title: { zh: "音频对象", "zh-Hant": traditional("音频对象"), en: "Audio objects", ja: "オーディオオブジェクト", ko: "오디오 오브젝트" }, detail: { zh: "声音 + 空间元数据", "zh-Hant": traditional("声音 + 空间元数据"), en: "audio + spatial metadata", ja: "音声 + 空間メタデータ", ko: "오디오 + 공간 메타데이터" } },
+    { title: { zh: "渲染器", "zh-Hant": traditional("渲染器"), en: "Renderer", ja: "レンダラー", ko: "렌더러" }, detail: { zh: "适配播放设备", "zh-Hant": traditional("适配播放设备"), en: "adapt to playback device", ja: "再生デバイスに適応", ko: "재생 장치에 맞춤" } },
+    { title: { zh: "耳机 / 扬声器", "zh-Hant": traditional("耳机 / 扬声器"), en: "Headphones / speakers", ja: "ヘッドホン / スピーカー", ko: "헤드폰 / 스피커" }, detail: { zh: "双耳或多扬声器输出", "zh-Hant": traditional("双耳或多扬声器输出"), en: "binaural or speaker output", ja: "バイノーラルまたはスピーカー出力", ko: "바이노럴 또는 스피커 출력" } }
   ],
   headTracking: [
-    { title: { zh: "IMU 姿态", en: "IMU pose", ja: "IMU 姿勢", ko: "IMU 자세" }, detail: { zh: "头部 yaw / pitch / roll", en: "head yaw / pitch / roll", ja: "頭部 yaw / pitch / roll", ko: "머리 yaw / pitch / roll" } },
-    { title: { zh: "坐标变换", en: "Coordinate update", ja: "座標更新", ko: "좌표 갱신" }, detail: { zh: "世界方向 -> 耳朵方向", en: "world direction -> ear direction", ja: "世界方向 -> 耳方向", ko: "세계 방향 -> 귀 방향" } },
-    { title: { zh: "重选 HRTF", en: "HRTF update", ja: "HRTF 更新", ko: "HRTF 갱신" }, detail: { zh: "低延迟更新滤波器", en: "low-latency filter update", ja: "低遅延でフィルターを更新", ko: "낮은 지연으로 필터 갱신" } },
-    { title: { zh: "外部化声像", en: "Externalized image", ja: "外在化した音像", ko: "외재화된 음상" }, detail: { zh: "声源不跟头转", en: "source does not rotate with head", ja: "音源が頭の回転に追従しない", ko: "음원이 머리 회전을 따라가지 않음" } }
+    { title: { zh: "IMU 姿态", "zh-Hant": traditional("IMU 姿态"), en: "IMU pose", ja: "IMU 姿勢", ko: "IMU 자세" }, detail: { zh: "头部 yaw / pitch / roll", "zh-Hant": traditional("头部 yaw / pitch / roll"), en: "head yaw / pitch / roll", ja: "頭部 yaw / pitch / roll", ko: "머리 yaw / pitch / roll" } },
+    { title: { zh: "坐标变换", "zh-Hant": traditional("坐标变换"), en: "Coordinate update", ja: "座標更新", ko: "좌표 갱신" }, detail: { zh: "世界方向 -> 耳朵方向", "zh-Hant": traditional("世界方向 -> 耳朵方向"), en: "world direction -> ear direction", ja: "世界方向 -> 耳方向", ko: "세계 방향 -> 귀 방향" } },
+    { title: { zh: "重选 HRTF", "zh-Hant": traditional("重选 HRTF"), en: "HRTF update", ja: "HRTF 更新", ko: "HRTF 갱신" }, detail: { zh: "低延迟更新滤波器", "zh-Hant": traditional("低延迟更新滤波器"), en: "low-latency filter update", ja: "低遅延でフィルターを更新", ko: "낮은 지연으로 필터 갱신" } },
+    { title: { zh: "外部化声像", "zh-Hant": traditional("外部化声像"), en: "Externalized image", ja: "外在化した音像", ko: "외재화된 음상" }, detail: { zh: "声源不跟头转", "zh-Hant": traditional("声源不跟头转"), en: "source does not rotate with head", ja: "音源が頭の回転に追従しない", ko: "음원이 머리 회전을 따라가지 않음" } }
   ]
 };
 
 const spatialCopy = {
-  sceneTitle: { zh: "俯视图：声源与头部朝向", en: "Top view: source and head direction", ja: "上面図：音源と頭の向き", ko: "평면도: 음원과 머리 방향" },
-  sceneAria: { zh: "空间音频声源定位图", en: "Spatial audio source localization diagram", ja: "空間音声の音源定位図", ko: "공간 오디오 음원 위치 다이어그램" },
-  front: { zh: "前", en: "front", ja: "前", ko: "앞" },
-  rear: { zh: "后", en: "rear", ja: "後ろ", ko: "뒤" },
-  left: { zh: "左", en: "left", ja: "左", ko: "왼쪽" },
-  right: { zh: "右", en: "right", ja: "右", ko: "오른쪽" },
-  leftEar: { zh: "左耳", en: "L", ja: "左耳", ko: "왼쪽 귀" },
-  rightEar: { zh: "右耳", en: "R", ja: "右耳", ko: "오른쪽 귀" },
-  source: { zh: "声源", en: "source", ja: "音源", ko: "음원" },
-  binauralCue: { zh: "当前双耳线索：", en: "Current binaural cue: ", ja: "現在の両耳手がかり：", ko: "현재 양이 단서: " },
-  earsAligned: { zh: "左右耳接近同时", en: "ears nearly aligned", ja: "左右の耳にほぼ同時に到達", ko: "양쪽 귀에 거의 동시에 도달" },
-  leftFirst: { zh: "左耳先到 / 左侧更强", en: "left ear first / stronger left", ja: "左耳が先に到達 / 左側が強い", ko: "왼쪽 귀가 먼저 도달 / 왼쪽이 더 강함" },
-  rightFirst: { zh: "右耳先到 / 右侧更强", en: "right ear first / stronger right", ja: "右耳が先に到達 / 右側が強い", ko: "오른쪽 귀가 먼저 도달 / 오른쪽이 더 강함" },
-  relativeDirection: { zh: "相对耳朵方向：", en: "Ear-relative direction: ", ja: "耳に対する方向：", ko: "귀 기준 방향: " },
-  worldSource: { zh: "世界声源角度：", en: "world source: ", ja: "世界座標の音源：", ko: "세계 음원: " },
-  headYaw: { zh: "头部朝向：", en: "head yaw: ", ja: "頭部 yaw：", ko: "머리 yaw: " },
-  earArrival: { zh: "双耳到达与电平", en: "Ear arrival and level", ja: "両耳の到達とレベル", ko: "양쪽 귀 도달 및 레벨" },
-  binauralTitle: { zh: "双耳线索：何时到达、有多强", en: "Binaural cues: arrival and level", ja: "両耳の手がかり：到達時刻と強さ", ko: "양이 단서: 도달 시각과 강도" },
-  relativeAmplitude: { zh: "相对幅度", en: "relative amplitude", ja: "相対振幅", ko: "상대 진폭" },
-  timeAmplitude: { zh: "时间 0–1 ms · 相对幅度 0–1 · 到达/增益示意", en: "Time 0–1 ms · Relative amplitude 0–1 · Arrival/gain", ja: "時間 0–1 ms · 相対振幅 0–1 · 到達/ゲインの概念図", ko: "시간 0–1 ms · 상대 진폭 0–1 · 도달/게인 개념도" },
-  earPlots: { zh: "双耳图说明", en: "About the ear plots", ja: "両耳グラフについて", ko: "양이 그래프 설명" },
-  earPlotDescription: { zh: "横轴固定 0–1 ms，以先到耳为 0；纵轴固定相对幅度 0–1（上/中/下网格为 1/0.5/0），参照 1 m 近侧耳。竖线只表示到达与增益，不是声波或 HRIR。距离加倍，两耳幅度减半；转头改变相对方向。", en: "X: fixed 0–1 ms from the first ear; Y: fixed relative amplitude 0–1 (top/middle/bottom grid: 1/0.5/0), referenced to the near ear at 1 m. Stems represent arrival and gain, not waveforms or HRIRs. Doubling distance halves both amplitudes; turning changes relative direction.", ja: "横軸は先に到達する耳を 0 とした固定 0–1 ms。縦軸は固定の相対振幅 0–1（上/中/下の目盛りは 1/0.5/0）で、1 m の近い耳を基準にする。縦線は到達とゲインを示すだけで、波形や HRIR ではない。距離が 2 倍になると両耳の振幅は半分になり、頭を回すと相対方向が変わる。", ko: "가로축은 먼저 도달하는 귀를 0으로 한 고정 0–1 ms. 세로축은 고정 상대 진폭 0–1(위/가운데/아래 눈금 1/0.5/0)이며 1 m에서 가까운 귀를 기준으로 함. 세로선은 도달과 게인만 나타내며 파형이나 HRIR이 아님. 거리가 2배가 되면 양쪽 귀 진폭이 절반이 되고 머리를 돌리면 상대 방향이 바뀜." },
-  earTrendDescription: { zh: "这里只用方向趋势展示 ITD/ILD，不做真实双耳卷积。真实 ILD 随频率变化；前后对称方向可能产生相同线索，还需要耳廓频谱和头部运动来区分。", en: "These directional ITD/ILD trends are not real binaural convolution. Actual ILD is frequency-dependent; front/back directions can share cues and need pinna spectra and head motion to disambiguate.", ja: "ここでは ITD/ILD の方向傾向だけを示し、実際の両耳畳み込みは行わない。実際の ILD は周波数依存で、前後対称の方向は同じ手がかりを持つことがあり、耳介スペクトルや頭部運動で区別する必要がある。", ko: "여기서는 ITD/ILD의 방향 경향만 보여 주며 실제 양이 컨볼루션은 수행하지 않음. 실제 ILD는 주파수에 따라 달라지고 앞뒤 대칭 방향은 같은 단서를 만들 수 있어 귓바퀴 스펙트럼과 머리 움직임으로 구분해야 함." },
-  relativeEnergy: { zh: "相对能量：直达声、反射、拖尾", en: "Relative energy: direct, reflections, tail", ja: "相対エネルギー：直接音、反射、尾部", ko: "상대 에너지: 직접음, 반사, 꼬리" },
-  direct: { zh: "直达声", en: "Direct", ja: "直接音", ko: "직접음" },
-  earlyReflections: { zh: "早期反射", en: "Early reflections", ja: "初期反射", ko: "초기 반사" },
-  reverbTail: { zh: "混响尾巴", en: "Reverb tail", ja: "残響尾部", ko: "잔향 꼬리" },
-  roomAria: { zh: "房间反射时间响应图", en: "Room reflection time response", ja: "室内反射の時間応答図", ko: "공간 반사 시간 응답 그래프" },
-  timeMs: { zh: "时间 ms", en: "time ms", ja: "時間 ms", ko: "시간 ms" },
-  energyModel: { zh: "能量图说明（非实测）", en: "Energy model (not measured)", ja: "エネルギーモデル（実測値ではない）", ko: "에너지 모델(실측값 아님)" },
-  energyDescription: { zh: "示意能量包络，不是真实房间脉冲响应。纵轴 10 log10(E/E₁ₘ)，显示下限 −60 dB，不是 dB SPL；直达声按 1/d² 衰减。反射保留比例 r = 滑块/100，三条假想反射使用 rⁿ/(d + 343Δt)²，额外延时 12/28/48 ms；尾部从额外 60 ms 开始。反射为 0 时无反射能量。上方曲线只是路径概念，不与这些延时逐条对应；未求解房间几何，不对应实测 RT60。", en: "Illustrative energy envelope, not a real room impulse response. Y = 10 log10(E/E at 1 m), floored at −60 dB, not dB SPL. Direct energy follows 1/d². Retention r = slider/100; three hypothetical reflections use rⁿ/(d + 343Δt)² with excess delays of 12/28/48 ms. The tail starts 60 ms after direct arrival. Zero reflection means zero reflected energy. Curved paths above are conceptual, not matched to these delays; no room geometry or measured RT60 is claimed.", ja: "説明用のエネルギー包絡であり、実際の室内インパルス応答ではない。Y = 10 log10(E/E at 1 m)、下限は −60 dB で dB SPL ではない。直接音は 1/d² に従って減衰する。保持率 r = スライダー/100、3 本の仮想反射は余分な遅延 12/28/48 ms に対して rⁿ/(d + 343Δt)² を使う。尾部は直接音の 60 ms 後から始まる。反射 0 では反射エネルギーはない。上の曲線は概念的な経路で、これらの遅延とは 1 対 1 に対応せず、部屋の幾何や実測 RT60 を解いていない。", ko: "설명용 에너지 엔벨로프이며 실제 공간 임펄스 응답이 아님. Y = 10 log10(E/E at 1 m), 하한은 −60 dB이고 dB SPL이 아님. 직접음은 1/d²에 따라 감쇠함. 유지율 r = 슬라이더/100이며 세 가상 반사는 추가 지연 12/28/48 ms에 대해 rⁿ/(d + 343Δt)²를 사용함. 꼬리는 직접음 도달 60 ms 후 시작함. 반사 0이면 반사 에너지가 없음. 위 곡선은 개념적 경로이며 이 지연과 일대일로 대응하지 않고 공간 기하나 실측 RT60을 계산하지 않음." },
-  pipeline: { zh: "空间音频渲染流程", en: "Spatial audio rendering pipeline", ja: "空間音声レンダリングフロー", ko: "공간 오디오 렌더링 흐름" },
-  backKnowledge: { zh: "返回知识库", en: "Back to knowledge base", ja: "ナレッジベースに戻る", ko: "지식 베이스로 돌아가기" },
-  backDetails: { zh: "返回详细内容", en: "Back to detailed content", ja: "詳細コンテンツに戻る", ko: "상세 내용으로 돌아가기" },
-  traditionalLab: { zh: "传统 DSP 实验", en: "Traditional DSP lab", ja: "従来型 DSP 実験", ko: "전통 DSP 실험" },
-  labTitle: { zh: "空间音频实验室", en: "Spatial Audio Lab", ja: "空間音声ラボ", ko: "공간 오디오 실험실" },
-  intro: { zh: "用一个俯视声源图理解 ITD、ILD、HRTF、双耳渲染、对象音频和头部追踪如何共同形成空间感。", en: "Use a top-down source diagram to understand how ITD, ILD, HRTF, binaural rendering, object audio, and head tracking create spatial perception.", ja: "上面から見た音源図で、ITD、ILD、HRTF、バイノーラルレンダリング、オブジェクト音声、ヘッドトラッキングが空間知覚をどう作るかを理解する。", ko: "평면 음원 다이어그램을 사용해 ITD, ILD, HRTF, 바이노럴 렌더링, 오브젝트 오디오 및 헤드 트래킹이 공간감을 어떻게 만드는지 이해함." },
-  workbench: { zh: "空间音频实验台", en: "Spatial audio workbench", ja: "空間音声ワークベンチ", ko: "공간 오디오 워크벤치" },
-  modes: { zh: "空间音频模式", en: "Spatial audio modes", ja: "空間音声モード", ko: "공간 오디오 모드" },
-  sourceAngle: { zh: "声源角度", en: "Source angle", ja: "音源角度", ko: "음원 각도" },
-  distance: { zh: "距离", en: "Distance", ja: "距離", ko: "거리" },
-  reflections: { zh: "房间反射", en: "Room reflections", ja: "室内反射", ko: "공간 반사" },
-  headDirection: { zh: "头部朝向", en: "Head yaw", ja: "頭部 yaw", ko: "머리 yaw" },
-  relativeAngle: { zh: "相对角度：", en: "Relative angle: ", ja: "相対角度：", ko: "상대 각도: " },
-  itd: { zh: "ITD：", en: "ITD: ", ja: "ITD：", ko: "ITD: " },
-  ildAbout: { zh: "ILD：约 ", en: "ILD: about ", ja: "ILD：約 ", ko: "ILD: 약 " },
-  distanceLoss: { zh: "距离衰减：", en: "Distance loss: ", ja: "距離減衰：", ko: "거리 감쇠: " },
-  modelLimits: { zh: "模型边界", en: "Model limits", ja: "モデルの範囲", ko: "모델 한계" },
-  modelBoundary: { zh: "ITD/ILD 是方向趋势模型，不是个人 HRTF：实际值还随频率、头型和距离变化。HRTF 需测量或选取数据库，延迟取决于渲染实现，不能由角度和反射强度直接推算。俯视图位置非等比例，曲线仅表示反射路径概念。", en: "ITD/ILD are directional trend models, not personal HRTFs; actual cues depend on frequency, head geometry, and distance. HRTFs require measurements or a database; latency depends on the renderer, not just angle and reflection strength. The top view is not to scale; curves are conceptual reflection paths.", ja: "ITD/ILD は方向の傾向モデルで、個人の HRTF ではない。実際の手がかりは周波数、頭部形状、距離にも依存する。HRTF には測定またはデータベースが必要で、遅延は角度や反射強度だけでなくレンダラーの実装で決まる。上面図は縮尺どおりではなく、曲線は反射経路の概念を示す。", ko: "ITD/ILD는 방향 경향 모델이며 개인별 HRTF가 아님. 실제 단서는 주파수, 머리 형상 및 거리에도 좌우됨. HRTF는 측정이나 데이터베이스가 필요하고 지연은 각도와 반사 강도만이 아니라 렌더러 구현에 따라 결정됨. 평면도는 실제 비율이 아니며 곡선은 반사 경로 개념임." },
-  principles: { zh: "原理与渲染流程", en: "Principles and rendering flow", ja: "原理とレンダリングフロー", ko: "원리 및 렌더링 흐름" }
+  sceneTitle: { zh: "俯视图：声源与头部朝向", "zh-Hant": traditional("俯视图：声源与头部朝向"), en: "Top view: source and head direction", ja: "上面図：音源と頭の向き", ko: "평면도: 음원과 머리 방향" },
+  sceneAria: { zh: "空间音频声源定位图", "zh-Hant": traditional("空间音频声源定位图"), en: "Spatial audio source localization diagram", ja: "空間音声の音源定位図", ko: "공간 오디오 음원 위치 다이어그램" },
+  front: { zh: "前", "zh-Hant": traditional("前"), en: "front", ja: "前", ko: "앞" },
+  rear: { zh: "后", "zh-Hant": traditional("后"), en: "rear", ja: "後ろ", ko: "뒤" },
+  left: { zh: "左", "zh-Hant": traditional("左"), en: "left", ja: "左", ko: "왼쪽" },
+  right: { zh: "右", "zh-Hant": traditional("右"), en: "right", ja: "右", ko: "오른쪽" },
+  leftEar: { zh: "左耳", "zh-Hant": traditional("左耳"), en: "L", ja: "左耳", ko: "왼쪽 귀" },
+  rightEar: { zh: "右耳", "zh-Hant": traditional("右耳"), en: "R", ja: "右耳", ko: "오른쪽 귀" },
+  source: { zh: "声源", "zh-Hant": traditional("声源"), en: "source", ja: "音源", ko: "음원" },
+  binauralCue: { zh: "当前双耳线索：", "zh-Hant": traditional("当前双耳线索："), en: "Current binaural cue: ", ja: "現在の両耳手がかり：", ko: "현재 양이 단서: " },
+  earsAligned: { zh: "左右耳接近同时", "zh-Hant": traditional("左右耳接近同时"), en: "ears nearly aligned", ja: "左右の耳にほぼ同時に到達", ko: "양쪽 귀에 거의 동시에 도달" },
+  leftFirst: { zh: "左耳先到 / 左侧更强", "zh-Hant": traditional("左耳先到 / 左侧更强"), en: "left ear first / stronger left", ja: "左耳が先に到達 / 左側が強い", ko: "왼쪽 귀가 먼저 도달 / 왼쪽이 더 강함" },
+  rightFirst: { zh: "右耳先到 / 右侧更强", "zh-Hant": traditional("右耳先到 / 右侧更强"), en: "right ear first / stronger right", ja: "右耳が先に到達 / 右側が強い", ko: "오른쪽 귀가 먼저 도달 / 오른쪽이 더 강함" },
+  relativeDirection: { zh: "相对耳朵方向：", "zh-Hant": traditional("相对耳朵方向："), en: "Ear-relative direction: ", ja: "耳に対する方向：", ko: "귀 기준 방향: " },
+  worldSource: { zh: "世界声源角度：", "zh-Hant": traditional("世界声源角度："), en: "world source: ", ja: "世界座標の音源：", ko: "세계 음원: " },
+  headYaw: { zh: "头部朝向：", "zh-Hant": traditional("头部朝向："), en: "head yaw: ", ja: "頭部 yaw：", ko: "머리 yaw: " },
+  earArrival: { zh: "双耳到达与电平", "zh-Hant": traditional("双耳到达与电平"), en: "Ear arrival and level", ja: "両耳の到達とレベル", ko: "양쪽 귀 도달 및 레벨" },
+  binauralTitle: { zh: "双耳线索：何时到达、有多强", "zh-Hant": traditional("双耳线索：何时到达、有多强"), en: "Binaural cues: arrival and level", ja: "両耳の手がかり：到達時刻と強さ", ko: "양이 단서: 도달 시각과 강도" },
+  relativeAmplitude: { zh: "相对幅度", "zh-Hant": traditional("相对幅度"), en: "relative amplitude", ja: "相対振幅", ko: "상대 진폭" },
+  timeAmplitude: { zh: "时间 0–1 ms · 相对幅度 0–1 · 到达/增益示意", "zh-Hant": traditional("时间 0–1 ms · 相对幅度 0–1 · 到达/增益示意"), en: "Time 0–1 ms · Relative amplitude 0–1 · Arrival/gain", ja: "時間 0–1 ms · 相対振幅 0–1 · 到達/ゲインの概念図", ko: "시간 0–1 ms · 상대 진폭 0–1 · 도달/게인 개념도" },
+  earPlots: { zh: "双耳图说明", "zh-Hant": traditional("双耳图说明"), en: "About the ear plots", ja: "両耳グラフについて", ko: "양이 그래프 설명" },
+  earPlotDescription: { zh: "横轴固定 0–1 ms，以先到耳为 0；纵轴固定相对幅度 0–1（上/中/下网格为 1/0.5/0），参照 1 m 近侧耳。竖线只表示到达与增益，不是声波或 HRIR。距离加倍，两耳幅度减半；转头改变相对方向。", "zh-Hant": traditional("横轴固定 0–1 ms，以先到耳为 0；纵轴固定相对幅度 0–1（上/中/下网格为 1/0.5/0），参照 1 m 近侧耳。竖线只表示到达与增益，不是声波或 HRIR。距离加倍，两耳幅度减半；转头改变相对方向。"), en: "X: fixed 0–1 ms from the first ear; Y: fixed relative amplitude 0–1 (top/middle/bottom grid: 1/0.5/0), referenced to the near ear at 1 m. Stems represent arrival and gain, not waveforms or HRIRs. Doubling distance halves both amplitudes; turning changes relative direction.", ja: "横軸は先に到達する耳を 0 とした固定 0–1 ms。縦軸は固定の相対振幅 0–1（上/中/下の目盛りは 1/0.5/0）で、1 m の近い耳を基準にする。縦線は到達とゲインを示すだけで、波形や HRIR ではない。距離が 2 倍になると両耳の振幅は半分になり、頭を回すと相対方向が変わる。", ko: "가로축은 먼저 도달하는 귀를 0으로 한 고정 0–1 ms. 세로축은 고정 상대 진폭 0–1(위/가운데/아래 눈금 1/0.5/0)이며 1 m에서 가까운 귀를 기준으로 함. 세로선은 도달과 게인만 나타내며 파형이나 HRIR이 아님. 거리가 2배가 되면 양쪽 귀 진폭이 절반이 되고 머리를 돌리면 상대 방향이 바뀜." },
+  earTrendDescription: { zh: "这里只用方向趋势展示 ITD/ILD，不做真实双耳卷积。真实 ILD 随频率变化；前后对称方向可能产生相同线索，还需要耳廓频谱和头部运动来区分。", "zh-Hant": traditional("这里只用方向趋势展示 ITD/ILD，不做真实双耳卷积。真实 ILD 随频率变化；前后对称方向可能产生相同线索，还需要耳廓频谱和头部运动来区分。"), en: "These directional ITD/ILD trends are not real binaural convolution. Actual ILD is frequency-dependent; front/back directions can share cues and need pinna spectra and head motion to disambiguate.", ja: "ここでは ITD/ILD の方向傾向だけを示し、実際の両耳畳み込みは行わない。実際の ILD は周波数依存で、前後対称の方向は同じ手がかりを持つことがあり、耳介スペクトルや頭部運動で区別する必要がある。", ko: "여기서는 ITD/ILD의 방향 경향만 보여 주며 실제 양이 컨볼루션은 수행하지 않음. 실제 ILD는 주파수에 따라 달라지고 앞뒤 대칭 방향은 같은 단서를 만들 수 있어 귓바퀴 스펙트럼과 머리 움직임으로 구분해야 함." },
+  relativeEnergy: { zh: "相对能量：直达声、反射、拖尾", "zh-Hant": traditional("相对能量：直达声、反射、拖尾"), en: "Relative energy: direct, reflections, tail", ja: "相対エネルギー：直接音、反射、尾部", ko: "상대 에너지: 직접음, 반사, 꼬리" },
+  direct: { zh: "直达声", "zh-Hant": traditional("直达声"), en: "Direct", ja: "直接音", ko: "직접음" },
+  earlyReflections: { zh: "早期反射", "zh-Hant": traditional("早期反射"), en: "Early reflections", ja: "初期反射", ko: "초기 반사" },
+  reverbTail: { zh: "混响尾巴", "zh-Hant": traditional("混响尾巴"), en: "Reverb tail", ja: "残響尾部", ko: "잔향 꼬리" },
+  roomAria: { zh: "房间反射时间响应图", "zh-Hant": traditional("房间反射时间响应图"), en: "Room reflection time response", ja: "室内反射の時間応答図", ko: "공간 반사 시간 응답 그래프" },
+  timeMs: { zh: "时间 ms", "zh-Hant": traditional("时间 ms"), en: "time ms", ja: "時間 ms", ko: "시간 ms" },
+  energyModel: { zh: "能量图说明（非实测）", "zh-Hant": traditional("能量图说明（非实测）"), en: "Energy model (not measured)", ja: "エネルギーモデル（実測値ではない）", ko: "에너지 모델(실측값 아님)" },
+  energyDescription: { zh: "示意能量包络，不是真实房间脉冲响应。纵轴 10 log10(E/E₁ₘ)，显示下限 −60 dB，不是 dB SPL；直达声按 1/d² 衰减。反射保留比例 r = 滑块/100，三条假想反射使用 rⁿ/(d + 343Δt)²，额外延时 12/28/48 ms；尾部从额外 60 ms 开始。反射为 0 时无反射能量。上方曲线只是路径概念，不与这些延时逐条对应；未求解房间几何，不对应实测 RT60。", "zh-Hant": traditional("示意能量包络，不是真实房间脉冲响应。纵轴 10 log10(E/E₁ₘ)，显示下限 −60 dB，不是 dB SPL；直达声按 1/d² 衰减。反射保留比例 r = 滑块/100，三条假想反射使用 rⁿ/(d + 343Δt)²，额外延时 12/28/48 ms；尾部从额外 60 ms 开始。反射为 0 时无反射能量。上方曲线只是路径概念，不与这些延时逐条对应；未求解房间几何，不对应实测 RT60。"), en: "Illustrative energy envelope, not a real room impulse response. Y = 10 log10(E/E at 1 m), floored at −60 dB, not dB SPL. Direct energy follows 1/d². Retention r = slider/100; three hypothetical reflections use rⁿ/(d + 343Δt)² with excess delays of 12/28/48 ms. The tail starts 60 ms after direct arrival. Zero reflection means zero reflected energy. Curved paths above are conceptual, not matched to these delays; no room geometry or measured RT60 is claimed.", ja: "説明用のエネルギー包絡であり、実際の室内インパルス応答ではない。Y = 10 log10(E/E at 1 m)、下限は −60 dB で dB SPL ではない。直接音は 1/d² に従って減衰する。保持率 r = スライダー/100、3 本の仮想反射は余分な遅延 12/28/48 ms に対して rⁿ/(d + 343Δt)² を使う。尾部は直接音の 60 ms 後から始まる。反射 0 では反射エネルギーはない。上の曲線は概念的な経路で、これらの遅延とは 1 対 1 に対応せず、部屋の幾何や実測 RT60 を解いていない。", ko: "설명용 에너지 엔벨로프이며 실제 공간 임펄스 응답이 아님. Y = 10 log10(E/E at 1 m), 하한은 −60 dB이고 dB SPL이 아님. 직접음은 1/d²에 따라 감쇠함. 유지율 r = 슬라이더/100이며 세 가상 반사는 추가 지연 12/28/48 ms에 대해 rⁿ/(d + 343Δt)²를 사용함. 꼬리는 직접음 도달 60 ms 후 시작함. 반사 0이면 반사 에너지가 없음. 위 곡선은 개념적 경로이며 이 지연과 일대일로 대응하지 않고 공간 기하나 실측 RT60을 계산하지 않음." },
+  pipeline: { zh: "空间音频渲染流程", "zh-Hant": traditional("空间音频渲染流程"), en: "Spatial audio rendering pipeline", ja: "空間音声レンダリングフロー", ko: "공간 오디오 렌더링 흐름" },
+  backKnowledge: { zh: "返回知识库", "zh-Hant": traditional("返回知识库"), en: "Back to knowledge base", ja: "ナレッジベースに戻る", ko: "지식 베이스로 돌아가기" },
+  backDetails: { zh: "返回详细内容", "zh-Hant": traditional("返回详细内容"), en: "Back to detailed content", ja: "詳細コンテンツに戻る", ko: "상세 내용으로 돌아가기" },
+  traditionalLab: { zh: "传统 DSP 实验", "zh-Hant": traditional("传统 DSP 实验"), en: "Traditional DSP lab", ja: "従来型 DSP 実験", ko: "전통 DSP 실험" },
+  labTitle: { zh: "空间音频实验室", "zh-Hant": traditional("空间音频实验室"), en: "Spatial Audio Lab", ja: "空間音声ラボ", ko: "공간 오디오 실험실" },
+  intro: { zh: "用一个俯视声源图理解 ITD、ILD、HRTF、双耳渲染、对象音频和头部追踪如何共同形成空间感。", "zh-Hant": traditional("用一个俯视声源图理解 ITD、ILD、HRTF、双耳渲染、对象音频和头部追踪如何共同形成空间感。"), en: "Use a top-down source diagram to understand how ITD, ILD, HRTF, binaural rendering, object audio, and head tracking create spatial perception.", ja: "上面から見た音源図で、ITD、ILD、HRTF、バイノーラルレンダリング、オブジェクト音声、ヘッドトラッキングが空間知覚をどう作るかを理解する。", ko: "평면 음원 다이어그램을 사용해 ITD, ILD, HRTF, 바이노럴 렌더링, 오브젝트 오디오 및 헤드 트래킹이 공간감을 어떻게 만드는지 이해함." },
+  workbench: { zh: "空间音频实验台", "zh-Hant": traditional("空间音频实验台"), en: "Spatial audio workbench", ja: "空間音声ワークベンチ", ko: "공간 오디오 워크벤치" },
+  modes: { zh: "空间音频模式", "zh-Hant": traditional("空间音频模式"), en: "Spatial audio modes", ja: "空間音声モード", ko: "공간 오디오 모드" },
+  sourceAngle: { zh: "声源角度", "zh-Hant": traditional("声源角度"), en: "Source angle", ja: "音源角度", ko: "음원 각도" },
+  distance: { zh: "距离", "zh-Hant": traditional("距离"), en: "Distance", ja: "距離", ko: "거리" },
+  reflections: { zh: "房间反射", "zh-Hant": traditional("房间反射"), en: "Room reflections", ja: "室内反射", ko: "공간 반사" },
+  headDirection: { zh: "头部朝向", "zh-Hant": traditional("头部朝向"), en: "Head yaw", ja: "頭部 yaw", ko: "머리 yaw" },
+  relativeAngle: { zh: "相对角度：", "zh-Hant": traditional("相对角度："), en: "Relative angle: ", ja: "相対角度：", ko: "상대 각도: " },
+  itd: { zh: "ITD：", "zh-Hant": traditional("ITD："), en: "ITD: ", ja: "ITD：", ko: "ITD: " },
+  ildAbout: { zh: "ILD：约 ", "zh-Hant": traditional("ILD：约 "), en: "ILD: about ", ja: "ILD：約 ", ko: "ILD: 약 " },
+  distanceLoss: { zh: "距离衰减：", "zh-Hant": traditional("距离衰减："), en: "Distance loss: ", ja: "距離減衰：", ko: "거리 감쇠: " },
+  modelLimits: { zh: "模型边界", "zh-Hant": traditional("模型边界"), en: "Model limits", ja: "モデルの範囲", ko: "모델 한계" },
+  modelBoundary: { zh: "ITD/ILD 是方向趋势模型，不是个人 HRTF：实际值还随频率、头型和距离变化。HRTF 需测量或选取数据库，延迟取决于渲染实现，不能由角度和反射强度直接推算。俯视图位置非等比例，曲线仅表示反射路径概念。", "zh-Hant": traditional("ITD/ILD 是方向趋势模型，不是个人 HRTF：实际值还随频率、头型和距离变化。HRTF 需测量或选取数据库，延迟取决于渲染实现，不能由角度和反射强度直接推算。俯视图位置非等比例，曲线仅表示反射路径概念。"), en: "ITD/ILD are directional trend models, not personal HRTFs; actual cues depend on frequency, head geometry, and distance. HRTFs require measurements or a database; latency depends on the renderer, not just angle and reflection strength. The top view is not to scale; curves are conceptual reflection paths.", ja: "ITD/ILD は方向の傾向モデルで、個人の HRTF ではない。実際の手がかりは周波数、頭部形状、距離にも依存する。HRTF には測定またはデータベースが必要で、遅延は角度や反射強度だけでなくレンダラーの実装で決まる。上面図は縮尺どおりではなく、曲線は反射経路の概念を示す。", ko: "ITD/ILD는 방향 경향 모델이며 개인별 HRTF가 아님. 실제 단서는 주파수, 머리 형상 및 거리에도 좌우됨. HRTF는 측정이나 데이터베이스가 필요하고 지연은 각도와 반사 강도만이 아니라 렌더러 구현에 따라 결정됨. 평면도는 실제 비율이 아니며 곡선은 반사 경로 개념임." },
+  principles: { zh: "原理与渲染流程", "zh-Hant": traditional("原理与渲染流程"), en: "Principles and rendering flow", ja: "原理とレンダリングフロー", ko: "원리 및 렌더링 흐름" }
 } satisfies Record<string, Localized>;
 
 function clamp(value: number, min: number, max: number) {
@@ -202,13 +203,13 @@ function SpatialScene({
   const reflectionAmount = reflection / 100;
   const showHeadTracking = mode === "headTracking";
   const cueSummary = {
-    zh: `当前双耳线索：${Math.abs(lateral) < 0.08 ? "左右耳接近同时" : lateral < 0 ? "左耳先到 / 左侧更强" : "右耳先到 / 右侧更强"}`,
+    zh: `当前双耳线索：${Math.abs(lateral) < 0.08 ? "左右耳接近同时" : lateral < 0 ? "左耳先到 / 左侧更强" : "右耳先到 / 右侧更强"}`, "zh-Hant": traditional(`当前双耳线索：${Math.abs(lateral) < 0.08 ? "左右耳接近同时" : lateral < 0 ? "左耳先到 / 左侧更强" : "右耳先到 / 右侧更强"}`),
     en: `Current binaural cue: ${Math.abs(lateral) < 0.08 ? "ears nearly aligned" : lateral < 0 ? "left ear first / stronger left" : "right ear first / stronger right"}`,
     ja: `現在の両耳手がかり：${Math.abs(lateral) < 0.08 ? "左右の耳にほぼ同時に到達" : lateral < 0 ? "左耳が先に到達 / 左側が強い" : "右耳が先に到達 / 右側が強い"}`,
     ko: `현재 양이 단서: ${Math.abs(lateral) < 0.08 ? "양쪽 귀에 거의 동시에 도달" : lateral < 0 ? "왼쪽 귀가 먼저 도달 / 왼쪽이 더 강함" : "오른쪽 귀가 먼저 도달 / 오른쪽이 더 강함"}`
   }[language];
   const directionSummary = {
-    zh: `相对耳朵方向：${formatSignedDegrees(relativeAngle)}；世界声源角度：${formatSignedDegrees(sourceAngle)}；头部朝向：${formatSignedDegrees(headYaw)}`,
+    zh: `相对耳朵方向：${formatSignedDegrees(relativeAngle)}；世界声源角度：${formatSignedDegrees(sourceAngle)}；头部朝向：${formatSignedDegrees(headYaw)}`, "zh-Hant": traditional(`相对耳朵方向：${formatSignedDegrees(relativeAngle)}；世界声源角度：${formatSignedDegrees(sourceAngle)}；头部朝向：${formatSignedDegrees(headYaw)}`),
     en: `Ear-relative direction: ${formatSignedDegrees(relativeAngle)}; world source: ${formatSignedDegrees(sourceAngle)}; head yaw: ${formatSignedDegrees(headYaw)}`,
     ja: `耳に対する方向：${formatSignedDegrees(relativeAngle)}。世界座標の音源：${formatSignedDegrees(sourceAngle)}。頭部 yaw：${formatSignedDegrees(headYaw)}`,
     ko: `귀 기준 방향: ${formatSignedDegrees(relativeAngle)}; 세계 음원: ${formatSignedDegrees(sourceAngle)}; 머리 yaw: ${formatSignedDegrees(headYaw)}`
@@ -323,19 +324,19 @@ function BinauralCues({ language, relativeAngle, itdMs, ildDb, distance }: {
       const gain = 10 ** (-(far ? ildDb : 0) / 20) / distance;
       const x = 20 + delay * 360;
       const earName = {
-        zh: ear === "L" ? "左耳" : "右耳",
+        zh: ear === "L" ? "左耳" : "右耳", "zh-Hant": traditional(ear === "L" ? "左耳" : "右耳"),
         en: ear,
         ja: ear === "L" ? "左耳" : "右耳",
         ko: ear === "L" ? "왼쪽 귀" : "오른쪽 귀"
       }[language];
       const earDescription = {
-        zh: `${earName} · ${delay.toFixed(2)} ms · ${gain.toFixed(3)} ${spatialCopy.relativeAmplitude.zh}`,
+        zh: `${earName} · ${delay.toFixed(2)} ms · ${gain.toFixed(3)} ${spatialCopy.relativeAmplitude.zh}`, "zh-Hant": traditional(`${earName} · ${delay.toFixed(2)} ms · ${gain.toFixed(3)} ${spatialCopy.relativeAmplitude.zh}`),
         en: `${earName} · ${delay.toFixed(2)} ms · ${gain.toFixed(3)} ${spatialCopy.relativeAmplitude.en}`,
         ja: `${earName} · ${delay.toFixed(2)} ms · ${gain.toFixed(3)} ${spatialCopy.relativeAmplitude.ja}`,
         ko: `${earName} · ${delay.toFixed(2)} ms · ${gain.toFixed(3)} ${spatialCopy.relativeAmplitude.ko}`
       }[language];
       const earAria = {
-        zh: `${earName}到达示意`,
+        zh: `${earName}到达示意`, "zh-Hant": traditional(`${earName}到达示意`),
         en: `${ear} arrival diagram`,
         ja: `${earName}の到達図`,
         ko: `${earName} 도달 다이어그램`
@@ -470,40 +471,40 @@ export function SpatialAudioLab({ language, onBack, onBackToDetails }: SpatialAu
     const distanceGain = -20 * Math.log10(distance);
     const leadingEar =
       Math.abs(lateral) < 0.08
-        ? { zh: "双耳近似同时", en: "ears nearly aligned", ja: "左右の耳にほぼ同時", ko: "양쪽 귀에 거의 동시에" }
+        ? { zh: "双耳近似同时", "zh-Hant": traditional("双耳近似同时"), en: "ears nearly aligned", ja: "左右の耳にほぼ同時", ko: "양쪽 귀에 거의 동시에" }
         : lateral < 0
-          ? { zh: "左耳先到", en: "left ear first", ja: "左耳が先", ko: "왼쪽 귀가 먼저" }
-          : { zh: "右耳先到", en: "right ear first", ja: "右耳が先", ko: "오른쪽 귀가 먼저" };
+          ? { zh: "左耳先到", "zh-Hant": traditional("左耳先到"), en: "left ear first", ja: "左耳が先", ko: "왼쪽 귀가 먼저" }
+          : { zh: "右耳先到", "zh-Hant": traditional("右耳先到"), en: "right ear first", ja: "右耳が先", ko: "오른쪽 귀가 먼저" };
 
     return { distanceGain, ildDb, itdMs, leadingEar, relativeAngle };
   }, [distance, headYaw, sourceAngle]);
   const sourceAngleLabel = {
-    zh: `声源角度：${formatSignedDegrees(sourceAngle)}`,
+    zh: `声源角度：${formatSignedDegrees(sourceAngle)}`, "zh-Hant": traditional(`声源角度：${formatSignedDegrees(sourceAngle)}`),
     en: `Source angle: ${formatSignedDegrees(sourceAngle)}`,
     ja: `音源角度：${formatSignedDegrees(sourceAngle)}`,
     ko: `음원 각도: ${formatSignedDegrees(sourceAngle)}`
   }[language];
   const distanceLabel = {
-    zh: `距离：${distance.toFixed(1)} m`,
+    zh: `距离：${distance.toFixed(1)} m`, "zh-Hant": traditional(`距离：${distance.toFixed(1)} m`),
     en: `Distance: ${distance.toFixed(1)} m`,
     ja: `距離：${distance.toFixed(1)} m`,
     ko: `거리: ${distance.toFixed(1)} m`
   }[language];
   const reflectionLabel = {
-    zh: `房间反射：${reflection}%`,
+    zh: `房间反射：${reflection}%`, "zh-Hant": traditional(`房间反射：${reflection}%`),
     en: `Room reflections: ${reflection}%`,
     ja: `室内反射：${reflection}%`,
     ko: `공간 반사: ${reflection}%`
   }[language];
   const headDirectionLabel = {
-    zh: `头部朝向：${formatSignedDegrees(headYaw)}`,
+    zh: `头部朝向：${formatSignedDegrees(headYaw)}`, "zh-Hant": traditional(`头部朝向：${formatSignedDegrees(headYaw)}`),
     en: `Head yaw: ${formatSignedDegrees(headYaw)}`,
     ja: `頭部 yaw：${formatSignedDegrees(headYaw)}`,
     ko: `머리 yaw: ${formatSignedDegrees(headYaw)}`
   }[language];
   const relativeAngleLabel = `${spatialCopy.relativeAngle[language]}${formatSignedDegrees(metrics.relativeAngle)}`;
   const itdLabel = {
-    zh: `ITD：${metrics.itdMs.toFixed(2)} ms，${metrics.leadingEar.zh}`,
+    zh: `ITD：${metrics.itdMs.toFixed(2)} ms，${metrics.leadingEar.zh}`, "zh-Hant": traditional(`ITD：${metrics.itdMs.toFixed(2)} ms，${metrics.leadingEar.zh}`),
     en: `ITD: ${metrics.itdMs.toFixed(2)} ms, ${metrics.leadingEar.en}`,
     ja: `ITD：${metrics.itdMs.toFixed(2)} ms、${metrics.leadingEar.ja}`,
     ko: `ITD: ${metrics.itdMs.toFixed(2)} ms, ${metrics.leadingEar.ko}`

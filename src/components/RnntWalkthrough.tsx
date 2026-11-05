@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
 import type { Language } from "../content/knowledge";
@@ -60,7 +61,7 @@ export function RnntWalkthrough({ language }: { language: Language }) {
     "真正流式还要求 Encoder 使用因果或受限右侧上下文，并管理缓存、分块和端点；使用 RNN-T 本身不保证低延迟。本图仅示范一条路径，训练会对合法对齐求和。": "진정한 스트리밍에는 Encoder의 인과적 또는 제한된 오른쪽 문맥, 캐시·청크·종단점 관리도 필요합니다. RNN-T 자체가 낮은 지연을 보장하지는 않습니다. 이 그림은 한 경로만 보여 주며 학습에서는 유효한 정렬을 합산합니다.",
     "RNN-T 原论文（Graves，2012）": "RNN-T 원 논문(Graves, 2012)"
   };
-  const t = (zh: string, en: string) => language === "zh" ? zh : language === "en" ? en : (language === "ja" ? ja[zh] : ko[zh]);
+  const t = (zh: string, en: string) => language === "zh-Hant" ? traditional(zh) : language === "zh" ? zh : language === "en" ? en : (language === "ja" ? ja[zh] : ko[zh]);
   const [position, setPosition] = useState(0);
   const [phrase, setPhrase] = useState("你好");
   const points = [{ time: 0, count: 0 }];

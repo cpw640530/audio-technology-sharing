@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { useId, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Language } from "../content/knowledge";
@@ -296,7 +297,7 @@ const ko: Record<string, string> = {
   "应用场景": "응용 시나리오"
 };
 
-const t = (zh: string, en: string): LocalizedText => ({ zh, en, ja: ja[zh], ko: ko[zh] });
+const t = (zh: string, en: string): LocalizedText => ({ zh, "zh-Hant": traditional(zh), en, ja: ja[zh], ko: ko[zh] });
 
 const scenarios: Record<ScenarioId, Scenario> = {
   personal: {
@@ -408,7 +409,7 @@ function SceneFrame({ name, description, scrollRegionLabel, arrowId, riskArrowId
 }
 
 function ScenarioScene({ id, language }: { id: ScenarioId; language: Language }) {
-  const text = (zhText: string, enText: string, jaText = ja[zhText], koText = ko[zhText]) => language === "zh" ? zhText : language === "en" ? enText : language === "ja" ? jaText : koText;
+  const text = (zhText: string, enText: string, jaText = ja[zhText], koText = ko[zhText]) => language === "zh-Hant" ? traditional(zhText) : language === "zh" ? zhText : language === "en" ? enText : language === "ja" ? jaText : koText;
   const markerId = useId().replace(/:/g, "");
   const arrowId = `${markerId}-arrow`;
   const riskArrowId = `${markerId}-risk-arrow`;
@@ -473,7 +474,7 @@ function ScenarioScene({ id, language }: { id: ScenarioId; language: Language })
 export function MeetingCommunicationLab({ language, onBack, onBackToDetails }: MeetingCommunicationLabProps) {
   const [activeScenario, setActiveScenario] = useState<ScenarioId>("personal");
   const scenario = scenarios[activeScenario];
-  const text = (zhText: string, enText: string, jaText = ja[zhText], koText = ko[zhText]) => language === "zh" ? zhText : language === "en" ? enText : language === "ja" ? jaText : koText;
+  const text = (zhText: string, enText: string, jaText = ja[zhText], koText = ko[zhText]) => language === "zh-Hant" ? traditional(zhText) : language === "zh" ? zhText : language === "en" ? enText : language === "ja" ? jaText : koText;
 
   return (
     <main className="meeting-lab-page" aria-label={text("会议与通信实验室", "Conferencing and Communication Lab")}>

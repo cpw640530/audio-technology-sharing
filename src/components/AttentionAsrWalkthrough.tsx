@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { useState } from "react";
 import type { Language } from "../content/knowledge";
 
@@ -85,7 +86,7 @@ export function AttentionAsrWalkthrough({ language }: { language: Language }) {
     "端侧 ONNX 推理和 Transducer/Zipformer 等实时路线。": "엣지 ONNX 추론과 Transducer/Zipformer 같은 실시간 방식.",
     "注意力对齐和端到端 ASR 教学实现参考。": "Attention 정렬과 엔드투엔드 ASR 교육 구현 참고."
   };
-  const t = (zh: string, en: string) => language === "zh" ? zh : language === "en" ? en : (language === "ja" ? ja[zh] : ko[zh]);
+  const t = (zh: string, en: string) => language === "zh-Hant" ? traditional(zh) : language === "zh" ? zh : language === "en" ? en : (language === "ja" ? ja[zh] : ko[zh]);
   const [step, setStep] = useState(0);
   const finished = step === outputs.length;
   const token = Math.min(step, outputs.length - 1);

@@ -19,7 +19,7 @@ export function WelcomePage({ language }: {
             width="1536" height="1024" loading="eager" />
           <div className="welcome-copy">
             <p className="welcome-greeting">{text(language, "欢迎来到我的", "Welcome to my", "ようこそ", "환영합니다")}</p>
-            <h1 id="welcome-title">{language === "ja" ? <>オーディオ技術<br />共有サイト</> : language === "ko" ? <>오디오 기술<br />공유 사이트</> : zh ? <>音频知识<br />分享网站</> : <>Audio Knowledge<br />Sharing Website</>}</h1>
+            <h1 id="welcome-title">{language === "zh-Hant" ? <>音頻知識<br />分享網站</> : language === "ja" ? <>オーディオ技術<br />共有サイト</> : language === "ko" ? <>오디오 기술<br />공유 사이트</> : zh ? <>音频知识<br />分享网站</> : <>Audio Knowledge<br />Sharing Website</>}</h1>
             <p className="welcome-message">{text(language, "希望你能在这里学到音频相关知识，发现声音背后的原理。", "I hope you learn something about audio here and discover how sound works.", "オーディオの知識を学び、音の仕組みを一緒に探っていきましょう。", "오디오 지식을 배우고 소리 속에 숨은 원리를 발견해 보세요.")}</p>
             <a className="welcome-enter" href="#top">{text(language, "进入音频知识库", "Explore audio knowledge", "オーディオ知識を探る", "오디오 지식 살펴보기")}<ArrowRight size={20} aria-hidden="true" /></a>
           </div>

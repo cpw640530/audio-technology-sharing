@@ -28,7 +28,7 @@ Audio Technology Sharing is a content-first repository and web app for organizin
 
 The website provides a simple way to browse audio fundamentals, hardware, software, signal processing, AI audio algorithms, and real-world applications. Topic cards can open detailed explanations and focused labs for visual or interactive learning.
 
-**[Explore the website](https://cpw640530.github.io/audio-technology-sharing/)** · English, Chinese, Japanese, and Korean supported.
+**[Explore the website](https://cpw640530.github.io/audio-technology-sharing/)** · English, Simplified Chinese, Traditional Chinese, Japanese, and Korean supported.
 
 ## Interactive Labs: See What Changes
 
@@ -37,6 +37,7 @@ Why does a higher bit depth reduce quantization error? How does a longer window 
 | Lab | Try it | What to look for |
 | --- | --- | --- |
 | Sound waves | Change frequency, amplitude and phase; play the signal | Connect a sine model with waveform shape and sound |
+| Waveforms and spectra | Adjust three harmonic components and their relative phase | Compare pointwise sums and ideal amplitude lines; hear the same coefficients without auto-normalization |
 | Sampling, quantization and PCM | Compare sparse/dense samples and 2-bit/8-bit quantization; inspect sample words | Separate time sampling from amplitude precision; trace quantized values to binary codes |
 | FFT / STFT | Compare single/nearby tones, short/long windows, hop sizes and impulses | Follow the selected PCM window into its spectrum; distinguish bin spacing from resolving nearby frequencies |
 | AEC echo cancellation | Compare 0%, 50% and 100% model strength across four signal tracks | Follow playback reference, capture, estimated echo and output; see why cancellation is not simply capture minus playback |
@@ -93,7 +94,7 @@ It is designed for:
 
 | Area | Topics |
 | --- | --- |
-| Audio fundamentals | Sound, audio units, sampling, quantization, encoding, listening perception and metrics |
+| Audio fundamentals | Sound, audio units, sampling, quantization, encoding, listening perception and metrics, reading waveforms and spectra |
 | Audio hardware | Microphones, ADC / DAC / Codec, digital audio interfaces, amplifiers and speakers |
 | Audio software | System audio architecture, ALSA, real-time processing, audio codecs |
 | Traditional algorithms | Core signal processing (FFT/STFT, filters, EQ, dynamics), speech enhancement, spatial audio |
@@ -166,6 +167,8 @@ This repository provides separate README files for each language:
 - [한국어](./READMEs/README.ko.md)
 
 The README, website interface, topic guides, and labs support English, Chinese, Japanese, and Korean. Use the website's language selector to switch in place; your choice is remembered. Standard model names, code, equations, and original text embedded in reference images remain unchanged.
+
+The website also offers Traditional Chinese (`zh-Hant`), derived from the Simplified Chinese content using ICU character conversion. Regional terminology is not separately localized. Conversion data is bundled locally; no translation service is contacted. After changing Chinese copy, maintainers with ICU `uconv` installed can refresh phrase mappings with `node scripts/generate-traditional.cjs`.
 
 GitHub README files do not run JavaScript, so language switching is implemented with normal Markdown links.
 

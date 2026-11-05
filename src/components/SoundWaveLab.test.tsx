@@ -15,4 +15,7 @@ it("keeps frequency and the computed waveform when switching Japanese to Korean"
   expect(screen.getByRole("slider", { name: "주파수" })).toHaveValue("550");
   expect(screen.getByRole("button", { name: "상세 설명으로 돌아가기" })).toBeInTheDocument();
   expect(view.container.querySelector(".lab-wave-path")?.getAttribute("d")).toBe(path);
+  view.rerender(<SoundWaveLab language="zh-Hant" onBack={back} onBackToDetails={back} />);
+  expect(screen.getByRole("slider", { name: "頻率" })).toHaveValue("550");
+  expect(view.container.querySelector(".lab-wave-path")?.getAttribute("d")).toBe(path);
 });

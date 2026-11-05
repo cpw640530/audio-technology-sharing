@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 /// <reference types="vite/client" />
 import { useEffect, useRef, useState } from "react";
 import type { Language } from "../content/knowledge";
@@ -178,7 +179,7 @@ export function AiDenoiseWalkthrough({ language }: { language: Language }) {
     "模型输出": "모델 출력",
     "干净参考": "깨끗한 참조"
   };
-  const t = (zh: string, en: string) => language === "zh" ? zh : language === "en" ? en : (language === "ja" ? ja[zh] : ko[zh]);
+  const t = (zh: string, en: string) => language === "zh-Hant" ? traditional(zh) : language === "zh" ? zh : language === "en" ? en : (language === "ja" ? ja[zh] : ko[zh]);
   const [data,setData] = useState<Demo | null>(null);
   const [failed,setFailed] = useState(false);
   const [step,setStep] = useState(0);

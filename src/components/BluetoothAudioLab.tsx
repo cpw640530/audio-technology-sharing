@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { useState } from "react";
 import { ArrowLeft, Headphones, Smartphone, Radio, Speaker } from "lucide-react";
 import type { Language } from "../content/knowledge";
@@ -135,7 +136,7 @@ export function BluetoothAudioLab({ language, onBack, onBackToDetails }: { langu
     "返回知识库": "지식 베이스로 돌아가기",
     "返回详细内容": "상세 내용으로 돌아가기"
   };
-  const text = (cn: string, en: string, jaText?: string, koText?: string) => language === "zh" ? cn : language === "en" ? en : language === "ja" ? jaText ?? ja[cn] : koText ?? ko[cn];
+  const text = (cn: string, en: string, jaText?: string, koText?: string) => language === "zh-Hant" ? traditional(cn) : language === "zh" ? cn : language === "en" ? en : language === "ja" ? jaText ?? ja[cn] : koText ?? ko[cn];
   const [codec, setCodec] = useState<Codec>("LC3");
   const [rate, setRate] = useState(160);
   const [loss, setLoss] = useState(5);

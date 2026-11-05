@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { text } from "../content/language";
 import type { ReactNode } from "react";
 import { TopicReadingLayout } from "./TopicReadingLayout";
@@ -25,42 +26,42 @@ const frameworkLayers: Array<{
 }> = [
   {
     id: "user",
-    label: { zh: "用户态", en: "User space", ja: "ユーザー空間", ko: "사용자 공간" },
+    label: { zh: "用户态", "zh-Hant": traditional("用户态"), en: "User space", ja: "ユーザー空間", ko: "사용자 공간" },
     nodes: [
-      { title: { zh: "应用程序", en: "Applications", ja: "アプリケーション", ko: "애플리케이션" }, detail: { zh: "播放器 / 录音 / 通话", en: "playback / capture / calls", ja: "再生 / 収録 / 通話", ko: "재생 / 캡처 / 통화" } },
-      { title: { zh: "可选音频服务", en: "Optional audio server", ja: "任意の音声サーバー", ko: "선택적 오디오 서버" }, detail: { zh: "PipeWire / PulseAudio / JACK", en: "PipeWire / PulseAudio / JACK", ja: "PipeWire / PulseAudio / JACK", ko: "PipeWire / PulseAudio / JACK" } },
-      { title: { zh: "alsa-lib", en: "alsa-lib", ja: "alsa-lib", ko: "alsa-lib" }, detail: { zh: "PCM API + Control API", en: "PCM API + Control API", ja: "PCM API + Control API", ko: "PCM API + Control API" } },
-      { title: { zh: "PCM 插件", en: "PCM plugins", ja: "PCM プラグイン", ko: "PCM 플러그인" }, detail: { zh: "hw / plughw / default / dmix", en: "hw / plughw / default / dmix", ja: "hw / plughw / default / dmix", ko: "hw / plughw / default / dmix" } }
+      { title: { zh: "应用程序", "zh-Hant": traditional("应用程序"), en: "Applications", ja: "アプリケーション", ko: "애플리케이션" }, detail: { zh: "播放器 / 录音 / 通话", "zh-Hant": traditional("播放器 / 录音 / 通话"), en: "playback / capture / calls", ja: "再生 / 収録 / 通話", ko: "재생 / 캡처 / 통화" } },
+      { title: { zh: "可选音频服务", "zh-Hant": traditional("可选音频服务"), en: "Optional audio server", ja: "任意の音声サーバー", ko: "선택적 오디오 서버" }, detail: { zh: "PipeWire / PulseAudio / JACK", "zh-Hant": traditional("PipeWire / PulseAudio / JACK"), en: "PipeWire / PulseAudio / JACK", ja: "PipeWire / PulseAudio / JACK", ko: "PipeWire / PulseAudio / JACK" } },
+      { title: { zh: "alsa-lib", "zh-Hant": traditional("alsa-lib"), en: "alsa-lib", ja: "alsa-lib", ko: "alsa-lib" }, detail: { zh: "PCM API + Control API", "zh-Hant": traditional("PCM API + Control API"), en: "PCM API + Control API", ja: "PCM API + Control API", ko: "PCM API + Control API" } },
+      { title: { zh: "PCM 插件", "zh-Hant": traditional("PCM 插件"), en: "PCM plugins", ja: "PCM プラグイン", ko: "PCM 플러그인" }, detail: { zh: "hw / plughw / default / dmix", "zh-Hant": traditional("hw / plughw / default / dmix"), en: "hw / plughw / default / dmix", ja: "hw / plughw / default / dmix", ko: "hw / plughw / default / dmix" } }
     ],
-    handoff: { zh: "系统调用 / ioctl / mmap", en: "system calls / ioctl / mmap", ja: "システムコール / ioctl / mmap", ko: "시스템 호출 / ioctl / mmap" }
+    handoff: { zh: "系统调用 / ioctl / mmap", "zh-Hant": traditional("系统调用 / ioctl / mmap"), en: "system calls / ioctl / mmap", ja: "システムコール / ioctl / mmap", ko: "시스템 호출 / ioctl / mmap" }
   },
   {
     id: "kernel",
-    label: { zh: "内核 ALSA", en: "Kernel ALSA", ja: "カーネル ALSA", ko: "커널 ALSA" },
+    label: { zh: "内核 ALSA", "zh-Hant": traditional("内核 ALSA"), en: "Kernel ALSA", ja: "カーネル ALSA", ko: "커널 ALSA" },
     nodes: [
-      { title: { zh: "ALSA Core", en: "ALSA Core", ja: "ALSA Core", ko: "ALSA Core" }, detail: { zh: "声卡注册、状态与公共接口", en: "card registration, state, common APIs", ja: "カード登録・状態・共通 API", ko: "사운드 카드 등록·상태·공통 API" } },
-      { title: { zh: "PCM 子系统", en: "PCM subsystem", ja: "PCM サブシステム", ko: "PCM 서브시스템" }, detail: { zh: "音频帧、buffer、period、XRUN", en: "frames, buffer, period, XRUN", ja: "フレーム・buffer・period・XRUN", ko: "프레임·buffer·period·XRUN" } },
-      { title: { zh: "Control 子系统", en: "Control subsystem", ja: "Control サブシステム", ko: "Control 서브시스템" }, detail: { zh: "音量、静音、路由与开关", en: "volume, mute, routes, switches", ja: "音量・ミュート・経路・スイッチ", ko: "음량·음소거·경로·스위치" } }
+      { title: { zh: "ALSA Core", "zh-Hant": traditional("ALSA Core"), en: "ALSA Core", ja: "ALSA Core", ko: "ALSA Core" }, detail: { zh: "声卡注册、状态与公共接口", "zh-Hant": traditional("声卡注册、状态与公共接口"), en: "card registration, state, common APIs", ja: "カード登録・状態・共通 API", ko: "사운드 카드 등록·상태·공통 API" } },
+      { title: { zh: "PCM 子系统", "zh-Hant": traditional("PCM 子系统"), en: "PCM subsystem", ja: "PCM サブシステム", ko: "PCM 서브시스템" }, detail: { zh: "音频帧、buffer、period、XRUN", "zh-Hant": traditional("音频帧、buffer、period、XRUN"), en: "frames, buffer, period, XRUN", ja: "フレーム・buffer・period・XRUN", ko: "프레임·buffer·period·XRUN" } },
+      { title: { zh: "Control 子系统", "zh-Hant": traditional("Control 子系统"), en: "Control subsystem", ja: "Control サブシステム", ko: "Control 서브시스템" }, detail: { zh: "音量、静音、路由与开关", "zh-Hant": traditional("音量、静音、路由与开关"), en: "volume, mute, routes, switches", ja: "音量・ミュート・経路・スイッチ", ko: "음량·음소거·경로·스위치" } }
     ],
-    handoff: { zh: "驱动回调 / 参数约束 / 中断", en: "driver callbacks / constraints / interrupts", ja: "ドライバーのコールバック / 制約 / 割り込み", ko: "드라이버 콜백 / 제약 / 인터럽트" }
+    handoff: { zh: "驱动回调 / 参数约束 / 中断", "zh-Hant": traditional("驱动回调 / 参数约束 / 中断"), en: "driver callbacks / constraints / interrupts", ja: "ドライバーのコールバック / 制約 / 割り込み", ko: "드라이버 콜백 / 제약 / 인터럽트" }
   },
   {
     id: "driver",
-    label: { zh: "设备驱动", en: "Device drivers", ja: "デバイスドライバー", ko: "장치 드라이버" },
+    label: { zh: "设备驱动", "zh-Hant": traditional("设备驱动"), en: "Device drivers", ja: "デバイスドライバー", ko: "장치 드라이버" },
     nodes: [
-      { title: { zh: "PC / USB 驱动", en: "PC / USB drivers", ja: "PC / USB ドライバー", ko: "PC / USB 드라이버" }, detail: { zh: "PCI、USB 等声卡驱动", en: "PCI, USB, and other sound drivers", ja: "PCI・USB などの音声ドライバー", ko: "PCI, USB 등의 사운드 드라이버" } },
-      { title: { zh: "嵌入式 ASoC", en: "Embedded ASoC", ja: "組み込み ASoC", ko: "임베디드 ASoC" }, detail: { zh: "Machine + Platform / CPU DAI", en: "Machine + Platform / CPU DAI", ja: "Machine + Platform / CPU DAI", ko: "Machine + Platform / CPU DAI" } },
-      { title: { zh: "Codec 驱动", en: "Codec driver", ja: "Codec ドライバー", ko: "Codec 드라이버" }, detail: { zh: "Codec DAI、Mixer、DAPM", en: "Codec DAI, Mixer, DAPM", ja: "Codec DAI・Mixer・DAPM", ko: "Codec DAI, Mixer, DAPM" } }
+      { title: { zh: "PC / USB 驱动", "zh-Hant": traditional("PC / USB 驱动"), en: "PC / USB drivers", ja: "PC / USB ドライバー", ko: "PC / USB 드라이버" }, detail: { zh: "PCI、USB 等声卡驱动", "zh-Hant": traditional("PCI、USB 等声卡驱动"), en: "PCI, USB, and other sound drivers", ja: "PCI・USB などの音声ドライバー", ko: "PCI, USB 등의 사운드 드라이버" } },
+      { title: { zh: "嵌入式 ASoC", "zh-Hant": traditional("嵌入式 ASoC"), en: "Embedded ASoC", ja: "組み込み ASoC", ko: "임베디드 ASoC" }, detail: { zh: "Machine + Platform / CPU DAI", "zh-Hant": traditional("Machine + Platform / CPU DAI"), en: "Machine + Platform / CPU DAI", ja: "Machine + Platform / CPU DAI", ko: "Machine + Platform / CPU DAI" } },
+      { title: { zh: "Codec 驱动", "zh-Hant": traditional("Codec 驱动"), en: "Codec driver", ja: "Codec ドライバー", ko: "Codec 드라이버" }, detail: { zh: "Codec DAI、Mixer、DAPM", "zh-Hant": traditional("Codec DAI、Mixer、DAPM"), en: "Codec DAI, Mixer, DAPM", ja: "Codec DAI・Mixer・DAPM", ko: "Codec DAI, Mixer, DAPM" } }
     ],
-    handoff: { zh: "寄存器 / DMA / 音频总线", en: "registers / DMA / audio buses", ja: "レジスター / DMA / 音声バス", ko: "레지스터 / DMA / 오디오 버스" }
+    handoff: { zh: "寄存器 / DMA / 音频总线", "zh-Hant": traditional("寄存器 / DMA / 音频总线"), en: "registers / DMA / audio buses", ja: "レジスター / DMA / 音声バス", ko: "레지스터 / DMA / 오디오 버스" }
   },
   {
     id: "hardware",
-    label: { zh: "硬件", en: "Hardware", ja: "ハードウェア", ko: "하드웨어" },
+    label: { zh: "硬件", "zh-Hant": traditional("硬件"), en: "Hardware", ja: "ハードウェア", ko: "하드웨어" },
     nodes: [
-      { title: { zh: "USB / PCI 声卡", en: "USB / PCI audio", ja: "USB / PCI 音声", ko: "USB / PCI 오디오" }, detail: { zh: "独立设备路径", en: "discrete device path", ja: "独立機器の経路", ko: "독립 장치 경로" } },
-      { title: { zh: "SoC 音频控制器", en: "SoC audio controller", ja: "SoC 音声コントローラー", ko: "SoC 오디오 컨트롤러" }, detail: { zh: "DMA + I2S / TDM / PDM", en: "DMA + I2S / TDM / PDM", ja: "DMA + I2S / TDM / PDM", ko: "DMA + I2S / TDM / PDM" } },
-      { title: { zh: "Codec 与换能器", en: "Codec and transducers", ja: "Codec と変換器", ko: "Codec 및 변환기" }, detail: { zh: "麦克风 → ADC；DAC → 功放 → 扬声器", en: "mic → ADC; DAC → amp → speaker", ja: "マイク → ADC；DAC → アンプ → スピーカー", ko: "마이크 → ADC; DAC → 앰프 → 스피커" } }
+      { title: { zh: "USB / PCI 声卡", "zh-Hant": traditional("USB / PCI 声卡"), en: "USB / PCI audio", ja: "USB / PCI 音声", ko: "USB / PCI 오디오" }, detail: { zh: "独立设备路径", "zh-Hant": traditional("独立设备路径"), en: "discrete device path", ja: "独立機器の経路", ko: "독립 장치 경로" } },
+      { title: { zh: "SoC 音频控制器", "zh-Hant": traditional("SoC 音频控制器"), en: "SoC audio controller", ja: "SoC 音声コントローラー", ko: "SoC 오디오 컨트롤러" }, detail: { zh: "DMA + I2S / TDM / PDM", "zh-Hant": traditional("DMA + I2S / TDM / PDM"), en: "DMA + I2S / TDM / PDM", ja: "DMA + I2S / TDM / PDM", ko: "DMA + I2S / TDM / PDM" } },
+      { title: { zh: "Codec 与换能器", "zh-Hant": traditional("Codec 与换能器"), en: "Codec and transducers", ja: "Codec と変換器", ko: "Codec 및 변환기" }, detail: { zh: "麦克风 → ADC；DAC → 功放 → 扬声器", "zh-Hant": traditional("麦克风 → ADC；DAC → 功放 → 扬声器"), en: "mic → ADC; DAC → amp → speaker", ja: "マイク → ADC；DAC → アンプ → スピーカー", ko: "마이크 → ADC; DAC → 앰프 → 스피커" } }
     ]
   }
 ];

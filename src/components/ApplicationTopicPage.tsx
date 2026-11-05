@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import type { ReactNode } from "react";
 import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
@@ -5,9 +6,9 @@ import type { Category, Language, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
 
 type DisplayTopic = Topic & { category: Category };
-type Locale = "zh" | "en" | "ja" | "ko";
+type Locale = "zh" | "en" | "ja" | "ko" | "zh-Hant";
 type LocalizedText = Record<Locale, string>;
-const l = (zh: string, en: string, ja: string, ko: string): LocalizedText => ({ zh, en, ja, ko });
+const l = (zh: string, en: string, ja: string, ko: string): LocalizedText => ({ zh, "zh-Hant": traditional(zh), en, ja, ko });
 type ApplicationTopicPageProps = {
   relatedTopics?: ReactNode; language: Language; topic: DisplayTopic; onBack: () => void; onOpenLab: () => void; onOpenPrevious?: () => void; onOpenNext?: () => void };
 
@@ -48,7 +49,7 @@ const stageMap: Record<string, Stage[]> = {
 export function ApplicationTopicPage({ relatedTopics, language, topic, onBack, onOpenLab, onOpenPrevious, onOpenNext }: ApplicationTopicPageProps) {
   const detail = topic.detail;
   const stages = stageMap[detail.lab?.type ?? ""] ?? [];
-  const t = (zh: string, en: string, ja: string, ko: string) => ({ zh, en, ja, ko })[language];
+  const t = (zh: string, en: string, ja: string, ko: string) => ({ zh, "zh-Hant": traditional(zh), en, ja, ko })[language];
   return (
     <main className="sound-topic-page application-topic-page" aria-labelledby="application-topic-title">
       <header className="sound-topic-hero">

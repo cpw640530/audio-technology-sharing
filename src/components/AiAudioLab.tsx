@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { ArrowLeft } from "lucide-react";
 import { AiDenoiseWalkthrough } from "./AiDenoiseWalkthrough";
 import { AsrWalkthrough } from "./AsrWalkthrough";
@@ -2197,7 +2198,7 @@ Object.assign(ko, {
 });
 
 const localizeText = (text: SourceText): LocalizedText => ({
-  zh: text.zh,
+  zh: text.zh, "zh-Hant": traditional(text.zh),
   en: text.en,
   ja: ja[text.zh],
   ko: ko[text.zh]
@@ -2230,7 +2231,7 @@ const aiArticles: Record<AiAudioLabId, LocalizedAiArticle> = Object.fromEntries(
 ) as Record<AiAudioLabId, LocalizedAiArticle>;
 
 const aiUiText = (language: Language, zh: string, en: string, jaText: string, koText: string): string => ({
-  zh,
+  zh, "zh-Hant": traditional(zh),
   en,
   ja: jaText,
   ko: koText

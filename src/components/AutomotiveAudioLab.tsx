@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { useId, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Language } from "../content/knowledge";
@@ -10,7 +11,7 @@ type AutomotiveAudioLabProps = {
 
 type LocalizedText = Record<Language, string>;
 
-const l = (zh: string, en: string, ja: string, ko: string): LocalizedText => ({ zh, en, ja, ko });
+const l = (zh: string, en: string, ja: string, ko: string): LocalizedText => ({ zh, "zh-Hant": traditional(zh), en, ja, ko });
 
 type AutomotiveModule = "layout" | "voice" | "localization" | "spatial" | "anc";
 
@@ -196,7 +197,7 @@ function AutomotiveCabinDiagram({ activeModule, language }: { activeModule: Auto
     "当前模块不相关": "현재 모듈과 무관",
     "选择模块，观察麦克风、扬声器与控制链路如何在同一座舱中协同。": "모듈을 선택해 같은 실내에서 마이크, 스피커, 제어 경로가 어떻게 협력하는지 확인합니다."
   };
-  const t = (zh: string, en: string, jaText = ja[zh], koText = ko[zh]) => language === "zh" ? zh : language === "en" ? en : language === "ja" ? jaText : koText;
+  const t = (zh: string, en: string, jaText = ja[zh], koText = ko[zh]) => language === "zh-Hant" ? traditional(zh) : language === "zh" ? zh : language === "en" ? en : language === "ja" ? jaText : koText;
 
   return (
     <figure className="automotive-diagram">
@@ -362,10 +363,10 @@ function AutomotiveCabinDiagram({ activeModule, language }: { activeModule: Auto
       >
         <ul>
           {legendItems.map((item) => {
-            const secondaryLanguage: Language = ({ zh: "en", en: "zh", ja: "en", ko: "en" } as Record<Language, Language>)[language];
+            const secondaryLanguage: Language = ({ zh: "en", "zh-Hant": traditional("en"), en: "zh", ja: "en", ko: "en" } as Record<Language, Language>)[language];
             const isRelevant = item.relevantTo.includes(activeModule);
             const accessibleLabel =
-              language === "zh"
+              language === "zh-Hant" ? traditional(`${item.label.zh} - ${isRelevant ? "当前模块相关" : "当前模块不相关"}`) : language === "zh"
                 ? `${item.label.zh} - ${isRelevant ? "当前模块相关" : "当前模块不相关"}`
                 : language === "en"
                   ? `${item.label.en} - ${isRelevant ? "Relevant to current module" : "Not relevant to current module"}`
@@ -399,7 +400,7 @@ function AutomotiveCabinDiagram({ activeModule, language }: { activeModule: Auto
 export function AutomotiveAudioLab({ language, onBack, onBackToDetails }: AutomotiveAudioLabProps) {
   const [activeModule, setActiveModule] = useState<AutomotiveModule>("layout");
   const activeContent = automotiveModules[activeModule];
-  const t = (zh: string, en: string, ja: string, ko: string) => language === "zh" ? zh : language === "en" ? en : language === "ja" ? ja : ko;
+  const t = (zh: string, en: string, ja: string, ko: string) => language === "zh-Hant" ? traditional(zh) : language === "zh" ? zh : language === "en" ? en : language === "ja" ? ja : ko;
 
   return (
     <main className="automotive-lab-page" aria-label={t("车载声学实验室", "In-Car Acoustics Lab", "車載音響ラボ", "차량 음향 랩")}>

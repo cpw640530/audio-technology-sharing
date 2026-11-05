@@ -10,7 +10,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 const cases = categories.flatMap(category => category.topics.flatMap(topic =>
-  (["ja", "ko"] as const).map(language => ({ title: topic.title.en, topic, language }))
+  (["ja", "ko", "zh-Hant"] as const).map(language => ({ title: topic.title.en, topic, language }))
 ));
 
 it.each(cases)("opens the translated guide and its lab: $title ($language)", ({ topic, language }) => {

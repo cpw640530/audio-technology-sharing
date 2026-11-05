@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { text } from "../content/language";
 import type { ReactNode } from "react";
 import { TopicReadingLayout } from "./TopicReadingLayout";
@@ -23,17 +24,17 @@ if (!audioUnitsTopic) {
 }
 
 const references: Record<string, Record<Language, string>> = {
-  dB: { zh: "比例：必须先说明比较对象", en: "Ratio: always name the compared quantities", ja: "比：比較する量を明示する", ko: "비율: 비교 대상을 명시" },
-  dBSPL: { zh: "声压参考：20 µPa", en: "Acoustic reference: 20 µPa", ja: "音圧の基準：20 µPa", ko: "음압 기준: 20 µPa" },
-  dBFS: { zh: "数字参考：0 dBFS 满刻度", en: "Digital reference: 0 dBFS full scale", ja: "デジタルの基準：0 dBFS フルスケール", ko: "디지털 기준: 0 dBFS 풀 스케일" },
-  "dBu / dBV": { zh: "模拟电压：0.775 / 1 Vrms", en: "Analog voltage: 0.775 / 1 Vrms", ja: "アナログ電圧：0.775 / 1 Vrms", ko: "아날로그 전압: 0.775 / 1 Vrms" }
+  dB: { zh: "比例：必须先说明比较对象", "zh-Hant": traditional("比例：必须先说明比较对象"), en: "Ratio: always name the compared quantities", ja: "比：比較する量を明示する", ko: "비율: 비교 대상을 명시" },
+  dBSPL: { zh: "声压参考：20 µPa", "zh-Hant": traditional("声压参考：20 µPa"), en: "Acoustic reference: 20 µPa", ja: "音圧の基準：20 µPa", ko: "음압 기준: 20 µPa" },
+  dBFS: { zh: "数字参考：0 dBFS 满刻度", "zh-Hant": traditional("数字参考：0 dBFS 满刻度"), en: "Digital reference: 0 dBFS full scale", ja: "デジタルの基準：0 dBFS フルスケール", ko: "디지털 기준: 0 dBFS 풀 스케일" },
+  "dBu / dBV": { zh: "模拟电压：0.775 / 1 Vrms", "zh-Hant": traditional("模拟电压：0.775 / 1 Vrms"), en: "Analog voltage: 0.775 / 1 Vrms", ja: "アナログ電圧：0.775 / 1 Vrms", ko: "아날로그 전압: 0.775 / 1 Vrms" }
 };
 
 export function AudioUnitsPage({ relatedTopics, language, onBack, onOpenLab, onOpenPrevious, onOpenNext }: AudioUnitsPageProps) {
   const detail = audioUnitsTopic.detail;
   const terms = detail.termExplanations ?? [];
   const chain = {
-    zh: ["数字样本 dBFS", "DAC 输出电压", "功放增益", "扬声器灵敏度", "测得 dBSPL"],
+    zh: ["数字样本 dBFS", "DAC 输出电压", "功放增益", "扬声器灵敏度", "测得 dBSPL"], "zh-Hant": traditional(["数字样本 dBFS", "DAC 输出电压", "功放增益", "扬声器灵敏度", "测得 dBSPL"]),
     en: ["Digital samples dBFS", "DAC output voltage", "Amplifier gain", "Speaker sensitivity", "Measured dBSPL"],
     ja: ["デジタル値 dBFS", "DAC 出力電圧", "アンプのゲイン", "スピーカー感度", "測定値 dBSPL"],
     ko: ["디지털 값 dBFS", "DAC 출력 전압", "앰프 게인", "스피커 감도", "측정값 dBSPL"]

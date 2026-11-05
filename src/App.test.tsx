@@ -114,6 +114,26 @@ describe("Audio knowledge app", () => {
     expect(screen.queryByRole("heading", { name: "音频技术分享" })).not.toBeInTheDocument();
   });
 
+  it.each(["zh", "en", "zh-Hant", "ja", "ko"] as const)("links the waveform-spectrum guide, lab and adjacent card (%s)", language => {
+    window.localStorage.setItem("audio-technology-language", language);
+    render(<App />);
+    const topics = categories[0].topics;
+    const topic = topics.find(item => item.detail.lab?.type === "wave-spectrum")!;
+    const previous = topics.find(item => item.detail.lab?.type === "sound-wave")!;
+    fireEvent.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: new RegExp(topic.title[language]) }));
+    const main = screen.getByRole("main", { name: topic.title[language] });
+    fireEvent.click(within(main).getByRole("button", { name: topic.detail.lab!.buttonLabel[language] }));
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(topic.detail.lab!.title[language]);
+    fireEvent.change(screen.getByRole("slider", { name: "500 Hz" }), { target: { value: "0" } });
+    expect(screen.getByTestId("spectrum-line-1")).toHaveAttribute("data-amplitude", "0");
+    fireEvent.click(document.querySelectorAll<HTMLButtonElement>(".sound-lab-back-actions button")[1]);
+    expect(screen.getByRole("main", { name: topic.title[language] })).toBeInTheDocument();
+    fireEvent.click(document.querySelectorAll<HTMLButtonElement>(".topic-pager button")[0]);
+    expect(screen.getByRole("main", { name: previous.title[language] })).toBeInTheDocument();
+    fireEvent.click(document.querySelectorAll<HTMLButtonElement>(".topic-pager button")[2]);
+    expect(screen.getByRole("main", { name: topic.title[language] })).toBeInTheDocument();
+  });
+
   it.each(["zh", "en"] as const)("keeps fundamentals definitions unique and diagrams in their chapters (%s)", async language => {
     window.localStorage.setItem("audio-technology-language", language);
     const user = userEvent.setup();
@@ -234,12 +254,12 @@ describe("Audio knowledge app", () => {
     render(<App />);
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
     expect(screen.getByRole("button", { name: "上一张卡片" })).toBeDisabled();
-    for (const title of ["声音与音频单位", "数字音频基础", "听感与指标"]) {
+    for (const title of ["读懂波形与频谱", "数字音频基础", "声音与音频单位", "听感与指标"]) {
       await user.click(screen.getByRole("button", { name: "下一张卡片" }));
       expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
     }
     expect(screen.getByRole("button", { name: "下一张卡片" })).toBeDisabled();
-    for (const title of ["数字音频基础", "声音与音频单位", "什么是声音"]) {
+    for (const title of ["声音与音频单位", "数字音频基础", "读懂波形与频谱", "什么是声音"]) {
       await user.click(screen.getByRole("button", { name: "上一张卡片" }));
       expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
     }
@@ -1682,12 +1702,12 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
   });
 
-  it("opens all four fundamental guides directly in both languages", async () => {
+  it("opens all five fundamental guides directly in both languages", async () => {
     const user = userEvent.setup();
     render(<App />);
     for (const titles of [
-      ["什么是声音", "声音与音频单位", "数字音频基础", "听感与指标"],
-      ["What Sound Is", "Sound and Audio Units", "Digital Audio Basics", "Listening Perception and Metrics"]
+      ["什么是声音", "声音与音频单位", "数字音频基础", "听感与指标", "读懂波形与频谱"],
+      ["What Sound Is", "Sound and Audio Units", "Digital Audio Basics", "Listening Perception and Metrics", "Reading Waveforms and Spectra"]
     ]) {
       const chinese = titles[0] === "什么是声音";
       if (!chinese) await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
@@ -3133,6 +3153,7 @@ describe("Audio knowledge app", () => {
 
   it("lets readers compare listening effects with generated audio examples", async () => {
     const oscillator = {
+      setPeriodicWave: vi.fn(),
       connect: vi.fn(),
       start: vi.fn(),
       stop: vi.fn(),
@@ -3161,6 +3182,7 @@ describe("Audio knowledge app", () => {
       currentTime: 0,
       destination: {},
       createOscillator: vi.fn(() => oscillator),
+      createPeriodicWave: vi.fn(() => ({})),
       createGain: vi.fn(() => gain),
       createBiquadFilter: vi.fn(() => biquadFilter),
       createStereoPanner: vi.fn(() => stereoPanner),
@@ -3202,9 +3224,9 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("低频")).toBeInTheDocument();
     expect(screen.getByText("中频")).toBeInTheDocument();
     expect(screen.getByText("高频")).toBeInTheDocument();
-    expect(screen.getByText("+12 dB")).toBeInTheDocument();
+    expect(screen.getByText("+18 dB")).toBeInTheDocument();
     expect(screen.getByText("0 dB")).toBeInTheDocument();
-    expect(screen.getByText("-12 dB")).toBeInTheDocument();
+    expect(screen.getByText("-18 dB")).toBeInTheDocument();
     expect(screen.getByText("高频提升区")).toBeInTheDocument();
     expect(screen.getByTestId("listening-tone-emphasis-band")).toHaveClass("listening-tone-emphasis-band");
     const brightMetricPath = screen.getByTestId("listening-metric-response").getAttribute("d");
@@ -3262,7 +3284,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByTestId("listening-harmonic-2")).toHaveClass("listening-harmonic-component");
     expect(screen.getByTestId("listening-harmonic-3")).toHaveClass("listening-harmonic-component");
     expect(screen.getByTestId("listening-harmonic-5")).toHaveClass("listening-harmonic-component");
-    expect(screen.queryByTestId("listening-harmonic-7")).not.toBeInTheDocument();
+    expect(screen.getByTestId("listening-harmonic-7")).toBeInTheDocument();
     const harmonicSumBefore = screen.getByTestId("listening-harmonic-sum").getAttribute("d");
 
     fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
@@ -3382,8 +3404,10 @@ describe("Audio knowledge app", () => {
     const audioContext = {
       currentTime: 0,
       destination: {},
+      createPeriodicWave: vi.fn(() => ({})),
       createOscillator: vi.fn(() => {
         const oscillator = {
+          setPeriodicWave: vi.fn(),
           connect: vi.fn(),
           start: vi.fn(),
           stop: vi.fn(),
@@ -3475,10 +3499,16 @@ describe("Audio knowledge app", () => {
     expect(createdFilters[createdFilters.length - 1]?.frequency.setValueAtTime).toHaveBeenLastCalledWith(260, 0);
 
     await user.click(screen.getByRole("button", { name: "噪声底噪" }));
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), { target: { value: "0" } });
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
     expect(audioContext.createBufferSource).toHaveBeenCalled();
     expect(audioContext.createBuffer).toHaveBeenCalledWith(1, 4410, 44100);
     expect(bufferData.some((sample) => sample !== 0)).toBe(true);
+    const noiseGain = createdGains[createdGains.length - 1]!;
+    Object.assign(noiseGain.gain, { cancelScheduledValues: vi.fn() });
+    expect(noiseGain.gain.linearRampToValueAtTime).toHaveBeenCalledWith(0, 0.04);
+    fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), { target: { value: "80" } });
+    expect(noiseGain.gain.setValueAtTime).toHaveBeenLastCalledWith(0.8 * (0.014 + 0.8 * 0.04), 0);
 
     await user.click(screen.getByRole("button", { name: "谐波失真" }));
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
@@ -3492,6 +3522,8 @@ describe("Audio knowledge app", () => {
     expect(createdCompressors[createdCompressors.length - 1]?.ratio.setValueAtTime).toHaveBeenLastCalledWith(expect.any(Number), 0);
     const compressionInputGain = createdGains[createdGains.length - 2];
     const compressionOutputGain = createdGains[createdGains.length - 1];
+    expect(compressionInputGain?.connect).toHaveBeenCalledWith(createdCompressors[createdCompressors.length - 1]);
+    expect(createdCompressors[createdCompressors.length - 1]?.connect).toHaveBeenCalledWith(compressionOutputGain);
     expect(compressionInputGain?.gain.linearRampToValueAtTime).toHaveBeenCalledWith(expect.any(Number), 0.08);
     expect(compressionInputGain?.gain.linearRampToValueAtTime).toHaveBeenCalledWith(expect.any(Number), 0.4);
     expect(compressionInputGain?.gain.linearRampToValueAtTime).toHaveBeenCalledWith(expect.any(Number), 0.72);

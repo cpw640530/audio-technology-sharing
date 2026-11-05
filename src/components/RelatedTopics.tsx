@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { ArrowRight } from "lucide-react";
 import { categories, type Category, type Language, type Topic } from "../content/knowledge";
 import { getTopicKey, relatedTopics, type TopicKey } from "../content/relatedTopics";
@@ -11,7 +12,7 @@ export function RelatedTopics({ topicKey, language, onOpen }: {
 }) {
   return (
     <section className="related-topics" aria-labelledby="related-topics-title">
-      <h2 id="related-topics-title">{{ zh: "相关知识", en: "Related knowledge", ja: "関連知識", ko: "관련 지식" }[language]}</h2>
+      <h2 id="related-topics-title">{{ zh: "相关知识", "zh-Hant": traditional("相关知识"), en: "Related knowledge", ja: "関連知識", ko: "관련 지식" }[language]}</h2>
       <ul>
         {relatedTopics[topicKey].map(relation => {
           const target = topics.find(topic => getTopicKey(topic) === relation.target);

@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { useState } from "react";
 import { RnntWalkthrough } from "./RnntWalkthrough";
 import { AttentionAsrWalkthrough } from "./AttentionAsrWalkthrough";
@@ -78,7 +79,7 @@ export function AsrWalkthrough({ language }: { language: Language }) {
     "算法参考：CTC 原论文（Graves 等，2006）": "알고리즘 참고: CTC 원 논문(Graves 등, 2006)",
     "Token": "토큰"
   };
-  const t = (zh: string, en: string) => language === "zh" ? zh : language === "en" ? en : (language === "ja" ? ja[zh] : ko[zh]);
+  const t = (zh: string, en: string) => language === "zh-Hant" ? traditional(zh) : language === "zh" ? zh : language === "en" ? en : (language === "ja" ? ja[zh] : ko[zh]);
   const [step, setStep] = useState(0);
   const [example, setExample] = useState(0);
   const [frame, setFrame] = useState(3);

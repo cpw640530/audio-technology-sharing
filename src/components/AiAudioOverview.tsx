@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import type { AiAudioLabId, Language } from "../content/knowledge";
@@ -125,7 +126,7 @@ export function AiAudioOverview({ language, onOpen }: { language: Language; onOp
     "落地例子：设备听懂一句指令": "적용 예시: 기기가 음성 명령을 이해하기",
     "这是模块化语音助手的一种实现；理解与执行不属于 ASR，端到端语音模型也可以绕过显式文本。总延迟还包含采集、缓冲、网络和播放，不能只看模型推理时间。": "이는 모듈형 음성 비서의 한 구현입니다. 이해와 실행은 ASR 자체가 아니며 엔드투엔드 음성 모델은 명시적 텍스트를 건너뛸 수도 있습니다. 전체 지연에는 캡처·버퍼·네트워크·재생도 포함되므로 모델 추론 시간만 볼 수 없습니다.",
   };
-  const t = (zh: string, en: string) => language === "zh" ? zh : language === "en" ? en : (language === "ja" ? ja[zh] : ko[zh]);
+  const t = (zh: string, en: string) => language === "zh-Hant" ? traditional(zh) : language === "zh" ? zh : language === "en" ? en : (language === "ja" ? ja[zh] : ko[zh]);
   const [task, setTask] = useState(0);
   const tasks = [
     { name: t("识别内容", "Recognize"), steps: [t("语音或环境声 PCM", "Speech or environmental PCM"), t("log-Mel 或学习型波形表示", "Log-Mel or learned waveform features"), t("识别或分类模型", "Recognition or classification model"), t("文字、事件标签", "Text or event labels"), t("字幕、玻璃破碎提醒", "Captions, glass-break alerts")], metric: t("ASR 看 WER/CER；事件识别看精确率、召回率和误报。", "ASR: WER/CER. Event detection: precision, recall and false alarms."), links: [["asr", "ASR"], ["event", t("声音事件识别", "Sound events")]] },

@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { useState, type PointerEvent } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Language } from "../content/knowledge";
@@ -143,7 +144,7 @@ export function RobotAudioLab({ language, onBack, onBackToDetails }: { language:
     "算法源码参考：": "알고리즘 소스 참고:",
     " 提供声源定位、跟踪、分离与后滤波；本实验室没有加载该引擎。": "는 음원 위치 추정, 추적, 분리, 후처리 필터를 제공합니다. 이 랩에서는 해당 엔진을 로드하지 않습니다."
   };
-  const t = (zh: string, en: string, jaText = ja[zh], koText = ko[zh]) => language === "zh" ? zh : language === "en" ? en : language === "ja" ? jaText : koText;
+  const t = (zh: string, en: string, jaText = ja[zh], koText = ko[zh]) => language === "zh-Hant" ? traditional(zh) : language === "zh" ? zh : language === "en" ? en : language === "ja" ? jaText : koText;
   const [view, setView] = useState("body");
   const [part, setPart] = useState(0);
   const [stage, setStage] = useState(0);

@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { text } from "../content/language";
 import type { ReactNode } from "react";
 import { TopicReadingLayout } from "./TopicReadingLayout";
@@ -19,20 +20,20 @@ type RealtimeAudioPageProps = {
 
 const realtimeStages = [
   {
-    title: { zh: "一块数据到来", en: "A block arrives", ja: "データブロックが到着", ko: "데이터 블록 도착" },
-    detail: { zh: "驱动或音频服务交付固定数量的 PCM 帧。", en: "The driver or audio service delivers a fixed block of PCM frames.", ja: "ドライバーや音声サービスが一定数の PCM フレームを渡します。", ko: "드라이버나 오디오 서비스가 일정 수의 PCM 프레임을 전달합니다." }
+    title: { zh: "一块数据到来", "zh-Hant": traditional("一块数据到来"), en: "A block arrives", ja: "データブロックが到着", ko: "데이터 블록 도착" },
+    detail: { zh: "驱动或音频服务交付固定数量的 PCM 帧。", "zh-Hant": traditional("驱动或音频服务交付固定数量的 PCM 帧。"), en: "The driver or audio service delivers a fixed block of PCM frames.", ja: "ドライバーや音声サービスが一定数の PCM フレームを渡します。", ko: "드라이버나 오디오 서비스가 일정 수의 PCM 프레임을 전달합니다." }
   },
   {
-    title: { zh: "开始计时", en: "The clock starts", ja: "時間予算の開始", ko: "시간 예산 시작" },
-    detail: { zh: "帧数 / 采样率给出稳态的每块时间预算；实际截止时间还受队列水位影响。", en: "Frames / sample rate gives a steady-state block budget; the actual deadline also depends on queue occupancy.", ja: "フレーム数 / 標本化周波数が定常状態のブロック時間予算です。実際の期限はキューの蓄積量にも依存します。", ko: "프레임 수 / 샘플링 주파수는 정상 상태의 블록 시간 예산입니다. 실제 마감 시간은 큐에 쌓인 데이터 양에도 좌우됩니다." }
+    title: { zh: "开始计时", "zh-Hant": traditional("开始计时"), en: "The clock starts", ja: "時間予算の開始", ko: "시간 예산 시작" },
+    detail: { zh: "帧数 / 采样率给出稳态的每块时间预算；实际截止时间还受队列水位影响。", "zh-Hant": traditional("帧数 / 采样率给出稳态的每块时间预算；实际截止时间还受队列水位影响。"), en: "Frames / sample rate gives a steady-state block budget; the actual deadline also depends on queue occupancy.", ja: "フレーム数 / 標本化周波数が定常状態のブロック時間予算です。実際の期限はキューの蓄積量にも依存します。", ko: "프레임 수 / 샘플링 주파수는 정상 상태의 블록 시간 예산입니다. 실제 마감 시간은 큐에 쌓인 데이터 양에도 좌우됩니다." }
   },
   {
-    title: { zh: "完成处理", en: "Processing completes", ja: "処理を完了", ko: "처리 완료" },
-    detail: { zh: "滤波、混音、AEC、编码等工作必须在预算内完成。", en: "Filtering, mixing, AEC, encoding, and other work must fit the budget.", ja: "フィルター、ミキシング、AEC、符号化などを予算内に完了する必要があります。", ko: "필터링, 믹싱, AEC, 인코딩 등의 처리는 시간 예산 내에 완료해야 합니다." }
+    title: { zh: "完成处理", "zh-Hant": traditional("完成处理"), en: "Processing completes", ja: "処理を完了", ko: "처리 완료" },
+    detail: { zh: "滤波、混音、AEC、编码等工作必须在预算内完成。", "zh-Hant": traditional("滤波、混音、AEC、编码等工作必须在预算内完成。"), en: "Filtering, mixing, AEC, encoding, and other work must fit the budget.", ja: "フィルター、ミキシング、AEC、符号化などを予算内に完了する必要があります。", ko: "필터링, 믹싱, AEC, 인코딩 등의 처리는 시간 예산 내에 완료해야 합니다." }
   },
   {
-    title: { zh: "按时交付", en: "Handoff on time", ja: "期限内に受け渡す", ko: "기한 내 전달" },
-    detail: { zh: "及时交付或读取数据；延误耗尽缓冲余量后，才会出现 underrun / overrun。", en: "Deliver or read on time; delays cause underrun / overrun once buffering headroom is exhausted.", ja: "期限内に受け渡しや読み出しを行います。遅れがバッファーの余裕を使い切ると underrun / overrun が起きます。", ko: "제때 전달하거나 읽어야 합니다. 지연으로 버퍼 여유가 소진되면 underrun / overrun이 발생합니다." }
+    title: { zh: "按时交付", "zh-Hant": traditional("按时交付"), en: "Handoff on time", ja: "期限内に受け渡す", ko: "기한 내 전달" },
+    detail: { zh: "及时交付或读取数据；延误耗尽缓冲余量后，才会出现 underrun / overrun。", "zh-Hant": traditional("及时交付或读取数据；延误耗尽缓冲余量后，才会出现 underrun / overrun。"), en: "Deliver or read on time; delays cause underrun / overrun once buffering headroom is exhausted.", ja: "期限内に受け渡しや読み出しを行います。遅れがバッファーの余裕を使い切ると underrun / overrun が起きます。", ko: "제때 전달하거나 읽어야 합니다. 지연으로 버퍼 여유가 소진되면 underrun / overrun이 발생합니다." }
   }
 ];
 

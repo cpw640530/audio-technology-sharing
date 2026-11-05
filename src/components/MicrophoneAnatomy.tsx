@@ -1,10 +1,11 @@
+import { traditional } from "../content/traditional";
 import { useState } from "react";
 import { Mic, CircuitBoard, Cpu } from "lucide-react";
 import type { Language } from "../content/knowledge";
 
-type SupportedLanguage = "zh" | "en" | "ja" | "ko";
+type SupportedLanguage = "zh" | "en" | "ja" | "ko" | "zh-Hant";
 
-const languageIndex: Record<SupportedLanguage, number> = { zh: 0, en: 1, ja: 2, ko: 3 };
+const languageIndex: Record<SupportedLanguage, number> = { zh: 0, "zh-Hant": traditional(0), en: 1, ja: 2, ko: 3 };
 
 const models = [
   {

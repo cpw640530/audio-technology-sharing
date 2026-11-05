@@ -5070,6 +5070,22 @@ body.details-open {
   gap: 14px;
   min-width: 0;
 }
+.listening-lab-workbench .listening-visual {
+  align-content: start;
+}
+.listening-lab-workbench { align-items: start; }
+.listening-visual .lab-live-note { display: grid; gap: 6px; color: #dbe8e4; }
+.listening-visual .lab-live-note strong { color: #fff; }
+.listening-lab-workbench > .listening-model-note {
+  order: 1;
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid #42645a;
+  color: #c5d8d2;
+  font-size: 14px;
+  line-height: 1.7;
+}
 
 .microphone-visual {
   display: grid;
@@ -10468,6 +10484,18 @@ body:has(.home-intro) {
 .welcome-music input { width: 72px; accent-color: #245c50; }
 .welcome-music-wave { width: 80px; height: 40px; display: block; }
 .welcome-motion.site-music { position: fixed; right: 16px; bottom: 16px; z-index: 50; padding: 8px; border: 1px solid #b9ccc3; border-radius: 4px; background: #f0f6f2; }
+body:has(.welcome-page) .welcome-motion.site-music {
+  top: 104px;
+  right: 5%;
+  bottom: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+body:has(.welcome-page) .site-music button { background: transparent; border-color: transparent; }
+body:has(.welcome-page) .site-music button:hover { background: rgba(36, 92, 80, .08); }
+body:has(.welcome-page) .site-music :is([role="alert"], .welcome-music-notice) { top: 48px; bottom: auto; }
 .site-music button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .welcome-page { padding-bottom: 80px; }
 body:has(.app-shell) .site-header { padding-right: 76px; }
@@ -10519,3 +10547,60 @@ body:has(.app-shell) .site-music :is([role="alert"], .welcome-music-notice) { bo
   .welcome-page :is(.welcome-copy, .welcome-equalizer i) { animation: none; }
   .welcome-enter { transition: none; }
 }
+
+.wave-spectrum-page .sound-topic-section { padding-block: 24px; gap: 12px; }
+.wave-spectrum-page .sound-topic-section h2 { margin: 0; }
+.wave-spectrum-page .sound-topic-section p { max-width: none; }
+.wave-spectrum-page .sound-topic-section ul { margin: 0; padding-left: 22px; color: #53645e; line-height: 1.7; }
+.wave-spectrum-page .sound-topic-section li + li { margin-top: 6px; }
+.wave-spectrum-page .sound-topic-formula-block { padding: 16px; }
+.wave-spectrum-page .sound-topic-formula-block p { margin-top: 8px; }
+.wave-spectrum-entry { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 4px; padding-top: 12px; border-top: 1px solid #d7e3dc; }
+.wave-spectrum-entry p { flex: 1 1 240px; margin: 0; }
+.wave-spectrum-entry .diagram-open-button { width: auto; max-width: 100%; white-space: normal; }
+.wave-spectrum-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 4px; font-size: 14px; line-height: 1.6; }
+.wave-spectrum-table caption { text-align: start; font-weight: 600; margin-bottom: 8px; }
+.wave-spectrum-table thead { background: #e8efea; color: #234c43; }
+.wave-spectrum-table th, .wave-spectrum-table td { padding: 10px 8px; text-align: start; vertical-align: top; border-bottom: 1px solid #d7e3dc; overflow-wrap: anywhere; }
+.wave-spectrum-table th:first-child { width: 25%; }
+.wave-spectrum-workbench { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 24px 16px; align-items: start; }
+.wave-spectrum-three-slot { grid-column: 1; grid-row: 1; min-width: 0; }
+.wave-spectrum-workbench > .sound-lab-panel { grid-column: 2; grid-row: 1; }
+.wave-spectrum-workbench > .sound-lab-visual { grid-row: 2; }
+.wave-spectrum-three { margin-bottom: 24px; min-width: 0; }
+.wave-spectrum-three-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.wave-spectrum-three-heading h2 { margin: 0; font-size: 20px; }
+.wave-spectrum-three .sine-button { color: #234c43; background: #e8efea; border: 1px solid #a7bdb2; }
+.wave-spectrum-three > .wave-spectrum-caption { color: #42594f; }
+.wave-spectrum-three-canvas { width: 100%; height: 440px; background: #172b27; }
+.wave-spectrum-three-canvas canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+@media (max-width: 700px) { .wave-spectrum-three-canvas { height: 320px; } }
+.wave-spectrum-workbench > section { min-width: 0; padding: 20px; border-radius: 8px; display: block; background: #172b27; border: 1px solid #42645a; }
+.wave-spectrum-lab .sound-lab-hero h1 { font-size: 36px; line-height: 1.25; }
+.wave-spectrum-workbench h2 { font-size: 18px; line-height: 1.4; margin: 0 0 16px; color: #edf7f4; }
+.wave-spectrum-workbench .wave-spectrum-three-heading h2 { color: #234c43; margin: 0; }
+.wave-spectrum-plot { margin: 0 0 20px; }
+.wave-spectrum-plot svg { display: block; width: 100%; height: auto; aspect-ratio: 420 / 180; overflow: visible; }
+.wave-spectrum-plot figcaption, .wave-spectrum-caption { font-size: 14px; line-height: 1.7; color: #c5d8d2; overflow-wrap: anywhere; }
+.wave-spectrum-plot figcaption { margin-block: 8px; }
+.wave-spectrum-plot svg text { fill: #dcece8; font-size: 16px; }
+.wave-spectrum-plot svg line { stroke: #55716b; stroke-width: 1; }
+.wave-spectrum-plot svg path { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.wave-spectrum-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; color: #edf7f4; font-size: 13px; }
+.wave-spectrum-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.wave-spectrum-legend i { width: 14px; height: 3px; }
+.wave-spectrum-values { margin: 16px 0; color: #edf7f4; }
+.wave-spectrum-values > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding-block: 8px; border-bottom: 1px solid #55716b; }
+.wave-spectrum-values dd { margin: 0; font-variant-numeric: tabular-nums; }
+.wave-spectrum-lab .lab-control { display: grid; gap: 10px; padding: 14px 0; color: #edf7f4; }
+.wave-spectrum-lab .lab-control > span { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.wave-spectrum-lab input[type="range"] { width: 100%; accent-color: #7ee7d8; }
+.wave-spectrum-commands { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 16px; }
+.wave-spectrum-commands button { min-height: 40px; }
+.wave-spectrum-lab [role="alert"] { color: #ffc6c6; }
+@media (max-width: 900px) {
+  .wave-spectrum-workbench { grid-template-columns: minmax(0, 1fr); }
+  .wave-spectrum-workbench > .sound-lab-panel { grid-column: 1; grid-row: 2; }
+  .wave-spectrum-workbench > .sound-lab-visual { grid-column: 1; grid-row: auto; }
+}
+@media (max-width: 700px) { .wave-spectrum-workbench > section { padding: 16px; } .wave-spectrum-lab .sound-lab-hero h1 { font-size: 28px; } }

@@ -1,3 +1,4 @@
+import { traditional } from "../content/traditional";
 import { text } from "../content/language";
 import type { ReactNode } from "react";
 import { TopicReadingLayout } from "./TopicReadingLayout";
@@ -63,7 +64,7 @@ export function DigitalAudioPage({ relatedTopics, language, onBack, onOpenLab, o
   const detail = digitalAudioTopic.detail;
   const terms = detail.termExplanations ?? [];
   const flow = {
-    zh: ["连续模拟波形", "抗混叠滤波", "按采样率取点", "按位深量化", "PCM 样本", "文件或码流编码"],
+    zh: ["连续模拟波形", "抗混叠滤波", "按采样率取点", "按位深量化", "PCM 样本", "文件或码流编码"], "zh-Hant": traditional(["连续模拟波形", "抗混叠滤波", "按采样率取点", "按位深量化", "PCM 样本", "文件或码流编码"]),
     en: ["Continuous analog wave", "Anti-alias filter", "Sample at fs", "Quantize by bit depth", "PCM samples", "File or stream encoding"],
     ja: ["連続アナログ波形", "アンチエイリアスフィルター", "fs で標本化", "ビット深度に応じた量子化", "PCM サンプル", "ファイル・ストリーム符号化"],
     ko: ["연속 아날로그 파형", "안티에일리어싱 필터", "fs로 샘플링", "비트 깊이에 따라 양자화", "PCM 샘플", "파일·스트림 인코딩"]
