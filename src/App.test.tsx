@@ -150,7 +150,7 @@ describe("Audio knowledge app", () => {
       }
       if (topic.title.en === "What Sound Is") {
         const term = topic.detail.termExplanations!.find(term => term.name.en === "From pressure to PCM")!;
-        expect(screen.getAllByText(term.explanation[language])).toHaveLength(1);
+        expect(screen.queryByText(term.explanation[language])).not.toBeInTheDocument();
       }
       if (topic.title.en === "Digital Audio Basics") {
         const image = screen.getByRole("img", { name: language === "zh" ? "不足采样产生混叠与足够采样的对比" : "Undersampling aliasing compared with adequate sampling" });
@@ -1687,13 +1687,14 @@ describe("Audio knowledge app", () => {
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
 
     const page = screen.getByRole("main", { name: "什么是声音" });
-    expect(within(page).getByRole("heading", { name: "从振动到 PCM：一条工程链路" })).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "1. 声音是什么？" })).toBeInTheDocument();
     expect(within(page).getByRole("img", { name: "振膜、空气疏密和固定观察点" })).toBeInTheDocument();
     const pressurePlot = within(page).getByRole("img", { name: "归一化观察点声压随时间变化" });
-    const voltagePlot = within(page).getByRole("img", { name: "归一化麦克风电压随时间变化" });
-    expect(pressurePlot.querySelectorAll("path")[1].getAttribute("d")).toEqual(voltagePlot.querySelectorAll("path")[1].getAttribute("d"));
-    expect(within(page).getByRole("heading", { name: "核心概念词典" })).toBeInTheDocument();
-    expect(within(page).getByRole("heading", { name: "声压级 dBSPL" })).toBeInTheDocument();
+    expect(pressurePlot).toBeInTheDocument();
+    expect(within(page).getByRole("img", { name: "归一化空气位移随时间变化" })).toBeInTheDocument();
+    expect(within(page).queryByTestId("sound-composition-spectrum")).not.toBeInTheDocument();
+    expect(within(page).getByRole("button", { name: "下一篇：读懂波形与频谱" })).toBeInTheDocument();
+    expect(within(page).queryByRole("heading", { name: "声压级 dBSPL" })).not.toBeInTheDocument();
     expect(within(page).getByRole("button", { name: "打开声音波形实验室" })).toBeInTheDocument();
 
     await user.click(within(page).getByRole("button", { name: "打开声音波形实验室" }));

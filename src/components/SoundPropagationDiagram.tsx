@@ -1,61 +1,87 @@
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { Pause, Play, RotateCcw, StepForward } from "lucide-react";
 import { text } from "../content/language";
 import type { Language } from "../content/knowledge";
+import { pressureHistory, propagationFrame, propagationSample, propagationStep, type PropagationSettings } from "./soundPropagationModel";
+
+const AirVolume = lazy(() => import("./SoundPropagation3D"));
 
 export function SoundPropagationDiagram({ language }: { language: Language }) {
   const figure = useRef<HTMLElement>(null);
-  const [running, setRunning] = useState(() => !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
-  const [phase, setPhase] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [time, setTime] = useState(0);
+  const [settings, setSettings] = useState<PropagationSettings>({ mode: "pulse", amplitude: 1, rate: 1 });
+  const t = (zh: string, en: string, ja: string, ko: string) => text(language, zh, en, ja, ko);
+  const reset = () => { setTime(0); setRunning(false); };
+  const configure = (change: Partial<PropagationSettings>) => { reset(); setSettings(value => ({ ...value, ...change })); };
   useEffect(() => {
-    if (!running || typeof IntersectionObserver === "undefined") return;
-    let visible = false;
-    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; });
-    if (figure.current) observer.observe(figure.current);
+    if (!running) return;
+    let visible = typeof IntersectionObserver === "undefined";
+    const observer = typeof IntersectionObserver !== "undefined" ? new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }) : undefined;
+    if (figure.current) observer?.observe(figure.current);
     const timer = window.setInterval(() => {
-      if (visible && !document.hidden) setPhase(value => (value + 2 * Math.PI / 120) % (2 * Math.PI));
+      if (visible && !document.hidden) setTime(value => settings.mode === "pulse" ? Math.min(4, value + propagationStep) : value + propagationStep);
     }, 1000 / 30);
-    return () => { clearInterval(timer); observer.disconnect(); };
-  }, [running]);
-  // Right-going wave: displacement = -a sin(kx - wt); pressure = -K d(displacement)/dx.
-  const pressure = Array.from({ length: 161 }, (_, i) =>
-    `${i ? "L" : "M"} ${30 + i * 1.5} ${85 + 45 * Math.cos(i / 160 * 2 * Math.PI)}`
-  ).join(" ");
-  return (
-    <figure className="sound-propagation" ref={figure}>
-      <div className="sound-propagation-air">
-        <h3>{text(language, "① 振膜推动空气，疏密变化向右传播", "① A diaphragm drives a pressure wave to the right", "① 振動板による音圧変化が右へ伝わる", "① 진동판이 만든 압력파가 오른쪽으로 전달됨")}</h3>
-        <button className="sound-topic-back" onClick={() => setRunning(value => !value)}>{running ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}{running ? text(language, "暂停动画", "Pause animation", "一時停止", "애니메이션 일시 정지") : text(language, "播放动画", "Play animation", "再生", "애니메이션 재생")}</button>
-        <svg viewBox="0 0 600 200" role="img" aria-label={text(language, "振膜、空气疏密和固定观察点", "Diaphragm, air compression and fixed observation point", "振動板、空気の圧縮と固定観測点", "진동판, 공기 압축 및 고정 관측점")}>
-          <path d="M 70 35 H 550 l -10 -6 m 10 6 l -10 6" fill="none" stroke="currentColor" />
-          <rect x={44 + 12 * Math.sin(phase)} y="65" width="6" height="90" fill="#227a70" />
-          <path d="M 28 165 H 65 m -6 -5 l 6 5 l -6 5 M 34 160 l -6 5 l 6 5" fill="none" stroke="currentColor" />
-          {Array.from({ length: 49 }, (_, i) => {
-            const rest = 60 + i * 10;
-            const x = rest - 12 * Math.sin(i / 48 * 2 * Math.PI - phase);
-            return [80, 100, 120, 140].map(y => <circle key={`${i}-${y}`} cx={x} cy={y} r="2.6" fill="#227a70" />);
-          })}
-          <line x1="300" x2="300" y1="55" y2="155" stroke="#a94d1d" strokeDasharray="4 4" />
+    return () => { clearInterval(timer); observer?.disconnect(); };
+  }, [running, settings.mode]);
+  useEffect(() => { if (settings.mode === "pulse" && time >= 4) setRunning(false); }, [time, settings.mode]);
+  const displacements = propagationFrame(time, settings);
+  const probe = propagationSample(4, time, settings);
+  const windowSize = settings.mode === "pulse" ? 4 : 8;
+  const start = Math.max(0, time - windowSize);
+  const history = pressureHistory(time, settings).filter(sample => sample.time >= start - 1e-7);
+  const px = (sampleTime: number) => 40 + (sampleTime - start) / windowSize * 240;
+  const pressurePath = history.map((sample, i) => `${i ? "L" : "M"} ${px(sample.time)} ${85 - sample.pressure * 50}`).join(" ");
+  const displacementPath = history.map((sample, i) => `${i ? "L" : "M"} ${px(sample.time)} ${85 - propagationSample(4, sample.time, settings).displacement / .22 * 50}`).join(" ");
+  const fallback = <svg viewBox="0 0 600 200" role="img" aria-label={t("振膜、空气疏密和固定观察点", "Diaphragm, air compression and fixed observation point", "振動板、空気の圧縮と固定観測点", "진동판, 공기 압축 및 고정 관측점")}>
+    <path d="M70 35 H550 l-10 -6 m10 6 l-10 6" fill="none" stroke="currentColor" />
+    <rect x={44 + displacements[0] * 60} y="65" width="6" height="90" fill="#227a70" />
+    {displacements.map((displacement, i) => [80, 100, 120, 140].map(y => <circle key={`${i}-${y}`} cx={60 + i * 10 + displacement * 60} cy={y} r="2.6" fill={i === 24 ? "#a94d1d" : "#227a70"} />))}
+    <line x1="300" x2="300" y1="55" y2="155" stroke="#a94d1d" strokeDasharray="4 4" />
+  </svg>;
+  return <figure className="sound-propagation" ref={figure}>
+    <h3>{t("① 推一下空气，远处会立刻变化吗？", "① Push the air: does a distant point change immediately?", "① 空気を押すと遠くもすぐ変わる？", "① 공기를 밀면 먼 곳도 즉시 변할까요?")}</h3>
+    <p>{t("先发出一次脉冲：振膜向前推动，再退回原位。留意橙色观察面何时开始变化。随后切换连续振动，比较一次扰动与一串声波。", "Send one pulse: the diaphragm pushes forward and returns. Watch when the orange observation plane responds. Then compare it with continuous vibration.", "一回のパルスで振動板が前へ動き、元に戻ります。橙色の観測面がいつ変わるか見て、連続振動と比べましょう。", "펄스를 보내면 진동판이 앞으로 갔다 돌아옵니다. 주황색 관측면이 언제 변하는지 보고 연속 진동과 비교해 보세요.")}</p>
+    <div className="sound-propagation-controls">
+      <div className="sound-propagation-modes" role="group" aria-label={t("激励方式", "Excitation mode", "加振方式", "진동 방식")}>
+        {(["pulse", "continuous"] as const).map(mode => <button type="button" key={mode} aria-pressed={settings.mode === mode} onClick={() => configure({ mode })}>{mode === "pulse" ? t("单次脉冲", "Single pulse", "単発パルス", "단일 펄스") : t("连续振动", "Continuous vibration", "連続振動", "연속 진동")}</button>)}
+      </div>
+      <div className="sound-propagation-actions">
+        <button type="button" className="sound-topic-back" onClick={() => { if (settings.mode === "pulse" && time >= 4) setTime(0); setRunning(value => !value); }}>{running ? <Pause size={18} /> : <Play size={18} />}{running ? t("暂停动画", "Pause animation", "一時停止", "일시 정지") : t("播放动画", "Play animation", "再生", "재생")}</button>
+        <button type="button" className="sound-topic-back" title={t("前进一步", "Step forward", "一コマ進む", "한 단계 진행")} aria-label={t("前进一步", "Step forward", "一コマ進む", "한 단계 진행")} onClick={() => { setRunning(false); setTime(value => settings.mode === "pulse" ? Math.min(4, value + .1) : value + .1); }}><StepForward size={18} /></button>
+        <button type="button" className="sound-topic-back" title={t("重新实验", "Restart experiment", "実験をリセット", "실험 초기화")} aria-label={t("重新实验", "Restart experiment", "実験をリセット", "실험 초기화")} onClick={reset}><RotateCcw size={18} /></button>
+      </div>
+      <label>{t("振膜行程", "Diaphragm stroke", "振動板のストローク", "진동판 이동량")} <span>{Math.round(settings.amplitude * 100)}%</span><input type="range" min="0" max="1" step="0.05" value={settings.amplitude} onChange={event => configure({ amplitude: Number(event.target.value) })} /></label>
+      <label>{t("振动速度", "Vibration rate", "振動の速さ", "진동 속도")} <span>{settings.rate.toFixed(2)}×</span><input type="range" min="0.5" max="1.5" step="0.05" disabled={settings.mode === "pulse"} value={settings.rate} onChange={event => configure({ rate: Number(event.target.value) })} /></label>
+    </div>
+    <div className="sound-propagation-air">
+      <Suspense fallback={fallback}><AirVolume displacements={displacements} language={language}>{fallback}</AirVolume></Suspense>
+    </div>
+    <div className="sound-propagation-legend"><span>{t("演示时间", "Demo time", "デモ時間", "데모 시간")}: {time.toFixed(2)}</span><span>Δp / p_ref = {probe.pressure.toFixed(2)}</span></div>
+    <p className="sound-topic-note">{t("橙色球点会一路跑到右端吗？它只在原位附近移动；传播的是疏密变化。球点代表含有大量分子的空气小体积，不是分子的随机热运动。橙色框才是固定的测量位置。", "Does the orange dot reach the far end? It moves locally; compression and rarefaction travel. Dots represent parcels containing many molecules, not molecular thermal motion. The orange frame is the fixed measurement location.", "橙色の点は局所的に動き、疎密変化が伝わります。点は多くの分子を含む空気の小体積で、分子の熱運動ではありません。橙色の枠は固定測定位置です。", "주황색 점은 국소적으로 움직이고 압축과 희박이 전달됩니다. 점은 많은 분자를 포함한 공기 부피이며 분자의 열운동이 아닙니다. 주황색 틀은 고정 측정 위치입니다.")}</p>
+    <h3>{t("② 固定位置的记录，逐渐画成波形", "② A fixed-location record becomes a waveform", "② 固定位置の記録が波形になる", "② 고정 위치의 기록이 파형이 됩니다")}</h3>
+    <p>{t("脉冲到达观察面前，曲线保持为零；经过时先升后降。正值表示压缩，负值表示稀疏，不是负的绝对气压。曲线只记录已经发生的变化，不会提前画出未来。", "The trace stays at zero until the pulse arrives, then rises and falls. Positive means compression; negative means rarefaction, not negative absolute pressure. Only elapsed time is recorded, never the future.", "到着前はゼロで、その後上下します。正は圧縮、負は希薄化で、負の絶対圧ではありません。過去の変化だけを記録し、未来は描きません。", "도착 전에는 0이고 이후 오르내립니다. 양수는 압축, 음수는 희박이며 음의 절대 압력이 아닙니다. 이미 일어난 변화만 기록합니다.")}</p>
+    <div className="sound-propagation-signals">
+      {[false, true].map(displacement => <div key={String(displacement)}>
+        <h3>{displacement ? t("橙色空气小体积的位移", "Displacement of the orange air parcel", "橙色の空気小体積の変位", "주황색 공기 부피의 변위") : t("观察面声压记录", "Pressure at the observation plane", "観測面の音圧記録", "관측면 음압 기록")}</h3>
+        <svg viewBox="0 0 300 185" role="img" aria-label={displacement ? t("归一化空气位移随时间变化", "Normalized parcel displacement over time", "正規化した空気変位の時間変化", "정규화한 공기 변위의 시간 변화") : t("归一化观察点声压随时间变化", "Normalized probe pressure over time", "正規化した観測点音圧の時間変化", "정규화한 관측점 음압의 시간 변화")}>
+          <path d="M40 25 V145 H280 M40 85 H280" fill="none" stroke="#a3b5af" />
+          <path data-testid={displacement ? "propagation-displacement-trace" : "propagation-pressure-trace"} d={displacement ? displacementPath : pressurePath} fill="none" stroke={displacement ? "#a94d1d" : "#227a70"} strokeWidth="2.5" />
+          <circle cx={px(time)} cy={85 - (displacement ? probe.displacement / .22 : probe.pressure) * 50} r="4" fill="#a94d1d" />
+          <text x="30" y="39" textAnchor="end">+1</text><text x="30" y="89" textAnchor="end">0</text><text x="30" y="139" textAnchor="end">−1</text>
+          {[0, windowSize / 2, windowSize].map(offset => <text key={offset} x={40 + offset / windowSize * 240} y="163" textAnchor="middle">{(start + offset).toFixed(1)}</text>)}
+          <text x="160" y="181" textAnchor="middle">{t("演示时间（慢放）", "Demo time (slow motion)", "デモ時間（スロー）", "데모 시간 (느리게)")}</text>
         </svg>
-        <div className="sound-propagation-legend"><span>t / T = {(phase / (2 * Math.PI)).toFixed(2)}</span><span>Δp / pₘₐₓ = {(-Math.cos(phase)).toFixed(2)}</span></div>
-        <p>{text(language, "动画慢放一个周期：点代表空气小体积，在原位附近往复，并不随声波向右流走。位移已夸大，虚线观察点固定；下方圆点同步标出当地声压和理想麦克风电压。", "One cycle in slow motion: dots represent air parcels oscillating locally, not flowing right with the wave. Displacement is exaggerated; the dashed probe stays fixed. Markers below track local pressure and ideal microphone voltage.", "一周期のスローモーションです。空気はその場で往復し、波と共に右へ流れません。変位は誇張し、観測点は固定です。下の点は音圧と理想マイク電圧を示します。", "한 주기를 느리게 표시합니다. 공기는 제자리에서 왕복하며 파동과 함께 오른쪽으로 흐르지 않습니다. 변위는 과장했으며 관측점은 고정입니다. 아래 점은 음압과 이상적 마이크 전압을 나타냅니다.")}</p>
-      </div>
-      <div className="sound-propagation-signals">
-        {[false, true].map(voltage => (
-          <div key={String(voltage)}>
-            <h3>{voltage ? (text(language, "③ 麦克风将当地声压变为电压", "③ A microphone converts local pressure to voltage", "③ マイクがその場所の音圧を電圧に変換", "③ 마이크가 해당 위치의 음압을 전압으로 변환")) : (text(language, "② 记录观察点的声压随时间变化", "② Record pressure over time at the probe", "② 観測点の音圧を時間に沿って記録", "② 관측점의 시간에 따른 음압 기록"))}</h3>
-            <svg viewBox="0 0 300 180" role="img" aria-label={voltage ? (text(language, "归一化麦克风电压随时间变化", "Normalized microphone voltage over time", "正規化したマイク電圧の時間変化", "정규화한 마이크 전압의 시간 변화")) : (text(language, "归一化观察点声压随时间变化", "Normalized probe pressure over time", "正規化した観測点音圧の時間変化", "정규화한 관측점 음압의 시간 변화"))}>
-              <path d="M30 25 V145 H270 M30 85 H270" fill="none" stroke="#a3b5af" />
-              <path d={pressure} fill="none" stroke={voltage ? "#a94d1d" : "#227a70"} strokeWidth="3" />
-              <circle cx={30 + 240 * phase / (2 * Math.PI)} cy={85 + 45 * Math.cos(phase)} r="5" fill="#a94d1d" />
-              <text x="24" y="44" textAnchor="end">+1</text><text x="24" y="89" textAnchor="end">0</text><text x="24" y="134" textAnchor="end">−1</text>
-              <text x="30" y="165">0</text><text x="150" y="165" textAnchor="middle">T/2</text><text x="270" y="165" textAnchor="end">T</text>
-            </svg>
-            <p>{voltage ? (text(language, "理想线性模型 v(t) = S · Δp(t)，S 为灵敏度。两图各自归一化，形状相同不代表 Pa 和 V 数值相等。", "Ideal linear model: v(t) = S · Δp(t), with sensitivity S. Each plot is normalized independently: equal shapes do not imply equal Pa and V values.", "理想的な線形モデルは v(t) = S · Δp(t) で、S は感度です。各図は独立に正規化しており、形が同じでも Pa と V の数値が同じとは限りません。", "이상적인 선형 모델은 v(t) = S · Δp(t)이며 S는 감도입니다. 각 그래프는 따로 정규화했으므로 모양이 같아도 Pa와 V의 수치가 같다는 뜻은 아닙니다.")) : (text(language, "横轴：时间；纵轴：Δp / 峰值声压。t = 0 时处于稀疏区，所以声压低于静态气压；并非绝对气压为负。", "Horizontal: time; vertical: Δp / peak pressure. At t = 0, rarefaction means pressure below ambient, not negative absolute pressure.", "横軸は時間、縦軸は Δp / ピーク音圧です。t = 0 の希薄な領域では周囲の静圧を下回りますが、絶対圧が負になるわけではありません。", "가로축은 시간, 세로축은 Δp / 최대 음압입니다. t = 0의 희박한 영역은 주변 정압보다 낮다는 뜻이며 절대 압력이 음수라는 뜻은 아닙니다."))}</p>
-          </div>
-        ))}
-      </div>
-      <figcaption>{text(language, "理想小振幅平面行波示意，忽略衰减、反射与麦克风频响。空气质点在平衡位置附近往复，传播的是扰动与能量。", "Ideal small-amplitude plane traveling wave; attenuation, reflections and microphone response are omitted. Air parcels oscillate locally while disturbance and energy propagate.", "理想的な微小振幅の平面進行波です。減衰・反射・マイクの周波数特性は省略しています。空気は平衡位置の周辺で振動し、擾乱とエネルギーが伝わります。", "이상적인 작은 진폭의 평면 진행파입니다. 감쇠, 반사, 마이크 주파수 응답은 생략했습니다. 공기는 평형 위치 근처에서 진동하고 교란과 에너지가 전달됩니다.")}</figcaption>
-    </figure>
-  );
+      </div>)}
+    </div>
+    <p>{t("纵轴分别是声压 Δp/p_ref 和位移 s/s_ref，使用固定参考值，不自动拉满高度。对比两图：位移达到最大、空气瞬时停下时，声压可以恰好过零；这两种量不能混为一谈。连续模式保留最近 8 个演示时间单位，单次脉冲显示 0–4；改变参数会清空记录。", "Vertical axes are pressure Δp/p_ref and displacement s/s_ref, with fixed references. At maximum displacement, the parcel momentarily stops and pressure can cross zero; these are different quantities. Continuous mode retains eight demo units; pulse mode shows 0–4. Parameter changes clear the record.", "縦軸は音圧 Δp/p_ref と変位 s/s_ref です。最大変位で瞬間的に停止するとき、音圧はゼロを通ることがあります。連続は過去8単位、単発は0–4を表示し、設定変更で消去します。", "세로축은 음압 Δp/p_ref와 변위 s/s_ref입니다. 최대 변위에서 순간 정지할 때 음압은 0을 지날 수 있습니다. 연속은 최근 8단위, 펄스는 0–4를 표시하며 설정 변경 시 기록을 지웁니다.")}</p>
+    <h3>{t("③ 加快振动，为什么声压也变大？", "③ Why does faster vibration also raise pressure?", "③ 振動を速くすると音圧も上がる理由", "③ 진동을 빠르게 하면 음압도 커지는 이유")}</h3>
+    <p>{t("同样的行程，用更短时间走完，空气运动得更快。连续模式下加快振动，周期会更密，声压也增大。这里调的是振膜行程，不是声压振幅；若想保持声压不变，需要在加快振动时同时减小行程。", "Covering the same stroke in less time means faster particle motion. In continuous mode, a higher rate produces more cycles and greater pressure. This control sets travel, not pressure amplitude. Keeping pressure constant requires reducing stroke as rate increases.", "同じ移動量を短時間で動くと粒子速度が増します。連続モードでは周期が密になり音圧も上がります。音圧一定で比べるには、速くするほど移動量を減らします。", "같은 거리를 짧은 시간에 움직이면 입자 속도가 커집니다. 연속 모드에서는 주기가 촘촘해지고 음압도 커집니다. 음압을 유지하려면 빠르게 할수록 이동량을 줄여야 합니다.")}</p>
+    <details><summary>{t("模型与适用边界", "Model and limits", "モデルと適用範囲", "모델과 한계")}</summary>
+      <p><code>s(x,t) = g(t − x/c); Δp = ρc · ∂s/∂t</code></p>
+      <p>{t("理想小振幅单向平面波，无反射与衰减，不是球面扩散或分子碰撞仿真。单次脉冲是一次平滑的往返行程，连续模式重复该行程。距离、位移和时间使用演示单位，位移夸大、速度放慢，不对应真实尺寸或可听频率。本实验不发声。", "Ideal small-amplitude one-way plane wave without reflections or attenuation, not spherical spreading or molecular collisions. A pulse is one smooth out-and-back stroke; continuous mode repeats it. Distances and times are illustrative, with exaggerated slow motion, not real dimensions or audible frequencies. This experiment is silent.", "反射・減衰のない微小振幅の一方向平面波で、球面拡散や分子衝突ではありません。単発は滑らかな往復、連続はその繰り返しです。長さと時間はデモ単位で、実寸や可聴周波数ではなく、音は出ません。", "반사와 감쇠가 없는 작은 진폭의 단방향 평면파이며 구면 확산이나 분자 충돌이 아닙니다. 한 번의 부드러운 왕복 또는 그 반복을 사용합니다. 길이와 시간은 데모 단위이며 실제 크기나 가청 주파수가 아닙니다. 소리는 재생하지 않습니다.")}</p>
+      <a href="https://www.acs.psu.edu/drussell/Demos/phase-p-u-sine/phase-p-u-sine.html" target="_blank" rel="noreferrer">Penn State: Phase Relationships for Plane Waves</a>
+      <p>{t("交互叙事参考", "Interactive narrative reference", "対話型解説の参考", "인터랙티브 설명 참고")}: <a href="https://ciechanow.ski/sound/" target="_blank" rel="noreferrer">Sound — Bartosz Ciechanowski</a></p>
+    </details>
+  </figure>;
 }
-import { useEffect, useRef, useState } from "react";
-import { Pause, Play } from "lucide-react";
