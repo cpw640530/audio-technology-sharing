@@ -36,7 +36,6 @@ export type TopicLab = {
     | "sampling-quantization"
     | "listening-metrics"
     | "microphone"
-    | "codec-hardware"
     | "digital-interface"
     | "amplifier-speaker"
     | "system-audio"
@@ -830,155 +829,6 @@ export const categories: Category[] = [
         }
       },
       {
-        title: { zh: "ADC / DAC / Codec", "zh-Hant": traditional("ADC / DAC / Codec"), en: "ADC / DAC / Codec", ja: "ADC / DAC / Codec", ko: "ADC / DAC / Codec" },
-        summary: {
-          zh: "理解模拟音频如何采样成数字、数字音频如何重建为模拟，以及音频 Codec 芯片如何整合整条链路。", "zh-Hant": traditional("理解模拟音频如何采样成数字、数字音频如何重建为模拟，以及音频 Codec 芯片如何整合整条链路。"),
-          en: "Understand how analog audio becomes digital samples, how digital audio is reconstructed to analog, and how audio codec chips integrate the whole chain.",
-          ja: "アナログ音声がデジタルサンプルになり、デジタル音声がアナログへ再構成され、オーディオ Codec チップがチェーン全体を統合する仕組みを理解します。",
-          ko: "아날로그 오디오가 디지털 샘플이 되고 디지털 오디오가 아날로그로 재구성되며 오디오 Codec 칩이 전체 체인을 통합하는 방식을 이해합니다."
-        },
-        bullets: [
-          { zh: "ADC 采样、量化、抗混叠和输入范围", "zh-Hant": traditional("ADC 采样、量化、抗混叠和输入范围"), en: "ADC sampling, quantization, anti-aliasing, and input range", ja: "ADC のサンプリング、量子化、アンチエイリアス、入力範囲", ko: "ADC 샘플링, 양자화, 앨리어싱 방지와 입력 범위" },
-          { zh: "DAC 重建、保持、低通滤波和输出驱动", "zh-Hant": traditional("DAC 重建、保持、低通滤波和输出驱动"), en: "DAC reconstruction, hold, low-pass filtering, and output drive", ja: "DAC の再構成、保持、ローパスフィルター、出力駆動", ko: "DAC 재구성, 홀드, 로우패스 필터와 출력 구동" },
-          { zh: "Codec 芯片、PGA、混音、I2S/PDM/TDM、时钟和电源噪声", "zh-Hant": traditional("Codec 芯片、PGA、混音、I2S/PDM/TDM、时钟和电源噪声"), en: "Codec chips, PGA, mixing, I2S/PDM/TDM, clocking, and power noise", ja: "Codec チップ、PGA、ミキシング、I2S/PDM/TDM、クロック、電源ノイズ", ko: "Codec 칩, PGA, 믹싱, I2S/PDM/TDM, 클록과 전원 잡음" }
-        ],
-        detail: {
-          explanation: {
-            zh: "ADC 把麦克风、线路输入等模拟电压按固定时钟采样并量化成数字样本；DAC 把数字样本转换成阶梯状或调制后的模拟信号，再经过重建滤波和输出级驱动耳机、功放或线路输出。音频 Codec 芯片通常把 ADC、DAC、PGA、耳机放大、混音、数字滤波、时钟和 I2S/PDM/TDM 接口集成在一起，是嵌入式音频链路的核心器件。", "zh-Hant": traditional("ADC 把麦克风、线路输入等模拟电压按固定时钟采样并量化成数字样本；DAC 把数字样本转换成阶梯状或调制后的模拟信号，再经过重建滤波和输出级驱动耳机、功放或线路输出。音频 Codec 芯片通常把 ADC、DAC、PGA、耳机放大、混音、数字滤波、时钟和 I2S/PDM/TDM 接口集成在一起，是嵌入式音频链路的核心器件。"),
-            en: "An ADC samples and quantizes analog voltage from microphones or line inputs into digital samples. A DAC converts digital samples into stepped or modulated analog signals, then uses reconstruction filtering and output stages to drive headphones, amplifiers, or line outputs. An audio codec chip often integrates ADCs, DACs, PGA, headphone amps, mixers, digital filters, clocks, and I2S/PDM/TDM interfaces.",
-            ja: "ADC はマイクやライン入力のアナログ電圧をサンプリングし、量子化してデジタルサンプルにします。DAC はデジタルサンプルを階段状または変調されたアナログ信号に変換し、再構成フィルターと出力段でヘッドホン、アンプ、ライン出力を駆動します。オーディオ Codec チップは ADC、DAC、PGA、ヘッドホンアンプ、ミキサー、デジタルフィルター、クロック、I2S/PDM/TDM インターフェースを統合することが多いです。",
-            ko: "ADC는 마이크나 라인 입력의 아날로그 전압을 샘플링하고 양자화해 디지털 샘플로 만듭니다. DAC는 디지털 샘플을 계단형 또는 변조된 아날로그 신호로 변환한 뒤 재구성 필터와 출력단으로 헤드폰, 앰프 또는 라인 출력을 구동합니다. 오디오 Codec 칩은 ADC, DAC, PGA, 헤드폰 앰프, 믹서, 디지털 필터, 클록과 I2S/PDM/TDM 인터페이스를 통합하는 경우가 많습니다."
-          },
-          chainContext: {
-            stage: { zh: "转换与模拟边界", "zh-Hant": traditional("转换与模拟边界"), en: "Chain position: analog/digital boundary", ja: "チェーン位置：アナログとデジタルの境界", ko: "체인 위치: 아날로그/디지털 경계" },
-            input: { zh: "模拟电压，或待播放的 PCM 样本", "zh-Hant": traditional("模拟电压，或待播放的 PCM 样本"), en: "Analog voltage, or PCM samples ready for playback", ja: "アナログ電圧、または再生待ちの PCM サンプル", ko: "아날로그 전압 또는 재생 대기 중인 PCM 샘플" },
-            output: { zh: "PCM，或经过重建滤波的模拟输出", "zh-Hant": traditional("PCM，或经过重建滤波的模拟输出"), en: "PCM, or an analog output after reconstruction filtering", ja: "PCM、または再構成フィルター後のアナログ出力", ko: "PCM 또는 재구성 필터 후의 아날로그 출력" },
-            next: { zh: "采集侧进入接口 / DSP；播放侧进入功放与扬声器", "zh-Hant": traditional("采集侧进入接口 / DSP；播放侧进入功放与扬声器"), en: "Capture goes to interfaces / DSP; playback goes to the amplifier and speaker", ja: "収音側はインターフェース / DSP へ、再生側はアンプとスピーカーへ", ko: "캡처 측은 인터페이스 / DSP로, 재생 측은 앰프와 스피커로 이동" }
-          },
-          keyConcepts: [
-            { zh: "ADC 之前的模拟前端决定输入电平、增益和抗混叠；输入过大会削波，输入太小会让底噪占比变高。", "zh-Hant": traditional("ADC 之前的模拟前端决定输入电平、增益和抗混叠；输入过大会削波，输入太小会让底噪占比变高。"), en: "The analog front end before an ADC sets input level, gain, and anti-aliasing; too much level clips, while too little level exposes noise.", ja: "ADC 前のアナログフロントエンドが入力レベル、ゲイン、アンチエイリアスを決めます。入力が大きすぎるとクリップし、小さすぎるとノイズの割合が増えます。", ko: "ADC 전 아날로그 프런트엔드가 입력 레벨, 게인과 앨리어싱 방지를 정합니다. 입력이 너무 크면 클리핑되고 너무 작으면 노이즈 비중이 커집니다." },
-            { zh: "DAC 之后的重建滤波、输出阻抗、负载能力和耳机/功放匹配决定实际播放质量。", "zh-Hant": traditional("DAC 之后的重建滤波、输出阻抗、负载能力和耳机/功放匹配决定实际播放质量。"), en: "After a DAC, reconstruction filtering, output impedance, load drive, and headphone/amplifier matching shape playback quality.", ja: "DAC 後の再構成フィルター、出力インピーダンス、負荷駆動能力、ヘッドホンやアンプとの適合が実際の再生品質を左右します。", ko: "DAC 이후의 재구성 필터, 출력 임피던스, 부하 구동 능력과 헤드폰/앰프 매칭이 실제 재생 품질을 좌우합니다." },
-            { zh: "Codec 芯片不是 MP3/AAC 压缩算法，而是集成音频转换、模拟通路、数字接口和控制寄存器的硬件芯片。", "zh-Hant": traditional("Codec 芯片不是 MP3/AAC 压缩算法，而是集成音频转换、模拟通路、数字接口和控制寄存器的硬件芯片。"), en: "A codec chip is not an MP3/AAC compression algorithm; it is hardware integrating conversion, analog paths, digital interfaces, and control registers.", ja: "Codec チップは MP3/AAC 圧縮アルゴリズムではなく、音声変換、アナログ経路、デジタルインターフェース、制御レジスターを統合したハードウェアです。", ko: "Codec 칩은 MP3/AAC 압축 알고리즘이 아니라 오디오 변환, 아날로그 경로, 디지털 인터페이스와 제어 레지스터를 통합한 하드웨어 칩입니다." },
-            { zh: "采样时钟、PLL、MCLK/BCLK/LRCLK 配置错误会造成采样率不准、变调、爆音、丢帧或左右声道错位。", "zh-Hant": traditional("采样时钟、PLL、MCLK/BCLK/LRCLK 配置错误会造成采样率不准、变调、爆音、丢帧或左右声道错位。"), en: "Wrong sample clocks, PLL, MCLK/BCLK/LRCLK settings can cause sample-rate errors, pitch shift, pops, dropouts, or channel misalignment.", ja: "サンプルクロック、PLL、MCLK/BCLK/LRCLK の設定を誤ると、サンプルレートのずれ、ピッチ変化、ポップノイズ、ドロップアウト、左右チャンネルのずれが起こります。", ko: "샘플 클록, PLL, MCLK/BCLK/LRCLK 설정이 잘못되면 샘플레이트 오류, 피치 변화, 팝 노이즈, 드롭아웃이나 좌우 채널 불일치가 발생할 수 있습니다." }
-          ],
-          termExplanations: [
-            {
-              name: { zh: "ADC", "zh-Hant": traditional("ADC"), en: "ADC", ja: "ADC", ko: "ADC" },
-              explanation: {
-                zh: "ADC 是模数转换器，把连续的模拟电压转换成离散数字样本。音频 ADC 通常包含采样保持、量化、数字滤波和抽取，现代芯片多采用 Σ-Δ 架构以获得较高动态范围。", "zh-Hant": traditional("ADC 是模数转换器，把连续的模拟电压转换成离散数字样本。音频 ADC 通常包含采样保持、量化、数字滤波和抽取，现代芯片多采用 Σ-Δ 架构以获得较高动态范围。"),
-                en: "An ADC converts continuous analog voltage into discrete digital samples. Audio ADCs usually include sample-and-hold, quantization, digital filtering, and decimation; modern parts often use sigma-delta architectures for high dynamic range.",
-                ja: "ADC は連続アナログ電圧を離散デジタルサンプルに変換します。オーディオ ADC には通常、サンプルホールド、量子化、デジタルフィルター、デシメーションが含まれ、現代の製品は高いダイナミックレンジのため Σ-Δ 構成を使うことが多いです。",
-                ko: "ADC는 연속 아날로그 전압을 이산적인 디지털 샘플로 변환합니다. 오디오 ADC에는 보통 샘플 앤 홀드, 양자화, 디지털 필터와 데시메이션이 포함되며 현대 부품은 높은 다이내믹 레인지를 위해 시그마-델타 구조를 사용하는 경우가 많습니다."
-              }
-            },
-            {
-              name: { zh: "DAC", "zh-Hant": traditional("DAC"), en: "DAC", ja: "DAC", ko: "DAC" },
-              explanation: {
-                zh: "DAC 是数模转换器，把数字样本重建为模拟电压或电流。音频 DAC 通常经过过采样、噪声整形、模拟低通滤波和输出缓冲，最后驱动线路输出、耳机或功放。", "zh-Hant": traditional("DAC 是数模转换器，把数字样本重建为模拟电压或电流。音频 DAC 通常经过过采样、噪声整形、模拟低通滤波和输出缓冲，最后驱动线路输出、耳机或功放。"),
-                en: "A DAC reconstructs digital samples into analog voltage or current. Audio DACs usually use oversampling, noise shaping, analog low-pass filtering, and output buffering before driving line out, headphones, or amplifiers.",
-                ja: "DAC はデジタルサンプルをアナログ電圧または電流に再構成します。オーディオ DAC は通常、ライン出力、ヘッドホン、アンプを駆動する前に、オーバーサンプリング、ノイズシェーピング、アナログローパスフィルター、出力バッファーを使います。",
-                ko: "DAC는 디지털 샘플을 아날로그 전압 또는 전류로 재구성합니다. 오디오 DAC는 보통 라인 출력, 헤드폰이나 앰프를 구동하기 전에 오버샘플링, 노이즈 셰이핑, 아날로그 로우패스 필터와 출력 버퍼를 사용합니다."
-              }
-            },
-            {
-              name: { zh: "音频 Codec 芯片", "zh-Hant": traditional("音频 Codec 芯片"), en: "Audio codec chip", ja: "オーディオ Codec チップ", ko: "오디오 Codec 칩" },
-              explanation: {
-                zh: "硬件 Codec 芯片把 ADC、DAC、PGA、耳机放大、麦克风偏置、混音矩阵、音量控制和数字接口集成在一起。它负责硬件通路，不等同于 MP3、AAC、Opus 这类压缩编码算法。", "zh-Hant": traditional("硬件 Codec 芯片把 ADC、DAC、PGA、耳机放大、麦克风偏置、混音矩阵、音量控制和数字接口集成在一起。它负责硬件通路，不等同于 MP3、AAC、Opus 这类压缩编码算法。"),
-                en: "A hardware codec chip integrates ADCs, DACs, PGA, headphone amps, mic bias, mixers, volume controls, and digital interfaces. It handles hardware paths, not compression formats such as MP3, AAC, or Opus.",
-                ja: "ハードウェア Codec チップは ADC、DAC、PGA、ヘッドホンアンプ、マイクバイアス、ミキサー、音量制御、デジタルインターフェースを統合します。担当するのはハードウェア経路であり、MP3、AAC、Opus などの圧縮形式ではありません。",
-                ko: "하드웨어 Codec 칩은 ADC, DAC, PGA, 헤드폰 앰프, 마이크 바이어스, 믹서, 볼륨 제어와 디지털 인터페이스를 통합합니다. 하드웨어 경로를 처리하며 MP3, AAC, Opus 같은 압축 형식을 처리하는 것은 아닙니다."
-              }
-            },
-            {
-              name: { zh: "PGA / 前级增益", "zh-Hant": traditional("PGA / 前级增益"), en: "PGA / preamp gain", ja: "PGA / プリアンプゲイン", ko: "PGA / 프리앰프 게인" },
-              explanation: {
-                zh: "PGA 是可编程增益放大器，用来把麦克风或线路输入调整到 ADC 合适范围。增益太小会浪费动态范围，增益太大则可能削波并把噪声一起放大。", "zh-Hant": traditional("PGA 是可编程增益放大器，用来把麦克风或线路输入调整到 ADC 合适范围。增益太小会浪费动态范围，增益太大则可能削波并把噪声一起放大。"),
-                en: "A PGA is a programmable gain amplifier that brings mic or line input into the ADC's usable range. Too little gain wastes dynamic range; too much clips and amplifies noise.",
-                ja: "PGA はプログラマブルゲインアンプで、マイクまたはライン入力を ADC の使用可能範囲に合わせます。ゲインが小さすぎるとダイナミックレンジを無駄にし、大きすぎるとクリップしてノイズも増幅します。",
-                ko: "PGA는 마이크 또는 라인 입력을 ADC의 사용 범위에 맞추는 프로그래머블 게인 앰프입니다. 게인이 너무 작으면 다이내믹 레인지를 낭비하고 너무 크면 클리핑과 함께 잡음도 증폭합니다."
-              }
-            },
-            {
-              name: { zh: "抗混叠滤波", "zh-Hant": traditional("抗混叠滤波"), en: "Anti-alias filter", ja: "アンチエイリアスフィルター", ko: "앨리어싱 방지 필터" },
-              explanation: {
-                zh: "采样前需要限制高于奈奎斯特频率的内容，否则高频会折叠成错误低频。现代音频 ADC 通常用模拟前端加过采样数字滤波共同完成抗混叠。", "zh-Hant": traditional("采样前需要限制高于奈奎斯特频率的内容，否则高频会折叠成错误低频。现代音频 ADC 通常用模拟前端加过采样数字滤波共同完成抗混叠。"),
-                en: "Before sampling, content above the Nyquist frequency must be limited or it folds into false lower frequencies. Modern audio ADCs combine analog front-end filtering with oversampled digital filtering.",
-                ja: "サンプリング前にナイキスト周波数を超える成分を制限しないと、偽の低周波へ折り返されます。現代のオーディオ ADC はアナログフロントエンドのフィルターとオーバーサンプリングされたデジタルフィルターを組み合わせます。",
-                ko: "샘플링 전에 나이퀴스트 주파수를 넘는 성분을 제한하지 않으면 가짜 저주파로 접혀 들어갑니다. 현대 오디오 ADC는 아날로그 프런트엔드 필터와 오버샘플링 디지털 필터를 함께 사용합니다."
-              }
-            },
-            {
-              name: { zh: "重建滤波", "zh-Hant": traditional("重建滤波"), en: "Reconstruction filter", ja: "再構成フィルター", ko: "재구성 필터" },
-              explanation: {
-                zh: "DAC 输出后会出现采样镜像和阶梯成分，需要低通重建滤波去除超声频镜像，让输出更接近连续模拟波形。", "zh-Hant": traditional("DAC 输出后会出现采样镜像和阶梯成分，需要低通重建滤波去除超声频镜像，让输出更接近连续模拟波形。"),
-                en: "DAC output contains sampling images and stepped components. A low-pass reconstruction filter removes ultrasonic images and makes the output closer to a continuous analog waveform.",
-                ja: "DAC 出力にはサンプリングイメージと階段状成分が含まれます。ローパスの再構成フィルターで超音波域のイメージを除き、連続アナログ波形に近づけます。",
-                ko: "DAC 출력에는 샘플링 이미지와 계단형 성분이 포함됩니다. 로우패스 재구성 필터가 초음파 대역 이미지를 제거해 출력을 연속적인 아날로그 파형에 가깝게 만듭니다."
-              }
-            },
-            {
-              name: { zh: "动态范围 / SNR", "zh-Hant": traditional("动态范围 / SNR"), en: "Dynamic range / SNR", ja: "ダイナミックレンジ / SNR", ko: "다이내믹 레인지 / SNR" },
-              explanation: {
-                zh: "动态范围描述最大不失真信号和噪声底之间的跨度。ADC/DAC 的 ENOB、SNR、THD+N、模拟布局和电源噪声都会影响真实可用动态范围。", "zh-Hant": traditional("动态范围描述最大不失真信号和噪声底之间的跨度。ADC/DAC 的 ENOB、SNR、THD+N、模拟布局和电源噪声都会影响真实可用动态范围。"),
-                en: "Dynamic range is the span between maximum unclipped signal and noise floor. ENOB, SNR, THD+N, analog layout, and power noise all affect usable converter range.",
-                ja: "ダイナミックレンジは、クリップしない最大信号とノイズフロアの幅です。ENOB、SNR、THD+N、アナログレイアウト、電源ノイズがコンバーターの実用範囲に影響します。",
-                ko: "다이내믹 레인지는 클리핑되지 않는 최대 신호와 노이즈 플로어 사이의 범위입니다. ENOB, SNR, THD+N, 아날로그 레이아웃과 전원 잡음이 변환기의 실제 사용 범위에 영향을 줍니다."
-              }
-            },
-            {
-              name: { zh: "时钟与抖动", "zh-Hant": traditional("时钟与抖动"), en: "Clocking and jitter", ja: "クロックとジッター", ko: "클로킹과 지터" },
-              explanation: {
-                zh: "音频采样依赖稳定时钟。抖动是采样或重建时刻的微小偏差，严重时会带来噪声、失真或声像模糊；实际系统还要正确配置 MCLK、BCLK、LRCLK 和 PLL。", "zh-Hant": traditional("音频采样依赖稳定时钟。抖动是采样或重建时刻的微小偏差，严重时会带来噪声、失真或声像模糊；实际系统还要正确配置 MCLK、BCLK、LRCLK 和 PLL。"),
-                en: "Audio conversion depends on stable clocks. Jitter is tiny timing error in sampling or reconstruction; when severe it can add noise, distortion, or image blur. Systems also need correct MCLK, BCLK, LRCLK, and PLL configuration.",
-                ja: "音声変換は安定したクロックに依存します。ジッターはサンプリングや再構成の時刻に生じる微小な誤差で、深刻になるとノイズ、歪み、音像のぼけを加えます。システムでは MCLK、BCLK、LRCLK、PLL も正しく設定する必要があります。",
-                ko: "오디오 변환은 안정적인 클록에 의존합니다. 지터는 샘플링 또는 재구성 시점의 미세한 시간 오차이며 심하면 잡음, 왜곡이나 음상 흐림을 추가할 수 있습니다. 시스템은 MCLK, BCLK, LRCLK와 PLL도 올바르게 설정해야 합니다."
-              }
-            },
-            {
-              name: { zh: "I2S / PDM / TDM", "zh-Hant": traditional("I2S / PDM / TDM"), en: "I2S / PDM / TDM", ja: "I2S / PDM / TDM", ko: "I2S / PDM / TDM" },
-              explanation: {
-                zh: "I2S 常用于双声道 PCM 音频，PDM 常见于数字 MEMS 麦克风，TDM 可在一组时钟线上承载多路音频。接口格式、位宽、左右对齐和主从时钟必须匹配。", "zh-Hant": traditional("I2S 常用于双声道 PCM 音频，PDM 常见于数字 MEMS 麦克风，TDM 可在一组时钟线上承载多路音频。接口格式、位宽、左右对齐和主从时钟必须匹配。"),
-                en: "I2S commonly carries stereo PCM, PDM is common for digital MEMS microphones, and TDM carries multiple channels on shared clocks. Format, word length, alignment, and clock master/slave roles must match.",
-                ja: "I2S はステレオ PCM、PDM はデジタル MEMS マイク、TDM は共有クロック上の複数チャンネル伝送によく使われます。形式、ワード長、アライメント、クロックのマスター／スレーブ役割を一致させる必要があります。",
-                ko: "I2S는 스테레오 PCM, PDM은 디지털 MEMS 마이크, TDM은 공유 클록에서 여러 채널을 전달하는 데 흔히 사용됩니다. 형식, 워드 길이, 정렬과 클록 마스터/슬레이브 역할이 일치해야 합니다."
-              }
-            },
-            {
-              name: { zh: "电源与模拟布局", "zh-Hant": traditional("电源与模拟布局"), en: "Power and analog layout", ja: "電源とアナログレイアウト", ko: "전원과 아날로그 레이아웃" },
-              explanation: {
-                zh: "Codec 周围的电源纹波、地回路、模拟/数字隔离、参考电压和去耦电容会直接影响噪声、串扰和爆音。数据手册推荐布局通常非常关键。", "zh-Hant": traditional("Codec 周围的电源纹波、地回路、模拟/数字隔离、参考电压和去耦电容会直接影响噪声、串扰和爆音。数据手册推荐布局通常非常关键。"),
-                en: "Power ripple, ground loops, analog/digital separation, voltage references, and decoupling near a codec directly affect noise, crosstalk, and pops. Datasheet layout guidance is often critical.",
-                ja: "Codec 周辺の電源リップル、グラウンドループ、アナログ／デジタル分離、電圧リファレンス、デカップリングは、ノイズ、クロストーク、ポップノイズに直接影響します。データシートのレイアウト指針が重要になることが多いです。",
-                ko: "Codec 주변의 전원 리플, 그라운드 루프, 아날로그/디지털 분리, 전압 기준과 디커플링은 잡음, 크로스토크와 팝 노이즈에 직접 영향을 줍니다. 데이터시트의 레이아웃 지침이 중요한 경우가 많습니다."
-              }
-            }
-          ],
-          lab: {
-            type: "codec-hardware",
-            title: { zh: "ADC / DAC / Codec 实验室", "zh-Hant": traditional("ADC / DAC / Codec 实验室"), en: "ADC / DAC / Codec Lab", ja: "ADC / DAC / Codec ラボ", ko: "ADC / DAC / Codec 실험실" },
-            description: {
-              zh: "进入独立界面切换 ADC 采集、DAC 重建和 Codec 芯片链路，调节输入电平、采样率、位深和时钟抖动，观察削波、量化噪声、重建滤波和接口数据流。", "zh-Hant": traditional("进入独立界面切换 ADC 采集、DAC 重建和 Codec 芯片链路，调节输入电平、采样率、位深和时钟抖动，观察削波、量化噪声、重建滤波和接口数据流。"),
-              en: "Open an independent lab to switch ADC capture, DAC reconstruction, and codec-chip paths, then adjust input level, sample rate, bit depth, and clock jitter to observe clipping, quantization noise, reconstruction filtering, and interface flow.",
-              ja: "独立したラボで ADC 収音、DAC 再構成、Codec チップの経路を切り替え、入力レベル、サンプルレート、ビット深度、クロックジッターを調整して、クリップ、量子化ノイズ、再構成フィルター、インターフェースの流れを観察します。",
-              ko: "독립 실험실에서 ADC 캡처, DAC 재구성과 Codec 칩 경로를 전환하고 입력 레벨, 샘플레이트, 비트 깊이와 클록 지터를 조절해 클리핑, 양자화 잡음, 재구성 필터와 인터페이스 흐름을 관찰합니다."
-            },
-            buttonLabel: { zh: "打开 ADC / DAC / Codec 实验室", "zh-Hant": traditional("打开 ADC / DAC / Codec 实验室"), en: "Open ADC / DAC / Codec lab", ja: "ADC / DAC / Codec ラボを開く", ko: "ADC / DAC / Codec 실험실 열기" }
-          },
-          misconception: {
-            zh: "硬件 Codec 芯片和 MP3、AAC 这类编解码算法不是同一个概念；前者是音频转换、模拟通路和接口芯片，后者是压缩格式算法。", "zh-Hant": traditional("硬件 Codec 芯片和 MP3、AAC 这类编解码算法不是同一个概念；前者是音频转换、模拟通路和接口芯片，后者是压缩格式算法。"),
-            en: "A hardware codec chip is not the same thing as an MP3 or AAC codec algorithm; the former handles conversion, analog paths, and interfaces, while the latter compresses audio data.",
-            ja: "ハードウェア Codec チップは MP3 や AAC の Codec アルゴリズムとは別物です。前者は変換、アナログ経路、インターフェースを扱い、後者は音声データを圧縮します。",
-            ko: "하드웨어 Codec 칩은 MP3나 AAC 코덱 알고리즘과 같은 개념이 아닙니다. 전자는 변환, 아날로그 경로와 인터페이스를 처리하고 후자는 오디오 데이터를 압축합니다."
-          },
-          contentDirection: {
-            zh: "适合继续扩展为从麦克风到扬声器的硬件链路图、Codec 寄存器配置示例、I2S/PDM/TDM 时序图，以及噪声、失真、爆音和时钟问题排查清单。", "zh-Hant": traditional("适合继续扩展为从麦克风到扬声器的硬件链路图、Codec 寄存器配置示例、I2S/PDM/TDM 时序图，以及噪声、失真、爆音和时钟问题排查清单。"),
-            en: "This can expand into microphone-to-speaker hardware chain diagrams, codec register examples, I2S/PDM/TDM timing diagrams, and checklists for noise, distortion, pops, and clocking problems.",
-            ja: "マイクからスピーカーまでのハードウェアチェーン図、Codec レジスター例、I2S/PDM/TDM のタイミング図、ノイズ、歪み、ポップノイズ、クロック問題のチェックリストへ発展できます。",
-            ko: "마이크에서 스피커까지의 하드웨어 체인 도해, Codec 레지스터 예시, I2S/PDM/TDM 타이밍 도해와 잡음, 왜곡, 팝 노이즈, 클로킹 문제 체크리스트로 확장할 수 있습니다."
-          }
-        }
-      },
-      {
         title: {
           zh: "数字音频接口 / 传输协议", "zh-Hant": traditional("数字音频接口 / 传输协议"),
           en: "Digital Audio Interfaces / Transport Protocols",
@@ -1160,10 +1010,10 @@ export const categories: Category[] = [
             {
               name: { zh: "Class A / AB / D", "zh-Hant": traditional("Class A / AB / D"), en: "Class A / AB / D", ja: "Class A / AB / D", ko: "Class A / AB / D" },
               explanation: {
-                zh: "Class A 器件几乎一直导通，线性好但耗电；Class AB 让正负半周分担输出；Class D 把信号调制成高速开关脉冲，再由负载和滤波恢复为音频。", "zh-Hant": traditional("Class A 器件几乎一直导通，线性好但耗电；Class AB 让正负半周分担输出；Class D 把信号调制成高速开关脉冲，再由负载和滤波恢复为音频。"),
-                en: "Class A devices conduct most of the time, Class AB splits positive and negative halves, and Class D modulates audio into fast switching pulses before filtering through the load.",
-                ja: "Class A はほぼ常時導通するため線形性に優れますが消費電力が大きく、Class AB は正負の半周期で出力を分担します。Class D は音声を高速スイッチングパルスへ変調し、負荷とフィルターで音声へ戻します。",
-                ko: "Class A 소자는 대부분의 시간 동안 도통해 선형성이 좋지만 전력 소모가 큽니다. Class AB는 양과 음의 반주기를 나눠 출력하고 Class D는 오디오를 고속 스위칭 펄스로 변조한 뒤 부하와 필터로 오디오를 복원합니다."
+                zh: "Class A 输出器件在设计工作范围内整周期导通，静态耗电较大；Class AB 用带重叠导通的推挽输出减小交越失真；Class D 用高速开关调制输出，通常效率更高。D 不代表数字输入，部分设计利用扬声器电感而不需外置 LC 滤波器。类别本身不是音质排名。", "zh-Hant": traditional("Class A 输出器件在设计工作范围内整周期导通，静态耗电较大；Class AB 用带重叠导通的推挽输出减小交越失真；Class D 用高速开关调制输出，通常效率更高。D 不代表数字输入，部分设计利用扬声器电感而不需外置 LC 滤波器。类别本身不是音质排名。"),
+                en: "Class A output devices conduct for the full cycle within their design range, with high idle dissipation. Class AB uses overlapping push-pull conduction to reduce crossover distortion. Class D switches rapidly for typically higher efficiency; D does not mean digital input, and some designs use speaker inductance without an external LC filter. Class is not a sound-quality ranking.",
+                ja: "Class Aは設計範囲内で出力素子が全周期導通し、無信号時の損失が大きくなります。ABは導通を重ねたプッシュプルでクロスオーバー歪みを減らします。Dは高速スイッチングで通常高効率ですが、デジタル入力という意味ではありません。スピーカーのインダクタンスを利用し外付けLC不要の設計もあります。方式は音質の順位ではありません。",
+                ko: "Class A 출력 소자는 설계 범위에서 전체 주기 동안 도통하며 대기 손실이 큽니다. AB는 겹치는 푸시풀 도통으로 교차 왜곡을 줄입니다. D는 고속 스위칭으로 보통 효율이 높지만 디지털 입력을 뜻하지 않습니다. 스피커 인덕턴스를 활용해 외부 LC가 필요 없는 설계도 있습니다. 방식은 음질 순위가 아닙니다."
               }
             },
             {
@@ -1302,10 +1152,10 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "系统音频架构回答的是：应用发起播放或录音请求后，系统如何选择设备、管理权限、处理会话和音量，并把 PCM 数据交给驱动和硬件。它是系统层总览，不展开具体 DSP 算法、接口时序或低延迟调参。", "zh-Hant": traditional("系统音频架构回答的是：应用发起播放或录音请求后，系统如何选择设备、管理权限、处理会话和音量，并把 PCM 数据交给驱动和硬件。它是系统层总览，不展开具体 DSP 算法、接口时序或低延迟调参。"),
-            en: "System audio architecture answers this question: after an app requests playback or recording, how does the system choose devices, manage permission, handle sessions and volume, then hand PCM data to drivers and hardware? It is a system-level overview, not a deep dive into DSP algorithms, interface timing, or low-latency tuning.",
-            ja: "システム音声アーキテクチャは、アプリが再生や録音を要求した後、システムがデバイスを選び、権限を管理し、セッションと音量を処理して、PCM データをドライバーとハードウェアへ渡す方法を説明します。これはシステム層の概要であり、具体的な DSP アルゴリズム、インターフェースのタイミング、低遅延チューニングの詳細には踏み込みません。",
-            ko: "시스템 오디오 아키텍처는 앱이 재생이나 녹음을 요청한 뒤 시스템이 장치를 선택하고 권한을 관리하며 세션과 볼륨을 처리해 PCM 데이터를 드라이버와 하드웨어로 넘기는 방식을 설명합니다. 시스템 계층의 개요이며 구체적인 DSP 알고리즘, 인터페이스 타이밍이나 저지연 튜닝의 세부 사항을 다루지는 않습니다."
+            zh: "系统音频架构回答的是：应用发起播放或录音请求后，系统如何选择设备、管理权限、处理会话和音量，并组织 PCM 在应用与设备之间传递。它是系统层总览，不展开具体 DSP 算法、接口时序或低延迟调参。", "zh-Hant": traditional("系统音频架构回答的是：应用发起播放或录音请求后，系统如何选择设备、管理权限、处理会话和音量，并组织 PCM 在应用与设备之间传递。它是系统层总览，不展开具体 DSP 算法、接口时序或低延迟调参。"),
+            en: "System audio architecture answers this question: after an app requests playback or recording, how does the system choose devices, manage permission, handle sessions and volume, and move PCM between the app and device? It is a system-level overview, not a deep dive into DSP algorithms, interface timing, or low-latency tuning.",
+            ja: "システム音声アーキテクチャは、アプリが再生や録音を要求した後、デバイス選択、権限、セッション、音量を管理し、アプリと機器の間でPCMを転送する仕組みを説明します。これはシステム層の概要であり、具体的なDSPアルゴリズム、インターフェースのタイミング、低遅延チューニングには踏み込みません。",
+            ko: "시스템 오디오 아키텍처는 앱이 재생이나 녹음을 요청한 뒤 장치, 권한, 세션, 볼륨을 관리하고 앱과 장치 사이에서 PCM을 전달하는 구조를 설명합니다. 시스템 계층의 개요이며 구체적인 DSP 알고리즘, 인터페이스 타이밍이나 저지연 튜닝은 다루지 않습니다."
           },
           chainContext: {
             stage: { zh: "系统调度层：请求到设备", "zh-Hant": traditional("系统调度层：请求到设备"), en: "System orchestration: request to device", ja: "システム調整層：リクエストからデバイスへ", ko: "시스템 오케스트레이션: 요청에서 장치로" },
@@ -1322,42 +1172,31 @@ export const categories: Category[] = [
             {
               name: { zh: "请求生命周期", "zh-Hant": traditional("请求生命周期"), en: "Request lifecycle", ja: "リクエストのライフサイクル", ko: "요청 수명 주기" },
               explanation: {
-                zh: "应用先提出播放、采集或通话请求，系统再完成权限检查、设备选择、格式协商和流启动。应用拿到的是系统提供的音频流，不必知道每个硬件寄存器。", "zh-Hant": traditional("应用先提出播放、采集或通话请求，系统再完成权限检查、设备选择、格式协商和流启动。应用拿到的是系统提供的音频流，不必知道每个硬件寄存器。"),
-                en: "An app first requests playback, capture, or a call. The system then checks permission, selects a device, negotiates format, and starts the stream. The app receives a system audio stream without knowing each hardware register.",
-                ja: "アプリはまず再生、収音、通話を要求し、システムが権限確認、デバイス選択、形式ネゴシエーション、ストリーム開始を行います。アプリは個々のハードウェアレジスターを知らなくても、システムが提供する音声ストリームを受け取れます。",
-                ko: "앱이 먼저 재생, 캡처 또는 통화를 요청하면 시스템이 권한 확인, 장치 선택, 형식 협상과 스트림 시작을 수행합니다. 앱은 각 하드웨어 레지스터를 알지 못해도 시스템 오디오 스트림을 받습니다."
+                zh: "加入会议时，应用通过 API 请求播放和采集流；相关组件检查访问权限，选择设备并协商格式后启动。通话中设备断开，可能重新路由，也可能要求应用重新打开流；退出时停止并释放该应用的流。系统不会为每一帧重新建立会话。", "zh-Hant": traditional("加入会议时，应用通过 API 请求播放和采集流；相关组件检查访问权限，选择设备并协商格式后启动。通话中设备断开，可能重新路由，也可能要求应用重新打开流；退出时停止并释放该应用的流。系统不会为每一帧重新建立会话。"),
+                en: "Joining a call requests playback and capture streams through APIs. The relevant components check access, select devices, negotiate formats and start. Device removal may trigger rerouting or require the app to reopen a stream. Leaving stops and releases the app's streams; sessions are not recreated for every frame.",
+                ja: "通話参加時、アプリがAPIで再生・収録ストリームを要求し、関連部品がアクセス権、機器、形式を確認して開始します。機器切断時は経路変更やストリーム再オープンが必要な場合があります。退出時はアプリのストリームを停止・解放します。フレームごとにセッションを作り直すわけではありません。",
+                ko: "통화 참여 시 앱이 API로 재생과 캡처 스트림을 요청합니다. 관련 구성 요소가 접근 권한, 장치, 형식을 확인하고 시작합니다. 장치가 끊기면 재라우팅하거나 앱이 스트림을 다시 열어야 할 수 있습니다. 종료 시 해당 앱의 스트림을 정지하고 해제하며 프레임마다 세션을 새로 만들지 않습니다."
               }
             },
             {
               name: { zh: "策略与数据流分离", "zh-Hant": traditional("策略与数据流分离"), en: "Policy versus data flow", ja: "ポリシーとデータフローの分離", ko: "정책과 데이터 흐름의 분리" },
               explanation: {
-                zh: "路由、音量、音频焦点和权限回答‘允许谁使用哪台设备’；PCM 数据流回答‘样本如何按时间顺序传递’。两者相关，但不是同一个模块。", "zh-Hant": traditional("路由、音量、音频焦点和权限回答‘允许谁使用哪台设备’；PCM 数据流回答‘样本如何按时间顺序传递’。两者相关，但不是同一个模块。"),
-                en: "Routing, volume, audio focus, and permission answer who may use which device; the PCM data flow answers how samples move over time. They interact but are not the same module.",
-                ja: "ルーティング、音量、オーディオフォーカス、権限は「誰がどのデバイスを使えるか」に答え、PCM データフローは「サンプルが時間に沿ってどう移動するか」に答えます。両者は関係しますが同じモジュールではありません。",
-                ko: "라우팅, 볼륨, 오디오 포커스와 권한은 ‘누가 어떤 장치를 사용할 수 있는가’를 결정하고 PCM 데이터 흐름은 ‘샘플이 시간에 따라 어떻게 이동하는가’를 다룹니다. 서로 관련되지만 같은 모듈은 아닙니다."
+                zh: "切换耳机时，策略决定流应连接哪一个输入或输出；数据通路持续搬运 PCM。拖动音量滑块是控制操作，实际增益由软件或硬件执行。控制与数据是职责上的区分，不要求每个平台都拆成两个进程。", "zh-Hant": traditional("切换耳机时，策略决定流应连接哪一个输入或输出；数据通路持续搬运 PCM。拖动音量滑块是控制操作，实际增益由软件或硬件执行。控制与数据是职责上的区分，不要求每个平台都拆成两个进程。"),
+                en: "When switching a headset, policy selects the input or output connection while the data path transports PCM. Moving a volume slider is a control operation; software or hardware applies the gain. Control and data are separate responsibilities, not necessarily separate processes on every platform.",
+                ja: "ヘッドセット切替ではポリシーが入出力の接続先を決め、データ経路はPCMを転送します。音量操作は制御で、実際のゲインはソフトまたはハードが適用します。役割の区別であり、必ず別プロセスになるとは限りません。",
+                ko: "헤드셋 전환 시 정책이 입출력 연결을 결정하고 데이터 경로는 PCM을 전달합니다. 볼륨 슬라이더는 제어 동작이며 실제 이득은 소프트웨어나 하드웨어가 적용합니다. 책임 구분이지 모든 플랫폼에서 별도 프로세스로 나뉜다는 뜻은 아닙니다."
               }
             },
             {
               name: { zh: "平台边界", "zh-Hant": traditional("平台边界"), en: "Platform boundary", ja: "プラットフォーム境界", ko: "플랫폼 경계" },
               explanation: {
-                zh: "Android AudioFlinger、Linux PipeWire/ALSA、Windows WASAPI 和 macOS Core Audio 的名称不同，但都要完成请求管理、路由和设备适配。具体 API 与驱动细节放在平台专题中。", "zh-Hant": traditional("Android AudioFlinger、Linux PipeWire/ALSA、Windows WASAPI 和 macOS Core Audio 的名称不同，但都要完成请求管理、路由和设备适配。具体 API 与驱动细节放在平台专题中。"),
-                en: "Android AudioFlinger, Linux PipeWire/ALSA, Windows WASAPI, and macOS Core Audio use different names but all manage requests, routing, and device adaptation. Platform-specific APIs and drivers belong in dedicated topics.",
-                ja: "Android AudioFlinger、Linux PipeWire/ALSA、Windows WASAPI、macOS Core Audio は名称が異なりますが、いずれもリクエスト管理、ルーティング、デバイス適応を行います。固有の API とドライバーの詳細は各プラットフォームのテーマで扱います。",
-                ko: "Android AudioFlinger, Linux PipeWire/ALSA, Windows WASAPI와 macOS Core Audio는 이름은 다르지만 모두 요청 관리, 라우팅과 장치 적응을 수행합니다. 플랫폼별 API와 드라이버 세부 사항은 각 플랫폼 주제에서 다룹니다."
+                zh: "同样的会议需求，在不同平台由不同组件协作完成。Android AudioFlinger 是服务组件，Windows WASAPI 是应用接口，macOS Core Audio 是一套技术体系，不能把这些名字当成同一层的替代品。本页以 Linux 为例理解职责，不要求记住所有平台名称。", "zh-Hant": traditional("同样的会议需求，在不同平台由不同组件协作完成。Android AudioFlinger 是服务组件，Windows WASAPI 是应用接口，macOS Core Audio 是一套技术体系，不能把这些名字当成同一层的替代品。本页以 Linux 为例理解职责，不要求记住所有平台名称。"),
+                en: "Different platforms meet the same call requirements with different cooperating components. Android AudioFlinger is a service component, Windows WASAPI an application interface, and macOS Core Audio a set of technologies; they are not interchangeable names for one layer. Use Linux here to understand responsibilities rather than memorize platform names.",
+                ja: "同じ通話要件でも各OSは異なる部品で実現します。AndroidのAudioFlingerはサービス、WindowsのWASAPIはアプリ用API、macOSのCore Audioは技術群であり、同じ層の代替品ではありません。ここではLinuxを例に役割を理解します。",
+                ko: "같은 통화 요구도 플랫폼마다 다른 구성 요소가 협력해 처리합니다. Android AudioFlinger는 서비스 구성 요소, Windows WASAPI는 앱 인터페이스, macOS Core Audio는 기술 모음이므로 같은 계층의 대체재가 아닙니다. 여기서는 Linux 예시로 역할을 이해합니다."
               }
             }
           ],
-          lab: {
-            type: "system-audio",
-            title: { zh: "系统音频架构实验室", "zh-Hant": traditional("系统音频架构实验室"), en: "System Audio Architecture Lab", ja: "システム音声アーキテクチャラボ", ko: "시스템 오디오 아키텍처 실험실" },
-            description: {
-              zh: "进入独立界面查看通用分层、Linux 示例，并切换播放、录音和全双工三条系统链路。", "zh-Hant": traditional("进入独立界面查看通用分层、Linux 示例，并切换播放、录音和全双工三条系统链路。"),
-              en: "Open an independent lab to view generic layers, a Linux example, and switch among playback, capture, and full-duplex system paths.",
-              ja: "独立したラボで一般的な層構造と Linux の例を確認し、再生、録音、全二重の3つのシステム経路を切り替えます。",
-              ko: "독립 실험실에서 일반적인 계층과 Linux 예시를 확인하고 재생, 녹음과 전이중 시스템 경로를 전환합니다."
-            },
-            buttonLabel: { zh: "打开系统音频架构实验室", "zh-Hant": traditional("打开系统音频架构实验室"), en: "Open system audio architecture lab", ja: "システム音声アーキテクチャラボを開く", ko: "시스템 오디오 아키텍처 실험실 열기" }
-          },
           misconception: {
             zh: "系统音频架构不是某一个算法模块，也不是硬件接口教程；它主要解释系统如何管理请求、设备和数据流边界。", "zh-Hant": traditional("系统音频架构不是某一个算法模块，也不是硬件接口教程；它主要解释系统如何管理请求、设备和数据流边界。"),
             en: "System audio architecture is not one algorithm module or a hardware-interface tutorial; it mainly explains how the system manages requests, devices, and data-flow boundaries.",
@@ -1720,19 +1559,19 @@ export const categories: Category[] = [
             {
               name: { zh: "频率域", "zh-Hant": traditional("频率域"), en: "Frequency domain", ja: "周波数領域", ko: "주파수 영역" },
               explanation: {
-                zh: "频率域把声音拆成不同频率的能量分布。FFT 会受到窗口长度、采样率和点数影响，频率分辨率越高，通常时间定位越粗。", "zh-Hant": traditional("频率域把声音拆成不同频率的能量分布。FFT 会受到窗口长度、采样率和点数影响，频率分辨率越高，通常时间定位越粗。"),
-                en: "The frequency domain decomposes sound into energy at different frequencies. FFT results depend on window length, sample rate, and point count; higher frequency resolution usually gives coarser time localization.",
-                ja: "周波数領域は音を異なる周波数のエネルギー分布へ分解します。FFT の結果は窓長、サンプルレート、点数に左右され、周波数分解能を高くすると通常は時間位置の分解能が粗くなります。",
-                ko: "주파수 영역은 소리를 서로 다른 주파수의 에너지 분포로 분해합니다. FFT 결과는 윈도 길이, 샘플레이트와 포인트 수에 좌우되며 주파수 해상도가 높을수록 일반적으로 시간 위치 해상도는 거칠어집니다."
+                zh: "频率域描述声音的频率组成，可显示幅度谱或功率谱，复数频谱还包含相位。FFT 格点间隔为 Δf = fs/NFFT；补零能让格点更密，但不能代替更长的观察窗口来分开邻近频率。", "zh-Hant": traditional("频率域描述声音的频率组成，可显示幅度谱或功率谱，复数频谱还包含相位。FFT 格点间隔为 Δf = fs/NFFT；补零能让格点更密，但不能代替更长的观察窗口来分开邻近频率。"),
+                en: "The frequency domain describes frequency content as magnitude or power spectra; complex spectra also contain phase. FFT bin spacing is Δf = fs/NFFT. Zero-padding gives denser bins, but does not replace a longer observation window for resolving nearby tones.",
+                ja: "周波数領域では振幅・パワースペクトルを示し、複素スペクトルは位相も含みます。ビン間隔はΔf = fs/NFFTです。ゼロ埋めでビンは密になりますが、近い周波数を分離する長い観測窓の代わりにはなりません。",
+                ko: "주파수 영역은 진폭 또는 파워 스펙트럼을 나타내며 복소 스펙트럼은 위상도 포함합니다. 빈 간격은 Δf = fs/NFFT입니다. 제로 패딩은 빈을 촘촘하게 하지만 가까운 주파수를 구분하는 긴 관측 창을 대체하지 못합니다."
               }
             },
             {
               name: { zh: "STFT 分帧", "zh-Hant": traditional("STFT 分帧"), en: "STFT framing", ja: "STFT フレーミング", ko: "STFT 프레이밍" },
               explanation: {
-                zh: "STFT 会把连续 PCM 切成短帧，每帧加窗后做 FFT。window size 和 hop size 决定时间分辨率、频率分辨率、延迟和计算量。", "zh-Hant": traditional("STFT 会把连续 PCM 切成短帧，每帧加窗后做 FFT。window size 和 hop size 决定时间分辨率、频率分辨率、延迟和计算量。"),
-                en: "STFT cuts continuous PCM into short frames, applies a window, then runs FFT per frame. Window size and hop size determine time resolution, frequency resolution, latency, and compute cost.",
-                ja: "STFT は連続 PCM を短いフレームに分け、各フレームへ窓を掛けて FFT を行います。window size と hop size が時間分解能、周波数分解能、遅延、計算量を決めます。",
-                ko: "STFT는 연속 PCM을 짧은 프레임으로 나누고 각 프레임에 윈도를 적용한 뒤 FFT를 수행합니다. window size와 hop size가 시간 해상도, 주파수 해상도, 지연과 계산량을 결정합니다."
+                zh: "STFT 对连续 PCM 分帧、加窗并逐帧做 FFT。窗口越长，通常越能分开邻近频率，但会模糊短时变化；hop size 控制相邻帧的时间间隔和计算量，不直接改变频率分辨能力。延迟还取决于是否居中、缓冲和具体实现。", "zh-Hant": traditional("STFT 对连续 PCM 分帧、加窗并逐帧做 FFT。窗口越长，通常越能分开邻近频率，但会模糊短时变化；hop size 控制相邻帧的时间间隔和计算量，不直接改变频率分辨能力。延迟还取决于是否居中、缓冲和具体实现。"),
+                en: "STFT windows successive PCM frames and computes an FFT for each. Longer windows usually resolve nearby frequencies better but smear brief changes. Hop size sets frame spacing and computation, not frequency resolving power directly. Latency also depends on centering, buffering and implementation.",
+                ja: "STFTはPCMを分割・窓掛けし、各フレームでFFTを計算します。長い窓は近い周波数を分離しやすい一方、短い変化をぼかします。ホップはフレーム間隔と計算量を決め、周波数分解能を直接変えません。遅延は中心配置やバッファー、実装にも依存します。",
+                ko: "STFT는 PCM을 프레임으로 나누어 윈도잉하고 FFT를 계산합니다. 긴 창은 가까운 주파수를 잘 구분하지만 짧은 변화를 흐립니다. 홉은 프레임 간격과 계산량을 정하며 주파수 분해 능력을 직접 바꾸지 않습니다. 지연은 중앙 정렬, 버퍼링, 구현에도 달려 있습니다."
               }
             },
             {

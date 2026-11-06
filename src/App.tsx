@@ -22,7 +22,6 @@ import { AutomotiveAudioLab } from "./components/AutomotiveAudioLab";
 import { RobotAudioLab } from "./components/RobotAudioLab";
 import { BluetoothAudioLab } from "./components/BluetoothAudioLab";
 import { CategoryTabs } from "./components/CategoryTabs";
-import { CodecHardwareLab } from "./components/CodecHardwareLab";
 import { CoreSignalProcessingLab } from "./components/CoreSignalProcessingLab";
 import { CoreSignalProcessingPage } from "./components/CoreSignalProcessingPage";
 import { DigitalAudioLab } from "./components/DigitalAudioLab";
@@ -47,7 +46,6 @@ import { SoundWaveLab } from "./components/SoundWaveLab";
 import { SoundTopicPage } from "./components/SoundTopicPage";
 import { SpatialAudioLab } from "./components/SpatialAudioLab";
 import { SpatialAudioPage } from "./components/SpatialAudioPage";
-import { SystemAudioLab } from "./components/SystemAudioLab";
 import { SystemAudioPage } from "./components/SystemAudioPage";
 import { TopicDetails } from "./components/TopicDetails";
 import { getTopicElementId, TopicGrid } from "./components/TopicGrid";
@@ -162,11 +160,9 @@ function AppContent({ language }: { language: Language }) {
     | "bluetoothAudioLab"
     | "iotContentLab"
     | "microphoneLab"
-    | "codecLab"
     | "digitalInterfaceLab"
     | "amplifierSpeakerLab"
     | "systemAudioPage"
-    | "systemAudioLab"
     | "alsaPage"
     | "alsaLab"
     | "audioCodecLab"
@@ -327,7 +323,6 @@ function AppContent({ language }: { language: Language }) {
   function openHardwareLab() {
     switch (activeHardwareTopic?.detail.lab?.type) {
       case "microphone": setActiveView("microphoneLab"); break;
-      case "codec-hardware": setActiveView("codecLab"); break;
       case "digital-interface": setActiveView("digitalInterfaceLab"); break;
       case "amplifier-speaker": setActiveView("amplifierSpeakerLab"); break;
       default: returnToHardware();
@@ -348,8 +343,8 @@ function AppContent({ language }: { language: Language }) {
       "realtime-audio": "realtimeAudioPage",
       "audio-codec": "audioCodecPage"
     } as const;
-    const labType = topic.detail.lab?.type;
-    const page = labType ? pageByLab[labType as keyof typeof pageByLab] : undefined;
+    const topicKey = getTopicKey(topic);
+    const page = topicKey ? pageByLab[topicKey as keyof typeof pageByLab] : undefined;
 
     if (!page) {
       setSelectedTopic(topic);
@@ -578,7 +573,6 @@ function AppContent({ language }: { language: Language }) {
           language={language}
           topic={activeSoftwareTopic}
           onBack={returnToSoftware}
-          onOpenLab={() => setActiveView("systemAudioLab")}
           onOpenPrevious={activeSoftwareTopicIndex > 0 ? () => openAdjacentSoftwareTopic(-1) : undefined}
           onOpenNext={activeSoftwareTopicIndex < softwareTopics.length - 1 ? () => openAdjacentSoftwareTopic(1) : undefined}
         />
@@ -740,20 +734,6 @@ function AppContent({ language }: { language: Language }) {
     );
   }
 
-  if (activeView === "codecLab") {
-    return (
-      <div className="app-shell">
-        <Header
-          language={language}
-        />
-        <CodecHardwareLab language={language} onBack={returnToHardware} onBackToDetails={activeHardwareTopic ? () => setActiveView("hardwareTopicPage") : undefined} />
-        <footer className="site-footer">
-          <span>{interfaceCopy.footer[language]}</span>
-        </footer>
-      </div>
-    );
-  }
-
   if (activeView === "digitalInterfaceLab") {
     return (
       <div className="app-shell">
@@ -775,20 +755,6 @@ function AppContent({ language }: { language: Language }) {
           language={language}
         />
         <AmplifierSpeakerLab language={language} onBack={returnToHardware} onBackToDetails={activeHardwareTopic ? () => setActiveView("hardwareTopicPage") : undefined} />
-        <footer className="site-footer">
-          <span>{interfaceCopy.footer[language]}</span>
-        </footer>
-      </div>
-    );
-  }
-
-  if (activeView === "systemAudioLab") {
-    return (
-      <div className="app-shell">
-        <Header
-          language={language}
-        />
-        <SystemAudioLab language={language} onBack={returnToSoftware} onBackToDetails={() => setActiveView("systemAudioPage")} />
         <footer className="site-footer">
           <span>{interfaceCopy.footer[language]}</span>
         </footer>
@@ -1171,17 +1137,9 @@ function AppContent({ language }: { language: Language }) {
                 setSelectedTopic(null);
                 setActiveView("realtimeAudioLab");
               }}
-              onOpenCodecLab={() => {
-                setSelectedTopic(null);
-                setActiveView("codecLab");
-              }}
               onOpenCoreSignalProcessingLab={() => {
                 setSelectedTopic(null);
                 setActiveView("coreSignalProcessingLab");
-              }}
-              onOpenSystemAudioLab={() => {
-                setSelectedTopic(null);
-                setActiveView("systemAudioLab");
               }}
               onOpenSpeechEnhancementLab={() => {
                 setSelectedTopic(null);

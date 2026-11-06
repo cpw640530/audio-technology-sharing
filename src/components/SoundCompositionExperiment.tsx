@@ -11,13 +11,16 @@ export function SoundCompositionExperiment({ language, mode }: { language: Langu
   const [amplitude, setAmplitude] = useState(.35);
   const [second, setSecond] = useState(.35);
   const [phase, setPhase] = useState(0);
+  const [third, setThird] = useState(.175);
+  const [thirdPhase, setThirdPhase] = useState(0);
   const [cursor, setCursor] = useState(.002);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState(false);
   const audio = useRef<Playback | null>(null);
-  const components = soundComponents(mode, amplitude, second, phase);
+  const components = soundComponents(mode, amplitude, second, phase, third, thirdPhase);
+  const axisMax = mode === "spectrum" ? 1.2 : 1;
   const coefficients = soundCoefficients(components);
-  const curve = (index?: number) => Array.from({ length: 401 }, (_, i) => `${i ? "L" : "M"}${40 + i},${100 - 65 * soundValue(i / 400 * .012, frequency, index === undefined ? components : [components[index]])}`).join(" ");
+  const curve = (index?: number) => Array.from({ length: 401 }, (_, i) => `${i ? "L" : "M"}${40 + i},${100 - 65 / axisMax * soundValue(i / 400 * .012, frequency, index === undefined ? components : [components[index]])}`).join(" ");
   function stop(update = true) {
     const current = audio.current; audio.current = null;
     if (current) {
@@ -54,10 +57,10 @@ export function SoundCompositionExperiment({ language, mode }: { language: Langu
   useEffect(() => {
     const current = audio.current;
     if (!current) return;
-    const c = soundCoefficients(soundComponents(mode, amplitude, second, phase));
+    const c = soundCoefficients(soundComponents(mode, amplitude, second, phase, third, thirdPhase));
     current.oscillator.frequency.setTargetAtTime(frequency, current.context.currentTime, .02);
     current.oscillator.setPeriodicWave(current.context.createPeriodicWave(c.real, c.imag, { disableNormalization: true }));
-  }, [mode, amplitude, second, phase, frequency]);
+  }, [mode, amplitude, second, phase, third, thirdPhase, frequency]);
   useEffect(() => {
     const halt = () => stop();
     const hide = () => { if (document.hidden) stop(); };
@@ -75,6 +78,10 @@ export function SoundCompositionExperiment({ language, mode }: { language: Langu
       {mode !== "tone" && <>
         <label>{t("分量 B 振幅", "Component B amplitude", "成分 B の振幅", "성분 B 진폭")} {second.toFixed(2)}<input type="range" min="0" max="0.4" step="0.01" value={second} onChange={e => setSecond(Number(e.target.value))} /></label>
         <label>{t("分量 B 相位", "Component B phase", "成分 B の位相", "성분 B 위상")} {Math.round(phase * 180 / Math.PI)}°<input type="range" min="0" max="180" step="1" value={Math.round(phase * 180 / Math.PI)} onChange={e => setPhase(Number(e.target.value) * Math.PI / 180)} /></label>
+      </>}
+      {mode === "spectrum" && <>
+        <label>{t("分量 C 振幅", "Component C amplitude", "成分 C の振幅", "성분 C 진폭")} {third.toFixed(3)}<input type="range" min="0" max="0.4" step="0.005" value={third} onChange={e => setThird(Number(e.target.value))} /></label>
+        <label>{t("分量 C 相位", "Component C phase", "成分 C の位相", "성분 C 위상")} {Math.round(thirdPhase * 180 / Math.PI)}°<input type="range" min="0" max="180" step="1" value={Math.round(thirdPhase * 180 / Math.PI)} onChange={e => setThirdPhase(Number(e.target.value) * Math.PI / 180)} /></label>
       </>}
       <label>{t("观察时刻", "Observation time", "観測時刻", "관측 시점")} {(cursor * 1000).toFixed(1)} ms<input type="range" min="0" max="0.012" step="0.0001" value={cursor} onChange={e => setCursor(Number(e.target.value))} /></label>
       <button type="button" className="sound-topic-back" onClick={() => playing ? stop() : void play()}>{playing ? <Square size={18} /> : <Play size={18} />}{playing ? t("停止试听", "Stop sound", "停止", "정지") : t("试听当前波形", "Listen to this waveform", "現在の波形を聴く", "현재 파형 듣기")}</button>
@@ -97,14 +104,14 @@ export function SoundCompositionExperiment({ language, mode }: { language: Langu
       <li><svg viewBox="0 0 40 12" aria-hidden="true"><path d="M20 0 V12" stroke="#687772" strokeDasharray="3 3" /></svg><span>{t("灰色竖线：观察时刻，不是信号", "Gray vertical line: observation time, not a signal", "灰色の縦線：観測時刻、信号ではありません", "회색 세로선: 관측 시점, 신호가 아닙니다")}</span></li>
     </ul>
     <svg className="sound-composition-wave" viewBox="0 0 460 210" role="img" aria-label={t("分量与合成波形", "Components and resulting waveform", "成分と合成波形", "성분과 합성 파형")}>
-      {[-1, 0, 1].map(a => <g key={a}><path d={`M40 ${100 - a * 65} H440`} stroke="#c8d6d0" /><text x="30" y={105 - a * 65} textAnchor="end">{a}</text></g>)}
+      {[-1, 0, 1].map(a => <g key={a}><path d={`M40 ${100 - a * 65} H440`} stroke="#c8d6d0" /><text x="30" y={105 - a * 65} textAnchor="end">{a * axisMax}</text></g>)}
       {[0, 3, 6, 9, 12].map(ms => <text key={ms} x={40 + ms / 12 * 400} y="190" textAnchor="middle">{ms}</text>)}
       {mode !== "tone" && components.map((_, i) => <path key={i} data-testid={`composition-component-${i}`} d={curve(i)} fill="none" stroke={colors[i]} strokeWidth="1.8" strokeDasharray={dashes[i]} />)}
       <path data-testid="composition-sum" d={curve()} fill="none" stroke="#203b35" strokeWidth="2.5" />
       <path d={`M${40 + cursor / .012 * 400} 25 V170`} stroke="#687772" strokeDasharray="3 3" />
-      <circle cx={40 + cursor / .012 * 400} cy={100 - 65 * soundValue(cursor, frequency, components)} r="4" fill="#203b35" />
+      <circle cx={40 + cursor / .012 * 400} cy={100 - 65 / axisMax * soundValue(cursor, frequency, components)} r="4" fill="#203b35" />
     </svg>
-    <p className="sound-topic-note">{t("横轴：时间 0–12 ms；纵轴：信号相对幅度，固定 ±1。实线是合成结果，虚线是分量。试听使用相同系数并统一衰减，不自动归一化；请先调低设备音量。", "X: time 0–12 ms; Y: signal amplitude, fixed ±1. Solid: sum; dashed: components. Playback uses the same coefficients with fixed attenuation and no normalization. Start with low device volume.", "横軸：時間 0–12 ms、縦軸：相対振幅 ±1 固定。実線は合成、破線は成分です。試聴は同じ係数と固定減衰を使用します。音量を下げて開始してください。", "가로축: 0–12 ms, 세로축: 상대 진폭 ±1 고정. 실선은 합, 점선은 성분입니다. 같은 계수와 고정 감쇠로 재생합니다. 기기 음량을 낮춰 시작하세요.")}</p>
+    <p className="sound-topic-note">{t(`横轴：时间 0–12 ms；纵轴：信号相对幅度，固定 ±${axisMax}。实线是合成结果，虚线是分量。试听使用相同系数并统一衰减，不自动归一化；请先调低设备音量。`, `X: time 0–12 ms; Y: signal amplitude, fixed ±${axisMax}. Solid: sum; dashed: components. Playback uses the same coefficients with fixed attenuation and no normalization. Start with low device volume.`, `横軸：時間 0–12 ms、縦軸：相対振幅 ±${axisMax} 固定。実線は合成、破線は成分です。試聴は同じ係数と固定減衰を使用します。音量を下げて開始してください。`, `가로축: 0–12 ms, 세로축: 상대 진폭 ±${axisMax} 고정. 실선은 합, 점선은 성분입니다. 같은 계수와 고정 감쇠로 재생합니다. 기기 음량을 낮춰 시작하세요.`)}</p>
     {mode === "sum" && <p className="sound-sum-readout">{components.map(c => (c.amplitude * Math.sin(2 * Math.PI * frequency * cursor + c.phase)).toFixed(3)).join(" + ")} = {soundValue(cursor, frequency, components).toFixed(3)}</p>}
     {mode === "spectrum" && <>
       <svg className="sound-composition-spectrum" viewBox="0 0 460 185" role="img" aria-label={t("幅度线谱", "Amplitude line spectrum", "振幅線スペクトル", "진폭 선 스펙트럼")}>
@@ -112,7 +119,7 @@ export function SoundCompositionExperiment({ language, mode }: { language: Langu
         {[0, 500, 1000, 1500, 2000].map(f => <text key={f} x={40 + f / 2000 * 400} y="171" textAnchor="middle">{f}</text>)}
         {components.map((c, i) => <path key={i} data-testid={`composition-spectrum-${i}`} d={`M${40 + frequency * c.multiple / 2000 * 400} 140 v${-c.amplitude * 280}`} stroke={colors[i]} strokeWidth="5" />)}
       </svg>
-      <p>{t("横轴：Hz；纵轴：各分量峰值振幅。A、B、C 分别是 f、2f、3f；C 振幅取 B 的一半。线谱来自已知合成系数，不是假装测得的 FFT，也不包含相位信息。", "X: Hz; Y: peak component amplitude. A, B, C are f, 2f, 3f; C has half B's amplitude. Lines come from known synthesis coefficients, not a measured FFT, and do not show phase.", "横軸は Hz、縦軸は各成分のピーク振幅。A、B、C は f、2f、3f、C は B の半分です。既知の合成係数であり FFT 測定ではなく、位相も示しません。", "가로축은 Hz, 세로축은 성분 피크 진폭입니다. A, B, C는 f, 2f, 3f이며 C는 B의 절반입니다. 알려진 합성 계수이며 FFT 측정이나 위상 표시가 아닙니다.")}</p>
+      <p>{t("横轴：Hz；纵轴：各分量峰值振幅。A、B、C 分别是 f、2f、3f；各分量的振幅独立调节。线谱来自已知合成系数，不是假装测得的 FFT，也不包含相位信息。", "X: Hz; Y: peak component amplitude. A, B, C are f, 2f, 3f; each amplitude is independent. Lines come from known synthesis coefficients, not a measured FFT, and do not show phase.", "横軸は Hz、縦軸は各成分のピーク振幅。A、B、C は f、2f、3f、各振幅は独立に調整できます。既知の合成係数であり FFT 測定ではなく、位相も示しません。", "가로축은 Hz, 세로축은 성분 피크 진폭입니다. A, B, C는 f, 2f, 3f이며 각 진폭은 독립적으로 조절합니다. 알려진 합성 계수이며 FFT 측정이나 위상 표시가 아닙니다.")}</p>
     </>}
   </div>;
 }

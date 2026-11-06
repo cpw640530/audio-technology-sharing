@@ -95,7 +95,7 @@ It is designed for:
 | Area | Topics |
 | --- | --- |
 | Audio fundamentals | Sound, audio units, sampling, quantization, encoding, listening perception and metrics, reading waveforms and spectra |
-| Audio hardware | Microphones, ADC / DAC / Codec, digital audio interfaces, amplifiers and speakers |
+| Audio hardware | Microphones, digital audio interfaces, amplifiers and speakers |
 | Audio software | System audio architecture, ALSA, real-time processing, audio codecs |
 | Traditional algorithms | Core signal processing (FFT/STFT, filters, EQ, dynamics), speech enhancement, spatial audio |
 | AI audio | Overall processing flow, ASR, TTS, generation, event detection, enhancement, neural audio coding |

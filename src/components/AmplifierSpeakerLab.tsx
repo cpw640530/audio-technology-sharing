@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
 import type { Language } from "../content/knowledge";
+import { text } from "../content/language";
 
 type SupportedLanguage = "zh" | "en" | "ja" | "ko" | "zh-Hant";
 type LocalizedText = Record<SupportedLanguage, string>;
@@ -208,7 +209,7 @@ function renderAmplifierDiagram(language: Language, ampClass: AmpClass) {
           ko: `${ampClassLabel} 앰프 다이어그램`
         })}
         role="img"
-        viewBox="0 0 760 410"
+        viewBox="0 0 760 310"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
@@ -216,7 +217,7 @@ function renderAmplifierDiagram(language: Language, ampClass: AmpClass) {
             <path d="M 0 0 L 10 5 L 0 10 Z" fill="#f0b46a" />
           </marker>
         </defs>
-        <rect className="lab-diagram-bg" height="410" rx="14" width="760" />
+        <rect className="lab-diagram-bg" height="310" rx="14" width="760" />
         <text className="lab-label amp-diagram-title" x="48" y="42">
           {localized(language, {
             zh: "从左到右：输入小信号 → 功放工作方式 → 功率输出 → 扬声器负载", "zh-Hant": traditional("从左到右：输入小信号 → 功放工作方式 → 功率输出 → 扬声器负载"),
@@ -236,7 +237,7 @@ function renderAmplifierDiagram(language: Language, ampClass: AmpClass) {
 
         <line className="amp-flow-centerline" x1="48" x2="712" y1="190" y2="190" />
         <path className="amp-flow-arrow" d="M 240 190 L 270 190" />
-        <path className="amp-flow-arrow" d="M 358 190 L 408 190" />
+        <path className="amp-flow-arrow" d="M 380 190 L 422 190" />
         <path className="amp-flow-arrow" d="M 560 190 L 598 190" />
 
         <text className="lab-label" x="144" y="112">
@@ -358,7 +359,7 @@ function renderSpeakerDiagram(language: Language) {
           {localized(language, { zh: "振膜运动", "zh-Hant": traditional("振膜运动"), en: "Diaphragm motion", ja: "振動板の運動", ko: "진동판 운동" })}
         </text>
         <path className="amp-cone" d="M 388 138 L 552 92 L 552 300 L 388 252 Z" />
-        <path className="amp-motion-line" d="M 434 118 L 466 118" />
+        <path className="amp-motion-line" d="M 434 144 L 466 144" />
         <path className="amp-motion-line reverse" d="M 434 318 L 466 318" />
         <text className="interface-node-sub" x="466" y="354">
           {localized(language, { zh: "振膜前后运动，压缩/稀疏空气", "zh-Hant": traditional("振膜前后运动，压缩/稀疏空气"), en: "Diaphragm pushes and pulls air", ja: "振動板が前後に動き、空気を圧縮・希薄化します", ko: "진동판이 앞뒤로 움직여 공기를 압축하고 희박하게 만듭니다" })}
@@ -420,7 +421,10 @@ function renderEnclosureDiagram(language: Language) {
         <text className="lab-label" x="96" y="134">
           {localized(language, { zh: "全频信号", "zh-Hant": traditional("全频信号"), en: "Full-range signal", ja: "全帯域信号", ko: "전대역 신호" })}
         </text>
-        <path className="amp-wave-input" d="M 54 198 C 72 168 90 168 108 198 S 144 228 162 198" />
+        <path className="amp-wave-input" d={Array.from({ length: 121 }, (_, index) => {
+          const phase = 2 * Math.PI * index / 120;
+          return `${index === 0 ? "M" : "L"} ${(54 + 108 * index / 120).toFixed(2)} ${(198 - 16 * Math.sin(phase) - 9 * Math.sin(4 * phase)).toFixed(2)}`;
+        }).join(" ")} />
         <text className="interface-node-sub" x="96" y="256">
           {localized(language, { zh: "功放输出含低频和高频", "zh-Hant": traditional("功放输出含低频和高频"), en: "Lows and highs from amplifier", ja: "アンプ出力には低域と高域が含まれます", ko: "앰프 출력에는 저역과 고역이 포함됩니다" })}
         </text>
@@ -437,8 +441,6 @@ function renderEnclosureDiagram(language: Language) {
           {localized(language, { zh: "分频点常见 2-3 kHz", "zh-Hant": traditional("分频点常见 2-3 kHz"), en: "Typical crossover point: 2-3 kHz", ja: "一般的なクロスオーバー周波数：2-3 kHz", ko: "일반적인 크로스오버 지점: 2-3 kHz" })}
         </text>
 
-        <path className="amp-enclosure-arrow" d="M 352 178 C 390 136 416 128 456 126" />
-        <path className="amp-enclosure-arrow" d="M 352 218 C 394 260 420 274 456 276" />
         <text className="lab-label" x="432" y="104">
           {localized(language, { zh: "高频通路", "zh-Hant": traditional("高频通路"), en: "High-frequency path", ja: "高域経路", ko: "고주파 경로" })}
         </text>
@@ -447,6 +449,8 @@ function renderEnclosureDiagram(language: Language) {
         </text>
 
         <rect className="amp-speaker-box" height="230" rx="16" width="190" x="474" y="90" />
+        <path className="amp-enclosure-arrow" d="M 352 178 C 390 136 416 136 540 136" />
+        <path className="amp-enclosure-arrow" d="M 352 218 C 394 260 420 248 516 248" />
         <circle className="amp-driver-high" cx="568" cy="136" r="28" />
         <circle className="amp-driver-low" cx="568" cy="248" r="52" />
         <text className="interface-node-sub" x="568" y="184">
@@ -457,14 +461,14 @@ function renderEnclosureDiagram(language: Language) {
         </text>
 
         <path className="amp-port" d="M 622 260 H 654" />
-        <text className="lab-chip" x="626" y="214">
+        <text className="lab-chip" x="596" y="342">
           {localized(language, { zh: "箱体低频响应", "zh-Hant": traditional("箱体低频响应"), en: "Enclosure bass response", ja: "エンクロージャーの低域応答", ko: "인클로저 저역 응답" })}
         </text>
         <path className="amp-air-wave" d="M 682 224 C 710 244 710 282 682 304" />
-        <text className="interface-node-sub" x="628" y="354">
+        <text className="interface-node-sub" x="596" y="366">
           {localized(language, { zh: "密闭 / 倒相会影响低频", "zh-Hant": traditional("密闭 / 倒相会影响低频"), en: "Sealed/ported designs affect bass", ja: "密閉型／バスレフ型は低域に影響します", ko: "밀폐형/베이스 리플렉스 설계는 저역에 영향을 줍니다" })}
         </text>
-        <text className="interface-node-sub" x="628" y="374">
+        <text className="interface-node-sub" x="596" y="388">
           {localized(language, { zh: "腔体容积会改变共振", "zh-Hant": traditional("腔体容积会改变共振"), en: "Cabinet volume changes resonance", ja: "キャビネット容積が共振を変えます", ko: "캐비닛 용적이 공진을 바꿉니다" })}
         </text>
       </svg>
@@ -622,15 +626,15 @@ function renderActivePassiveDiagram(language: Language) {
         <rect className="lab-diagram-bg" height="430" rx="14" width="760" />
         <text className="lab-label amp-diagram-title" x="48" y="42">{localized(language, { zh: "主动分频：先分频，再分别功放", "zh-Hant": traditional("主动分频：先分频，再分别功放"), en: "Active crossover: split first, then amplify each band", ja: "アクティブクロスオーバー：先に分けてから帯域ごとに増幅", ko: "액티브 크로스오버: 먼저 나눈 뒤 각 대역을 증폭" })}</text>
         <rect className="amp-block" height="58" rx="10" width="112" x="54" y="84" />
-        <text className="interface-node-text" x="110" y="120">DSP</text>
+        <text className="interface-node-text" x="110" y="120">DSP / DAC</text>
         <path className="amp-enclosure-arrow" d="M 170 112 H 196 V 92 H 220" />
         <path className="amp-enclosure-arrow" d="M 196 112 V 176 H 220" />
         <rect className="amp-block" height="58" rx="10" width="112" x="224" y="62" />
         <text className="interface-node-text" x="280" y="98">{localized(language, { zh: "低频功放", "zh-Hant": traditional("低频功放"), en: "LF amp", ja: "低域アンプ", ko: "저역 앰프" })}</text>
         <rect className="amp-block" height="58" rx="10" width="112" x="224" y="146" />
         <text className="interface-node-text" x="280" y="182">{localized(language, { zh: "高频功放", "zh-Hant": traditional("高频功放"), en: "HF amp", ja: "高域アンプ", ko: "고역 앰프" })}</text>
-        <path className="amp-enclosure-arrow" d="M 340 92 H 404" />
-        <path className="amp-enclosure-arrow" d="M 340 176 H 404" />
+        <path className="amp-enclosure-arrow" d="M 336 92 H 424" />
+        <path className="amp-enclosure-arrow" d="M 336 176 H 432" />
         <circle className="amp-driver-low" cx="452" cy="92" r="28" />
         <circle className="amp-driver-high" cx="452" cy="176" r="20" />
         <text className="interface-node-sub" x="596" y="92">{localized(language, { zh: "优点：延迟/EQ/限幅/保护精确", "zh-Hant": traditional("优点：延迟/EQ/限幅/保护精确"), en: "Pros: precise delay/EQ/limiting/protection", ja: "利点：ディレイ／EQ／リミッター／保護を精密に設定", ko: "장점: 딜레이/EQ/리미팅/보호를 정밀하게 설정" })}</text>
@@ -644,10 +648,10 @@ function renderActivePassiveDiagram(language: Language) {
         <rect className="amp-block muted" height="82" rx="10" width="126" x="224" y="294" />
         <text className="interface-node-text" x="287" y="324">L / C / R</text>
         <text className="interface-node-sub" x="287" y="350">{localized(language, { zh: "被动分频网络", "zh-Hant": traditional("被动分频网络"), en: "passive network", ja: "パッシブネットワーク", ko: "패시브 네트워크" })}</text>
-        <path className="amp-enclosure-arrow" d="M 354 314 H 404" />
-        <path className="amp-enclosure-arrow" d="M 354 356 H 404" />
+        <path className="amp-enclosure-arrow" d="M 350 314 H 424" />
+        <path className="amp-enclosure-arrow" d="M 350 356 H 392 V 370 H 432" />
         <circle className="amp-driver-low" cx="452" cy="314" r="28" />
-        <circle className="amp-driver-high" cx="452" cy="356" r="20" />
+        <circle className="amp-driver-high" cx="452" cy="370" r="20" />
         <text className="interface-node-sub" x="596" y="314">{localized(language, { zh: "优点：结构简单，一路功放即可", "zh-Hant": traditional("优点：结构简单，一路功放即可"), en: "Pros: simple, one amp channel can work", ja: "利点：構造が簡単で、1チャンネルのアンプで動作", ko: "장점: 구조가 단순하고 앰프 한 채널로 동작" })}</text>
         <text className="interface-node-sub" x="596" y="344">{localized(language, { zh: "代价：受阻抗曲线影响，元件会损耗", "zh-Hant": traditional("代价：受阻抗曲线影响，元件会损耗"), en: "Cost: load-dependent, components dissipate power", ja: "代償：インピーダンス特性に左右され、部品で電力を消費", ko: "대가: 임피던스 곡선에 좌우되고 부품에서 전력이 소모" })}</text>
       </svg>
@@ -682,7 +686,7 @@ function renderLineArrayDiagram(language: Language) {
         {drivers.map((y, index) => (
           <g key={y}>
             <circle className="amp-driver-high" cx="134" cy={y} r="14" />
-            <text className="interface-node-sub" x="196" y={y + 4}>{localized(language, { zh: `单元 ${index + 1}`, "zh-Hant": traditional(`单元 ${index + 1}`), en: `Driver ${index + 1}`, ja: `ドライバー ${index + 1}`, ko: `드라이버 ${index + 1}` })}</text>
+            <text className="interface-node-sub" x="134" y={y + 4}>{index + 1}</text>
           </g>
         ))}
         <path className="amp-linearray-main" d="M 184 212 C 290 126 462 100 684 130" />
@@ -774,9 +778,9 @@ function renderMatchingDiagram(language: Language) {
             <text className="interface-node-text" x={node.x} y={node.y + 6}>
               {node.label}
             </text>
-            <text className="interface-node-sub" x={node.x} y={node.y + 30}>
-              {node.sub}
-            </text>
+            <foreignObject x={node.x - 78} y={node.y + 12} width="156" height="28">
+              <p className="amp-match-description">{node.sub}</p>
+            </foreignObject>
           </g>
         ))}
 
@@ -796,7 +800,7 @@ function renderMatchingDiagram(language: Language) {
           {localized(language, { zh: "失真 / 保护风险", "zh-Hant": traditional("失真 / 保护风险"), en: "Distortion / protection risk", ja: "歪み / 保護リスク", ko: "왜곡 / 보호 위험" })}
         </text>
         <text className="interface-node-sub" x="595" y="282">
-          {localized(language, { zh: "超出电压余量会削波；低阻抗可能触发过流", "zh-Hant": traditional("超出电压余量会削波；低阻抗可能触发过流"), en: "Voltage limit: clipping; current limit: protection", ja: "電圧余裕を超えるとクリップし、低インピーダンスでは過電流保護が働くことがあります", ko: "전압 여유를 넘으면 클리핑되고 낮은 임피던스에서는 과전류 보호가 작동할 수 있습니다" })}
+          {localized(language, { zh: "超出电压余量会削波；低阻抗可能触发过流", "zh-Hant": traditional("超出电压余量会削波；低阻抗可能触发过流"), en: "Voltage limit: clipping; current limit: protection", ja: "電圧限界でクリップ、電流限界で保護が動作", ko: "전압 한계: 클리핑 / 전류 한계: 보호 동작" })}
         </text>
         <text className="interface-node-sub" x="595" y="302">
           {localized(language, { zh: "灵敏度低需要更多功率", "zh-Hant": traditional("灵敏度低需要更多功率"), en: "Low sensitivity needs more power", ja: "感度が低いほど多くの電力が必要です", ko: "감도가 낮을수록 더 많은 전력이 필요합니다" })}
@@ -986,6 +990,12 @@ export function AmplifierSpeakerLab({ language, onBack, onBackToDetails }: Ampli
           ) : null}
 
           {renderDiagram({ language, diagramMode, ampClass })}
+          <p className="amp-lab-model-note">{text(language,
+            diagramMode === "activePassive" ? "图中是数字主动分频示例：DSP 分频后，各频段经 DAC 和独立功放输出。模拟主动分频不需要 DAC。" : diagramMode === "lineArray" ? "覆盖边界为概念示意，不是计算声场或固定指向角；实际覆盖随频率、阵列长度、间距和角度变化，并非每种阵列都支持逐单元延迟。" : "图示用于解释原理，不是产品实测。分频阶数页为理想 Butterworth 电气低通响应，其余示意不按尺寸或数值比例绘制。",
+            diagramMode === "activePassive" ? "Digital active crossover example: DSP splits the bands, then DAC channels and separate amplifiers drive them. Analog active crossovers need no DAC." : diagramMode === "lineArray" ? "Coverage outlines are conceptual, not a calculated sound field or fixed angle. Coverage depends on frequency, array length, spacing and splay; not every array offers per-element delay." : "These are conceptual diagrams, not product measurements. The order page plots ideal Butterworth electrical low-passes; other diagrams are not dimensionally or numerically to scale.",
+            diagramMode === "activePassive" ? "デジタルの例です。DSPで帯域分割し、各帯域をDACと専用アンプで出力します。アナログ方式にDACは不要です。" : diagramMode === "lineArray" ? "境界は概念図で、計算した音場や固定角度ではありません。周波数、長さ、間隔、角度で変化し、全機種が素子別の遅延を持つわけではありません。" : "図は原理説明であり実測ではありません。次数の図は理想Butterworth電気ローパス応答で、他の図の寸法や数値は比例しません。",
+            diagramMode === "activePassive" ? "디지털 방식의 예입니다. DSP로 대역을 나눈 뒤 각 대역을 DAC와 개별 앰프로 출력합니다. 아날로그 액티브 방식에는 DAC가 필요 없습니다." : diagramMode === "lineArray" ? "경계는 계산된 음장이나 고정 각도가 아닌 개념도입니다. 주파수, 길이, 간격, 각도에 따라 달라지며 모든 어레이가 유닛별 지연을 지원하지는 않습니다." : "원리 도해이며 실측이 아닙니다. 차수 페이지는 이상적인 Butterworth 전기 저역통과 응답이며 다른 도해는 치수나 수치 비례를 나타내지 않습니다."
+          )}</p>
           {diagramMode === "amplifier" ? renderAmpPrinciple(language, ampClass) : null}
         </div>
       </section>

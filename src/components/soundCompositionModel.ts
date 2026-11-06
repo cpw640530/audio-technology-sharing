@@ -1,8 +1,8 @@
 export type SoundComponent = { multiple: number; amplitude: number; phase: number };
-export function soundComponents(mode: "tone" | "sum" | "spectrum", amplitude: number, second: number, phase: number): SoundComponent[] {
+export function soundComponents(mode: "tone" | "sum" | "spectrum", amplitude: number, second: number, phase: number, third = .175, thirdPhase = 0): SoundComponent[] {
   return mode === "tone" ? [{ multiple: 1, amplitude, phase: 0 }] : mode === "sum"
     ? [{ multiple: 1, amplitude, phase: 0 }, { multiple: 1, amplitude: second, phase }]
-    : [{ multiple: 1, amplitude, phase: 0 }, { multiple: 2, amplitude: second, phase }, { multiple: 3, amplitude: second / 2, phase: 0 }];
+    : [{ multiple: 1, amplitude, phase: 0 }, { multiple: 2, amplitude: second, phase }, { multiple: 3, amplitude: third, phase: thirdPhase }];
 }
 export function soundValue(time: number, frequency: number, components: SoundComponent[]) {
   return components.reduce((sum, c) => sum + c.amplitude * Math.sin(2 * Math.PI * frequency * c.multiple * time + c.phase), 0);

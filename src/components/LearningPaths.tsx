@@ -4,7 +4,7 @@ import { getTopicKey, type TopicKey } from "../content/relatedTopics";
 
 export const learningPaths: { title: Record<Language, string>; topics: TopicKey[] }[] = [
   { title: { zh: "声音入门", "zh-Hant": traditional("声音入门"), en: "Audio fundamentals", ja: "音の基礎", ko: "소리의 기초" }, topics: ["sound-wave", "wave-spectrum", "sampling-quantization", "audio-units", "listening-metrics"] },
-  { title: { zh: "设备开发", "zh-Hant": traditional("设备开发"), en: "Device development", ja: "デバイス開発", ko: "장치 개발" }, topics: ["microphone", "codec-hardware", "digital-interface", "system-audio", "alsa", "realtime-audio"] },
+  { title: { zh: "设备开发", "zh-Hant": traditional("设备开发"), en: "Device development", ja: "デバイス開発", ko: "장치 개발" }, topics: ["microphone", "sampling-quantization", "digital-interface", "system-audio", "alsa", "realtime-audio"] },
   { title: { zh: "算法进阶", "zh-Hant": traditional("算法进阶"), en: "Signal processing", ja: "信号処理", ko: "신호 처리" }, topics: ["core-signal-processing", "speech-enhancement", "ai-overview"] }
 ];
 const topics = categories.flatMap(category => category.topics.map(topic => ({ ...topic, category })));

@@ -169,136 +169,53 @@ function createPdmBits() {
   return "1011110111101110011110110011011011110010".split("");
 }
 
-function getI2sBitLabel(cell: number, bitDepth: number) {
-  const position = cell % 8;
-
-  if (position === 0) {
-    return "MSB";
-  }
-
-  if (position === 3) {
-    return "...";
-  }
-
-  if (position === 6) {
-    return "b1";
-  }
-
-  if (position === 7) {
-    return "LSB";
-  }
-
-  return `b${bitDepth - position - 1}`;
-}
-
-function renderI2sDiagram(language: Language, bitDepth: number, channels: number) {
-  const bitCells = Array.from({ length: 16 }, (_, index) => index);
-  const dataLines = Array.from({ length: Math.ceil(channels / 2) }, (_, index) => index);
-  const isMultichannelI2s = channels > 2;
-  const i2sDataStartY = 166;
-  const i2sDataRowGap = 44;
-  const i2sDataRowHeight = 34;
-  const i2sLastDataRowY = i2sDataStartY + (dataLines.length - 1) * i2sDataRowGap;
-  const i2sNotesY = i2sLastDataRowY + i2sDataRowHeight + 44;
-  const i2sMclkLabelY = i2sNotesY + 134;
-  const i2sMclkWaveY = i2sMclkLabelY + 16;
-  const i2sMappingY = i2sMclkWaveY + 58;
-  const i2sDiagramHeight = isMultichannelI2s ? i2sMappingY + 36 : 360;
-  const leftFrameChannels = dataLines.map((line) => `CH${line * 2 + 1}`).join(" / ");
-  const rightFrameChannels = dataLines.map((line) => `CH${line * 2 + 2}`).join(" / ");
-
-  return (
-    <svg
-      aria-label={localized(language, { zh: "I2S 时序图", "zh-Hant": traditional("I2S 时序图"), en: "I2S timing diagram", ja: "I2Sタイミング図", ko: "I2S 타이밍 다이어그램" })}
-      role="img"
-      viewBox={`0 0 760 ${i2sDiagramHeight}`}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <marker id="interfaceArrow" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4">
-          <path d="M 0 0 L 8 4 L 0 8 Z" fill="#f0b46a" />
-        </marker>
-      </defs>
-      <rect className="lab-diagram-bg" height={i2sDiagramHeight} rx="14" width="760" />
-      <text className="lab-label" x="42" y="44">BCLK</text>
-      <text className="lab-label" x="42" y="116">LRCLK</text>
-      <text className="lab-label" x="42" y={isMultichannelI2s ? 150 : 188}>{isMultichannelI2s ? localized(language, { zh: "SD 数据线", "zh-Hant": traditional("SD 数据线"), en: "SD lines", ja: "SDデータ線", ko: "SD 데이터 라인" }) : "SD"}</text>
-      <text className="lab-label" x="42" y={isMultichannelI2s ? i2sMclkLabelY : 282}>MCLK</text>
-      <path className="interface-clock-line" d={createSquareWavePath({ height: 28, pulses: 24, width: 588, x: 124, y: 72 })} />
-      <path className="interface-frame-line" d="M 124 132 H 418 V 104 H 712 V 132" />
-      {isMultichannelI2s ? (
-        <>
-          <text className="interface-channel-label" x="266" y="152">{localized(language, { zh: "L 半帧", "zh-Hant": traditional("L 半帧"), en: "L half-frame", ja: "Lハーフフレーム", ko: "L 하프 프레임" })}</text>
-          <text className="interface-channel-label" x="560" y="152">{localized(language, { zh: "R 半帧", "zh-Hant": traditional("R 半帧"), en: "R half-frame", ja: "Rハーフフレーム", ko: "R 하프 프레임" })}</text>
-          <g>
-            {dataLines.map((line) => {
-              const y = i2sDataStartY + line * i2sDataRowGap;
-              const leftChannel = line * 2 + 1;
-              const rightChannel = line * 2 + 2;
-
-              return (
-                <g key={line}>
-                  <text className="lab-label interface-i2s-line-label" x="86" y={y + 20}>{`SD${line}`}</text>
-                  <rect className="interface-i2s-data-pair" height={i2sDataRowHeight} width="284" x="124" y={y} />
-                  <rect className="interface-i2s-data-pair right" height={i2sDataRowHeight} width="284" x="418" y={y} />
-                  <text className="interface-slot-label" x="266" y={y + 18}>{`CH${leftChannel}`}</text>
-                  <text className="interface-slot-label" x="560" y={y + 18}>{`CH${rightChannel}`}</text>
-                </g>
-              );
-            })}
-          </g>
-          <text className="interface-tdm-note" x="124" y={i2sNotesY}>
-            {localized(language, { zh: `多通道 I2S（并行 SD 线）：${dataLines.length} 条 SD 数据线同时工作`, "zh-Hant": traditional(`多通道 I2S（并行 SD 线）：${dataLines.length} 条 SD 数据线同时工作`), en: `Multichannel I2S (parallel SD lines): ${dataLines.length} SD data lines work at once`, ja: `マルチチャンネルI2S（並列SD線）：${dataLines.length}本のSDデータ線が同時に動作`, ko: `다채널 I2S(병렬 SD 라인): ${dataLines.length}개의 SD 데이터 라인이 동시에 동작` })}
+function renderI2sDiagram(language: Language, bitDepth: number, channels: number, slotWidth: number) {
+  const t = (zh: string, en: string, ja: string, ko: string) => localized(language, { zh, en, ja, ko, "zh-Hant": traditional(zh) });
+  const dataLines = Array.from({ length: channels / 2 }, (_, i) => i);
+  const bitWidth = 588 / (slotWidth * 2);
+  const left = 124;
+  const right = 418;
+  const notesY = 178 + dataLines.length * 68;
+  const diagramHeight = notesY + 190;
+  // Data cells begin on falling edges; WS changes one full bit before each MSB.
+  const clock = Array.from({ length: slotWidth * 2 }, (_, i) => {
+    const x = left + i * bitWidth;
+    return `H ${x + bitWidth / 2} V 44 H ${x + bitWidth} V 72`;
+  }).join(" ");
+  return <svg aria-label={t("I2S 时序图", "I2S timing diagram", "I2Sタイミング図", "I2S 타이밍 다이어그램")} role="img" viewBox={`0 0 760 ${diagramHeight}`}>
+    <rect className="lab-diagram-bg" height={diagramHeight} rx="8" width="760" />
+    <text className="lab-label" x="28" y="58">BCLK</text>
+    <path className="interface-clock-line" data-cycles={slotWidth * 2} d={`M ${left} 72 ${clock}`} />
+    <text className="lab-label" x="28" y="122">LRCLK</text>
+    <path className="interface-frame-line" data-bit-width={bitWidth} d={`M ${left - 2 * bitWidth} 104 H ${left - bitWidth} V 132 H ${right - bitWidth} V 104 H ${712 - bitWidth} V 132 H 712`} />
+    <text className="interface-channel-label" x="266" y="155">L · WS = 0</text>
+    <text className="interface-channel-label" x="560" y="155">R · WS = 1</text>
+    {dataLines.map(line => {
+      const y = 178 + line * 68;
+      return <g key={line}>
+        <text className="lab-label interface-i2s-line-label" x="84" y={y + 22}>{`SD${line}`}</text>
+        {[0, 1].map(side => <g key={side}>
+          {Array.from({ length: slotWidth }, (_, bit) => <rect key={bit}
+            className={side ? "interface-bit-cell right" : "interface-bit-cell"}
+            data-bit={bit < bitDepth ? bitDepth - bit - 1 : "padding"}
+            style={bit >= bitDepth ? { fill: "#344642", strokeDasharray: "2 2" } : undefined}
+            height="34" width={bitWidth} x={left + (side * slotWidth + bit) * bitWidth} y={y} />)}
+          <text className="interface-channel-label" x={side ? 560 : 266} y={y + 54}>
+            {channels === 2 ? `${side ? "R" : "L"}: bit${bitDepth - 1} → bit0` : `SD${line}: CH${line * 2 + side + 1}`}
           </text>
-          <text className="interface-tdm-note" x="124" y={i2sNotesY + 22}>
-            {localized(language, { zh: `左半帧并行传输 ${leftFrameChannels}`, "zh-Hant": traditional(`左半帧并行传输 ${leftFrameChannels}`), en: `Left half-frame transfers ${leftFrameChannels} in parallel`, ja: `Lハーフフレームは${leftFrameChannels}を並列伝送`, ko: `L 하프 프레임은 ${leftFrameChannels}을 병렬 전송` })}
-          </text>
-          <text className="interface-tdm-note" x="124" y={i2sNotesY + 44}>
-            {localized(language, { zh: `右半帧并行传输 ${rightFrameChannels}`, "zh-Hant": traditional(`右半帧并行传输 ${rightFrameChannels}`), en: `Right half-frame transfers ${rightFrameChannels} in parallel`, ja: `Rハーフフレームは${rightFrameChannels}を並列伝送`, ko: `R 하프 프레임은 ${rightFrameChannels}을 병렬 전송` })}
-          </text>
-          <text className="interface-tdm-note" x="124" y={i2sNotesY + 66}>
-            {localized(language, { zh: "每条 SD 仍只传一对 L / R；LRCLK 只负责左右半帧", "zh-Hant": traditional("每条 SD 仍只传一对 L / R；LRCLK 只负责左右半帧"), en: "Each SD still carries one L/R pair; LRCLK only marks the two half-frames", ja: "各SDは今も1組のL/Rを運び、LRCLKは左右のハーフフレームだけを示します", ko: "각 SD는 여전히 하나의 L/R 쌍을 전달하고 LRCLK는 두 하프 프레임만 표시합니다" })}
-          </text>
-          <text className="interface-tdm-note" x="124" y={i2sNotesY + 88}>
-            {localized(language, { zh: "如果只用一条 SD 放多声道，那是 TDM 的 slot 思路", "zh-Hant": traditional("如果只用一条 SD 放多声道，那是 TDM 的 slot 思路"), en: "If one SD carries many channels, that is the TDM slot approach", ja: "1本のSDで多チャンネルを運ぶなら、それはTDMのスロット方式です", ko: "하나의 SD로 여러 채널을 전달한다면 TDM 슬롯 방식입니다" })}
-          </text>
-          <path className="interface-clock-line faint" d={createSquareWavePath({ height: 18, pulses: 12, width: 588, x: 124, y: i2sMclkWaveY })} />
-          <g>
-            {dataLines.map((line) => {
-              const leftChannel = line * 2 + 1;
-              const rightChannel = line * 2 + 2;
-              return (
-                <text className="interface-channel-label" key={`map-${line}`} x={124 + line * 150} y={i2sMappingY}>
-                  {`SD${line}: CH${leftChannel} / CH${rightChannel}`}
-                </text>
-              );
-            })}
-          </g>
-        </>
-      ) : (
-        <>
-          <path className="interface-clock-line faint" d={createSquareWavePath({ height: 18, pulses: 12, width: 588, x: 124, y: 298 })} />
-          <g>
-            {bitCells.map((cell) => {
-              const x = 124 + cell * 36;
-              const isRight = cell >= 8;
-              return (
-                <g key={cell}>
-                  <rect className={isRight ? "interface-bit-cell right" : "interface-bit-cell"} height="46" width="34" x={x} y="164" />
-                  <text className="interface-bit-text" x={x + 17} y="192">
-                    {getI2sBitLabel(cell, bitDepth)}
-                  </text>
-                </g>
-              );
-            })}
-          </g>
-          <text className="interface-channel-label" x="216" y="238">{localized(language, { zh: `L: bit${bitDepth - 1} → bit0`, "zh-Hant": traditional(`L: bit${bitDepth - 1} → bit0`), en: `L: bit${bitDepth - 1} to bit0`, ja: `L: bit${bitDepth - 1} → bit0`, ko: `L: bit${bitDepth - 1} → bit0` })}</text>
-          <text className="interface-channel-label" x="506" y="238">{localized(language, { zh: `R: bit${bitDepth - 1} → bit0`, "zh-Hant": traditional(`R: bit${bitDepth - 1} → bit0`), en: `R: bit${bitDepth - 1} to bit0`, ja: `R: bit${bitDepth - 1} → bit0`, ko: `R: bit${bitDepth - 1} → bit0` })}</text>
-          <text className="lab-chip" x="418" y="324" textAnchor="middle">{localized(language, { zh: "LRCLK 每翻转一次切换声道", "zh-Hant": traditional("LRCLK 每翻转一次切换声道"), en: "LRCLK toggles between channels", ja: "LRCLKが切り替わるたびにチャンネルが変わります", ko: "LRCLK가 전환될 때마다 채널이 바뀝니다" })}</text>
-        </>
-      )}
-    </svg>
-  );
+        </g>)}
+        <text className="interface-bit-text" x={left + bitWidth / 2} y={y + 23}>M</text>
+        <text className="interface-bit-text" x={right + bitWidth / 2} y={y + 23}>M</text>
+      </g>;
+    })}
+    <foreignObject x="124" y={notesY} width="588" height="170">
+      <div className="interface-diagram-copy">
+        <p>{t("M 为 MSB；每格对应一个 BCLK，虚线格为补齐位。WS 比对应声道的 MSB 提前一格切换。", "M marks MSB. One cell is one BCLK; dashed cells are padding. WS changes one cell before the channel MSB.", "MはMSB。1マスが1 BCLK、破線はパディング。WSは対応するMSBの1マス前に変化します。", "M은 MSB입니다. 한 칸은 1 BCLK이고 점선은 패딩입니다. WS는 해당 MSB보다 한 칸 먼저 전환됩니다.")}</p>
+        <p>{t(`${channels > 2 ? "多通道 I2S（并行 SD 线）" : "双声道 I2S"}：${dataLines.length} SD × 2 slots × ${slotWidth} bit；有效位深 ${bitDepth} bit。`, `${channels > 2 ? "Multichannel I2S (parallel SD)" : "Stereo I2S"}: ${dataLines.length} SD × 2 slots × ${slotWidth} bits; ${bitDepth} valid bits.`, `I2S：${dataLines.length} SD × 2スロット × ${slotWidth} bit、有効${bitDepth} bit。`, `I2S: ${dataLines.length} SD × 2슬롯 × ${slotWidth} bit, 유효 ${bitDepth} bit.`)}</p>
+        <p>{t("MCLK 可为片内 PLL 或转换器提供参考，不承载数据位；是否需要外部输入以器件手册为准。", "MCLK can reference an internal PLL or converter, not carry data bits. External clock requirements depend on the device.", "MCLKはPLLや変換器の基準であり、データビットは運びません。外部入力の要否は仕様書に従います。", "MCLK는 PLL이나 변환기의 기준이며 데이터 비트를 전송하지 않습니다. 외부 입력 필요 여부는 기기 사양을 따릅니다.")}</p>
+      </div>
+    </foreignObject>
+  </svg>;
 }
 
 function renderTdmDiagram(language: Language, channels: number, slotWidth: number, bitDepth: number) {
@@ -324,9 +241,9 @@ function renderTdmDiagram(language: Language, channels: number, slotWidth: numbe
         {localized(language, { zh: `一帧 = ${channels} 个 slot`, "zh-Hant": traditional(`一帧 = ${channels} 个 slot`), en: `One frame = ${channels} slots`, ja: `1フレーム = ${channels}スロット`, ko: `한 프레임 = ${channels}개 슬롯` })}
       </text>
       <text className="lab-label" x="18" y="86">BCLK</text>
-      <path className="interface-clock-line" d={createSquareWavePath({ height: 22, pulses: 32, width: 620, x: 70, y: 94 })} />
+      <path className="interface-clock-line" data-cycles={channels * slotWidth} d={createSquareWavePath({ height: 22, pulses: channels * slotWidth, width: 620, x: 70, y: 94 })} />
       <text className="lab-label" x="48" y="138">FS</text>
-      <path className="interface-frame-line" d="M 70 142 V 116 H 132 V 142 H 690" />
+      <path className="interface-frame-line" data-pulse-width={620 / (channels * slotWidth)} d={`M 70 142 V 116 H ${70 + 620 / (channels * slotWidth)} V 142 H 690`} />
       <text className="interface-tdm-note" x="352" y="134">
         {localized(language, { zh: "FS 帧同步：新一帧从这里开始", "zh-Hant": traditional("FS 帧同步：新一帧从这里开始"), en: "FS frame sync: a new frame starts here", ja: "FSフレーム同期：ここから新しいフレームが始まります", ko: "FS 프레임 동기: 여기서 새 프레임이 시작됩니다" })}
       </text>
@@ -418,7 +335,7 @@ function renderPdmDiagram(language: Language) {
           />
         ))}
       </g>
-      <text className="lab-chip" x="482" y="170">{localized(language, { zh: "1-bit 高速脉冲密度流", "zh-Hant": traditional("1-bit 高速脉冲密度流"), en: "High-rate 1-bit PDM", ja: "高速1-bitパルス密度ストリーム", ko: "고속 1-bit PDM 펄스 밀도 스트림" })}</text>
+      <text className="lab-chip" x="482" y="170">{localized(language, { zh: "1-bit 高速脉冲密度流", "zh-Hant": traditional("1-bit 高速脉冲密度流"), en: "High-rate 1-bit PDM", ja: "高速1-bit PDM", ko: "고속 1-bit PDM" })}</text>
 
       <text className="lab-label" x="48" y="230">{localized(language, { zh: "密度如何表示幅度", "zh-Hant": traditional("密度如何表示幅度"), en: "Density represents amplitude", ja: "密度で振幅を表す仕組み", ko: "밀도가 진폭을 나타내는 방식" })}</text>
       <text className="interface-tdm-note" x="56" y="260">{localized(language, { zh: "脉冲密度表示幅度", "zh-Hant": traditional("脉冲密度表示幅度"), en: "Pulse density represents amplitude", ja: "パルス密度が振幅を表します", ko: "펄스 밀도가 진폭을 나타냅니다" })}</text>
@@ -469,7 +386,7 @@ function renderSpdifDiagram(language: Language) {
       <image
         aria-label={localized(language, { zh: "SPDIF 同轴光纤线示例图", "zh-Hant": traditional("SPDIF 同轴光纤线示例图"), en: "SPDIF coaxial optical cable example", ja: "SPDIF同軸・光ケーブルの例", ko: "SPDIF 동축·광 케이블 예시" })}
         height="210"
-        href="/audio-technology-sharing/images/spdif-line.png"
+        href={`${import.meta.env.BASE_URL}images/spdif-line.png`}
         preserveAspectRatio="xMidYMid meet"
         role="img"
         width="250"
@@ -521,7 +438,7 @@ function renderUsbDiagram(language: Language) {
       <image
         aria-label={localized(language, { zh: "USB 外置声卡示例图", "zh-Hant": traditional("USB 外置声卡示例图"), en: "USB external sound card example", ja: "USB外付けサウンドカードの例", ko: "USB 외장 사운드 카드 예시" })}
         height="210"
-        href="/audio-technology-sharing/images/usb-audio-card.png.png"
+        href={`${import.meta.env.BASE_URL}images/usb-audio-card.png.png`}
         preserveAspectRatio="xMidYMid meet"
         role="img"
         width="250"
@@ -548,14 +465,14 @@ function renderUsbDiagram(language: Language) {
       <text className="interface-node-sub" x="633" y="380">USB Audio</text>
       {[0, 1, 2, 3].map((packet) => (
         <g key={packet}>
-          <rect className="interface-usb-packet" height="46" rx="8" width="70" x={232 + packet * 80} y={328 + (packet % 2) * 46} />
-          <text className="interface-slot-label" x={267 + packet * 80} y={356 + (packet % 2) * 46}>{`Pkt ${packet + 1}`}</text>
+          <rect className="interface-usb-packet" height="46" rx="8" width="70" x={232 + packet * 80} y={343} />
+          <text className="interface-slot-label" x={267 + packet * 80} y={371}>{`Pkt ${packet + 1}`}</text>
         </g>
       ))}
       <path className="interface-flow-arrow" d="M 196 366 L 224 366" />
-      <path className="interface-flow-arrow" d="M 526 366 L 552 366" />
-      <path className="interface-link-line alt" d="M 536 452 C 430 484 330 484 224 452" />
-      <path className="interface-flow-arrow" d="M 244 452 L 224 452" />
+      <path className="interface-flow-arrow" d="M 542 366 L 560 366" />
+      <path className="interface-link-line alt" d="M 633 408 V 452 H 122 V 408" />
+      <path className="interface-flow-arrow" d="M 122 428 L 122 408" />
       <text className="lab-chip" x="224" y="296">{localized(language, { zh: "音频样本被装入 USB 等时包", "zh-Hant": traditional("音频样本被装入 USB 等时包"), en: "Playback: isochronous audio packets", ja: "オーディオサンプルをUSBアイソクロナスパケットへ格納", ko: "오디오 샘플을 USB 등시성 패킷에 담기" })}</text>
       <text className="lab-chip" x="156" y="504">{localized(language, { zh: "异步播放示例：设备向主机反馈速率", "zh-Hant": traditional("异步播放示例：设备向主机反馈速率"), en: "Async playback: rate feedback to host", ja: "非同期再生の例：機器がホストへレートをフィードバック", ko: "비동기 재생 예: 장치가 호스트에 속도를 피드백" })}</text>
     </svg>
@@ -579,7 +496,7 @@ function renderProtocolDiagram(protocol: InterfaceProtocol, language: Language, 
     return renderUsbDiagram(language);
   }
 
-  return renderI2sDiagram(language, bitDepth, channels);
+  return renderI2sDiagram(language, bitDepth, channels, slotWidth);
 }
 
 export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: DigitalInterfaceLabProps) {
@@ -591,12 +508,12 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
   const [mclkMultiple, setMclkMultiple] = useState(256);
 
   const sampleRateHz = sampleRate * 1000;
-  const bclkMhz = useMemo(() => formatMhz((sampleRateHz * (protocol === "tdm" ? channels * slotWidth : bitDepth * 2)) / 1_000_000), [bitDepth, channels, protocol, sampleRateHz, slotWidth]);
+  const bclkMhz = useMemo(() => formatMhz((sampleRateHz * (protocol === "tdm" ? channels * slotWidth : slotWidth * 2)) / 1_000_000), [bitDepth, channels, protocol, sampleRateHz, slotWidth]);
   const mclkMhz = useMemo(() => formatMhz((sampleRateHz * mclkMultiple) / 1_000_000), [mclkMultiple, sampleRateHz]);
   const bclkFormula = protocol === "tdm"
-    ? `${sampleRate} kHz × 1000 × ${channels} slots × ${slotWidth} bit ÷ 1,000,000 = ${bclkMhz} MHz`
-    : `${sampleRate} kHz × 1000 × ${bitDepth} bit × 2 ch ÷ 1,000,000 = ${bclkMhz} MHz / SD`;
-  const mclkFormula = `${sampleRate} kHz × 1000 × ${mclkMultiple} ÷ 1,000,000 = ${mclkMhz} MHz`;
+    ? `${sampleRateHz} Hz × ${channels} slots × ${slotWidth} bit ÷ 1,000,000 = ${bclkMhz} MHz`
+    : `${sampleRateHz} Hz × 2 slots × ${slotWidth} bit ÷ 1,000,000 = ${bclkMhz} MHz / SD`;
+  const mclkFormula = `${sampleRateHz} Hz × ${mclkMultiple} ÷ 1,000,000 = ${mclkMhz} MHz`;
   const activeCopy = protocolCopy[protocol];
   const usesClockControls = protocol === "i2s" || protocol === "tdm";
   const protocolObservation = getProtocolObservation({ bclkFormula, language, mclkFormula, mclkMultiple, protocol });
@@ -637,10 +554,10 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
             {renderProtocolDiagram(protocol, language, bitDepth, channels, slotWidth)}
           </div>
           {usesClockControls && <p className="codec-model-note">{localized(language, {
-            zh: protocol === "i2s" ? "本图展示声道排布，位单元与时钟周期有省略，不按比例绘制。标准 I2S 在 LRCLK 切换后一个 BCLK 周期发送新声道 MSB；此处计算假设每个声道时隙宽度等于有效位深，不含填充。" : `每个 slot 下方的 ${bitDepth}+${slotWidth - bitDepth} 表示有效数据位 + 填充位；示例按左对齐、补 0 处理。时钟图不逐位展开，FS 宽度、极性和首位延迟以芯片配置为准。`, "zh-Hant": traditional(protocol === "i2s" ? "本图展示声道排布，位单元与时钟周期有省略，不按比例绘制。标准 I2S 在 LRCLK 切换后一个 BCLK 周期发送新声道 MSB；此处计算假设每个声道时隙宽度等于有效位深，不含填充。" : `每个 slot 下方的 ${bitDepth}+${slotWidth - bitDepth} 表示有效数据位 + 填充位；示例按左对齐、补 0 处理。时钟图不逐位展开，FS 宽度、极性和首位延迟以芯片配置为准。`),
-            en: protocol === "i2s" ? "Channel-layout schematic: bit cells and clock cycles are abbreviated, not to scale. Standard I2S sends the new MSB one BCLK after LRCLK changes. This calculation assumes slot width equals valid bit depth, with no padding." : `${bitDepth}+${slotWidth - bitDepth} in each slot means valid data bits + padding bits, shown left-aligned with zero padding. Clock cycles are abbreviated; FS width, polarity and first-bit delay depend on chip configuration.`,
-            ja: protocol === "i2s" ? "チャンネル配置の模式図です。ビットセルとクロック周期は省略しており、縮尺どおりではありません。標準I2SはLRCLK切り替えの1 BCLK後に新しいチャンネルのMSBを送ります。この計算では各チャンネルのスロット幅を有効ビット深度と同じとし、パディングを含めません。" : `各スロット下の${bitDepth}+${slotWidth - bitDepth}は有効データビット + パディングビットを示し、左詰め・0パディングで表示します。クロック周期は省略しており、FS幅、極性、最初のビット遅延はチップ設定に依存します。`,
-            ko: protocol === "i2s" ? "채널 배치의 개략도입니다. 비트 셀과 클록 주기는 생략했으며 축척과 다릅니다. 표준 I2S는 LRCLK 전환 후 한 BCLK 뒤에 새 채널의 MSB를 보냅니다. 이 계산은 각 채널 슬롯 폭이 유효 비트 깊이와 같고 패딩이 없다고 가정합니다." : `각 슬롯 아래의 ${bitDepth}+${slotWidth - bitDepth}는 유효 데이터 비트 + 패딩 비트이며 왼쪽 정렬과 0 패딩으로 표시합니다. 클록 주기는 생략했으며 FS 폭, 극성, 첫 비트 지연은 칩 설정에 따라 달라집니다.`
+            zh: protocol === "i2s" ? "本图显示一帧：每格一个 BCLK，WS 提前一位；slot 宽度可大于有效位深。改变采样率只改变这一帧的实际时长，不改变其位数。" : `每个 slot 下方的 ${bitDepth}+${slotWidth - bitDepth} 表示有效数据位 + 填充位；示例按左对齐、补 0 处理。本图选用高有效、1 BCLK 宽的 FS，首位延迟为 0；真实器件的 FS 与首位延迟以配置为准。`, "zh-Hant": traditional(protocol === "i2s" ? "本图显示一帧：每格一个 BCLK，WS 提前一位；slot 宽度可大于有效位深。改变采样率只改变这一帧的实际时长，不改变其位数。" : `每个 slot 下方的 ${bitDepth}+${slotWidth - bitDepth} 表示有效数据位 + 填充位；示例按左对齐、补 0 处理。本图选用高有效、1 BCLK 宽的 FS，首位延迟为 0；真实器件的 FS 与首位延迟以配置为准。`),
+            en: protocol === "i2s" ? "One frame: each cell is one BCLK and WS leads by one bit. Slot width can exceed valid bit depth. Sample rate changes frame duration, not bit count." : `${bitDepth}+${slotWidth - bitDepth} in each slot means valid data bits + padding bits, shown left-aligned with zero padding. This example uses active-high FS lasting one BCLK and zero first-bit delay; actual FS and offset depend on device settings.`,
+            ja: protocol === "i2s" ? "1フレームを表示。1マスは1 BCLK、WSは1ビット先行します。スロット幅は有効ビット数以上です。標本化周波数は実時間長を変え、ビット数は変えません。" : `各スロット下の${bitDepth}+${slotWidth - bitDepth}は有効データビット + パディングビットを示し、左詰め・0パディングで表示します。この例はHigh有効・1 BCLK幅のFSと遅延0を使います。実機のFSと遅延は設定に従います。`,
+            ko: protocol === "i2s" ? "한 프레임을 표시합니다. 한 칸은 1 BCLK이며 WS는 한 비트 앞섭니다. 슬롯 폭은 유효 비트 수 이상입니다. 샘플 속도는 실제 프레임 길이를 바꾸지만 비트 수는 바꾸지 않습니다." : `각 슬롯 아래의 ${bitDepth}+${slotWidth - bitDepth}는 유효 데이터 비트 + 패딩 비트이며 왼쪽 정렬과 0 패딩으로 표시합니다. 이 예시는 활성 High, 1 BCLK 폭 FS와 첫 비트 지연 0을 사용하며 실제 설정은 기기에 따릅니다.`
           })}</p>}
         </div>
 
@@ -662,7 +579,7 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
           {usesClockControls ? (
             <>
               <div className="lab-sliders">
-                {protocol === "tdm" && <label>
+                <label>
                   <span>
                     {localized(language, { zh: "Slot 宽度", "zh-Hant": traditional("Slot 宽度"), en: "Slot width", ja: "スロット幅", ko: "슬롯 폭" })}
                     <strong>{slotWidth} bit</strong>
@@ -674,7 +591,7 @@ export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: Digit
                   }}>
                     {[16, 24, 32].map((value) => <option key={value} value={value}>{value} bit</option>)}
                   </select>
-                </label>}
+                </label>
                 <label>
                   <span>
                     {localized(language, { zh: "采样率", "zh-Hant": traditional("采样率"), en: "Sample rate", ja: "サンプルレート", ko: "샘플 속도" })}

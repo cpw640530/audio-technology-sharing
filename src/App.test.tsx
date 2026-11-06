@@ -93,9 +93,13 @@ describe("Audio knowledge app", () => {
       await user.click(within(region).getByRole("button", { name: target.title[language] }));
       expect(screen.getByRole("main").querySelector("h1")).toHaveTextContent(target.title[language]);
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-      await user.click(screen.getByRole("button", { name: target.detail.lab!.buttonLabel[language] }));
-      expect(screen.queryByRole("region", { name: language === "zh" ? "相关知识" : "Related knowledge" })).not.toBeInTheDocument();
-      await user.click(screen.getByRole("button", { name: language === "zh" ? "返回详细内容" : /^Back to detailed (content|guide)$/ }));
+      if (target.detail.lab) {
+        await user.click(screen.getByRole("button", { name: target.detail.lab.buttonLabel[language] }));
+        expect(screen.queryByRole("region", { name: language === "zh" ? "相关知识" : "Related knowledge" })).not.toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: language === "zh" ? "返回详细内容" : /^Back to detailed (content|guide)$/ }));
+      } else {
+        expect(document.querySelector(".system-audio-inline")).toBeInTheDocument();
+      }
       expect(screen.getByRole("main").querySelector("h1")).toHaveTextContent(target.title[language]);
       await user.click(screen.getByRole("button", { name: language === "zh" ? "返回知识库" : "Back to knowledge base" }));
       await user.click(within(screen.getByRole("region", { name: language === "zh" ? "知识分类" : "Knowledge Areas" })).getByRole("button", { name: language === "zh" ? /全部/ : /All/ }));
@@ -322,7 +326,7 @@ describe("Audio knowledge app", () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: language === "zh" ? /^音频硬件 麦克风/ : /Microphones/ }));
-    expect(screen.getByText(language === "zh" ? /数字麦已在内部完成模数转换/ : /^Microphones convert pressure changes/)).toBeInTheDocument();
+    expect(screen.getByText(language === "zh" ? /数字麦在内部完成转换/ : /Digital microphones convert internally/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: language === "zh" ? "打开麦克风实验室" : "Open microphone lab" }));
     const chart = screen.getByRole("img", { name: language === "zh" ? "麦克风指向性极坐标图" : "Microphone polar pattern chart" });
     const readouts = screen.getByLabelText(language === "zh" ? "拾音教学结果" : "Pickup teaching results");
@@ -350,28 +354,28 @@ describe("Audio knowledge app", () => {
     render(<App />);
     await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /^音频硬件 麦克风/ }));
     const contents = screen.getByRole("navigation", { name: "章节目录" });
-    expect(within(contents).getAllByRole("link")).toHaveLength(6);
+    expect(within(contents).getAllByRole("link")).toHaveLength(7);
     for (const [index, link] of within(contents).getAllByRole("link").entries()) {
       const section = document.querySelector(link.getAttribute("href")!)!;
       expect(section).not.toBeNull();
       vi.spyOn(section, "getBoundingClientRect").mockReturnValue({ top: (index - 4) * 300 } as DOMRect);
     }
-    const target = screen.getByRole("heading", { name: "再确认系统接口" });
+    const target = screen.getByRole("heading", { name: "输出如何接入系统" });
     const scroll = vi.fn();
     target.scrollIntoView = scroll;
     const hash = window.location.hash;
-    await user.click(within(contents).getByRole("link", { name: "再确认系统接口" }));
+    await user.click(within(contents).getByRole("link", { name: "输出如何接入系统" }));
     expect(target).toHaveFocus();
     expect(scroll).toHaveBeenCalledWith({ block: "start", behavior: "instant" });
     expect(window.location.hash).toBe(hash);
-    expect(within(contents).getByRole("link", { name: "再确认系统接口" })).toHaveAttribute("aria-current", "location");
+    expect(within(contents).getByRole("link", { name: "输出如何接入系统" })).toHaveAttribute("aria-current", "location");
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
     expect(screen.getByRole("navigation", { name: "Page contents" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Next topic" }));
     const nextContents = screen.getByRole("navigation", { name: "Page contents" });
     const destinations = within(nextContents).getAllByRole("link").map(link => link.getAttribute("href"));
     expect(new Set(destinations).size).toBe(destinations.length);
-    expect(within(nextContents).queryByRole("link", { name: "Then confirm the system interface" })).not.toBeInTheDocument();
+    expect(within(nextContents).queryByRole("link", { name: "Connect the output to the system" })).not.toBeInTheDocument();
     expect(within(nextContents).getAllByRole("link").map(link => link.textContent))
       .toEqual(Array.from(document.querySelectorAll(".sound-topic-content h2")).map(heading => heading.textContent));
   });
@@ -383,8 +387,8 @@ describe("Audio knowledge app", () => {
       if (!zh) await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
       await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: zh ? /^音频硬件 麦克风/ : /Microphones/ }));
       const titles = zh
-        ? ["麦克风", "ADC / DAC / Codec", "数字音频接口 / 传输协议", "功放与扬声器"]
-        : ["Microphones", "ADC / DAC / Codec", "Digital Audio Interfaces / Transport Protocols", "Amplifiers and Speakers"];
+        ? ["麦克风", "数字音频接口 / 传输协议", "功放与扬声器"]
+        : ["Microphones", "Digital Audio Interfaces / Transport Protocols", "Amplifiers and Speakers"];
       expect(screen.getByRole("button", { name: zh ? "上一张卡片" : "Previous topic" })).toBeDisabled();
       for (const [index, title] of titles.entries()) {
         const page = screen.getByRole("main", { name: title });
@@ -396,9 +400,9 @@ describe("Audio knowledge app", () => {
       }
       expect(screen.getByRole("button", { name: zh ? "下一张卡片" : "Next topic" })).toBeDisabled();
       await user.click(screen.getByRole("button", { name: zh ? "上一张卡片" : "Previous topic" }));
-      expect(screen.getByRole("main", { name: titles[2] })).toBeInTheDocument();
+      expect(screen.getByRole("main", { name: titles[titles.length - 2] })).toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: zh ? "返回知识库" : "Back to knowledge base" }));
-      expect(within(screen.getByTestId("topic-grid")).getAllByRole("button")).toHaveLength(4);
+      expect(within(screen.getByTestId("topic-grid")).getAllByRole("button")).toHaveLength(titles.length);
     }
   });
 
@@ -1162,17 +1166,17 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("heading", { name: "时间域" })).toBeInTheDocument();
     expect(within(details).getByText(/波形、周期、瞬态、包络/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "频率域" })).toBeInTheDocument();
-    expect(within(details).getAllByText(/频率分辨率/).length).toBeGreaterThan(0);
+    expect(within(details).getByText(/Δf = fs\/NFFT/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "STFT 分帧" })).toBeInTheDocument();
-    expect(within(details).getByText(/window size 和 hop size/)).toBeInTheDocument();
+    expect(within(details).getByText(/hop size 控制相邻帧的时间间隔和计算量/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "滤波器" })).toBeInTheDocument();
     expect(within(details).getByText(/FIR 和 IIR/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "参数 EQ" })).toBeInTheDocument();
     expect(within(details).getByText(/gain、frequency、Q/)).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "动态处理" })).toBeInTheDocument();
     expect(within(details).getAllByText(/threshold、ratio、attack、release/).length).toBeGreaterThan(0);
-    expect(within(details).getByText(/输入 PCM -> 分帧\/加窗 -> FFT\/STFT 分析/)).toBeInTheDocument();
-    expect(within(details).getByText(/压缩器不是 MP3\/AAC 这类编码压缩/)).toBeInTheDocument();
+    expect(within(details).getByRole("list", { name: "分析路径" })).toBeInTheDocument();
+    expect(within(details).getByText(/已削波的数据不能靠限幅恢复/)).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开基础信号处理实验室" })).toBeInTheDocument();
   });
 
@@ -2037,21 +2041,15 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("heading", { name: "MP3" })).toBeInTheDocument();
   });
 
-  it("expands ADC DAC Codec hardware knowledge with detailed terms and a lab entry", async () => {
+  it("merges converter knowledge into digital audio without a separate hardware card", async () => {
     const user = userEvent.setup();
     render(<App />);
-
-    await user.click(screen.getByRole("button", { name: /ADC \/ DAC \/ Codec/ }));
-
-    const details = screen.getByRole("main", { name: "ADC / DAC / Codec" });
-    expect(within(details).getByText(/ADC 把麦克风、线路输入等模拟电压/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "ADC：从电压到 PCM" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "DAC：从 PCM 到模拟输出" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "Codec 与 SoC：音频、控制、时钟分开看" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "读规格与定位问题" })).toBeInTheDocument();
-    expect(within(details).getByText("I²C / SPI")).toBeInTheDocument();
-    expect(within(details).getByRole("link", { name: "查看瑞芯微 RK3308 官方资料" })).toBeInTheDocument();
-    expect(within(details).getByRole("button", { name: "打开 ADC / DAC / Codec 实验室" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^音频硬件 ADC/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^音频基础 数字音频基础/ }));
+    const details = screen.getByRole("main", { name: "数字音频基础" });
+    expect(within(details).getByRole("heading", { name: "从 ADC 输入范围到 DAC 模拟输出" })).toBeInTheDocument();
+    expect(within(details).getByText(/0.2 V 峰值经 4 倍增益/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "硬件 Codec：把转换链路集成到芯片" })).toBeInTheDocument();
   });
 
   it("expands amplifier speaker knowledge with detailed terms and a lab entry", async () => {
@@ -2088,7 +2086,7 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("button", { name: "打开功放与扬声器实验室" })).toBeInTheDocument();
   });
 
-  it("opens a dedicated system audio architecture page with the lab before core concepts", async () => {
+  it("opens the system audio article with inline diagrams", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -2098,9 +2096,9 @@ describe("Audio knowledge app", () => {
 
     const page = screen.getByRole("main", { name: "系统音频架构" });
     expect(within(page).getByText(/系统音频架构回答的是/)).toBeInTheDocument();
-    expect(within(page).getByRole("region", { name: "当前模块在音频链路中的位置" })).toBeInTheDocument();
+    expect(within(page).queryByRole("region", { name: "当前模块在音频链路中的位置" })).not.toBeInTheDocument();
     expect(within(page).getByRole("heading", { name: "系统如何管理一条音频流" })).toBeInTheDocument();
-    expect(within(page).getByRole("heading", { name: "先分清三种数据方向" })).toBeInTheDocument();
+    expect(within(page).getByRole("heading", { name: "先分清播放、采集和全双工" })).toBeInTheDocument();
     expect(within(page).getByText("应用 → 设备")).toBeInTheDocument();
     expect(within(page).getByText("设备 → 应用")).toBeInTheDocument();
     expect(within(page).getByRole("heading", { name: "请求生命周期" })).toBeInTheDocument();
@@ -2109,8 +2107,8 @@ describe("Audio knowledge app", () => {
     expect(within(page).queryByRole("heading", { name: "音频服务" })).not.toBeInTheDocument();
     expect(within(page).queryByRole("heading", { name: "HAL / 驱动" })).not.toBeInTheDocument();
     expect(within(page).getByText(/不展开具体 DSP 算法、接口时序或低延迟调参/)).toBeInTheDocument();
-    expect(within(page).getByRole("button", { name: "打开系统音频架构实验室" })).toBeInTheDocument();
-    expect(within(page).getByRole("region", { name: "当前主题实验室入口" })).toBeInTheDocument();
+    expect(within(page).queryByRole("button", { name: "打开系统音频架构实验室" })).not.toBeInTheDocument();
+    expect(within(page).getByRole("region", { name: "系统音频架构总览" })).toBeInTheDocument();
   });
 
   it("opens a dedicated real-time audio page with deadline concepts", async () => {
@@ -2268,27 +2266,13 @@ describe("Audio knowledge app", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: /系统音频架构/ }));
-    await user.click(
-      screen.getByRole("button", {
-        name: "打开系统音频架构实验室"
-      })
-    );
 
-    expect(screen.getByRole("heading", { name: "系统音频架构实验室" })).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "系统音频架构" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
     const overview = screen.getByRole("region", { name: "系统音频架构总览" });
     expect(overview).toBeInTheDocument();
-    const genericDiagram = within(overview).getByRole("img", { name: "通用系统音频架构框图" });
     const linuxDiagram = within(overview).getByRole("img", { name: "Linux 音频架构示例框图" });
-    expect(genericDiagram).toBeInTheDocument();
     expect(linuxDiagram).toBeInTheDocument();
-    expect(within(genericDiagram).getByText("应用程序")).toBeInTheDocument();
-    expect(within(genericDiagram).getByText("应用")).toBeInTheDocument();
-    expect(within(genericDiagram).getByText("音频 API / 音频服务")).toBeInTheDocument();
-    expect(within(genericDiagram).getAllByText("中间件").length).toBeGreaterThan(0);
-    expect(within(genericDiagram).getByText("软件")).toBeInTheDocument();
-    expect(within(genericDiagram).getByText("驱动")).toBeInTheDocument();
-    expect(within(genericDiagram).getByText("硬件")).toBeInTheDocument();
     expect(within(linuxDiagram).getByText("PipeWire / PulseAudio / JACK")).toBeInTheDocument();
     expect(within(linuxDiagram).getByText("中间件")).toBeInTheDocument();
     expect(within(linuxDiagram).getByText("ALSA 用户态接口")).toBeInTheDocument();
@@ -2374,11 +2358,6 @@ describe("Audio knowledge app", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: /系统音频架构/ }));
-    await user.click(
-      screen.getByRole("button", {
-        name: "打开系统音频架构实验室"
-      })
-    );
 
     expect(screen.getByRole("button", { name: "播放链路" })).toHaveAttribute("aria-pressed", "true");
     let flowChart = screen.getByRole("img", { name: "播放链路流程图" });
@@ -2644,10 +2623,11 @@ describe("Audio knowledge app", () => {
     await user.click(within(topicGrid).getByRole("button", { name: /数字音频接口 \/ 传输协议/ }));
 
     const details = screen.getByRole("main", { name: "数字音频接口 / 传输协议" });
-    expect(within(details).getByText(/接口协议关注的是芯片和设备之间如何搬运音频样本/)).toBeInTheDocument();
-    expect(within(details).getByRole("region", { name: "当前模块在音频链路中的位置" })).toBeInTheDocument();
-    expect(within(details).getByText("芯片之间的数字搬运层")).toBeInTheDocument();
-    expect(within(details).getByText("进入 DSP、Codec、DAC、功放或主机协议栈")).toBeInTheDocument();
+    expect(within(details).getByText(/数字音频基础解决的是如何得到 PCM/)).toBeInTheDocument();
+    expect(within(details).queryByRole("region", { name: "当前模块在音频链路中的位置" })).not.toBeInTheDocument();
+    expect(within(details).getByRole("table", { name: "五种接口，先按连接对象区分" })).toBeInTheDocument();
+    expect(within(details).getByText("48,000 × 24 × 2 = 2.304 Mbit/s")).toBeInTheDocument();
+    expect(within(details).getByText("48,000 × 2 × 32 = 3.072 MHz")).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "I2S / IIS / I²S" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "TDM" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "PDM" })).toBeInTheDocument();
@@ -2674,52 +2654,27 @@ describe("Audio knowledge app", () => {
     expect(i2sChart).toBeInTheDocument();
     expect(within(i2sChart).getByText("L: bit23 → bit0")).toBeInTheDocument();
     expect(within(i2sChart).getByText("R: bit23 → bit0")).toBeInTheDocument();
-    expect(within(i2sChart).getAllByText("b22")).toHaveLength(2);
-    expect(within(i2sChart).getAllByText("b21")).toHaveLength(2);
-    expect(screen.getByText("协议：I2S / IIS / I²S")).toBeInTheDocument();
-    expect(screen.getByText("BCLK = 48 kHz × 1000 × 24 bit × 2 ch ÷ 1,000,000 = 2.304 MHz / SD")).toBeInTheDocument();
-    expect(screen.getByText(/当前公式按每条 SD 计算名义 BCLK：48 kHz × 1000 × 24 bit/)).toBeInTheDocument();
-    expect(screen.getByText("MCLK 配置 256fs：48 kHz × 1000 × 256 ÷ 1,000,000 = 12.288 MHz")).toBeInTheDocument();
-    expect(screen.getByRole("slider", { name: "采样率" })).toBeInTheDocument();
-    expect(screen.getByRole("slider", { name: "位深" })).toBeInTheDocument();
-    expect(screen.getByRole("slider", { name: "通道数" })).toBeInTheDocument();
-
-    fireEvent.change(screen.getByRole("slider", { name: "位深" }), {
-      target: { value: "16" }
-    });
-    fireEvent.change(screen.getByRole("slider", { name: "通道数" }), {
-      target: { value: "8" }
-    });
-    expect(screen.getByText("BCLK = 48 kHz × 1000 × 16 bit × 2 ch ÷ 1,000,000 = 1.536 MHz / SD")).toBeInTheDocument();
-    expect(screen.getByText(/当前公式按每条 SD 计算名义 BCLK：48 kHz × 1000 × 16 bit/)).toBeInTheDocument();
+    expect(i2sChart.querySelectorAll('[data-bit="padding"]')).toHaveLength(16);
+    expect(i2sChart.querySelector('[data-cycles]')).toHaveAttribute("data-cycles", "64");
+    expect(screen.getByText("BCLK = 48000 Hz × 2 slots × 32 bit ÷ 1,000,000 = 3.072 MHz / SD")).toBeInTheDocument();
+    expect(screen.getByText("MCLK 配置 256fs：48000 Hz × 256 ÷ 1,000,000 = 12.288 MHz")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Slot 宽度" })).toHaveValue("32");
+    fireEvent.change(screen.getByRole("slider", { name: "位深" }), { target: { value: "16" } });
+    fireEvent.change(screen.getByRole("slider", { name: "通道数" }), { target: { value: "8" } });
+    expect(screen.getByText("BCLK = 48000 Hz × 2 slots × 32 bit ÷ 1,000,000 = 3.072 MHz / SD")).toBeInTheDocument();
     const multichannelI2sChart = screen.getByRole("img", { name: "I2S 时序图" });
-    expect(within(multichannelI2sChart).getByText("SD0")).toBeInTheDocument();
-    expect(within(multichannelI2sChart).getByText("SD1")).toBeInTheDocument();
-    expect(within(multichannelI2sChart).getByText("SD2")).toBeInTheDocument();
-    expect(within(multichannelI2sChart).getByText("SD3")).toBeInTheDocument();
-    expect(within(multichannelI2sChart).getByText("SD0: CH1 / CH2")).toBeInTheDocument();
-    expect(within(multichannelI2sChart).getByText("SD3: CH7 / CH8")).toBeInTheDocument();
-    expect(within(multichannelI2sChart).getByText("左半帧并行传输 CH1 / CH3 / CH5 / CH7")).toBeInTheDocument();
-    expect(within(multichannelI2sChart).getByText("右半帧并行传输 CH2 / CH4 / CH6 / CH8")).toBeInTheDocument();
-    expect(within(multichannelI2sChart).getByText("每条 SD 仍只传一对 L / R；LRCLK 只负责左右半帧")).toBeInTheDocument();
-    expect(within(multichannelI2sChart).getByText("如果只用一条 SD 放多声道，那是 TDM 的 slot 思路")).toBeInTheDocument();
-    expect(
-      Math.abs(
-        Number(within(multichannelI2sChart).getByText("SD 数据线").getAttribute("y")) -
-          Number(within(multichannelI2sChart).getByText("SD0").getAttribute("y"))
-      )
-    ).toBeGreaterThan(24);
-    expect(
-      Number(within(multichannelI2sChart).getByText(/多通道 I2S/).getAttribute("y"))
-    ).toBeGreaterThan(Number(within(multichannelI2sChart).getByText("SD3").getAttribute("y")) + 42);
-    expect(Number(within(multichannelI2sChart).getByText("MCLK").getAttribute("y"))).toBeGreaterThan(
-      Number(within(multichannelI2sChart).getByText("如果只用一条 SD 放多声道，那是 TDM 的 slot 思路").getAttribute("y")) + 32
-    );
+    for (const line of ["SD0", "SD1", "SD2", "SD3"]) {
+      expect(within(multichannelI2sChart).getByText(line)).toBeInTheDocument();
+    }
+    expect(within(multichannelI2sChart).getByText("SD3: CH7")).toBeInTheDocument();
+    expect(within(multichannelI2sChart).getByText("SD3: CH8")).toBeInTheDocument();
+    expect(multichannelI2sChart.querySelectorAll("[data-bit]")).toHaveLength(256);
+    expect(multichannelI2sChart.querySelectorAll('[data-bit="padding"]')).toHaveLength(128);
 
     await user.click(screen.getByRole("button", { name: "TDM" }));
     expect(screen.getByRole("img", { name: "TDM 时隙图" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Slot 宽度" })).toHaveValue("32");
-    expect(screen.getByText("BCLK = 48 kHz × 1000 × 8 slots × 32 bit ÷ 1,000,000 = 12.288 MHz")).toBeInTheDocument();
+    expect(screen.getByText("BCLK = 48000 Hz × 8 slots × 32 bit ÷ 1,000,000 = 12.288 MHz")).toBeInTheDocument();
     expect(screen.getByText("协议：TDM 多通道时分复用")).toBeInTheDocument();
     expect(screen.getByText("8 个 slot 共用一条 SD 数据线")).toBeInTheDocument();
     expect(screen.getByText("FS 帧同步：新一帧从这里开始")).toBeInTheDocument();
@@ -2732,7 +2687,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText(/Slot 8/)).toBeInTheDocument();
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Slot 宽度" }), "16");
-    expect(screen.getByText("BCLK = 48 kHz × 1000 × 8 slots × 16 bit ÷ 1,000,000 = 6.144 MHz")).toBeInTheDocument();
+    expect(screen.getByText("BCLK = 48000 Hz × 8 slots × 16 bit ÷ 1,000,000 = 6.144 MHz")).toBeInTheDocument();
     expect(within(screen.getByRole("img", { name: "TDM 时隙图" })).getAllByText("16+0")).toHaveLength(8);
     fireEvent.change(screen.getByRole("slider", { name: "位深" }), { target: { value: "24" } });
     expect(screen.getByRole("combobox", { name: "Slot 宽度" })).toHaveValue("24");
@@ -2740,14 +2695,14 @@ describe("Audio knowledge app", () => {
     expect(within(screen.getByRole("img", { name: "TDM 时隙图" })).getAllByText("24+8")).toHaveLength(8);
     fireEvent.change(screen.getByRole("slider", { name: "位深" }), { target: { value: "16" } });
     expect(within(screen.getByRole("img", { name: "TDM 时隙图" })).getAllByText("16+16")).toHaveLength(8);
-    expect(screen.getByText("BCLK = 48 kHz × 1000 × 8 slots × 32 bit ÷ 1,000,000 = 12.288 MHz")).toBeInTheDocument();
+    expect(screen.getByText("BCLK = 48000 Hz × 8 slots × 32 bit ÷ 1,000,000 = 12.288 MHz")).toBeInTheDocument();
     fireEvent.change(screen.getByRole("slider", { name: "位深" }), { target: { value: "24" } });
     await user.selectOptions(screen.getByRole("combobox", { name: "Slot 宽度" }), "16");
     expect(screen.getByRole("slider", { name: "位深" })).toHaveValue("16");
     expect(screen.getByRole("button", { name: "TDM" })).toHaveAttribute("aria-pressed", "true");
 
     await user.selectOptions(screen.getByRole("combobox", { name: "MCLK 倍频" }), "512");
-    expect(screen.getByText("MCLK 配置 512fs：48 kHz × 1000 × 512 ÷ 1,000,000 = 24.576 MHz")).toBeInTheDocument();
+    expect(screen.getByText("MCLK 配置 512fs：48000 Hz × 512 ÷ 1,000,000 = 24.576 MHz")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "PDM" }));
     expect(screen.getByRole("img", { name: "PDM 到 PCM 转换图" })).toBeInTheDocument();
@@ -2799,115 +2754,28 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("异步播放示例：设备向主机反馈速率")).toBeInTheDocument();
     const usbChart = screen.getByRole("img", { name: "USB Audio 包传输图" });
     expect(usbChart.querySelector("marker#interfaceArrow")).toBeInTheDocument();
-    expect(usbChart.querySelector('path[d="M 526 366 L 552 366"]')).toBeInTheDocument();
+    expect(usbChart.querySelector('path[d="M 542 366 L 560 366"]')).toBeInTheDocument();
     expect(screen.queryByRole("slider", { name: "采样率" })).not.toBeInTheDocument();
     expect(screen.queryByText(/BCLK =/)).not.toBeInTheDocument();
     expect(screen.queryByText(/MCLK 配置/)).not.toBeInTheDocument();
   });
 
-  it("lets readers explore ADC DAC Codec conversion and interface behavior", async () => {
+  it("opens ADC and DAC demonstrations from digital audio and returns to its guide", async () => {
     const user = userEvent.setup();
     render(<App />);
-
-    await user.click(screen.getByRole("button", { name: /ADC \/ DAC \/ Codec/ }));
-    await user.click(
-      screen.getByRole("button", {
-        name: "打开 ADC / DAC / Codec 实验室"
-      })
-    );
-
-    expect(screen.getByRole("heading", { name: "ADC / DAC / Codec 实验室" })).toBeInTheDocument();
-    const conversionChart = screen.getByRole("img", { name: "ADC 采集图" });
-    expect(screen.queryByRole("region", { name: "当前模式关键知识点" })).not.toBeInTheDocument();
-    expect(screen.getByText(/本图把 100% 视为归一化满量程/)).toBeInTheDocument();
-    expect(conversionChart).toBeInTheDocument();
-    expect(screen.queryByRole("img", { name: "DAC 重建图" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("img", { name: "Codec 芯片链路图" })).not.toBeInTheDocument();
-    expect(conversionChart.querySelector(".codec-diagram-chain")).not.toBeInTheDocument();
-    expect(conversionChart.querySelector(".codec-analog-path")).toBeInTheDocument();
-    expect(conversionChart.querySelector(".codec-quant-grid")).toBeInTheDocument();
-    expect(conversionChart.querySelector(".codec-reconstruction-path")).not.toBeInTheDocument();
-    expect(conversionChart.querySelector(".codec-playback-path")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("ADC 采集流程图")).not.toBeInTheDocument();
-    expect(document.querySelector(".codec-chain")).not.toBeInTheDocument();
-    expect(screen.getByText("ADC：模拟电压变成数字样本")).toBeInTheDocument();
-
-    fireEvent.change(screen.getByRole("slider", { name: "输入电平" }), {
-      target: { value: "120" }
-    });
-    fireEvent.change(screen.getByRole("slider", { name: "采样点数" }), {
-      target: { value: "40" }
-    });
-    const lowBitDepthGridCount = conversionChart.querySelectorAll(".codec-quant-grid").length;
-    fireEvent.change(screen.getByRole("slider", { name: "位深" }), {
-      target: { value: "7" }
-    });
-    fireEvent.change(screen.getByRole("slider", { name: "时钟抖动" }), {
-      target: { value: "32" }
-    });
-
-    expect(screen.getByRole("img", { name: "ADC 采集图" }).querySelectorAll(".codec-quant-grid").length).toBeGreaterThan(lowBitDepthGridCount);
-    expect(screen.getByText("量化等级：128 级 · 采样点：40")).toBeInTheDocument();
-    expect(screen.getByText(/^削波样本占比 \d+%$/)).toBeInTheDocument();
-    expect(screen.getByText("时间偏移上限 8% Ts")).toBeInTheDocument();
-    const inputYs = [...conversionChart.querySelectorAll(".digital-sample-dot")].map(dot => Number(dot.getAttribute("cy")));
-    const outputYs = [...conversionChart.querySelectorAll(".digital-quantized-dot")].map(dot => Number(dot.getAttribute("cy")));
-    expect(inputYs.some(y => y < 58 || y > 242)).toBe(true);
-    expect(outputYs.every(y => y >= 58 && y <= 242)).toBe(true);
-    for (const line of conversionChart.querySelectorAll(".codec-quant-grid")) {
-      const value = (150 - Number(line.getAttribute("y1"))) / 92;
-      const code = ((value + 1) / 2) * 127;
-      expect(Math.abs(code - Math.round(code))).toBeLessThan(0.004);
-    }
-
-    await user.click(screen.getByRole("button", { name: "DAC 重建" }));
-    expect(screen.getByText("DAC：数字样本重建成模拟输出")).toBeInTheDocument();
-    expect(screen.queryByRole("img", { name: "ADC 采集图" })).not.toBeInTheDocument();
-    const dacChart = screen.getByRole("img", { name: "DAC 重建图" });
-    expect(screen.queryByRole("img", { name: "Codec 芯片链路图" })).not.toBeInTheDocument();
-    expect(dacChart.querySelector(".codec-analog-path")).not.toBeInTheDocument();
-    expect(dacChart.querySelector(".codec-quant-grid")).not.toBeInTheDocument();
-    expect(dacChart.querySelectorAll(".codec-sub-axis")).toHaveLength(2);
-    expect(dacChart.querySelector(".lab-axis")).not.toBeInTheDocument();
-    expect(dacChart.querySelector(".codec-step-path")).toBeInTheDocument();
-    expect(dacChart.querySelector(".codec-reconstruction-path")).toBeInTheDocument();
-    expect(dacChart.querySelector(".codec-step-path")?.getAttribute("d")).toContain(" H ");
-    const originalReconstruction = dacChart.querySelector(".codec-reconstruction-path")?.getAttribute("d");
-    fireEvent.change(screen.getByRole("slider", { name: "位深" }), { target: { value: "3" } });
-    expect(dacChart.querySelector(".codec-reconstruction-path")?.getAttribute("d")).not.toBe(originalReconstruction);
-    const coarseReconstruction = dacChart.querySelector(".codec-reconstruction-path")?.getAttribute("d");
-    fireEvent.change(screen.getByRole("slider", { name: "采样点数" }), { target: { value: "8" } });
-    expect(dacChart.querySelector(".codec-reconstruction-path")?.getAttribute("d")).not.toBe(coarseReconstruction);
-    expect(screen.queryByLabelText("DAC 重建流程图")).not.toBeInTheDocument();
-    expect(screen.getByRole("slider", { name: "输入电平" })).toBeInTheDocument();
-    expect(screen.getByRole("slider", { name: "采样点数" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^音频基础 数字音频基础/ }));
+    await user.click(screen.getByRole("button", { name: "打开采样、量化与编码实验室" }));
+    expect(screen.getByRole("button", { name: "ADC · Analog → PCM" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("slider", { name: "位深" })).toBeInTheDocument();
-    expect(screen.getByRole("slider", { name: "时钟抖动" })).toBeInTheDocument();
-    expect(screen.getByText(/零阶保持加一阶 RC 只示意/)).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Codec 芯片链路" }));
-    expect(screen.getByText("Codec 芯片：采集、播放和路由集成")).toBeInTheDocument();
-    expect(screen.queryByRole("img", { name: "ADC 采集图" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("img", { name: "DAC 重建图" })).not.toBeInTheDocument();
-    const codecChart = screen.getByRole("img", { name: "Codec 芯片链路图" });
-    expect(screen.getByRole("button", { name: "Codec 芯片链路" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText("双向链路 · 音频数据与寄存器控制分开")).toBeInTheDocument();
-    expect(screen.queryByText(/每帧样本/)).not.toBeInTheDocument();
-    const control = codecChart.querySelector(".codec-control-node")!;
-    expect(Number(control.getAttribute("y"))).toBeGreaterThan(70 + 58);
-    expect(Number(control.getAttribute("y")) + Number(control.getAttribute("height"))).toBeLessThan(218);
-    expect(codecChart.querySelector(".codec-capture-path")).not.toBeInTheDocument();
-    expect(codecChart.querySelector(".codec-playback-path")).not.toBeInTheDocument();
-    expect(codecChart.querySelectorAll(".codec-block-node")).toHaveLength(10);
-    expect(within(codecChart).getByText("ADC")).toBeInTheDocument();
-    expect(within(codecChart).getByText("DAC")).toBeInTheDocument();
-    expect(within(codecChart).getAllByText("I2S/TDM")).toHaveLength(2);
-    expect(within(codecChart).getByText("寄存器控制")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Codec 芯片链路流程图")).not.toBeInTheDocument();
-    expect(screen.queryByRole("slider", { name: "输入电平" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("slider", { name: "采样点数" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("slider", { name: "位深" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("slider", { name: "时钟抖动" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "DAC · PCM → Analog" }));
+    const dac = screen.getByRole("img", { name: "DAC 重建图" });
+    const hold = dac.querySelector(".codec-step-path")!.getAttribute("d");
+    const output = dac.querySelector(".codec-reconstruction-path")!.getAttribute("d");
+    fireEvent.change(screen.getByRole("slider", { name: "滤波时间常数" }), { target: { value: "100" } });
+    expect(dac.querySelector(".codec-reconstruction-path")!.getAttribute("d")).not.toBe(output);
+    expect(dac.querySelector(".codec-step-path")!.getAttribute("d")).toBe(hold);
+    await user.click(screen.getByRole("button", { name: "返回详细内容" }));
+    expect(screen.getByRole("main", { name: "数字音频基础" })).toBeInTheDocument();
   });
 
   it("expands microphone knowledge with detailed hardware concepts and a lab entry", async () => {
@@ -2918,103 +2786,24 @@ describe("Audio knowledge app", () => {
 
     const details = screen.getByRole("main", { name: "麦克风" });
     expect(within(details).getByText(/麦克风把声压变化转换成电信号/)).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "先判断采集任务" })).toBeInTheDocument();
-    expect(within(details).getByRole("heading", { name: "再确认系统接口" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "把参数放回采集场景" })).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "输出如何接入系统" })).toBeInTheDocument();
     expect(within(details).getByText(/普通被动动圈不需供电/)).toBeInTheDocument();
     expect(within(details).queryByRole("heading", { name: "动圈麦克风" })).not.toBeInTheDocument();
     expect(within(details).queryByRole("heading", { name: "最大 SPL" })).not.toBeInTheDocument();
     expect(within(details).getByRole("region", { name: "麦克风实物与剖面图解" })).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开麦克风实验室" })).toBeInTheDocument();
+    const sections = within(details).getAllByRole("heading", { level: 2 }).map(heading => heading.textContent);
+    expect(sections.slice(0, 6)).toEqual([
+      "先建立硬件链路", "从实物看懂换能", "观察指向性与距离", "输出如何接入系统", "用四个参数读懂规格", "把参数放回采集场景"
+    ]);
+    expect(within(details).queryByLabelText("当前模块在音频链路中的位置")).not.toBeInTheDocument();
+    expect(within(details).getByRole("table", { name: "输出如何接入系统" }).querySelectorAll("tbody tr")).toHaveLength(3);
+    expect(within(details).getByRole("table", { name: "用四个参数读懂规格" }).querySelectorAll("tbody tr")).toHaveLength(4);
+    expect(within(details).getByText(/不是音质排名/)).toBeInTheDocument();
   });
 
-  it("lets readers explore microphone polar pattern, distance, gain, and pickup examples", async () => {
-    type MockAudioParam = {
-      cancelScheduledValues: ReturnType<typeof vi.fn>;
-      linearRampToValueAtTime: ReturnType<typeof vi.fn>;
-      setTargetAtTime: ReturnType<typeof vi.fn>;
-      setValueAtTime: ReturnType<typeof vi.fn>;
-    };
-    type MockGainNode = {
-      connect: ReturnType<typeof vi.fn>;
-      gain: MockAudioParam;
-    };
-    type MockFilterNode = {
-      connect: ReturnType<typeof vi.fn>;
-      frequency: MockAudioParam;
-      Q: MockAudioParam;
-      type: BiquadFilterType;
-    };
-    const createAudioParam = (): MockAudioParam => ({
-      cancelScheduledValues: vi.fn(),
-      linearRampToValueAtTime: vi.fn(),
-      setTargetAtTime: vi.fn(),
-      setValueAtTime: vi.fn()
-    });
-    const createdOscillators: Array<{
-      connect: ReturnType<typeof vi.fn>;
-      start: ReturnType<typeof vi.fn>;
-      stop: ReturnType<typeof vi.fn>;
-      frequency: { setValueAtTime: ReturnType<typeof vi.fn> };
-      type: OscillatorType;
-    }> = [];
-    const createdGains: MockGainNode[] = [];
-    const createdFilters: MockFilterNode[] = [];
-    const bufferData = new Float32Array(4410);
-    const audioContext = {
-      currentTime: 0,
-      destination: {},
-      sampleRate: 44100,
-      createOscillator: vi.fn(() => {
-        const oscillator = {
-          connect: vi.fn(),
-          start: vi.fn(),
-          stop: vi.fn(),
-          frequency: { setValueAtTime: vi.fn() },
-          type: "sine" as OscillatorType
-        };
-        createdOscillators.push(oscillator);
-        return oscillator;
-      }),
-      createGain: vi.fn(() => {
-        const gain = {
-          connect: vi.fn(),
-          gain: createAudioParam()
-        };
-        createdGains.push(gain);
-        return gain;
-      }),
-      createBiquadFilter: vi.fn(() => {
-        const filter = {
-          connect: vi.fn(),
-          frequency: createAudioParam(),
-          Q: createAudioParam(),
-          type: "bandpass" as BiquadFilterType
-        };
-        createdFilters.push(filter);
-        return filter;
-      }),
-      createWaveShaper: vi.fn(() => ({
-        connect: vi.fn(),
-        curve: null as Float32Array | null,
-        oversample: "none" as OverSampleType
-      })),
-      createBuffer: vi.fn(() => ({
-        getChannelData: vi.fn(() => bufferData)
-      })),
-      createBufferSource: vi.fn(() => ({
-        connect: vi.fn(),
-        start: vi.fn(),
-        stop: vi.fn(),
-        buffer: null as AudioBuffer | null,
-        loop: false
-      })),
-      close: vi.fn()
-    };
-    Object.defineProperty(window, "AudioContext", {
-      configurable: true,
-      value: vi.fn(() => audioContext)
-    });
-
+  it("keeps microphone pickup visual without synthetic playback", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -3047,29 +2836,7 @@ describe("Audio knowledge app", () => {
     expect(within(screen.getByLabelText("拾音教学结果")).getByText("距离").nextElementSibling).toHaveTextContent("2.5 m");
     expect(within(screen.getByLabelText("拾音教学结果")).getByText("增益旋钮").nextElementSibling).toHaveTextContent("82%");
 
-    await user.click(screen.getByRole("button", { name: "削波失真" }));
-    await user.click(screen.getByRole("button", { name: "播放拾音示例" }));
-
-    expect(audioContext.createWaveShaper).toHaveBeenCalled();
-    expect(createdOscillators[createdOscillators.length - 1]?.start).toHaveBeenCalledWith(0);
-    const directGain = createdGains[0];
-    const firstDirectPickup = directGain.gain.linearRampToValueAtTime.mock.calls.find(([, time]) => time === 0.04)?.[0];
-    expect(firstDirectPickup).toBeLessThan(0.005);
-
-    fireEvent.change(screen.getByRole("slider", { name: "声源角度" }), {
-      target: { value: "0" }
-    });
-
-    const liveDirectValues = directGain.gain.setTargetAtTime.mock.calls.map(([value]) => Number(value));
-    expect(Math.max(...liveDirectValues)).toBeGreaterThan(0.05);
-    expect(createdFilters[0].frequency.setTargetAtTime).toHaveBeenCalledWith(expect.any(Number), 0, 0.025);
-    expect(screen.getByText("播放中")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "环境底噪" }));
-    await user.click(screen.getByRole("button", { name: "播放拾音示例" }));
-
-    expect(audioContext.createBufferSource).toHaveBeenCalled();
-    expect(bufferData.some((sample) => sample !== 0)).toBe(true);
+    expect(screen.queryByRole("button", { name: "播放拾音示例" })).not.toBeInTheDocument();
   });
 
   it("visualizes analog, digital, vocal, and array microphone working principles", async () => {
@@ -3098,7 +2865,7 @@ describe("Audio knowledge app", () => {
     expect(within(numericFlow).getByText("6.31 mVrms")).toBeInTheDocument();
     expect(within(numericFlow).getByText("20 dB 前级后")).toBeInTheDocument();
     expect(within(numericFlow).getByText("63.10 mVrms")).toBeInTheDocument();
-    expect(within(numericFlow).getByText("约 -24.0 dBFS")).toBeInTheDocument();
+    expect(within(numericFlow).getByRole("status")).toHaveTextContent("约 -24.0 dBFS");
 
     fireEvent.change(screen.getByRole("slider", { name: "工作原理输入声压" }), {
       target: { value: "114" }
@@ -3108,13 +2875,13 @@ describe("Audio knowledge app", () => {
     expect(within(numericFlow).getByText("声压：10.000 Pa")).toBeInTheDocument();
     expect(within(numericFlow).getByText("63.10 mVrms")).toBeInTheDocument();
     expect(within(numericFlow).getByText("631.00 mVrms")).toBeInTheDocument();
-    expect(within(numericFlow).getByText("约 -4.0 dBFS")).toBeInTheDocument();
+    expect(within(numericFlow).getByRole("status")).toHaveTextContent("约 -4.0 dBFS");
 
     await user.click(screen.getByRole("button", { name: "数字 MEMS 麦" }));
     expect(screen.getByRole("img", { name: "数字 MEMS 麦工作原理图" })).toBeInTheDocument();
     expect(screen.getByText(/Σ-Δ 调制输出 PDM/)).toBeInTheDocument();
     expect(screen.getAllByText("输出：PDM / I2S").length).toBeGreaterThan(0);
-    expect(within(numericFlow).getByText(/数字 MEMS 约 -26 dBFS\/Pa/)).toBeInTheDocument();
+    expect(within(numericFlow).getByText(/数字 MEMS 在 94 dB SPL 时约 -26 dBFS/)).toBeInTheDocument();
     expect(within(numericFlow).getByText("PDM 1-bit 流")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "动圈话筒" }));
@@ -3130,8 +2897,8 @@ describe("Audio knowledge app", () => {
     expect(arrayDiagram.querySelectorAll("path.mic-signal-line[d*='404']")).toHaveLength(4);
     expect(screen.getByText(/延时对齐并加权求和/)).toBeInTheDocument();
     expect(screen.getAllByText("输出：增强后的目标声").length).toBeGreaterThan(0);
-    expect(within(numericFlow).getByText(/4 Mic 目标方向延时对齐后/)).toBeInTheDocument();
-    expect(within(numericFlow).getByText("延时对齐求和")).toBeInTheDocument();
+    expect(within(numericFlow).getByText(/理想四麦等权平均/)).toBeInTheDocument();
+    expect(within(numericFlow).getByText("对齐后等权平均")).toBeInTheDocument();
   });
 
   it("expands listening perception with metrics and an audio effects lab", async () => {

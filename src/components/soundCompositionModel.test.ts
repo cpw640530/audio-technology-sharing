@@ -22,3 +22,12 @@ it("uses equivalent Fourier coefficients for audio and visual samples", () => {
     }
   }
 });
+
+it("uses independent third-component audio coefficients and a bounded sum", () => {
+  const parts = soundComponents("spectrum", .4, .4, 0, .4, Math.PI / 2);
+  const { real, imag } = soundCoefficients(parts);
+  expect(real[3]).toBeCloseTo(.4);
+  expect(imag[3]).toBeCloseTo(0);
+  expect(soundComponents("spectrum", .4, 0, 0, .4, Math.PI / 2)[2]).toEqual(parts[2]);
+  for (let i = 0; i < 1000; i++) expect(Math.abs(soundValue(i / 48000, 220, parts))).toBeLessThanOrEqual(1.2);
+});

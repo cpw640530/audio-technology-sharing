@@ -23,9 +23,14 @@ it.each(cases)("opens the translated guide and its lab: $title ($language)", ({ 
   fireEvent.click(card!);
   expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(topic.title[language]);
   const entry = view.container.querySelector<HTMLButtonElement>(".diagram-open-button");
-  expect(entry, `${topic.title.en}: lab entry`).not.toBeNull();
-  expect(entry?.textContent?.trim()).toBeTruthy();
-  fireEvent.click(entry!);
+  if (topic.detail.lab) {
+    expect(entry, `${topic.title.en}: lab entry`).not.toBeNull();
+    expect(entry?.textContent?.trim()).toBeTruthy();
+    fireEvent.click(entry!);
+  } else {
+    expect(entry).toBeNull();
+    expect(view.container.querySelector(".system-audio-inline")).toBeInTheDocument();
+  }
   expect(screen.getByRole("heading", { level: 1 }).textContent?.trim()).toBeTruthy();
   expect(screen.getByRole("combobox", { name: /Language/ })).toHaveValue(language);
   expect(view.container.textContent).not.toMatch(/undefined|\[object Object\]/);

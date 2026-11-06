@@ -4,6 +4,7 @@ import type { AiAudioLabId, LocalizedText, Topic, TopicLab } from "./knowledge";
 export type TopicKey = Exclude<TopicLab["type"], "ai-audio"> | `ai-${AiAudioLabId}`;
 
 export function getTopicKey(topic: Topic): TopicKey | undefined {
+  if (topic.title.en === "System Audio Architecture") return "system-audio";
   const lab = topic.detail.lab;
   if (!lab) return undefined;
   if (lab.type !== "ai-audio") return lab.type;
@@ -57,7 +58,7 @@ export const relatedTopics: Record<TopicKey, { target: TopicKey; reason: Localiz
   ],
   microphone: [
     {
-      target: "codec-hardware",
+      target: "sampling-quantization",
       reason: { zh: "麦克风信号通常经过 Codec 或 ADC 进入数字链路。", "zh-Hant": traditional("麦克风信号通常经过 Codec 或 ADC 进入数字链路。"), en: "Microphone signals usually enter the digital chain through a Codec or ADC.", ja: "マイク信号は通常 Codec や ADC を通ってデジタル経路に入ります。", ko: "마이크 신호는 보통 Codec이나 ADC를 거쳐 디지털 경로로 들어갑니다." }
     },
     {
@@ -65,19 +66,9 @@ export const relatedTopics: Record<TopicKey, { target: TopicKey; reason: Localiz
       reason: { zh: "数字麦克风和 ADC 通过音频接口传输采样数据。", "zh-Hant": traditional("数字麦克风和 ADC 通过音频接口传输采样数据。"), en: "Digital microphones and ADCs carry samples through audio interfaces.", ja: "デジタルマイクと ADC は音声インターフェースでサンプルを転送します。", ko: "디지털 마이크와 ADC는 오디오 인터페이스로 샘플을 전달합니다." }
     }
   ],
-  "codec-hardware": [
-    {
-      target: "microphone",
-      reason: { zh: "Codec 的输入端连接麦克风等模拟换能器。", "zh-Hant": traditional("Codec 的输入端连接麦克风等模拟换能器。"), en: "Codec inputs connect to microphones and other analog transducers.", ja: "Codec の入力にはマイクなどのアナログ変換器を接続します。", ko: "Codec 입력은 마이크 등의 아날로그 변환기에 연결됩니다." }
-    },
-    {
-      target: "audio-codec",
-      reason: { zh: "区分采集/播放用的 Codec 芯片与压缩码流用的编解码算法。", "zh-Hant": traditional("区分采集/播放用的 Codec 芯片与压缩码流用的编解码算法。"), en: "Distinguish capture/playback codec chips from algorithms that compress audio streams.", ja: "収録・再生用 Codec チップと音声圧縮アルゴリズムを区別しましょう。", ko: "캡처·재생용 Codec 칩과 오디오 압축 알고리즘을 구분하세요." }
-    }
-  ],
   "digital-interface": [
     {
-      target: "codec-hardware",
+      target: "sampling-quantization",
       reason: { zh: "I2S 等接口连接 Codec 与处理器。", "zh-Hant": traditional("I2S 等接口连接 Codec 与处理器。"), en: "Interfaces such as I2S connect Codecs to processors.", ja: "I2S などのインターフェースが Codec とプロセッサーを接続します。", ko: "I2S 등의 인터페이스는 Codec과 프로세서를 연결합니다." }
     },
     {
@@ -117,7 +108,7 @@ export const relatedTopics: Record<TopicKey, { target: TopicKey; reason: Localiz
   ],
   "audio-codec": [
     {
-      target: "codec-hardware",
+      target: "sampling-quantization",
       reason: { zh: "把 PCM 编解码与硬件采集、播放的职责区分开。", "zh-Hant": traditional("把 PCM 编解码与硬件采集、播放的职责区分开。"), en: "Separate PCM encoding/decoding from hardware capture and playback responsibilities.", ja: "PCM の符号化・復号と、ハードウェアの収録・再生の役割を区別します。", ko: "PCM 인코딩·디코딩과 하드웨어 캡처·재생의 역할을 구분합니다." }
     },
     {

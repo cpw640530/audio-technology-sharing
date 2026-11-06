@@ -2,8 +2,9 @@ import { traditional } from "../content/traditional";
 import { text } from "../content/language";
 import type { ReactNode } from "react";
 import { TopicReadingLayout } from "./TopicReadingLayout";
-import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
+import { ArrowLeft, BookOpen } from "lucide-react";
 import type { Category, Language, Topic } from "../content/knowledge";
+import { SystemAudioDiagrams } from "./SystemAudioDiagrams";
 import { TopicPager } from "./TopicPager";
 
 type DisplayTopic = Topic & { category: Category };
@@ -13,7 +14,6 @@ type SystemAudioPageProps = {
   language: Language;
   topic: DisplayTopic;
   onBack: () => void;
-  onOpenLab: () => void;
   onOpenPrevious?: () => void;
   onOpenNext?: () => void;
 };
@@ -26,18 +26,18 @@ const systemLayers = [
   },
   {
     number: "02",
-    title: { zh: "策略与会话", "zh-Hant": traditional("策略与会话"), en: "Policy and session", ja: "ポリシーとセッション", ko: "정책과 세션" },
-    description: { zh: "系统处理权限、设备选择、路由、混音和格式协商。", "zh-Hant": traditional("系统处理权限、设备选择、路由、混音和格式协商。"), en: "The system handles permissions, device choice, routing, mixing, and format negotiation.", ja: "システムが権限、機器選択、ルーティング、ミキシング、形式のネゴシエーションを扱います。", ko: "시스템은 권한, 장치 선택, 라우팅, 믹싱 및 형식 협상을 처리합니다." }
+    title: { zh: "用户态音频服务", "zh-Hant": traditional("用户态音频服务"), en: "User-space audio service", ja: "ユーザー空間の音声サービス", ko: "사용자 공간 오디오 서비스" },
+    description: { zh: "通过音频 API 接收流，按配置连接设备，按需混音或转换格式；策略决定连接关系。", "zh-Hant": traditional("通过音频 API 接收流，按配置连接设备，按需混音或转换格式；策略决定连接关系。"), en: "Receives streams through audio APIs, connects devices, and mixes or converts formats as needed. Policy decides the connections.", ja: "音声APIでストリームを受け、設定に沿って機器へ接続します。必要に応じてミキシングや形式変換を行い、接続先はポリシーが決めます。", ko: "오디오 API로 스트림을 받아 설정에 따라 장치에 연결하고 필요시 믹싱과 형식 변환을 합니다. 연결 관계는 정책이 결정합니다." }
   },
   {
     number: "03",
-    title: { zh: "用户态音频接口", "zh-Hant": traditional("用户态音频接口"), en: "User-space audio interface", ja: "ユーザー空間の音声インターフェース", ko: "사용자 공간 오디오 인터페이스" },
-    description: { zh: "把应用可见的音频流交给平台接口；Linux 中常见 ALSA、PipeWire 等。", "zh-Hant": traditional("把应用可见的音频流交给平台接口；Linux 中常见 ALSA、PipeWire 等。"), en: "Platform interfaces deliver application streams; Linux commonly uses ALSA, PipeWire, and related layers.", ja: "プラットフォームのインターフェースがアプリのストリームを渡します。Linux では ALSA、PipeWire などを使います。", ko: "플랫폼 인터페이스가 앱 스트림을 전달합니다. Linux에서는 ALSA, PipeWire 등의 계층을 사용합니다." }
+    title: { zh: "内核驱动", "zh-Hant": traditional("内核驱动"), en: "Kernel drivers", ja: "カーネルドライバー", ko: "커널 드라이버" },
+    description: { zh: "提供设备与流接口，管理缓冲、传输和状态；DMA、总线与时钟由具体驱动协调。", "zh-Hant": traditional("提供设备与流接口，管理缓冲、传输和状态；DMA、总线与时钟由具体驱动协调。"), en: "Expose device and stream interfaces, manage buffers, transport and state, and coordinate DMA, buses and clocks as applicable.", ja: "機器とストリームのインターフェースを提供し、バッファー、転送、状態を管理します。DMAやバス、クロックの扱いは実装によります。", ko: "장치와 스트림 인터페이스를 제공하고 버퍼, 전송, 상태를 관리합니다. DMA, 버스, 클록은 해당 드라이버가 조정합니다." }
   },
   {
     number: "04",
-    title: { zh: "驱动与硬件", "zh-Hant": traditional("驱动与硬件"), en: "Driver and hardware", ja: "ドライバーとハードウェア", ko: "드라이버와 하드웨어" },
-    description: { zh: "驱动管理 DMA、时钟和设备寄存器，最后连接 Codec、功放或 ADC。", "zh-Hant": traditional("驱动管理 DMA、时钟和设备寄存器，最后连接 Codec、功放或 ADC。"), en: "Drivers manage DMA, clocks, and registers before reaching a Codec, amplifier, or ADC.", ja: "ドライバーが DMA、クロック、レジスターを管理し、Codec、アンプ、ADC へ接続します。", ko: "드라이버는 DMA, 클록, 레지스터를 관리하며 Codec, 앰프, ADC에 연결됩니다." }
+    title: { zh: "硬件设备", "zh-Hant": traditional("硬件设备"), en: "Hardware devices", ja: "ハードウェア機器", ko: "하드웨어 장치" },
+    description: { zh: "完成实际采集或播放：模拟麦经 ADC 得到 PCM；播放 PCM 经 DAC、功放和扬声器发声。数字麦可在内部完成转换。", "zh-Hant": traditional("完成实际采集或播放：模拟麦经 ADC 得到 PCM；播放 PCM 经 DAC、功放和扬声器发声。数字麦可在内部完成转换。"), en: "Perform capture or playback: an analog mic feeds an ADC; playback PCM feeds a DAC, amplifier and speaker. Digital mics can integrate conversion.", ja: "実際の収録・再生を担います。アナログマイクはADCへ、再生PCMはDAC・アンプ・スピーカーへ進みます。デジタルマイクは変換を内蔵できます。", ko: "실제 수음과 재생을 담당합니다. 아날로그 마이크는 ADC로, 재생 PCM은 DAC, 앰프, 스피커로 이어집니다. 디지털 마이크는 변환을 내장할 수 있습니다." }
   }
 ];
 
@@ -63,7 +63,6 @@ export function SystemAudioPage({ relatedTopics,
   language,
   topic,
   onBack,
-  onOpenLab,
   onOpenPrevious,
   onOpenNext
 }: SystemAudioPageProps) {
@@ -86,7 +85,7 @@ export function SystemAudioPage({ relatedTopics,
         <div className="sound-topic-meta">
           <span>{text(language, "系统边界", "System boundaries", "システムの責任範囲", "시스템의 책임 범위")}</span>
           <span>{text(language, "请求与路由", "Requests and routing", "要求とルーティング", "요청과 라우팅")}</span>
-          <span>{text(language, "实验验证", "Hands-on lab", "実験で確認", "실험으로 확인")}</span>
+          <span>{text(language, "链路图解", "Path diagrams", "経路図", "경로 다이어그램")}</span>
         </div>
       </header>
 
@@ -95,51 +94,15 @@ export function SystemAudioPage({ relatedTopics,
           <div>
             <h2>{text(language, "先建立系统地图", "Build the system map first", "まずシステムの全体像をつかむ", "먼저 시스템의 전체 구조 파악")}</h2>
             <p>{detail.explanation[language]}</p>
+            <p>{text(language, "以电脑会议为例：你要听到远端声音，同时把麦克风声音送给应用。插入耳机后，还需要决定两条流改用哪个设备。下面先看数据往哪里走，再看各层分别负责什么。", "Consider a computer call: you need to hear the remote participant while sending microphone audio to the app. Plugging in a headset also raises a routing decision for both streams. First follow their directions, then identify who does what.", "PCの通話では相手の声を聴きながら、マイク音声をアプリへ渡します。ヘッドセットを接続すると、それぞれの接続先も決める必要があります。まず流れの方向、次に各層の役割を見ます。", "PC 통화에서는 상대방 소리를 듣는 동시에 마이크 소리를 앱에 전달합니다. 헤드셋을 연결하면 두 스트림의 장치도 결정해야 합니다. 먼저 데이터 방향을 보고 각 계층의 역할을 살펴봅니다.")}</p>
           </div>
-        </section>
-
-        {detail.chainContext ? (
-          <section className="details-chain-context hardware-chain-context" aria-label={text(language, "当前模块在音频链路中的位置", "Current module in the audio chain", "音声経路内のこのモジュールの位置", "오디오 경로에서 현재 모듈의 위치")}>
-            <div className="details-chain-heading">
-              <strong>{text(language, "它在整条音频链路中的位置", "Where this module fits", "音声経路内での役割", "전체 오디오 경로에서의 역할")}</strong>
-              <span>{detail.chainContext.stage[language]}</span>
-            </div>
-            <div className="details-chain-grid">
-              <div><small>{text(language, "输入", "Input", "入力", "입력")}</small><p>{detail.chainContext.input[language]}</p></div>
-              <div><small>{text(language, "本模块输出", "Module output", "モジュールの出力", "모듈 출력")}</small><p>{detail.chainContext.output[language]}</p></div>
-              <div><small>{text(language, "下一站", "Next", "次の段階", "다음 단계")}</small><p>{detail.chainContext.next[language]}</p></div>
-            </div>
-          </section>
-        ) : null}
-
-        <section className="sound-topic-section">
-          <div className="sound-topic-section-heading">
-            <div>
-              <h2>{text(language, "系统如何管理一条音频流", "How the system manages an audio stream", "システムは音声ストリームをどう管理するか", "시스템은 오디오 스트림을 어떻게 관리하는가")}</h2>
-              <p>{text(language, "这四层是职责边界，不是四道信号处理算法。播放数据由应用送往设备，采集数据反向返回；权限和路由策略控制两条流的建立与交付。", "These are responsibility boundaries, not four signal-processing algorithms. Playback data goes from app to device; capture returns in reverse. Permission and routing policy control stream setup and delivery.", "この四層は責任分担であり、四つの信号処理アルゴリズムではありません。再生はアプリから機器へ、収録は逆方向へ流れます。権限とルーティングのポリシーがストリームの開始と受け渡しを制御します。", "이 네 계층은 책임 구분이며 네 개의 신호 처리 알고리즘이 아닙니다. 재생 데이터는 앱에서 장치로, 캡처 데이터는 반대로 흐릅니다. 권한과 라우팅 정책은 스트림 설정과 전달을 제어합니다.")}</p>
-            </div>
-          </div>
-          <ol className="system-topic-flow" aria-label={text(language, "系统音频请求流程", "System audio request flow", "システム音声要求の流れ", "시스템 오디오 요청 흐름")}>
-            {systemLayers.map((layer) => (
-              <li key={layer.number}>
-                <span>{layer.number}</span>
-                <div>
-                  <strong>{layer.title[language]}</strong>
-                  <p>{layer.description[language]}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <p className="sound-topic-note">
-            {text(language, "边界提醒：ALSA 负责 Linux 设备接口与 PCM 传输；实时音频卡片负责 deadline、buffer 和 XRUN；DSP 算法卡片负责对信号本身做处理。", "Boundary note: ALSA covers Linux device interfaces and PCM transport; the real-time audio card covers deadlines, buffers, and XRUNs; DSP cards cover signal processing.", "範囲の区別：ALSA は Linux の機器インターフェースと PCM 転送、リアルタイム音声は期限・バッファー・XRUN、DSP は信号そのものの処理を扱います。", "범위 구분: ALSA는 Linux 장치 인터페이스와 PCM 전송을, 실시간 오디오는 마감 시간·버퍼·XRUN을, DSP는 신호 자체의 처리를 다룹니다.")}
-          </p>
         </section>
 
         <section className="sound-topic-section system-topic-modes">
           <div className="sound-topic-section-heading">
             <div>
-              <h2>{text(language, "先分清三种数据方向", "Separate the three data directions", "三つのデータ方向を区別する", "세 가지 데이터 방향 구분")}</h2>
-              <p>{text(language, "系统架构相同，但数据方向和设备占用方式不同；理解这一点再进入实验室会更容易。", "The architecture is shared, but data direction and device ownership differ; this makes the lab flows easier to read.", "構造は共通でもデータの方向と機器の使用方法は異なります。この区別が実験室の図を読む助けになります。", "구조는 같아도 데이터 방향과 장치 사용 방식은 다릅니다. 이를 구분하면 실험실 흐름을 이해하기 쉽습니다.")}</p>
+              <h2>{text(language, "先分清播放、采集和全双工", "Start with playback, capture and duplex", "まず再生・収録・全二重を区別する", "먼저 재생, 캡처, 전이중 구분")}</h2>
+              <p>{text(language, "以下以 PCM 音频流为例。播放和采集是两个方向；全双工是同时使用这两个方向，不是第三种数据格式，也不意味着自动具备回声消除。", "The examples use PCM streams. Playback and capture are two directions; full duplex uses both at once. It is not a third data format and does not automatically provide echo cancellation.", "以下はPCMストリームの例です。再生と収録は二つの方向で、全二重は両方を同時に使う方式です。第三の形式ではなく、エコー除去が自動で付くわけでもありません。", "아래는 PCM 스트림의 예입니다. 재생과 캡처는 두 방향이며 전이중은 양쪽을 동시에 사용하는 방식입니다. 세 번째 형식이 아니고 자동으로 에코 제거가 되는 것도 아닙니다.")}</p>
             </div>
           </div>
           <div className="system-topic-mode-grid">
@@ -155,34 +118,37 @@ export function SystemAudioPage({ relatedTopics,
           </div>
         </section>
 
-        <section className="sound-topic-section system-topic-lab-entry" aria-label={text(language, "当前主题实验室入口", "Current topic lab entry", "このトピックの実験室", "현재 주제 실험실 입구")}>
-          <div className="sound-topic-cta">
-            <CircuitBoard size={22} aria-hidden="true" />
-            <h2>{text(language, "进入系统音频架构实验室", "Open the system audio architecture lab", "システム音声構造の実験室へ", "시스템 오디오 구조 실험실 열기")}</h2>
-            <p>{text(language, "在同一套架构中切换播放、录音和全双工，观察应用、策略、驱动与硬件的分工。", "Switch playback, capture, and duplex in one architecture to see how applications, policy, drivers, and hardware divide the work.", "再生・収録・全二重を切り替え、同じ構造内でアプリ、ポリシー、ドライバー、ハードウェアの役割を確認しましょう。", "같은 구조에서 재생, 캡처, 전이중을 전환하며 앱, 정책, 드라이버, 하드웨어의 역할을 확인하세요.")}</p>
-            <button className="diagram-open-button" type="button" onClick={onOpenLab}>
-              {detail.lab?.buttonLabel[language]}
-            </button>
-          </div>
-        </section>
-
         <section className="sound-topic-section">
           <div className="sound-topic-section-heading">
             <div>
-              <h2>{text(language, "核心知识点", "Core concepts", "基本知識", "핵심 지식")}</h2>
-              <p>{text(language, "掌握系统级判断，再进入 ALSA、实时处理和具体算法。", "Learn the system-level decisions before diving into ALSA, real-time processing, and algorithms.", "ALSA、リアルタイム処理、個別アルゴリズムに進む前に、システム全体での判断を理解します。", "ALSA, 실시간 처리, 개별 알고리즘으로 넘어가기 전에 시스템 수준의 판단을 이해합니다.")}</p>
+              <h2>{text(language, "系统如何管理一条音频流", "How the system manages an audio stream", "システムは音声ストリームをどう管理するか", "시스템은 오디오 스트림을 어떻게 관리하는가")}</h2>
+              <p>{text(language, "两条流都要跨越应用、用户态服务、内核驱动和硬件的边界。下列分层是常见服务型架构的职责示意，不是四道 DSP 算法；策略在旁控制连接关系，不是 PCM 必经的串行处理站。", "Both streams cross application, user-space service, kernel driver and hardware boundaries. These are roles in a common service-based architecture, not four DSP stages. Policy controls connections rather than acting as a serial PCM stage.", "両ストリームはアプリ、ユーザー空間サービス、カーネル、機器の境界を通ります。一般的なサービス型構造の役割であり、四段のDSPではありません。ポリシーは接続を制御し、PCMの直列処理段ではありません。", "두 스트림은 앱, 사용자 공간 서비스, 커널 드라이버, 하드웨어의 경계를 지납니다. 일반적인 서비스형 구조의 역할이지 DSP 네 단계가 아닙니다. 정책은 연결을 제어하며 PCM의 직렬 처리 단계가 아닙니다.")}</p>
             </div>
           </div>
-          <div className="sound-topic-glossary system-topic-key-points">
-            {detail.keyConcepts.map((concept) => <article key={concept.en}><p>{concept[language]}</p></article>)}
-          </div>
+          <ol className="system-topic-flow" aria-label={text(language, "系统音频职责分层", "System audio responsibilities", "システム音声の役割分担", "시스템 오디오 역할 분담")}>
+            {systemLayers.map((layer) => (
+              <li key={layer.number}>
+                <span>{layer.number}</span>
+                <div>
+                  <strong>{layer.title[language]}</strong>
+                  <p>{layer.description[language]}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <p className="sound-topic-note">{text(language, "落到 Linux 桌面：PipeWire 提供媒体图与流处理机制，WirePlumber 负责会话与连接策略；ALSA 既有用户态库，也有内核驱动，不是与 PipeWire 二选一。嵌入式应用也可能直接通过 ALSA 访问设备，不经过桌面音频服务。", "On a Linux desktop, PipeWire supplies the media graph and processing mechanism; WirePlumber handles session and connection policy. ALSA includes user-space libraries and kernel drivers, not an either-or alternative to PipeWire. Embedded apps may access devices through ALSA without a desktop audio service.", "LinuxデスクトップではPipeWireがメディアグラフと処理機構、WirePlumberがセッションと接続方針を担います。ALSAにはユーザー空間ライブラリとカーネルドライバーがあり、PipeWireとの二者択一ではありません。組み込みアプリはALSAを直接利用する場合もあります。", "Linux 데스크톱에서는 PipeWire가 미디어 그래프와 처리 기구를, WirePlumber가 세션과 연결 정책을 맡습니다. ALSA에는 사용자 라이브러리와 커널 드라이버가 있으며 PipeWire와 양자택일이 아닙니다. 임베디드 앱은 데스크톱 서비스 없이 ALSA로 장치에 접근할 수도 있습니다.")}</p>
+        </section>
+
+        <section className="sound-topic-section system-topic-diagrams">
+          <h2>{text(language, "对照 Linux，跟随数据流", "Follow the data through Linux", "Linuxでデータの流れをたどる", "Linux에서 데이터 흐름 따라가기")}</h2>
+          <SystemAudioDiagrams language={language} />
         </section>
 
         <section className="sound-topic-section">
           <div className="sound-topic-section-heading">
             <div>
-              <h2>{text(language, "系统术语", "System terms", "システム用語", "시스템 용어")}</h2>
-              <p>{text(language, "把常见软件层概念放回真实请求路径中。", "Place common software-layer terms back into the real request path.", "ソフトウェア層の用語を、実際の要求経路に沿って整理します。", "소프트웨어 계층 용어를 실제 요청 경로에 맞춰 정리합니다.")}</p>
+              <h2>{text(language, "回到会议：请求、路由与平台差异", "Back to the call: requests, routing and platforms", "通話に戻る：要求・経路・プラットフォームの違い", "통화로 돌아가기: 요청, 라우팅, 플랫폼 차이")}</h2>
+              <p>{text(language, "从加入会议到切换耳机，再到结束通话，用这三个问题检查是否真正理解了系统边界。", "From joining a call to switching a headset and ending the call, use these three questions to check the system boundaries.", "参加、ヘッドセット切替、通話終了の三つの場面から、システムの責任範囲を確認します。", "통화 참여, 헤드셋 전환, 통화 종료 상황에서 시스템의 책임 범위를 확인합니다.")}</p>
             </div>
           </div>
           <div className="sound-topic-glossary">
@@ -199,6 +165,9 @@ export function SystemAudioPage({ relatedTopics,
           <div>
             <h2>{text(language, "工程边界", "Engineering boundary", "実装上の適用範囲", "구현의 적용 범위")}</h2>
             <p>{detail.misconception[language]}</p>
+            <p className="sound-topic-note">
+              {text(language, "接下来按问题深入：设备接口与 PCM 传输看 ALSA；deadline、buffer 和 XRUN 看实时音频处理；信号本身如何变化看算法卡片。", "Continue by question: explore ALSA for device interfaces and PCM transport, real-time audio for deadlines, buffers and XRUNs, and algorithm cards for changes to the signal itself.", "次は疑問に合わせて進みます。機器インターフェースとPCM転送はALSA、期限・バッファー・XRUNはリアルタイム音声、信号自体の変化はアルゴリズムのカードで扱います。", "질문에 따라 이어서 살펴보세요. 장치 인터페이스와 PCM 전송은 ALSA, 마감 시간·버퍼·XRUN은 실시간 오디오, 신호 자체의 변화는 알고리즘 카드에서 다룹니다.")}
+            </p>
           </div>
         </section>
       </TopicReadingLayout>

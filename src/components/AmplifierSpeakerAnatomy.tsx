@@ -6,8 +6,8 @@ import type { Language } from "../content/knowledge";
 type SupportedLanguage = "zh" | "en" | "ja" | "ko" | "zh-Hant";
 type LocalizedText = Record<SupportedLanguage, string>;
 
-const languageIndex: Record<SupportedLanguage, number> = { zh: 0, "zh-Hant": traditional(0), en: 1, ja: 2, ko: 3 };
-const localized = (language: Language, values: [string, string, string, string]) => values[languageIndex[language as SupportedLanguage]];
+const languageIndex: Record<SupportedLanguage, number> = { zh: 0, "zh-Hant": 0, en: 1, ja: 2, ko: 3 };
+const localized = (language: Language, values: [string, string, string, string]) => language === "zh-Hant" ? traditional(values[0]) : values[languageIndex[language]];
 
 type AnatomyMode = "amplifier" | "woofer" | "crossover";
 
@@ -73,14 +73,14 @@ function PrincipleDiagram({ mode, language }: { mode: AnatomyMode; language: Lan
     : mode === "woofer"
       ? ["音频电流", "音圈", "磁隙中的力", "振膜运动", "空气声压", "Audio current", "Voice coil", "Force in gap", "Diaphragm", "Air pressure", "オーディオ電流", "ボイスコイル", "ギャップ内の力", "振動板の動き", "空気圧", "오디오 전류", "보이스 코일", "갭 안의 힘", "진동판 운동", "공기 압력"]
       : ["功放输出", "低通支路", "低音单元", "高通支路", "高音单元", "Amp output", "Low-pass", "Woofer", "High-pass", "Tweeter", "アンプ出力", "ローパス経路", "ウーファー", "ハイパス経路", "ツイーター", "앰프 출력", "저역 통과 경로", "우퍼", "고역 통과 경로", "트위터"];
-  const label = (index: number) => diagramLabels[index + languageIndex[language as SupportedLanguage] * 5];
+  const label = (index: number) => language === "zh-Hant" ? traditional(diagramLabels[index]) : diagramLabels[index + languageIndex[language] * 5];
   return <svg className="amplifier-speaker-schematic" role="img" aria-label={localized(language, [`${modes[mode].label.zh}原理图`, `${modes[mode].label.en} principle diagram`, `${modes[mode].label.ja}の原理図`, `${modes[mode].label.ko} 원리도`])} viewBox="0 0 620 300">
     <rect className="amplifier-speaker-schematic-bg" height="300" rx="12" width="620" />
     {mode !== "crossover" && <path className="amplifier-speaker-schematic-line" d="M48 150 H572" />}
     {mode === "amplifier" && <>
       {[{ x: 58, text: label(0) }, { x: 190, text: label(1) }, { x: 322, text: label(2) }, { x: 454, text: label(3) }].map(({ x, text }) => <g key={text}><rect className="amplifier-speaker-schematic-box" height="58" rx="7" width="108" x={x} y="121" /><text className="amplifier-speaker-schematic-text" textAnchor="middle" x={x + 54} y="155">{text}</text></g>)}
       <path className="amplifier-speaker-schematic-line" d="M376 121 V64 H250" /><text className="amplifier-speaker-schematic-label" x="258" y="55">{label(4)}</text>
-      <path className="amplifier-speaker-schematic-line feedback" d="M508 179 V238 H240 V179" /><text className="amplifier-speaker-schematic-label" x="270" y="260">{localized(language, ["反馈 / 保护", "Feedback / protection", "フィードバック / 保護", "피드백 / 보호"])}</text>
+      <path className="amplifier-speaker-schematic-line feedback" d="M438 150 V238 H240 V179" /><text className="amplifier-speaker-schematic-label" x="270" y="260">{localized(language, ["输出反馈示意", "Output feedback example", "出力帰還の例", "출력 피드백 예시"])}</text>
     </>}
     {mode === "woofer" && <>
       <rect className="amplifier-speaker-schematic-box" height="58" rx="7" width="108" x="48" y="121" /><text className="amplifier-speaker-schematic-text" textAnchor="middle" x="102" y="155">{label(0)}</text>
@@ -95,7 +95,7 @@ function PrincipleDiagram({ mode, language }: { mode: AnatomyMode; language: Lan
       <rect className="amplifier-speaker-schematic-box" height="48" rx="7" width="116" x="280" y="68" /><text className="amplifier-speaker-schematic-text" textAnchor="middle" x="338" y="97">{label(1)}</text>
       <rect className="amplifier-speaker-schematic-box" height="48" rx="7" width="116" x="280" y="184" /><text className="amplifier-speaker-schematic-text" textAnchor="middle" x="338" y="213">{label(3)}</text>
       <path className="amplifier-speaker-schematic-line" d="M396 92 H490 M396 208 H490" /><text className="amplifier-speaker-schematic-label" x="430" y="82">{label(2)}</text><text className="amplifier-speaker-schematic-label" x="430" y="230">{label(4)}</text>
-      <path className="amplifier-speaker-schematic-wave" d="M492 92 C510 72 528 72 546 92 S582 112 600 92" /><path className="amplifier-speaker-schematic-wave" d="M492 208 C510 188 528 188 546 208 S582 228 600 208" />
+      <path className="amplifier-speaker-schematic-wave" d="M492 92 C510 72 528 72 546 92 S582 112 600 92" /><path className="amplifier-speaker-schematic-wave" d="M492 208 q4.5 -20 9 0 t9 0 t9 0 t9 0 t9 0 t9 0 t9 0 t9 0 t9 0 t9 0 t9 0 t9 0" />
     </>}
   </svg>;
 }

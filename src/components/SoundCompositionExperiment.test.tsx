@@ -3,6 +3,23 @@ import { afterEach, expect, it, vi } from "vitest";
 import { SoundCompositionExperiment } from "./SoundCompositionExperiment";
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
+it("controls C independently of B and keeps phase out of magnitude spectra", () => {
+  render(<SoundCompositionExperiment mode="spectrum" language="en" />);
+  const c = screen.getByTestId("composition-spectrum-2");
+  const initialC = c.getAttribute("d");
+  fireEvent.change(screen.getByRole("slider", { name: /Component B amplitude/ }), { target: { value: "0.1" } });
+  expect(c.getAttribute("d")).toBe(initialC);
+  const b = screen.getByTestId("composition-spectrum-1").getAttribute("d");
+  fireEvent.change(screen.getByRole("slider", { name: /Component C amplitude/ }), { target: { value: "0.4" } });
+  expect(c.getAttribute("d")).not.toBe(initialC);
+  expect(screen.getByTestId("composition-spectrum-1").getAttribute("d")).toBe(b);
+  const magnitude = c.getAttribute("d");
+  const wave = screen.getByTestId("composition-sum").getAttribute("d");
+  fireEvent.change(screen.getByRole("slider", { name: /Component C phase/ }), { target: { value: "90" } });
+  expect(c.getAttribute("d")).toBe(magnitude);
+  expect(screen.getByTestId("composition-sum").getAttribute("d")).not.toBe(wave);
+});
+
 it("identifies components with matching colors, distinct dashes and live frequencies", () => {
   render(<SoundCompositionExperiment mode="spectrum" language="en" />);
   const legend = screen.getByRole("list", { name: "Curve legend" });

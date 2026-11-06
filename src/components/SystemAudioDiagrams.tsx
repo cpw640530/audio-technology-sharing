@@ -1,6 +1,5 @@
 import { traditional } from "../content/traditional";
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
 
 import type { Language, LocalizedText } from "../content/knowledge";
 
@@ -27,41 +26,10 @@ type ArchitectureLayer = {
   detail: LocalizedText;
 };
 
-type SystemAudioLabProps = {
-  language: Language;
-  onBack: () => void;
-  onBackToDetails?: () => void;
-};
+
 
 const localized = (language: Language, values: LocalizedText) => values[language];
 
-const genericArchitectureLayers = [
-  {
-    kind: "app",
-    title: { zh: "应用程序", "zh-Hant": traditional("应用程序"), en: "Application", ja: "アプリケーション", ko: "애플리케이션" },
-    detail: { zh: "播放器 / 浏览器 / 录音 / 通话软件", "zh-Hant": traditional("播放器 / 浏览器 / 录音 / 通话软件"), en: "player / browser / recorder / call app", ja: "プレーヤー / ブラウザー / レコーダー / 通話アプリ", ko: "플레이어 / 브라우저 / 녹음 / 통화 앱" }
-  },
-  {
-    kind: "middleware",
-    title: { zh: "音频 API / 音频服务", "zh-Hant": traditional("音频 API / 音频服务"), en: "Audio API / audio service", ja: "オーディオAPI / オーディオサービス", ko: "오디오 API / 오디오 서비스" },
-    detail: { zh: "接收请求，管理会话、权限和音量", "zh-Hant": traditional("接收请求，管理会话、权限和音量"), en: "receives requests, manages sessions, permission, and volume", ja: "要求を受け、セッション、権限、音量を管理", ko: "요청을 받고 세션, 권한, 음량을 관리" }
-  },
-  {
-    kind: "software",
-    title: { zh: "混音 / 路由 / 重采样 / 音量管理", "zh-Hant": traditional("混音 / 路由 / 重采样 / 音量管理"), en: "Mixing / routing / resampling / volume", ja: "ミキシング / ルーティング / リサンプリング / 音量管理", ko: "믹싱 / 라우팅 / 리샘플링 / 음량 관리" },
-    detail: { zh: "合并播放流，选择设备，统一格式", "zh-Hant": traditional("合并播放流，选择设备，统一格式"), en: "combines streams, selects devices, normalizes formats", ja: "再生ストリームをまとめ、デバイスを選び、形式を統一", ko: "재생 스트림을 합치고 장치를 선택하며 형식을 통일" }
-  },
-  {
-    kind: "driver",
-    title: { zh: "驱动接口", "zh-Hant": traditional("驱动接口"), en: "Driver interface", ja: "ドライバーインターフェース", ko: "드라이버 인터페이스" },
-    detail: { zh: "承接 PCM 数据、控制命令和设备状态", "zh-Hant": traditional("承接 PCM 数据、控制命令和设备状态"), en: "handles PCM data, controls, and device state", ja: "PCMデータ、制御命令、デバイス状態を受け渡す", ko: "PCM 데이터, 제어 명령, 장치 상태를 처리" }
-  },
-  {
-    kind: "hardware",
-    title: { zh: "硬件设备", "zh-Hant": traditional("硬件设备"), en: "Hardware device", ja: "ハードウェアデバイス", ko: "하드웨어 장치" },
-    detail: { zh: "Codec / DAC / ADC / 麦克风 / 扬声器", "zh-Hant": traditional("Codec / DAC / ADC / 麦克风 / 扬声器"), en: "Codec / DAC / ADC / microphone / speaker", ja: "Codec / DAC / ADC / マイク / スピーカー", ko: "Codec / DAC / ADC / 마이크 / 스피커" }
-  }
-] satisfies ArchitectureLayer[];
 
 const linuxArchitectureLayers = [
   {
@@ -385,51 +353,16 @@ function ArchitectureStack({
   );
 }
 
-export function SystemAudioLab({ language, onBack, onBackToDetails }: SystemAudioLabProps) {
+export function SystemAudioDiagrams({ language }: { language: Language }) {
   const [flowMode, setFlowMode] = useState<FlowMode>("playback");
 
   return (
-    <main className="codec-lab-page system-audio-lab">
-      <section className="sound-lab-hero" aria-labelledby="system-audio-lab-title">
-        <div className="sound-lab-back-actions">
-          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
-            <ArrowLeft size={18} aria-hidden="true" />
-            {localized(language, { zh: "返回知识库", "zh-Hant": traditional("返回知识库"), en: "Back to knowledge base", ja: "ナレッジベースに戻る", ko: "지식 베이스로 돌아가기" })}
-          </button>
-          {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
-            <ArrowLeft size={18} aria-hidden="true" />
-            {localized(language, { zh: "返回详细内容", "zh-Hant": traditional("返回详细内容"), en: "Back to detailed content", ja: "詳細内容に戻る", ko: "상세 내용으로 돌아가기" })}
-          </button>}
-        </div>
-        <div>
-          <span className="section-kicker">{localized(language, { zh: "软件实验", "zh-Hant": traditional("软件实验"), en: "Software lab", ja: "ソフトウェア実験", ko: "소프트웨어 실험" })}</span>
-          <h1 id="system-audio-lab-title">
-            {localized(language, { zh: "系统音频架构实验室", "zh-Hant": traditional("系统音频架构实验室"), en: "System Audio Architecture Lab", ja: "システムオーディオアーキテクチャラボ", ko: "시스템 오디오 아키텍처 실험실" })}
-          </h1>
-          <p>{localized(language, {
-            zh: "对照通用架构与 Linux 映射，切换播放、录音和全双工的数据方向。", "zh-Hant": traditional("对照通用架构与 Linux 映射，切换播放、录音和全双工的数据方向。"),
-            en: "Compare the generic architecture with its Linux mapping, then switch playback, capture, and full-duplex data paths.",
-            ja: "一般的なアーキテクチャとLinuxの対応関係を比べ、再生、録音、全二重のデータ方向を切り替えます。",
-            ko: "일반 아키텍처와 Linux 매핑을 비교하고 재생, 녹음, 전이중 데이터 경로를 전환합니다."
-          })}</p>
-        </div>
-      </section>
-
+    <div className="system-audio-inline">
       <section
         aria-label={localized(language, { zh: "系统音频架构总览", "zh-Hant": traditional("系统音频架构总览"), en: "System audio architecture overview", ja: "システムオーディオアーキテクチャ概要", ko: "시스템 오디오 아키텍처 개요" })}
         className="system-audio-overview"
       >
-        <div className="system-audio-overview-grid">
-          <article className="system-audio-frame-panel">
-            <span className="section-kicker">{localized(language, { zh: "通用框架", "zh-Hant": traditional("通用框架"), en: "Generic model", ja: "一般モデル", ko: "일반 모델" })}</span>
-            <h2>{localized(language, { zh: "通用系统音频架构", "zh-Hant": traditional("通用系统音频架构"), en: "Generic System Audio Architecture", ja: "一般的なシステムオーディオアーキテクチャ", ko: "일반 시스템 오디오 아키텍처" })}</h2>
-            <ArchitectureStack
-              ariaLabel={localized(language, { zh: "通用系统音频架构框图", "zh-Hant": traditional("通用系统音频架构框图"), en: "Generic system audio architecture block diagram", ja: "一般的なシステムオーディオアーキテクチャのブロック図", ko: "일반 시스템 오디오 아키텍처 블록 다이어그램" })}
-              language={language}
-              layers={genericArchitectureLayers}
-            />
-          </article>
-
+        <div className="system-audio-inline-architecture">
           <article className="system-audio-frame-panel">
             <span className="section-kicker">{localized(language, { zh: "具体例子", "zh-Hant": traditional("具体例子"), en: "Concrete example", ja: "具体例", ko: "구체적인 예" })}</span>
             <h2>{localized(language, { zh: "Linux 音频架构示例", "zh-Hant": traditional("Linux 音频架构示例"), en: "Linux Audio Architecture Example", ja: "Linuxオーディオアーキテクチャの例", ko: "Linux 오디오 아키텍처 예시" })}</h2>
@@ -472,6 +405,6 @@ export function SystemAudioLab({ language, onBack, onBackToDetails }: SystemAudi
           {renderFlowDiagram(language, flowMode)}
         </div>
       </section>
-    </main>
+    </div>
   );
 }

@@ -5,7 +5,7 @@ import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
 import type { Category, Language, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
 import { MicrophoneAnatomy } from "./MicrophoneAnatomy";
-import { ConverterGuide } from "./ConverterGuide";
+import { DigitalInterfaceGuide } from "./DigitalInterfaceGuide";
 import { AmplifierSpeakerAnatomy } from "./AmplifierSpeakerAnatomy";
 
 type DisplayTopic = Topic & { category: Category };
@@ -32,12 +32,6 @@ const flowByType: Record<string, Record<SupportedLanguage, string[]>> = {
     ja: ["音圧の変化", "アナログマイクの振動板変換", "アナログプリアンプ", "アンチエイリアスとADC", "PCMサンプル"],
     ko: ["음압 변화", "아날로그 마이크 진동판 변환", "아날로그 프리앰프", "안티앨리어싱과 ADC", "PCM 샘플"]
   },
-  "codec-hardware": {
-    zh: ["模拟输入", "ADC 采样", "PCM 总线", "DSP / 混音", "DAC 输出"], "zh-Hant": traditional(["模拟输入", "ADC 采样", "PCM 总线", "DSP / 混音", "DAC 输出"]),
-    en: ["Analog input", "ADC sampling", "PCM bus", "DSP / mixer", "DAC output"],
-    ja: ["アナログ入力", "ADCサンプリング", "PCMバス", "DSP / ミキサー", "DAC出力"],
-    ko: ["아날로그 입력", "ADC 샘플링", "PCM 버스", "DSP / 믹서", "DAC 출력"]
-  },
   "digital-interface": {
     zh: ["PCM 样本", "I2S / TDM 成帧", "时钟与数据线", "接收端解帧", "PCM 样本"], "zh-Hant": traditional(["PCM 样本", "I2S / TDM 成帧", "时钟与数据线", "接收端解帧", "PCM 样本"]),
     en: ["PCM samples", "I2S / TDM framing", "Clocks and data lines", "Receiver deframing", "PCM samples"],
@@ -52,36 +46,42 @@ const flowByType: Record<string, Record<SupportedLanguage, string[]>> = {
   }
 };
 
-const microphoneSections = [
-  {
-    title: { zh: "先判断采集任务", "zh-Hant": traditional("先判断采集任务"), en: "Start with the capture task", ja: "まず収音の目的を判断する", ko: "먼저 수음 목적을 판단하기" },
-    description: {
-      zh: "先看声源、距离和空间环境，再决定需要的灵敏度、指向性和耐受声压。", "zh-Hant": traditional("先看声源、距离和空间环境，再决定需要的灵敏度、指向性和耐受声压。"),
-      en: "Check the source, distance, and room first, then choose sensitivity, directionality, and SPL tolerance.",
-      ja: "まず音源、距離、空間環境を確認し、必要な感度、指向性、許容SPLを決めます。",
-      ko: "먼저 음원, 거리, 공간 환경을 확인한 뒤 필요한 감도, 지향성, 허용 SPL을 결정합니다."
-    },
-    points: [
-      { zh: "近距离大声压更看重耐受和余量；远场语音更看重自噪声、阵列布局和后端处理。", "zh-Hant": traditional("近距离大声压更看重耐受和余量；远场语音更看重自噪声、阵列布局和后端处理。"), en: "Close loud sources need SPL headroom; far-field speech depends more on self-noise, array placement, and downstream processing.", ja: "近距離の大音圧では許容SPLとヘッドルームが重要で、遠距離音声では自己雑音、アレイ配置、後段処理がより重要です。", ko: "가까운 큰 음원은 허용 SPL과 헤드룸이 중요하고 원거리 음성은 자체 잡음, 어레이 배치, 후단 처리가 더 중요합니다." },
-      { zh: "电容、动圈、驻极体和 MEMS 是换能与封装选择，不是单独代表音质高低。", "zh-Hant": traditional("电容、动圈、驻极体和 MEMS 是换能与封装选择，不是单独代表音质高低。"), en: "Condenser, dynamic, electret, and MEMS describe transducer and package choices, not a universal quality ranking.", ja: "コンデンサー、ダイナミック、エレクトレット、MEMSは変換方式とパッケージの選択を示すもので、単独で音質の優劣を決めるものではありません。", ko: "콘덴서, 다이내믹, 일렉트릿, MEMS는 변환 방식과 패키지 선택을 뜻할 뿐 그 자체로 음질 순위를 정하지 않습니다." },
-      { zh: "录音棚和乐器还要按声压、瞬态、音色目标和房间条件比较电容、动圈与铝带麦，并结合摆位。", "zh-Hant": traditional("录音棚和乐器还要按声压、瞬态、音色目标和房间条件比较电容、动圈与铝带麦，并结合摆位。"), en: "Studio and instrument capture also compares condenser, dynamic, and ribbon mics by SPL, transients, tone target, and room, then tunes placement.", ja: "スタジオや楽器の収音では、SPL、過渡応答、目標音色、部屋の条件でコンデンサー、ダイナミック、リボンを比較し、配置も調整します。", ko: "스튜디오와 악기 수음에서는 SPL, 트랜지언트, 목표 음색, 공간 조건으로 콘덴서·다이내믹·리본 마이크를 비교하고 배치도 조정합니다." }
-    ]
-  },
-  {
-    title: { zh: "再确认系统接口", "zh-Hant": traditional("再确认系统接口"), en: "Then confirm the system interface", ja: "次にシステムインターフェースを確認する", ko: "다음으로 시스템 인터페이스를 확인하기" },
-    description: {
-      zh: "模拟输出需要匹配前级和 ADC；供电按类型决定：普通被动动圈不需供电，两线驻极体通常需要外部偏置。数字麦还需匹配电源、时钟和 PDM 或 I2S 接口。", "zh-Hant": traditional("模拟输出需要匹配前级和 ADC；供电按类型决定：普通被动动圈不需供电，两线驻极体通常需要外部偏置。数字麦还需匹配电源、时钟和 PDM 或 I2S 接口。"),
-      en: "Analog outputs need a suitable preamp and ADC. Power depends on type: conventional passive moving-coil capsules need none; two-wire electret capsules typically need external bias. Digital mics also require compatible power, clocks, and PDM or I2S interfaces.",
-      ja: "アナログ出力には適切なプリアンプとADCが必要です。電源は種類で決まり、一般的な受動ダイナミックカプセルは不要ですが、2線式エレクトレットは通常外部バイアスを必要とします。デジタルマイクでは電源、クロック、PDMまたはI2Sインターフェースも適合させます。",
-      ko: "아날로그 출력에는 적절한 프리앰프와 ADC가 필요합니다. 전원은 종류에 따라 다르며 일반적인 수동 다이내믹 캡슐은 필요 없지만 2선식 일렉트릿은 보통 외부 바이어스가 필요합니다. 디지털 마이크는 전원, 클록, PDM 또는 I2S 인터페이스도 맞아야 합니다."
-    },
-    points: [
-      { zh: "先保证信号链有足够余量，再比较灵敏度、频响、自噪声和最大 SPL 等规格。", "zh-Hant": traditional("先保证信号链有足够余量，再比较灵敏度、频响、自噪声和最大 SPL 等规格。"), en: "Ensure signal-chain headroom first, then compare sensitivity, frequency response, self-noise, and maximum SPL.", ja: "まず信号チェーンのヘッドルームを確保し、その後で感度、周波数応答、自己雑音、最大SPLなどを比較します。", ko: "먼저 신호 체인의 헤드룸을 확보한 뒤 감도, 주파수 응답, 자체 잡음, 최대 SPL 등의 사양을 비교합니다." },
-      { zh: "PDM 接收端需要抽取滤波；I2S 接收端需要匹配时钟、字长和声道配置。不能仅凭‘数字麦’判断接口兼容。", "zh-Hant": traditional("PDM 接收端需要抽取滤波；I2S 接收端需要匹配时钟、字长和声道配置。不能仅凭‘数字麦’判断接口兼容。"), en: "PDM reception needs decimation; I2S reception needs matching clocks, word length, and channel settings. The label 'digital mic' alone does not establish compatibility.", ja: "PDMの受信側にはデシメーションが必要で、I2Sの受信側にはクロック、ワード長、チャンネル設定の一致が必要です。「デジタルマイク」という名称だけでは互換性を判断できません。", ko: "PDM 수신 측에는 데시메이션이 필요하고 I2S 수신 측에는 클록, 워드 길이, 채널 설정을 맞춰야 합니다. ‘디지털 마이크’라는 이름만으로는 호환성을 판단할 수 없습니다." },
-      { zh: "手机和耳机里的多麦 MEMS 常与波束成形、通话降噪和风噪检测配合，系统布局比单颗麦规格更关键。", "zh-Hant": traditional("手机和耳机里的多麦 MEMS 常与波束成形、通话降噪和风噪检测配合，系统布局比单颗麦规格更关键。"), en: "Multi-mic MEMS systems in phones and earbuds often pair beamforming with call noise reduction and wind detection, making layout as important as one mic's specification.", ja: "スマートフォンやイヤホンの複数MEMSマイクは、ビームフォーミング、通話ノイズ低減、風雑音検出と組み合わせることが多く、単一マイクの仕様以上にシステム配置が重要です。", ko: "스마트폰과 이어버드의 다중 MEMS 마이크는 빔포밍, 통화 잡음 감소, 바람 잡음 감지와 함께 사용되는 경우가 많아 단일 마이크 사양보다 시스템 배치가 중요합니다." }
-    ]
-  }
+const micText = (zh: string, en: string, ja: string, ko: string): LocalizedText => ({ zh, "zh-Hant": traditional(zh), en, ja, ko });
+
+const speakerReadingGroups = [
+  { id: "speaker-drive", title: micText("先驱动，再换能", "Drive, then transduce", "駆動から音への変換", "구동에서 소리로"), terms: ["What an amplifier does", "Class A / AB / D", "Moving-coil speaker"] },
+  { id: "speaker-match", title: micText("匹配负载，而不是只看瓦数", "Match the load, not just the watts", "ワット数だけでなく負荷を確認", "와트 수보다 부하 매칭"), terms: ["Impedance", "Sensitivity"] },
+  { id: "speaker-box", title: micText("单元确定之后，再设计箱体", "Design the enclosure around the driver", "ユニットに合わせて箱を設計", "드라이버에 맞춘 인클로저 설계"), terms: ["Thiele-Small parameters", "Sealed vs bass reflex"] },
+  { id: "speaker-crossover", title: micText("把频段分开，再让声音合起来", "Split the bands, then sum the sound", "帯域を分け、音を合成する", "대역을 나눈 뒤 소리를 합하기"), terms: ["Crossover", "Crossover order and phase", "Active vs passive crossover"] },
+  { id: "speaker-array", title: micText("进阶：从单只音箱到覆盖控制", "Next: from one speaker to coverage control", "発展：単体からカバレッジ制御へ", "심화: 단일 스피커에서 커버리지 제어로"), terms: ["Line array speaker"] }
 ];
+
+const microphoneReading = {
+  intro: micText("麦克风把声压变化转换成电信号。先看它怎样换能，再看输出如何接入系统，最后用参数判断是否适合你的采集任务。", "A microphone converts pressure changes into an electrical signal. Start with transduction, follow its output into the system, then use specifications to judge the capture task.", "マイクは音圧の変化を電気信号に変えます。変換の仕組み、システムへの接続、用途に合う仕様の順に見ていきます。", "마이크는 음압 변화를 전기 신호로 바꿉니다. 변환 원리, 시스템 연결, 용도에 맞는 사양 순으로 살펴봅니다."),
+  anatomy: micText("从实物看懂换能", "From the real microphone to transduction", "実物から変換の仕組みを知る", "실물로 이해하는 변환 원리"),
+  anatomyNote: micText("左侧看外形，右侧看声压如何变成电信号。动圈描述换能方式，驻极体属于电容式，MEMS 描述微加工结构；这些名称不是音质排名。", "Compare the product on the left with transduction on the right. Moving-coil describes a principle, electret is a condenser type, and MEMS describes a micromachined structure; these labels are not quality rankings.", "左の外観と右の変換原理を見比べます。動電型は変換方式、エレクトレットはコンデンサーの一種、MEMSは微細加工構造を表し、音質の順位ではありません。", "왼쪽 실물과 오른쪽 변환 원리를 비교합니다. 다이내믹은 변환 방식, 일렉트릿은 콘덴서의 한 종류, MEMS는 미세 가공 구조를 뜻하며 음질 순위가 아닙니다."),
+  lab: micText("观察指向性与距离", "Explore directionality and distance", "指向性と距離を観察する", "지향성과 거리 살펴보기"),
+  labNote: micText("可在实验室调节方向、距离和增益，观察理想模型；继续向下阅读接口与选型。", "Adjust direction, distance, and gain in an idealized model, or continue below for interfaces and selection.", "ラボでは方向、距離、ゲインを理想モデルで確認できます。続いて接続と選び方を読み進められます。", "실험실에서 방향, 거리, 이득을 이상화된 모델로 확인하거나 아래에서 연결과 선택 기준을 읽을 수 있습니다."),
+  interface: micText("输出如何接入系统", "Connect the output to the system", "出力をシステムにつなぐ", "출력을 시스템에 연결하기"),
+  interfaceNote: micText("先确认输出类型，再匹配供电和接收端。模拟或数字只是接口差别，不能直接代表音质高低。", "Identify the output first, then match power and the receiver. Analog versus digital describes the interface, not a quality ranking.", "出力形式を確認し、電源と受信側を合わせます。アナログとデジタルは接続の違いであり、音質の順位ではありません。", "출력 형식을 확인한 뒤 전원과 수신 측을 맞춥니다. 아날로그와 디지털은 연결 방식의 차이이지 음질 순위가 아닙니다."),
+  interfaceHeaders: [micText("输出", "Output", "出力", "출력"), micText("供电与接入条件", "Power and connection", "電源と接続条件", "전원과 연결 조건"), micText("下一环节", "Next stage", "次の段", "다음 단계")],
+  interfaces: [
+    [micText("模拟电压", "Analog voltage", "アナログ電圧", "아날로그 전압"), micText("普通被动动圈不需供电；两线驻极体通常需外部偏置。其他电容麦按型号供电。", "Passive moving-coil capsules need no power; two-wire electrets usually need external bias. Power other condenser mics as specified.", "一般的な受動動電型は電源不要、2線式エレクトレットは通常外部バイアスが必要です。他のコンデンサー型は機種仕様に従います。", "일반적인 수동 다이내믹 캡슐은 전원이 필요 없고 2선식 일렉트릿은 보통 외부 바이어스가 필요합니다. 다른 콘덴서형은 모델 사양에 따릅니다."), micText("前级 → 抗混叠 / ADC → PCM", "Preamp → anti-aliasing / ADC → PCM", "前段増幅 → アンチエイリアス / ADC → PCM", "프리앰프 → 안티앨리어싱 / ADC → PCM")],
+    [micText("PDM 数字流", "PDM stream", "PDMストリーム", "PDM 스트림"), micText("匹配电源、时钟和数据电平。", "Match power, clock, and logic levels.", "電源、クロック、信号レベルを合わせます。", "전원, 클록, 논리 레벨을 맞춥니다."), micText("PDM 接收 / 抽取滤波 → PCM", "PDM receiver / decimation → PCM", "PDM受信 / デシメーション → PCM", "PDM 수신 / 데시메이션 → PCM")],
+    [micText("I2S 数字流", "I2S stream", "I2Sストリーム", "I2S 스트림"), micText("匹配电源、时钟、时隙和有效字长。", "Match power, clocks, slots, and valid word length.", "電源、クロック、スロット、有効ワード長を合わせます。", "전원, 클록, 슬롯, 유효 워드 길이를 맞춥니다."), micText("I2S 接收 → PCM", "I2S receiver → PCM", "I2S受信 → PCM", "I2S 수신 → PCM")]
+  ],
+  specs: micText("用四个参数读懂规格", "Read four key specifications", "四つの仕様を読み解く", "네 가지 핵심 사양 읽기"),
+  specHeaders: [micText("参数", "Parameter", "項目", "항목"), micText("告诉你什么", "What it tells you", "分かること", "의미"), micText("什么时候关注", "When it matters", "注目する場面", "중요한 상황")],
+  parameters: [
+    [micText("灵敏度", "Sensitivity", "感度", "감도"), micText("给定声压下的输出大小；模拟麦常用 mV/Pa 或 dBV/Pa，数字麦常用 dBFS @ 94 dB SPL。", "Output at a stated pressure: often mV/Pa or dBV/Pa for analog mics, dBFS @ 94 dB SPL for digital mics.", "所定音圧での出力。アナログはmV/PaやdBV/Pa、デジタルはdBFS @ 94 dB SPLなどで表します。", "정해진 음압에서의 출력입니다. 아날로그는 주로 mV/Pa 또는 dBV/Pa, 디지털은 dBFS @ 94 dB SPL로 표시합니다."), micText("匹配前级增益与输入余量，不是越高越好。", "Match preamp gain and headroom; higher is not always better.", "前段ゲインとヘッドルームを合わせます。高いほど良いわけではありません。", "프리앰프 이득과 헤드룸을 맞춥니다. 높을수록 좋은 것은 아닙니다.")],
+    [micText("自噪声", "Self-noise", "自己雑音", "자체 잡음"), micText("麦克风自身噪声折算成的等效输入声压级，常用 dB(A) SPL。", "The mic's own noise expressed as equivalent input SPL, often in dB(A) SPL.", "マイク自身の雑音を等価入力音圧レベルで表し、通常dB(A) SPLを使います。", "마이크 자체 잡음을 등가 입력 음압 레벨로 나타내며 보통 dB(A) SPL을 씁니다."), micText("安静、微弱声源；须在相同计权与带宽下比较。", "Quiet or faint sources; compare with matching weighting and bandwidth.", "静かな環境や小さい音。計重と帯域をそろえて比較します。", "조용한 환경이나 작은 음원. 가중치와 대역폭을 맞춰 비교합니다.")],
+    [micText("最大 SPL", "Maximum SPL", "最大SPL", "최대 SPL"), micText("达到规定失真限值时可承受的声压级。", "The sound pressure level at a specified distortion limit.", "規定の歪み限界に達する音圧レベルです。", "정해진 왜곡 한계에 도달하는 음압 레벨입니다."), micText("近距离大声源；也要检查前级 / ADC 是否先削波。", "Loud close sources; the preamp or ADC may clip first.", "近距離の大きな音。前段やADCが先にクリップしないかも確認します。", "가까운 큰 음원. 프리앰프나 ADC가 먼저 클리핑되는지도 확인합니다.")],
+    [micText("频率响应", "Frequency response", "周波数応答", "주파수 응답"), micText("不同频率被增强或减弱的程度。", "How response varies with frequency.", "周波数ごとの強調や減衰の程度です。", "주파수에 따른 강조 또는 감쇠 정도입니다."), micText("人声、乐器音色；结合测量方向、距离与摆位判断。", "Speech and instrument tone; consider measurement angle, distance, and placement.", "声や楽器の音色。測定方向、距離、配置も考慮します。", "음성과 악기 음색. 측정 방향, 거리, 배치를 함께 고려합니다.")]
+  ],
+  selection: micText("把参数放回采集场景", "Apply the specifications to a capture task", "仕様を収音の場面に当てはめる", "수음 상황에 사양 적용하기"),
+  example: micText("例如桌面语音：先把麦放近说话者，再根据噪声方向选指向性；确认输出与设备兼容后，检查自噪声和增益余量。远场会议还要考虑混响与阵列布局，不能只靠提高灵敏度解决。", "For desktop speech, first move the mic closer, then choose directionality for the noise direction. Check output compatibility, self-noise, and gain headroom. Far-field meetings also require room and array design; higher sensitivity alone is not a solution.", "卓上での音声収録なら、まず話者に近づけ、雑音の方向に応じて指向性を選びます。出力の互換性、自己雑音、ゲイン余裕を確認します。遠距離の会議では残響とアレイ配置も重要で、感度を上げるだけでは解決しません。", "데스크톱 음성은 먼저 마이크를 화자 가까이 두고 잡음 방향에 맞춰 지향성을 고릅니다. 출력 호환성, 자체 잡음, 이득 여유를 확인합니다. 원거리 회의는 잔향과 어레이 배치도 고려해야 하며 감도만 높여서는 해결되지 않습니다."),
+  next: micText("下一步：微弱的模拟电压如何变成 PCM？继续阅读数字音频基础；数字麦的时钟与接线则看数字音频接口。", "Next: how does a small analog voltage become PCM? Continue to Digital Audio Basics; for digital mic clocks and wiring, see digital audio interfaces.", "次は微弱なアナログ電圧をPCMに変える仕組みです。デジタル音声の基礎へ進み、デジタルマイクのクロックや配線はデジタルオーディオ接続で確認します。", "다음은 작은 아날로그 전압이 PCM으로 바뀌는 과정입니다. 디지털 오디오 기초로 이어가고 디지털 마이크의 클록과 배선은 디지털 오디오 인터페이스에서 확인합니다.")
+};
 
 export function HardwareTopicPage({ relatedTopics,
   language,
@@ -93,14 +93,14 @@ export function HardwareTopicPage({ relatedTopics,
 }: HardwareTopicPageProps) {
   const detail = topic.detail;
   const isMicrophone = detail.lab?.type === "microphone";
-  const isConverter = detail.lab?.type === "codec-hardware";
+  const isInterface = detail.lab?.type === "digital-interface";
   const isAmplifierSpeaker = detail.lab?.type === "amplifier-speaker";
   const terms = detail.termExplanations ?? [];
   const currentLanguage = language as SupportedLanguage;
   const flow = flowByType[detail.lab?.type ?? ""]?.[currentLanguage] ?? topic.bullets.map((item) => item[language]);
 
   return (
-    <main className={`sound-topic-page hardware-topic-page${isMicrophone ? " microphone-topic-page" : ""}`} aria-labelledby="hardware-topic-title">
+    <main className={`sound-topic-page hardware-topic-page${isMicrophone ? " microphone-topic-page" : ""}${isAmplifierSpeaker ? " amplifier-topic-page" : ""}`} aria-labelledby="hardware-topic-title">
       <header className="sound-topic-hero">
         <button className="sound-topic-back" type="button" onClick={onBack}>
           <ArrowLeft size={17} aria-hidden="true" />
@@ -120,14 +120,20 @@ export function HardwareTopicPage({ relatedTopics,
       </header>
 
       <TopicReadingLayout language={language}>
+        {isInterface && detail.lab ? <DigitalInterfaceGuide language={language} lab={detail.lab} onOpenLab={onOpenLab} /> : <>
         <section id={isMicrophone ? "mic-intro" : undefined} tabIndex={isMicrophone ? -1 : undefined} className="sound-topic-section sound-topic-intro">
           <div>
             <h2>{localized(language, { zh: "先建立硬件链路", "zh-Hant": traditional("先建立硬件链路"), en: "Start with the hardware chain", ja: "まずハードウェア経路を組み立てる", ko: "먼저 하드웨어 경로를 세우기" })}</h2>
-            <p>{detail.explanation[language]}</p>
+            <p>{isMicrophone ? microphoneReading.intro[language] : isAmplifierSpeaker ? micText(
+              "功放负责把 DAC、Codec 或前级输出的小信号，变成驱动扬声器所需的电压和电流；能量来自电源。扬声器再把电能转换成机械运动和声波。先认识实物，再看负载、箱体和分频如何共同决定结果。",
+              "A power amplifier uses supply energy to turn a small DAC, Codec or preamp signal into speaker-driving voltage and current. The speaker converts electrical energy into motion and sound. Start with real hardware, then examine loads, enclosures and crossovers.",
+              "アンプは電源のエネルギーを使い、DACや前段の小信号をスピーカー駆動用の電圧・電流にします。スピーカーは電気を運動と音に変えます。実物から負荷、箱、クロスオーバーへと見ていきます。",
+              "앰프는 전원 에너지로 DAC, Codec, 프리앰프의 작은 신호를 스피커 구동 전압과 전류로 바꿉니다. 스피커는 전기를 운동과 소리로 변환합니다. 실물부터 부하, 인클로저, 크로스오버 순으로 살펴봅니다."
+            )[language] : detail.explanation[language]}</p>
           </div>
         </section>
 
-        {detail.chainContext ? <section className="details-chain-context hardware-chain-context" aria-label={localized(language, { zh: "当前模块在音频链路中的位置", "zh-Hant": traditional("当前模块在音频链路中的位置"), en: "Current module in the audio chain", ja: "現在のモジュールのオーディオ経路上の位置", ko: "현재 모듈의 오디오 경로상 위치" })}>
+        {!isMicrophone && !isAmplifierSpeaker && detail.chainContext ? <section className="details-chain-context hardware-chain-context" aria-label={localized(language, { zh: "当前模块在音频链路中的位置", "zh-Hant": traditional("当前模块在音频链路中的位置"), en: "Current module in the audio chain", ja: "現在のモジュールのオーディオ経路上の位置", ko: "현재 모듈의 오디오 경로상 위치" })}>
           <div className="details-chain-heading">
             <strong>{localized(language, { zh: "它在整条音频链路中的位置", "zh-Hant": traditional("它在整条音频链路中的位置"), en: "Where this module fits", ja: "オーディオ経路の中での位置", ko: "전체 오디오 경로에서의 위치" })}</strong>
             <span>{detail.chainContext.stage[language]}</span>
@@ -139,13 +145,13 @@ export function HardwareTopicPage({ relatedTopics,
           </div>
         </section> : null}
 
-        {!isConverter && <section id={isMicrophone ? "mic-signal" : undefined} tabIndex={isMicrophone ? -1 : undefined} className="sound-topic-section">
-          <div className="sound-topic-section-heading">
+        <section id={isMicrophone ? "mic-signal" : undefined} tabIndex={isMicrophone ? -1 : undefined} className="sound-topic-section">
+          {!isMicrophone && <div className="sound-topic-section-heading">
             <div>
               <h2>{localized(language, { zh: "典型信号链示例", "zh-Hant": traditional("典型信号链示例"), en: "Example signal chain", ja: "典型的な信号経路の例", ko: "일반적인 신호 경로 예시" })}</h2>
               <p>{localized(language, { zh: "沿着信号实际经过的边界阅读，避免把换能、转换、传输和播放混成一个概念。", "zh-Hant": traditional("沿着信号实际经过的边界阅读，避免把换能、转换、传输和播放混成一个概念。"), en: "Follow the actual signal boundaries so transduction, conversion, transport, and playback stay distinct.", ja: "信号が実際に通る境界に沿って読み、変換、伝送、再生を一つの概念に混同しないようにします。", ko: "신호가 실제로 지나가는 경계를 따라 읽어 변환, 전송, 재생을 하나의 개념으로 섞지 않습니다." })}</p>
             </div>
-          </div>
+          </div>}
           <ol className="sound-topic-flow" aria-label={localized(language, { zh: "音频硬件信号链", "zh-Hant": traditional("音频硬件信号链"), en: "Audio hardware signal chain", ja: "オーディオハードウェア信号経路", ko: "오디오 하드웨어 신호 경로" })}>
             {flow.map((step, index) => (
               <li key={`${index}-${step}`}>
@@ -157,20 +163,28 @@ export function HardwareTopicPage({ relatedTopics,
           {detail.lab?.type === "microphone" && <p className="sound-topic-note">{localized(language, { zh: "上图是模拟麦路径。数字麦在内部完成转换；PDM 输出需抽取滤波得到 PCM，I2S 数字麦可直接输出 PCM。", "zh-Hant": traditional("上图是模拟麦路径。数字麦在内部完成转换；PDM 输出需抽取滤波得到 PCM，I2S 数字麦可直接输出 PCM。"), en: "This shows an analog microphone path. Digital microphones convert internally: PDM needs decimation to PCM, while I2S microphones can output PCM directly.", ja: "上の図はアナログマイクの経路です。デジタルマイクは内部で変換し、PDM出力にはPCMへのデシメーションが必要ですが、I2SマイクはPCMを直接出力できます。", ko: "위 그림은 아날로그 마이크 경로입니다. 디지털 마이크는 내부에서 변환하며 PDM 출력은 PCM으로 데시메이션해야 하지만 I2S 마이크는 PCM을 직접 출력할 수 있습니다." })}</p>}
           {detail.lab?.type === "digital-interface" && <p className="sound-topic-note">{localized(language, { zh: "上图仅示例 I2S/TDM。PDM 是 1-bit 密度流，SPDIF 携带嵌入时钟，USB Audio 使用数据包，不能套用同一时序。", "zh-Hant": traditional("上图仅示例 I2S/TDM。PDM 是 1-bit 密度流，SPDIF 携带嵌入时钟，USB Audio 使用数据包，不能套用同一时序。"), en: "This example covers I2S/TDM only. PDM carries a 1-bit density stream, SPDIF embeds its clock, and USB Audio uses packets; their timing differs.", ja: "この例はI2S/TDMだけを扱います。PDMは1-bit密度ストリーム、SPDIFは埋め込みクロック、USB Audioはパケットを使うため、同じタイミング規則は適用できません。", ko: "이 예시는 I2S/TDM만 다룹니다. PDM은 1-bit 밀도 스트림, SPDIF는 임베디드 클록, USB Audio는 패킷을 사용하므로 같은 타이밍을 적용할 수 없습니다." })}</p>}
           {isAmplifierSpeaker && <AmplifierSpeakerAnatomy language={language} />}
+        </section>
+
+        {isMicrophone && <section id="mic-anatomy" tabIndex={-1} className="sound-topic-section microphone-topic-section">
+          <div>
+            <h2>{microphoneReading.anatomy[language]}</h2>
+            <p>{microphoneReading.anatomyNote[language]}</p>
+          </div>
+          <MicrophoneAnatomy language={language} />
         </section>}
 
         <section id={isMicrophone ? "mic-lab" : undefined} tabIndex={isMicrophone ? -1 : undefined} className="sound-topic-section hardware-topic-lab-entry" aria-label={localized(language, { zh: "当前主题实验室入口", "zh-Hant": traditional("当前主题实验室入口"), en: "Current topic lab entry", ja: "現在のトピックのラボ入口", ko: "현재 주제 실험실 입구" })}>
           <div className="sound-topic-cta">
             <CircuitBoard size={22} aria-hidden="true" />
-            <h2>{localized(language, { zh: "先进入实验室验证", "zh-Hant": traditional("先进入实验室验证"), en: "Verify it in the lab first", ja: "まずラボで検証する", ko: "먼저 실험실에서 검증하기" })}</h2>
-            <p>{localized(language, { zh: "先用交互实验观察参数变化，再阅读后面的核心知识点和术语说明。", "zh-Hant": traditional("先用交互实验观察参数变化，再阅读后面的核心知识点和术语说明。"), en: "Use the interactive lab to observe parameter changes before reading the core concepts and terms below.", ja: "まずインタラクティブな実験でパラメーターの変化を観察し、その後で核心概念と用語を読みます。", ko: "먼저 대화형 실험으로 매개변수 변화를 관찰한 뒤 핵심 개념과 용어 설명을 읽습니다." })}</p>
+            <h2>{isMicrophone ? microphoneReading.lab[language] : localized(language, { zh: "先进入实验室验证", "zh-Hant": traditional("先进入实验室验证"), en: "Verify it in the lab first", ja: "まずラボで検証する", ko: "먼저 실험실에서 검증하기" })}</h2>
+            <p>{isMicrophone ? microphoneReading.labNote[language] : isAmplifierSpeaker ? micText("切换功放类别、单元、箱体和分频图解，观察各环节的作用。图解是原理示意，不是具体产品的实测曲线；下文继续讨论选型与工程限制。", "Switch amplifier classes, drivers, enclosures and crossover diagrams to inspect their roles. These are conceptual diagrams, not product measurements; continue below for selection and limits.", "アンプ方式、ユニット、箱、分岐の図を切り替え、各段の役割を確認します。図は原理の説明であり製品の実測ではありません。続いて選定と制約を読みます。", "앰프 방식, 드라이버, 인클로저, 크로스오버 도해를 전환해 역할을 확인합니다. 개념도이며 제품 실측 곡선은 아닙니다. 아래에서 선택과 한계를 이어서 읽습니다.")[language] : localized(language, { zh: "先用交互实验观察参数变化，再阅读后面的核心知识点和术语说明。", "zh-Hant": traditional("先用交互实验观察参数变化，再阅读后面的核心知识点和术语说明。"), en: "Use the interactive lab to observe parameter changes before reading the core concepts and terms below.", ja: "まずインタラクティブな実験でパラメーターの変化を観察し、その後で核心概念と用語を読みます。", ko: "먼저 대화형 실험으로 매개변수 변화를 관찰한 뒤 핵심 개념과 용어 설명을 읽습니다." })}</p>
             <button className="diagram-open-button" type="button" onClick={onOpenLab}>
               {detail.lab?.buttonLabel[language]}
             </button>
           </div>
         </section>
 
-        {!isMicrophone && !isConverter && <section className="sound-topic-section">
+        {!isMicrophone && !isAmplifierSpeaker && <section className="sound-topic-section">
           <div className="sound-topic-section-heading">
             <div>
               <h2>{localized(language, { zh: "核心知识点", "zh-Hant": traditional("核心知识点"), en: "Core concepts", ja: "核心概念", ko: "핵심 개념" })}</h2>
@@ -186,20 +200,47 @@ export function HardwareTopicPage({ relatedTopics,
           </div>
         </section>}
 
-        {isConverter ? <ConverterGuide language={language} /> : isMicrophone ? microphoneSections.map((section, index) => (
-          <section id={index === 0 ? "mic-selection" : "mic-interface"} tabIndex={-1} className="sound-topic-section microphone-topic-section" key={section.title.en}>
-            <div className="microphone-topic-section-intro">
-              <h2>{section.title[language]}</h2>
-              <p>{section.description[language]}</p>
+        {isMicrophone ? <>
+          <section id="mic-interface" tabIndex={-1} className="sound-topic-section microphone-topic-section">
+            <div>
+              <h2>{microphoneReading.interface[language]}</h2>
+              <p>{microphoneReading.interfaceNote[language]}</p>
             </div>
-            <ul className="microphone-topic-points">
-              {section.points.map((point) => <li key={point.en}>{point[language]}</li>)}
-            </ul>
-            {index === 0 && <>
-              <MicrophoneAnatomy language={language} />
-            </>}
+            <table className="microphone-reading-table">
+              <caption>{microphoneReading.interface[language]}</caption>
+              <thead><tr>{microphoneReading.interfaceHeaders.map(header => <th scope="col" key={header.en}>{header[language]}</th>)}</tr></thead>
+              <tbody>{microphoneReading.interfaces.map(row => <tr key={row[0].en}>
+                <th scope="row">{row[0][language]}</th><td>{row[1][language]}</td><td>{row[2][language]}</td>
+              </tr>)}</tbody>
+            </table>
           </section>
-        )) : <section className="sound-topic-section">
+          <section id="mic-specs" tabIndex={-1} className="sound-topic-section microphone-topic-section">
+            <h2>{microphoneReading.specs[language]}</h2>
+            <table className="microphone-reading-table">
+              <caption>{microphoneReading.specs[language]}</caption>
+              <thead><tr>{microphoneReading.specHeaders.map(header => <th scope="col" key={header.en}>{header[language]}</th>)}</tr></thead>
+              <tbody>{microphoneReading.parameters.map(row => <tr key={row[0].en}>
+                <th scope="row">{row[0][language]}</th><td>{row[1][language]}</td><td>{row[2][language]}</td>
+              </tr>)}</tbody>
+            </table>
+          </section>
+          <section id="mic-selection" tabIndex={-1} className="sound-topic-section microphone-topic-section">
+            <div><h2>{microphoneReading.selection[language]}</h2><p>{microphoneReading.example[language]}</p></div>
+          </section>
+        </> : isAmplifierSpeaker ? speakerReadingGroups.map(group => <section key={group.id} id={group.id} tabIndex={-1} className="sound-topic-section">
+          <h2>{group.title[language]}</h2>
+          <div className="sound-topic-glossary">
+            {terms.filter(term => group.terms.includes(term.name.en)).map(term => <article key={term.name.en}>
+              <h3>{term.name[language]}</h3><p>{term.explanation[language]}</p>
+            </article>)}
+          </div>
+          {group.id === "speaker-match" && <p className="sound-topic-note">{micText(
+            "理想纯电阻例子：4 V RMS 加到 8 Ω，P = V²/R = 2 W；同电压加到 4 Ω 是 4 W，电流也加倍。实际扬声器阻抗随频率变化，不能直接套用标称阻抗计算所有频率的功率。灵敏度比较须统一距离与输入：2.83 V 在 8 Ω 上约为 1 W，在 4 Ω 上约为 2 W。",
+            "Ideal resistor example: 4 V RMS into 8 Ω gives P = V²/R = 2 W; into 4 Ω it gives 4 W and twice the current. Real speaker impedance varies with frequency. Compare sensitivity at the same distance and input: 2.83 V is about 1 W into 8 Ω but 2 W into 4 Ω.",
+            "理想抵抗の例：4 V RMSを8 Ωに加えるとP = V²/R = 2 W、4 Ωでは4 Wで電流も2倍です。実際のインピーダンスは周波数で変わります。感度比較では距離と入力を統一します。2.83 Vは8 Ωで約1 W、4 Ωで約2 Wです。",
+            "이상적인 저항 예: 4 V RMS를 8 Ω에 가하면 P = V²/R = 2 W, 4 Ω이면 4 W이며 전류도 두 배입니다. 실제 임피던스는 주파수에 따라 달라집니다. 감도는 같은 거리와 입력으로 비교합니다. 2.83 V는 8 Ω에서 약 1 W, 4 Ω에서 약 2 W입니다."
+          )[language]}</p>}
+        </section>) : <section className="sound-topic-section">
           <div className="sound-topic-section-heading">
             <div>
               <h2>{localized(language, { zh: "术语与参数词典", "zh-Hant": traditional("术语与参数词典"), en: "Terms and parameters", ja: "用語とパラメーター", ko: "용어와 매개변수" })}</h2>
@@ -220,8 +261,10 @@ export function HardwareTopicPage({ relatedTopics,
           <div>
             <h2>{localized(language, { zh: "工程边界", "zh-Hant": traditional("工程边界"), en: "Engineering boundary", ja: "技術上の境界", ko: "엔지니어링 경계" })}</h2>
             <p>{detail.misconception[language]}</p>
+            {isMicrophone && <p className="sound-topic-note">{microphoneReading.next[language]}</p>}
           </div>
         </section>
+        </>}
       </TopicReadingLayout>
       {relatedTopics}
       <TopicPager language={language} onBack={onBack} onPrevious={onOpenPrevious} onNext={onOpenNext} />

@@ -31,7 +31,7 @@ const models = [
     parts: [
       { name: ["振膜", "Diaphragm", "振動板", "진동판"], text: ["振膜与背板构成电容；声压使间距变化，从而改变电容。", "The diaphragm and backplate form a capacitor; pressure changes their spacing and capacitance.", "振動板と背板がコンデンサーを形成し、音圧で間隔と静電容量が変化します。", "진동판과 백플레이트가 커패시터를 이루며 음압이 간격과 정전용량을 바꿉니다."], x: 180, y: 80 },
       { name: ["背板与驻极体", "Backplate and electret", "背板とエレクトレット", "백플레이트와 일렉트릿"], text: ["以背驻极体结构为例，材料中的持久电荷提供极化，不代表整个咪头无需供电。", "In this back-electret example, persistent material charge provides polarization; this does not make the whole capsule power-free.", "バックエレクトレットの例では材料の残留電荷が分極を作りますが、カプセル全体に電源が不要という意味ではありません。", "백 일렉트릿 예에서는 재료의 영구 전하가 분극을 만들지만 캡슐 전체에 전원이 필요 없다는 뜻은 아닙니다."], x: 180, y: 127 },
-      { name: ["JFET", "JFET", "JFET", "JFET"], text: ["高输入阻抗的 JFET 缓冲微弱信号；常见两线咪头由外部偏置电阻供电，并通过耦合电容取出交流信号。", "A high-input-impedance JFET buffers the small signal. Typical two-wire capsules use an external bias resistor and AC-coupled output.", "高入力インピーダンスのJFETが微弱信号をバッファします。一般的な2線式カプセルは外部バイアス抵抗で動作点を作り、結合コンデンサーで交流信号を取り出します。", "입력 임피던스가 높은 JFET가 미약한 신호를 버퍼링합니다. 일반적인 2선식 캡슐은 외부 바이어스 저항으로 동작점을 만들고 결합 커패시터로 교류 신호를 꺼냅니다."], x: 230, y: 211 }
+      { name: ["JFET", "JFET", "JFET", "JFET"], text: ["高输入阻抗的 JFET 缓冲微弱信号；常见两线咪头由外部偏置电阻供电，并通过耦合电容取出交流信号。", "A high-input-impedance JFET buffers the small signal. Typical two-wire capsules use an external bias resistor and AC-coupled output.", "高入力インピーダンスのJFETが微弱信号をバッファします。一般的な2線式カプセルは外部バイアス抵抗で動作点を作り、結合コンデンサーで交流信号を取り出します。", "입력 임피던스가 높은 JFET가 미약한 신호를 버퍼링합니다. 일반적인 2선식 캡슐은 외부 바이어스 저항으로 동작점을 만들고 결합 커패시터로 교류 신호를 꺼냅니다."], x: 212, y: 211 }
     ]
   },
   {
@@ -71,35 +71,45 @@ export function MicrophoneAnatomy({ language }: { language: Language }) {
             {selected === 0 ? <>
               <path d="M65 90 V251 H305 V90" fill="none" stroke="#879a92" strokeWidth="7" />
               <path d="M72 90 Q185 54 298 90" fill="#d7eee5" stroke="#226d60" strokeWidth="4" />
+              <rect x="113" y="121" width="43" height="96" fill="#fff1cf" />
+              <rect x="214" y="121" width="43" height="96" fill="#fff1cf" />
               <path d="M126 79 V176 M244 79 V176" stroke="#b47b42" strokeWidth="3" />
               <path d="M87 120 H112 V218 H157 V119 H213 V218 H258 V120 H283 V243 H87 Z" fill="#c7d3dd" stroke="#536879" strokeWidth="2" />
               <rect x="159" y="177" width="52" height="41" fill="#ba7671" stroke="#81524e" />
               {[132, 144, 156, 168].map(y => <g key={y} fill="#d9994c" stroke="#87581e"><circle cx="126" cy={y} r="5" /><circle cx="244" cy={y} r="5" /></g>)}
               <path d="M246 174 H323 V267 H350 M246 163 H334 V280 H350" stroke="#b47b42" strokeWidth="2" fill="none" />
-              <path d="M50 105 V152 M44 112 L50 105 L56 112 M44 145 L50 152 L56 145" stroke="#226d60" fill="none" strokeWidth="2" />
+              <path d="M320 97 V127 M314 104 L320 97 L326 104 M314 120 L320 127 L326 120" stroke="#226d60" fill="none" strokeWidth="2" />
+              <g className="mic-gap-field" stroke="#3264a0" fill="none" strokeWidth="2">
+                <path d="M151 190 H118 M125 185 L118 190 L125 195 M219 190 H252 M245 185 L252 190 L245 195" />
+              </g>
+              <text x="132" y="211">B</text><text x="228" y="211">B</text>
               <path d="M290 87 H380 M258 151 H380 M213 198 H380" stroke="#879a92" fill="none" />
               <text x="392" y="91">{["振膜 / 可动", "Diaphragm / moving", "振動板 / 可動部", "진동판 / 가동부"][l]}</text>
-              <text x="392" y="145">{["音圈处于磁隙内", "Coil in magnetic gap", "ボイスコイルは磁気ギャップ内", "보이스 코일은 자기 갭 안에 위치"][l]}</text>
-              <text x="392" y="168">{["两侧为同一环形线圈", "Two sides of one coil", "両側は一つの環状コイル", "양쪽은 하나의 환형 코일"][l]}</text>
+              <text x="392" y="145">{["音圈 / 磁隙内", "Coil / in the gap", "音声コイル / 磁気ギャップ内", "코일 / 자기 갭 내부"][l]}</text>
+              <text x="392" y="168">{["同一环形线圈的两侧", "Two sides of one coil", "同じ環状コイルの両側", "하나의 환형 코일 양쪽"][l]}</text>
               <text x="392" y="202">{["永磁体与导磁极片", "Magnet + pole pieces", "永久磁石とポールピース", "영구 자석과 폴 피스"][l]}</text>
               <text x="365" y="279">{["两端模拟输出", "Analog output pair", "2端子アナログ出力", "2단자 아날로그 출력"][l]}</text>
-              <text x="28" y="319">{["振膜带动音圈沿轴向往复；磁路固定不动。", "Diaphragm and coil move axially; the magnetic circuit stays fixed.", "振動板とコイルが軸方向に往復し、磁気回路は固定されています。", "진동판과 코일은 축 방향으로 왕복하고 자기 회로는 고정되어 있습니다."][l]}</text>
+              <text x="28" y="302">{["振膜与音圈沿轴向往复；磁路固定。", "Diaphragm and coil move axially; the magnetic circuit is fixed.", "振動板とコイルは軸方向に往復し、磁気回路は固定。", "진동판과 코일은 축 방향으로 왕복하며 자기 회로는 고정."][l]}</text>
+              <text x="28" y="325">{["浅黄色：磁隙；B 箭头：磁场方向示例。", "Pale yellow: air gaps. B arrows: example field direction.", "薄黄色：磁気ギャップ。B矢印：磁界方向の一例。", "연한 노랑: 자기 갭. B 화살표: 자기장 방향의 예."][l]}</text>
             </> : selected === 1 ? <>
               <path d="M65 78 V260 H315 V78" fill="#f0f4f2" stroke="#879a92" strokeWidth="5" />
               <rect x="82" y="96" width="216" height="25" fill="#e5f3fb" />
-              <path d="M72 89 Q190 75 308 89" fill="none" stroke="#226d60" strokeWidth="4" className="mic-diaphragm-motion" />
+              <path d="M72 89 C110 89 120 89 190 89 C260 89 270 89 308 89" fill="none" stroke="#226d60" strokeWidth="4" className="mic-diaphragm-motion" />
+              <path d="M72 83 V95 M308 83 V95" stroke="#536879" strokeWidth="7" />
               <path d="M82 128 H298" stroke="#b87838" strokeWidth="6" strokeDasharray="23 6" />
               <path d="M82 139 H298" stroke="#8d9fab" strokeWidth="12" strokeDasharray="23 6" />
               <path d="M190 145 V204 H212 M268 201 H330 V247 M268 224 H288 V260" stroke="#536879" fill="none" strokeWidth="2" />
               <rect x="212" y="184" width="56" height="47" rx="3" fill="#d7eee5" stroke="#226d60" />
+              <text x="240" y="214" textAnchor="middle">JFET</text>
               <path d="M298 89 H379 M298 108 H355 V121 H379 M298 128 H343 V157 H379 M298 143 H330 V185 H379" stroke="#879a92" fill="none" />
               <text x="392" y="93">{["导电振膜 / 可动", "Conductive diaphragm", "導電振動板 / 可動部", "전도성 진동판 / 가동부"][l]}</text>
               <text x="392" y="125">{["空气间隙 d", "Air gap d", "空気ギャップ d", "공기 갭 d"][l]}</text>
               <text x="392" y="161">{["驻极体层 / 持久电荷", "Electret / stored charge", "エレクトレット層 / 残留電荷", "일렉트릿층 / 영구 전하"][l]}</text>
-              <text x="392" y="189">{["穿孔背板 / 固定", "Perforated backplate", "穴あき背板 / 固定部", "천공 백플레이트 / 고정부"][l]}</text>
+              <text x="392" y="189">{["穿孔背板 / 固定", "Fixed, perforated plate", "穴あき背板 / 固定", "고정 백플레이트"][l]}</text>
               <text x="352" y="251">{["信号 + 供电端", "Signal + bias terminal", "信号 + バイアス端子", "신호 + 바이어스 단자"][l]}</text>
-              <text x="250" y="285">{["外壳 / 地", "Case / ground", "ケース / グランド", "케이스 / 접지"][l]}</text>
-              <text x="28" y="319">{["背驻极体示意：间距 d 改变 → 电容 C ≈ εA/d 改变。", "Back-electret example: changing gap d changes C ≈ εA/d.", "バックエレクトレットの例：ギャップdが変わるとC ≈ εA/dも変化します。", "백 일렉트릿 예: 간격 d가 변하면 C ≈ εA/d도 변합니다."][l]}</text>
+              <text x="250" y="276">{["外壳 / 地", "Case / ground", "ケース / グランド", "케이스 / 접지"][l]}</text>
+              <text x="28" y="302">{["振膜边缘固定，中心挠曲；间隙随位置变化。", "The rim is clamped; the center flexes, changing the local gap.", "振動板の縁は固定し、中心がたわんで局所的な間隔が変化。", "진동판 가장자리는 고정되고 중앙이 휘어 국소 간격이 변화."][l]}</text>
+              <text x="28" y="325">{["C ≈ εA/d 为均匀间隙近似；驻极体提供极化。", "C ≈ εA/d assumes a uniform gap; the electret provides polarization.", "C ≈ εA/dは一様な間隔の近似。エレクトレットは分極を提供。", "C ≈ εA/d는 균일 간격 근사이며 일렉트릿은 분극을 제공."][l]}</text>
             </> : <>
               <path d="M50 240 V72 H94 M138 72 H350 V240" fill="none" stroke="#879a92" strokeWidth="8" />
               <path d="M46 242 H354" stroke="#627c6c" strokeWidth="12" />
@@ -107,21 +117,33 @@ export function MicrophoneAnatomy({ language }: { language: Language }) {
               <path d="M96 157 H140" stroke="#b87838" strokeWidth="5" strokeDasharray="8 4" />
               <path d="M96 175 Q118 184 140 175" fill="none" stroke="#226d60" strokeWidth="3" />
               <rect x="238" y="171" width="80" height="60" fill="#d7eee5" stroke="#226d60" rx="3" />
-              <path d="M153 184 Q195 106 247 184 M302 231 V258 H353" fill="none" stroke="#c46f2a" strokeWidth="3" />
+              <text x="278" y="207" textAnchor="middle">ASIC</text>
+              <g className="mic-electrode-connections" fill="none" stroke="#c46f2a" strokeWidth="2">
+                <path d="M140 157 H174 V151 H222 V186 H238" />
+                <path d="M140 175 H164 V211 H238" />
+                <circle cx="140" cy="157" r="3" fill="#c46f2a" /><circle cx="140" cy="175" r="3" fill="#c46f2a" />
+              </g>
+              <path d="M302 231 V258 H353" fill="none" stroke="#c46f2a" strokeWidth="3" />
               <path d="M115 90 V130 M108 120 L115 130 L122 120" fill="none" stroke="#3264a0" strokeWidth="2" />
               <text x="383" y="79">{["传感器局部放大", "Sensor detail", "センサー拡大図", "센서 상세"][l]}</text>
-              <rect x="382" y="94" width="184" height="107" fill="#f0f6fa" stroke="#b2c6d0" />
-              <path d="M398 117 H550" stroke="#b87838" strokeWidth="7" strokeDasharray="18 8" />
-              <path d="M398 162 Q474 185 550 162" fill="none" stroke="#226d60" strokeWidth="3" />
-              <path d="M156 160 L382 94 M156 183 L382 201" stroke="#879a92" strokeDasharray="4 4" />
-              <text x="400" y="144">{["背板 · 空气间隙", "Backplate · air gap", "背板・空気ギャップ", "백플레이트 · 공기 갭"][l]}</text>
-              <text x="403" y="193">{["可动振膜", "Moving diaphragm", "可動振動板", "가동 진동판"][l]}</text>
+              <rect x="382" y="94" width="192" height="122" fill="#f0f6fa" stroke="#b2c6d0" />
+              <path d="M398 123 H550" stroke="#b87838" strokeWidth="7" strokeDasharray="18 8" />
+              <path d="M398 177 Q474 195 550 177" fill="none" stroke="#226d60" strokeWidth="3" />
+              <path d="M156 160 L382 94" stroke="#879a92" strokeDasharray="4 4" />
+              <text x="398" y="111">{["固定背板", "Fixed backplate", "固定背板", "고정 백플레이트"][l]}</text>
+              <text x="398" y="151">{["空气间隙", "Air gap", "空気ギャップ", "공기 갭"][l]}</text>
+              <text x="398" y="205">{["可动振膜", "Moving diaphragm", "可動振動板", "가동 진동판"][l]}</text>
+              <text x="168" y="270">{["电极 → ASIC", "Electrodes → ASIC", "電極 → ASIC", "전극 → ASIC"][l]}</text>
               <text x="375" y="262">PDM / I2S</text>
-              <text x="28" y="290">{["ASIC：偏置 → 前端放大 → ADC → 数字接口", "ASIC: bias → analog front end → ADC → digital interface", "ASIC：バイアス → アナログ前段 → ADC → デジタルインターフェース", "ASIC: 바이어스 → 아날로그 전단 → ADC → 디지털 인터페이스"][l]}</text>
-              <text x="28" y="319">{["顶进音封装示意；PDM 与 I2S 是不同型号的接口选择。", "Top-port example; PDM and I2S are alternative model interfaces.", "トップポート型の例。PDMとI2Sは機種ごとのインターフェース選択です。", "톱 포트 예시입니다. PDM과 I2S는 모델별 인터페이스 선택입니다."][l]}</text>
+              <text x="28" y="290">{["ASIC：偏置 / 前端 / ADC / 数字接口", "ASIC: bias / front end / ADC / digital I/O", "ASIC：バイアス / 前段 / ADC / デジタル入出力", "ASIC: 바이어스 / 전단 / ADC / 디지털 I/O"][l]}</text>
+              <text x="28" y="319">{["顶进音示意；PDM、I2S 为不同型号接口。", "Top-port example; PDM and I2S are alternative interfaces.", "トップポートの例。PDMとI2Sは機種ごとの接続方式。", "톱 포트 예시. PDM과 I2S는 모델별 인터페이스."][l]}</text>
             </>}
             {model.parts.map((item, index) => <g key={item.name[1]} role="button" tabIndex={0} aria-label={item.name[l]} aria-pressed={part === index} onClick={() => setPart(index)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setPart(index); } }} className="mic-anatomy-hotspot">
-              <title>{item.name[l]}</title><circle cx={item.x} cy={item.y} r="18" fill={part === index ? "#226d60" : "#fff"} stroke="#226d60" strokeWidth="2" /><text x={item.x} y={item.y + 5} textAnchor="middle" style={{ fill: part === index ? "#fff" : "#234c43" }}>{index + 1}</text>
+              <title>{item.name[l]}</title>
+              <circle cx="28" cy={78 + index * 62} r="22" fill="transparent" />
+              <path d={`M42 ${78 + index * 62} H54 L${item.x} ${item.y}`} fill="none" stroke="#879a92" strokeDasharray="3 3" />
+              <circle cx="28" cy={78 + index * 62} r="14" fill={part === index ? "#226d60" : "#fff"} stroke="#226d60" strokeWidth="2" />
+              <text x="28" y={83 + index * 62} textAnchor="middle" style={{ fill: part === index ? "#fff" : "#234c43" }}>{index + 1}</text>
             </g>)}
           </svg>
           <figcaption>{["通用原理剖面，非照片型号拆解；非实际比例。封装与声孔因型号而异。", "Generic principle, not a teardown of the photographed model; not to scale. Packages and port locations vary.", "一般原理の断面図であり、写真の機種を分解したものではありません。縮尺は実寸ではなく、パッケージとポート位置は機種で異なります。", "일반 원리 단면도이며 사진 속 모델을 분해한 것이 아닙니다. 실제 비율이 아니고 패키지와 포트 위치는 모델마다 다릅니다."][l]}{selected === 1 && [" 振膜运动为慢速夸张示意，不表示实际振幅或频率。", " Diaphragm motion is slowed and exaggerated, not an actual amplitude or frequency.", " 振動板の動きは低速化・誇張した表示で、実際の振幅や周波数ではありません。", " 진동판 움직임은 느리게 과장한 표현이며 실제 진폭이나 주파수를 나타내지 않습니다."][l]}</figcaption>

@@ -1,3 +1,4 @@
+import { text } from "../content/language";
 import { traditional } from "../content/traditional";
 import type { ReactNode } from "react";
 import { TopicReadingLayout } from "./TopicReadingLayout";
@@ -65,7 +66,7 @@ const signalPaths = [
   },
   {
     title: { zh: "频域处理路径", "zh-Hant": traditional("频域处理路径"), en: "Frequency-domain processing path", ja: "周波数領域処理の経路", ko: "주파수 영역 처리 경로" },
-    note: { zh: "只有需要在频率格上修改并还原音频时，才需要 IFFT 和重叠相加。", "zh-Hant": traditional("只有需要在频率格上修改并还原音频时，才需要 IFFT 和重叠相加。"), en: "IFFT and overlap-add are needed when frequency bins are modified and audio must be reconstructed.", ja: "周波数ビンを変更して音声を復元する場合にだけ、IFFT とオーバーラップ加算が必要になる。", ko: "주파수 빈을 수정하고 오디오를 복원해야 할 때만 IFFT와 오버랩-애드가 필요함." },
+    note: { zh: "这里展示 STFT 修改后经 IFFT 和重叠相加恢复 PCM 的常见路径；须满足窗与帧移的重建条件。FFT 分块卷积也可用重叠保留法。", "zh-Hant": traditional("这里展示 STFT 修改后经 IFFT 和重叠相加恢复 PCM 的常见路径；须满足窗与帧移的重建条件。FFT 分块卷积也可用重叠保留法。"), en: "This common STFT path reconstructs PCM using IFFT and overlap-add, with compatible windows and hop sizes. FFT block convolution can also use overlap-save.", ja: "STFTの変更後にIFFTとオーバーラップ加算でPCMを復元する例です。窓とホップの再構成条件が必要で、FFTブロック畳み込みにはオーバーラップ保存法もあります。", ko: "STFT 수정 후 IFFT와 오버랩-애드로 PCM을 복원하는 일반적인 경로입니다. 윈도와 홉의 복원 조건이 필요하며 FFT 블록 컨볼루션에는 오버랩-세이브도 사용할 수 있습니다." },
     steps: {
       zh: ["FFT", "修改频率格", "IFFT", "重叠相加"], "zh-Hant": traditional(["FFT", "修改频率格", "IFFT", "重叠相加"]),
       en: ["FFT", "Modify bins", "IFFT", "Overlap-add"],
@@ -88,13 +89,9 @@ const copy = {
   method: { zh: "方法", "zh-Hant": traditional("方法"), en: "Method", ja: "方法", ko: "방법" },
   result: { zh: "结果", "zh-Hant": traditional("结果"), en: "Result", ja: "結果", ko: "결과" },
   paths: { zh: "不要把所有 DSP 都画成 FFT 链路", "zh-Hant": traditional("不要把所有 DSP 都画成 FFT 链路"), en: "Not every DSP algorithm needs an FFT path", ja: "すべての DSP を FFT 経路として描かない", ko: "모든 DSP를 FFT 경로로 그리지 않기" },
-  pathsLead: { zh: "分析、时域处理和频域处理是三条不同路径；只有修改频域后还要恢复声音时，才需要完整的 FFT → IFFT 重建。", "zh-Hant": traditional("分析、时域处理和频域处理是三条不同路径；只有修改频域后还要恢复声音时，才需要完整的 FFT → IFFT 重建。"), en: "Analysis, time-domain processing, and frequency-domain processing are distinct paths. A full FFT-to-IFFT reconstruction is only needed when modified frequency-domain data must return to audio.", ja: "解析、時間領域処理、周波数領域処理は別々の経路。周波数領域を変更して音声に戻す場合だけ、完全な FFT → IFFT 再構成が必要になる。", ko: "분석, 시간 영역 처리, 주파수 영역 처리는 서로 다른 경로임. 수정한 주파수 영역 데이터를 다시 오디오로 돌려야 할 때만 전체 FFT → IFFT 재구성이 필요함." },
+  pathsLead: { zh: "下面是不同目的的示例，不是必须依次串联的三步。滤波 / EQ 与动态处理的先后应按目标选择；频域处理返回声音时还要做逆变换与正确的分块重建。", "zh-Hant": traditional("下面是不同目的的示例，不是必须依次串联的三步。滤波 / EQ 与动态处理的先后应按目标选择；频域处理返回声音时还要做逆变换与正确的分块重建。"), en: "These are alternative examples, not three mandatory successive stages. Filter/EQ and dynamics order depends on the goal; frequency-domain processing needs inverse transformation and correct block reconstruction to return audio.", ja: "以下は目的別の例で、必須の三段直列処理ではありません。フィルター/EQとダイナミクスの順序は目的によります。周波数領域から音へ戻すには逆変換と適切なブロック再構成が必要です。", ko: "아래는 목적별 예시이며 반드시 이어지는 세 단계가 아닙니다. 필터/EQ와 다이내믹 처리 순서는 목적에 따라 정하며 주파수 영역에서 소리로 돌아오려면 역변환과 올바른 블록 복원이 필요합니다." },
   labAria: { zh: "当前主题实验室入口", "zh-Hant": traditional("当前主题实验室入口"), en: "Current topic lab entry", ja: "現在のテーマのラボ入口", ko: "현재 주제 실험실 입구" },
   labTitle: { zh: "进入基础信号处理实验室", "zh-Hant": traditional("进入基础信号处理实验室"), en: "Open the core signal processing lab", ja: "基礎信号処理ラボを開く", ko: "기초 신호 처리 실험실 열기" },
-  concepts: { zh: "核心知识点", "zh-Hant": traditional("核心知识点"), en: "Core concepts", ja: "核心概念", ko: "핵심 개념" },
-  conceptsLead: { zh: "这些判断决定算法效果、延迟和计算量。", "zh-Hant": traditional("这些判断决定算法效果、延迟和计算量。"), en: "These decisions determine algorithm behavior, latency, and compute cost.", ja: "これらの判断がアルゴリズムの挙動、遅延、計算量を決める。", ko: "이러한 판단이 알고리즘 동작, 지연 시간 및 연산량을 결정함." },
-  terms: { zh: "基础术语", "zh-Hant": traditional("基础术语"), en: "Core terms", ja: "基本用語", ko: "기본 용어" },
-  termsLead: { zh: "把观察方式、处理方法和控制参数分清。", "zh-Hant": traditional("把观察方式、处理方法和控制参数分清。"), en: "Separate observation domains, processing methods, and control parameters.", ja: "観測領域、処理方法、制御パラメータを区別する。", ko: "관찰 영역, 처리 방법 및 제어 파라미터를 구분함." },
   fft: {
     zh: "FFT（Fast Fourier Transform，快速傅里叶变换）是快速计算 DFT 的算法，把一帧时间域 PCM 转成复数频谱，包含幅度和相位信息；取模后可显示幅度谱。STFT（Short-Time Fourier Transform，短时傅里叶变换）把连续音频切成加窗短帧，通常逐帧用 FFT 计算，再按时间排列频谱。", "zh-Hant": traditional("FFT（Fast Fourier Transform，快速傅里叶变换）是快速计算 DFT 的算法，把一帧时间域 PCM 转成复数频谱，包含幅度和相位信息；取模后可显示幅度谱。STFT（Short-Time Fourier Transform，短时傅里叶变换）把连续音频切成加窗短帧，通常逐帧用 FFT 计算，再按时间排列频谱。"),
     en: "FFT (Fast Fourier Transform) is a fast algorithm for computing the DFT. It converts a PCM frame into a complex spectrum carrying magnitude and phase; taking magnitudes produces a magnitude spectrum. STFT (Short-Time Fourier Transform) analyzes successive windowed frames, typically using FFTs, and arranges their spectra over time.",
@@ -186,42 +183,31 @@ export function CoreSignalProcessingPage({ relatedTopics, language, topic, onBac
           </div>
         </section>
 
-        <section className="sound-topic-section">
-          <div className="sound-topic-section-heading">
-            <div>
-              <h2>{copy.concepts[language]}</h2>
-              <p>{copy.conceptsLead[language]}</p>
+        {[
+          { title: copy.signalAnalysis, terms: ["Time domain", "Frequency domain", "STFT framing"], fft: true,
+            lead: text(language, "想知道嗡声在哪个频率，先分析，不必改动 PCM。波形看时间变化，频谱看频率组成，STFT 看频率组成如何随时间变化。", "To locate a hum, analyze before changing PCM. Waveforms show time variation, spectra show frequency content, and STFT shows how that content evolves.", "ハムの周波数を調べるなら、PCMを変える前に解析します。波形は時間変化、スペクトルは周波数成分、STFTは成分の時間変化を示します。", "험의 주파수를 찾으려면 PCM을 바꾸기 전에 분석합니다. 파형은 시간 변화, 스펙트럼은 주파수 성분, STFT는 성분의 시간 변화를 보여 줍니다.") },
+          { title: copy.frequencyShaping, terms: ["Filters", "Parametric EQ"], fft: false,
+            lead: text(language, "发现低频轰鸣后，可用高通衰减低频；人声某段过于突出时，可用参数 EQ 定点削减。它们按频率处理，不能自动把重叠在同一频段的人声和噪声分开。", "A high-pass can attenuate low-frequency rumble; parametric EQ can cut a prominent band in a voice. Frequency selection alone cannot separate speech and noise occupying the same band.", "低域の振動音にはハイパス、声の突出した帯域にはパラメトリックEQを使えます。同じ帯域に重なる声と雑音は、周波数選択だけでは分離できません。", "저역의 울림은 고역 통과 필터로, 특정 대역의 돌출은 파라메트릭 EQ로 줄일 수 있습니다. 같은 대역의 음성과 잡음은 주파수 선택만으로 분리할 수 없습니다.") },
+          { title: copy.levelControl, terms: ["Dynamics processing"], fft: false,
+            lead: text(language, "说话忽大忽小，处理对象就从频段转为随时间变化的电平。压缩器按检测电平调节增益；限幅器约束峰值，但已削波的数据不能靠限幅恢复，也不等于达到某个 LUFS。", "For uneven speech levels, control gain over time rather than select a frequency band. A compressor follows detected level; a limiter constrains peaks. Limiting neither restores clipped samples nor guarantees a LUFS target.", "声量のばらつきには、周波数ではなく時間に沿ったゲイン制御を使います。コンプレッサーは検出レベルに応じて動作し、リミッターはピークを制限します。クリップの復元やLUFS目標の保証ではありません。", "말소리 크기가 불규칙하면 주파수 선택이 아니라 시간에 따른 이득을 제어합니다. 컴프레서는 검출 레벨에 반응하고 리미터는 피크를 제한합니다. 클리핑 복원이나 LUFS 목표 달성을 보장하지는 않습니다.") }
+        ].map(group => (
+          <section className="sound-topic-section core-topic-concept-group" key={group.title.en}>
+            <h2>{group.title[language]}</h2>
+            <p>{group.lead}</p>
+            <div className="sound-topic-glossary">
+              {group.fft && <article><h3>FFT / STFT</h3><p>{copy.fft[language]}</p></article>}
+              {detail.termExplanations?.filter(term => group.terms.includes(term.name.en)).map(term => (
+                <article key={term.name.en}><h3>{term.name[language]}</h3><p>{term.explanation[language]}</p></article>
+              ))}
             </div>
-          </div>
-          <div className="sound-topic-glossary core-topic-key-points">
-            {detail.keyConcepts.map((concept) => <article key={concept.en}><p>{concept[language]}</p></article>)}
-          </div>
-        </section>
-
-        <section className="sound-topic-section">
-          <div className="sound-topic-section-heading">
-            <div>
-              <h2>{copy.terms[language]}</h2>
-              <p>{copy.termsLead[language]}</p>
-            </div>
-          </div>
-          <div className="sound-topic-glossary">
-            <article>
-              <h3>FFT / STFT</h3>
-              <p>
-                {copy.fft[language]}
-              </p>
-            </article>
-            {detail.termExplanations?.map((term) => (
-              <article key={term.name.en}><h3>{term.name[language]}</h3><p>{term.explanation[language]}</p></article>
-            ))}
-          </div>
-        </section>
+          </section>
+        ))}
 
         <section className="sound-topic-section">
           <div>
             <h2>{copy.boundary[language]}</h2>
             <p>{detail.misconception[language]}</p>
+            <p className="sound-topic-note">{text(language, "本卡解释通用处理工具；回声参考、噪声估计与多麦协作见语音增强，声源方位与空间渲染见空间音频。实验室负责验证参数变化，这里不重复操作说明。", "This card covers general DSP tools. Speech enhancement covers echo references, noise estimation and multiple microphones; spatial audio covers source direction and rendering. Parameter experiments stay in the lab.", "ここでは汎用DSPを扱います。エコー参照・雑音推定・複数マイクは音声強調、音源方向・空間レンダリングは空間音声で扱い、パラメーターの実験はラボで行います。", "이 카드는 범용 DSP 도구를 다룹니다. 에코 참조, 잡음 추정, 다중 마이크는 음성 향상에서, 음원 방향과 렌더링은 공간 오디오에서 다루며 파라미터 실험은 실험실에 둡니다.")}</p>
           </div>
         </section>
       </TopicReadingLayout>

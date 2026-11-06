@@ -20,7 +20,6 @@ type TopicDetailsProps = {
   onOpenAutomotiveAudioLab: () => void;
   onOpenRobotAudioLab: () => void;
   onOpenBluetoothAudioLab: () => void;
-  onOpenCodecLab: () => void;
   onOpenCoreSignalProcessingLab: () => void;
   onOpenDigitalLab: () => void;
   onOpenDigitalPage: () => void;
@@ -36,7 +35,6 @@ type TopicDetailsProps = {
   onOpenWaveSpectrumLab: () => void;
   onOpenSoundTopicPage: () => void;
   onOpenSpatialAudioLab: () => void;
-  onOpenSystemAudioLab: () => void;
 };
 
 export function SoundWaveDiagram({
@@ -131,7 +129,6 @@ export function TopicDetails({
   onOpenAutomotiveAudioLab,
   onOpenRobotAudioLab,
   onOpenBluetoothAudioLab,
-  onOpenCodecLab,
   onOpenCoreSignalProcessingLab,
   onOpenDigitalLab,
   onOpenDigitalPage,
@@ -147,7 +144,6 @@ export function TopicDetails({
   onOpenWaveSpectrumLab,
   onOpenSoundTopicPage,
   onOpenSpatialAudioLab,
-  onOpenSystemAudioLab
 }: TopicDetailsProps) {
   const isSoundTopic = topic.detail.lab?.type === "sound-wave";
   const isAudioUnitsTopic = topic.detail.lab?.type === "audio-units";
@@ -184,11 +180,6 @@ export function TopicDetails({
       return;
     }
 
-    if (topic.detail.lab?.type === "codec-hardware") {
-      onOpenCodecLab();
-      return;
-    }
-
     if (topic.detail.lab?.type === "digital-interface") {
       onOpenDigitalInterfaceLab();
       return;
@@ -196,11 +187,6 @@ export function TopicDetails({
 
     if (topic.detail.lab?.type === "amplifier-speaker") {
       onOpenAmplifierSpeakerLab();
-      return;
-    }
-
-    if (topic.detail.lab?.type === "system-audio") {
-      onOpenSystemAudioLab();
       return;
     }
 

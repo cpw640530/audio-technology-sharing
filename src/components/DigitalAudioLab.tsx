@@ -1,10 +1,12 @@
 import { traditional } from "../content/traditional";
 import { useMemo, useState } from "react";
+import { DacReconstruction } from "./DacReconstruction";
 import { ArrowLeft } from "lucide-react";
 import type { Language, LocalizedText } from "../content/knowledge";
 
 type DigitalAudioLabProps = {
   language: Language;
+  initialDirection?: "adc" | "dac";
   onBack: () => void;
   onBackToDetails?: () => void;
 };
@@ -105,10 +107,10 @@ const digitalAudioCopy = {
   kicker: { zh: "数字音频实验", "zh-Hant": traditional("数字音频实验"), en: "Digital audio lab", ja: "デジタル音声ラボ", ko: "디지털 오디오 실험실" },
   title: { zh: "采样、量化与编码实验室", "zh-Hant": traditional("采样、量化与编码实验室"), en: "Sampling, Quantization, and Encoding Lab", ja: "サンプリング・量子化・符号化ラボ", ko: "샘플링, 양자화와 인코딩 실험실" },
   description: {
-    zh: "调节采样点、位深和输入频率，观察采样位置、量化阶梯、误差和 PCM 样本实时变化。", "zh-Hant": traditional("调节采样点、位深和输入频率，观察采样位置、量化阶梯、误差和 PCM 样本实时变化。"),
-    en: "Adjust samples, bit depth, and input frequency to observe sample positions, quantization steps, error, and PCM words in real time.",
-    ja: "サンプル数、ビット深度、入力周波数を調整し、サンプル位置、量子化ステップ、誤差、PCM ワードの変化をリアルタイムで確認します。",
-    ko: "샘플 수, 비트 깊이와 입력 주파수를 조절해 샘플 위치, 양자화 계단, 오차와 PCM 워드의 변화를 실시간으로 확인합니다."
+    zh: "切换 ADC / DAC：从采样、量化与 PCM 码字，逐步观察电压映射、零阶保持和重建低通。", "zh-Hant": traditional("切换 ADC / DAC：从采样、量化与 PCM 码字，逐步观察电压映射、零阶保持和重建低通。"),
+    en: "Switch ADC / DAC: explore sampling, quantization and PCM words, then voltage mapping, zero-order hold and reconstruction filtering.",
+    ja: "ADC / DACを切り替え、標本化・量子化・PCMから電圧変換・ゼロ次ホールド・再構成フィルターまで観察します。",
+    ko: "ADC / DAC를 전환하여 샘플링, 양자화, PCM부터 전압 매핑, 영차 홀드, 복원 필터까지 살펴봅니다."
   },
   workbench: { zh: "采样、量化与编码实验台", "zh-Hant": traditional("采样、量化与编码实验台"), en: "Sampling, quantization, and encoding workbench", ja: "サンプリング・量子化・符号化の実験台", ko: "샘플링, 양자화와 인코딩 실험대" },
   simulation: {
@@ -123,13 +125,6 @@ const digitalAudioCopy = {
   bitDepthGuide: { zh: "位深量化等级参考线", "zh-Hant": traditional("位深量化等级参考线"), en: "Bit-depth quantization level guide", ja: "ビット深度の量子化レベル基準線", ko: "비트 깊이 양자화 레벨 기준선" },
   errorDefinition: { zh: "误差 = 原始值 - 量化值", "zh-Hant": traditional("误差 = 原始值 - 量化值"), en: "Error = original - quantized", ja: "誤差 = 元の値 - 量子化値", ko: "오차 = 원래 값 - 양자화 값" },
   moreSamples: { zh: "采样点越多，时间越细", "zh-Hant": traditional("采样点越多，时间越细"), en: "More samples, finer time detail", ja: "サンプル点が多いほど時間分解能が高くなります", ko: "샘플 지점이 많을수록 시간 해상도가 높아집니다" },
-  loadComparison: { zh: "加载对照实验", "zh-Hant": traditional("加载对照实验"), en: "Load a comparison", ja: "比較実験を読み込む", ko: "비교 실험 불러오기" },
-  chooseParameters: { zh: "选择一组起始参数", "zh-Hant": traditional("选择一组起始参数"), en: "Choose starting parameters", ja: "開始パラメーターを選択", ko: "시작 파라미터 선택" },
-  sparsePreset: { zh: "1A · 7 周期，8 个采样点", "zh-Hant": traditional("1A · 7 周期，8 个采样点"), en: "1A · 7 cycles, 8 samples", ja: "1A · 7 周期、8 サンプル点", ko: "1A · 7주기, 샘플 8개" },
-  densePreset: { zh: "1B · 7 周期，48 个采样点", "zh-Hant": traditional("1B · 7 周期，48 个采样点"), en: "1B · 7 cycles, 48 samples", ja: "1B · 7 周期、48 サンプル点", ko: "1B · 7주기, 샘플 48개" },
-  coarsePreset: { zh: "2A · 2-bit 量化误差", "zh-Hant": traditional("2A · 2-bit 量化误差"), en: "2A · 2-bit quantization error", ja: "2A · 2-bit 量子化誤差", ko: "2A · 2-bit 양자화 오차" },
-  finePreset: { zh: "2B · 8-bit 量化误差", "zh-Hant": traditional("2B · 8-bit 量化误差"), en: "2B · 8-bit quantization error", ja: "2B · 8-bit 量子化誤差", ko: "2B · 8-bit 양자화 오차" },
-  pcmPreset: { zh: "3 · 4-bit 样本与码字", "zh-Hant": traditional("3 · 4-bit 样本与码字"), en: "3 · 4-bit samples and words", ja: "3 · 4-bit サンプルとコードワード", ko: "3 · 4-bit 샘플과 코드워드" },
   displayMode: { zh: "显示模式", "zh-Hant": traditional("显示模式"), en: "Display mode", ja: "表示モード", ko: "표시 모드" },
   sampleCount: { zh: "采样点数", "zh-Hant": traditional("采样点数"), en: "Sample count", ja: "サンプル数", ko: "샘플 수" },
   bitDepth: { zh: "位深", "zh-Hant": traditional("位深"), en: "Bit depth", ja: "ビット深度", ko: "비트 깊이" },
@@ -284,7 +279,8 @@ function createErrorPath(points: ReturnType<typeof createSamplePoints>) {
     .join(" ");
 }
 
-export function DigitalAudioLab({ language, onBack, onBackToDetails }: DigitalAudioLabProps) {
+export function DigitalAudioLab({ language, onBack, onBackToDetails, initialDirection = "adc" }: DigitalAudioLabProps) {
+  const [direction, setDirection] = useState(initialDirection);
   const [sampleCount, setSampleCount] = useState(24);
   const [bitDepth, setBitDepth] = useState(4);
   const [frequency, setFrequency] = useState(2);
@@ -331,6 +327,10 @@ export function DigitalAudioLab({ language, onBack, onBackToDetails }: DigitalAu
         </div>
       </section>
 
+      <div className="waveform-tabs digital-conversion-tabs" role="group" aria-label="ADC / DAC">
+        {(["adc", "dac"] as const).map(mode => <button key={mode} type="button" className={direction === mode ? "waveform-tab active" : "waveform-tab"} aria-pressed={direction === mode} onClick={() => setDirection(mode)}>{mode === "adc" ? "ADC · Analog → PCM" : "DAC · PCM → Analog"}</button>)}
+      </div>
+      {direction === "dac" ? <DacReconstruction language={language} values={samplePoints.map(point => point.quantizedValue)} codes={samplePoints.map(point => point.pcmInteger)} bitDepth={bitDepth} /> : <>
       <section
         aria-label={digitalAudioCopy.workbench[language]}
         className="digital-lab-workbench"
@@ -405,30 +405,13 @@ export function DigitalAudioLab({ language, onBack, onBackToDetails }: DigitalAu
         </div>
 
         <div className="digital-lab-panel">
-          <label className="digital-study-select">
-            <span>{digitalAudioCopy.loadComparison[language]}</span>
-            <select value="" onChange={event => {
-              const preset = event.target.value;
-              if (!preset) return;
-              setFrequency(preset === "sparse" || preset === "dense" ? 7 : 2);
-              setSampleCount(preset === "sparse" ? 8 : preset === "dense" ? 48 : 24);
-              setBitDepth(preset === "coarse" ? 2 : preset === "fine" ? 8 : 4);
-              setDisplayMode(preset === "pcm" ? "pcm" : preset === "sparse" || preset === "dense" ? "samples" : "error");
-            }}>
-              <option value="">{digitalAudioCopy.chooseParameters[language]}</option>
-              <option value="sparse">{digitalAudioCopy.sparsePreset[language]}</option>
-              <option value="dense">{digitalAudioCopy.densePreset[language]}</option>
-              <option value="coarse">{digitalAudioCopy.coarsePreset[language]}</option>
-              <option value="fine">{digitalAudioCopy.finePreset[language]}</option>
-              <option value="pcm">{digitalAudioCopy.pcmPreset[language]}</option>
-            </select>
-          </label>
           <div className="waveform-tabs" role="group" aria-label={digitalAudioCopy.displayMode[language]}>
             {(Object.keys(modeLabels) as DisplayMode[]).map((mode) => (
               <button
                 className={displayMode === mode ? "waveform-tab active" : "waveform-tab"}
                 key={mode}
                 type="button"
+                aria-pressed={displayMode === mode}
                 onClick={() => setDisplayMode(mode)}
               >
                 {modeLabels[mode][language]}
@@ -555,6 +538,7 @@ export function DigitalAudioLab({ language, onBack, onBackToDetails }: DigitalAu
           {digitalAudioCopy.wavNote[language]}
         </p>
       </section>
+      </>}
     </main>
   );
 }

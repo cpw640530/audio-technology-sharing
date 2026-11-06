@@ -1238,6 +1238,7 @@ body.details-open {
 .sound-story-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 .sound-story-comparison > div { border-top: 1px solid #c8d6d0; padding-top: 12px; }
 .sound-composition { color: #243f39; }
+.wave-spectrum-lab .sound-composition { background: #eef4f1; padding: 16px; border-radius: 4px; }
 .sound-composition svg { display: block; width: 100%; height: auto; overflow: visible; }
 .sound-composition svg text { fill: currentColor; font: 13px sans-serif; }
 .sound-composition .sound-topic-back svg { width: 18px; height: 18px; }
@@ -2224,6 +2225,9 @@ body.details-open {
   grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
   padding: clamp(16px, 3vw, 26px);
 }
+
+.codec-lab-workbench > .waveform-tabs { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.codec-lab-workbench > .waveform-tabs .waveform-tab { white-space: normal; overflow-wrap: anywhere; min-width: 0; }
 
 .audio-codec-workbench {
   align-items: stretch;
@@ -4702,6 +4706,25 @@ body.details-open {
   padding: clamp(16px, 3vw, 26px);
 }
 
+.system-audio-inline {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.system-topic-page .system-audio-inline h2 {
+  color: #f0f6f3;
+  font-size: 1.15rem;
+}
+
+.system-topic-page .system-audio-inline .system-audio-overview-note {
+  color: #cedbd5;
+}
+
+.system-topic-diagrams {
+  min-width: 0;
+}
+
 .amp-lab-chain {
   align-items: stretch;
   background: #17211f;
@@ -4935,7 +4958,7 @@ body.details-open {
 }
 
 .mic-principle-workbench {
-  align-items: stretch;
+  align-items: start;
   background: #17211f;
   border: 1px solid rgba(23, 33, 31, 0.12);
   border-radius: 8px;
@@ -4947,8 +4970,7 @@ body.details-open {
 }
 
 .mic-principle-visual {
-  display: grid;
-  gap: 12px;
+  display: contents;
   min-width: 0;
 }
 
@@ -4956,6 +4978,38 @@ body.details-open {
   display: block;
   height: auto;
   max-width: 100%;
+  width: 100%;
+}
+
+.mic-principle-visual > svg { grid-column: 1; grid-row: 1; }
+.mic-principle-stage-flow { grid-column: 1; grid-row: 2; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 0; margin: 0; list-style: decimal inside; color: #dbe8e4; }
+.mic-principle-stage-flow li { padding: 10px; border-top: 2px solid #7ee7d8; line-height: 1.6; overflow-wrap: anywhere; font-size: .875rem; }
+.mic-principle-workbench .mic-model-note { grid-column: 1; grid-row: 3; color: #b8cbc6; font-size: .875rem; line-height: 1.65; margin: 0; }
+.mic-principle-copy { grid-column: 2; grid-row: 1 / 4; }
+.mic-principle-numeric { grid-column: 1 / -1; grid-row: 4; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.mic-numeric-heading, .mic-principle-numeric-slider, .mic-numeric-assumptions { grid-column: 1 / -1; }
+.mic-principle-workbench .mic-principle-numeric .mic-numeric-assumptions { grid-row: auto; grid-column: 1 / -1; }
+.mic-principle-numeric .section-kicker { color: #7ee7d8; }
+.mic-output-preview { min-width: 0; margin: 0; }
+.mic-output-preview figcaption { color: #fff; font-weight: 700; margin-bottom: 12px; }
+.mic-output-preview svg { margin-block: 12px; }
+.mic-output-preview svg text { fill: #dbe8e4; font: 17px system-ui, sans-serif; }
+.mic-preview-grid { fill: none; stroke: #627c73; stroke-width: 1; }
+.mic-principle-numeric .mic-overload-warning { margin-top: 12px; color: #ffd29a; border-left: 3px solid #f0b46a; padding-left: 10px; }
+.mic-principle-numeric .mic-output-level { margin-top: 12px; color: #7ee7d8; }
+.mic-output-preview p { overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .mic-principle-numeric .mic-numeric-heading { grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .mic-principle-numeric .mic-numeric-heading p { max-width: none; }
+  .mic-principle-numeric .mic-numeric-flow { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 900px) {
+  .mic-principle-workbench .mic-principle-visual > svg { grid-column: 1; grid-row: 1; }
+  .mic-principle-stage-flow { grid-column: 1; grid-row: 2; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mic-principle-workbench .mic-model-note { grid-column: 1; grid-row: 3; }
+  .mic-principle-workbench .mic-principle-copy { grid-column: 1; grid-row: 4; }
+  .mic-principle-workbench .mic-principle-numeric { grid-column: 1; grid-row: 5; grid-template-columns: minmax(0, 1fr); }
+  .mic-output-preview { grid-column: 1; }
 }
 
 .mic-principle-copy {
@@ -5046,8 +5100,9 @@ body.details-open {
 .mic-numeric-flow {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+.mic-numeric-step:last-child:nth-child(odd) { grid-column: 1 / -1; }
 
 .mic-numeric-step {
   background: rgba(255, 255, 255, 0.055);
@@ -5062,7 +5117,7 @@ body.details-open {
 
 .mic-numeric-step:not(:last-child)::after {
   color: rgba(240, 180, 106, 0.8);
-  content: ">";
+  content: none;
   font-size: 1rem;
   font-weight: 900;
   position: absolute;
@@ -5398,7 +5453,8 @@ body.details-open {
   color: #7ee7d8;
 }
 
-.interface-select-label select {
+.interface-select-label select,
+.digital-interface-panel .lab-sliders select {
   background: #24332f;
   border: 1px solid rgba(126, 231, 216, 0.34);
   border-radius: 6px;
@@ -5542,13 +5598,24 @@ body.details-open {
 
 .amp-lab-panel {
   align-content: start;
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
   display: grid;
-  gap: 16px;
+  gap: 14px;
   min-width: 0;
-  padding: 16px;
+}
+
+.amp-lab { max-width: 1080px; gap: 18px; }
+.amp-lab .sound-lab-hero h1 { font-size: 2.5rem; }
+.amp-lab .amp-lab-workbench { padding: 18px; }
+.amp-lab .amp-principle-panel { background: none; border: 0; border-top: 1px solid rgba(255, 255, 255, .16); border-radius: 0; padding: 14px 0 0; }
+.amp-lab .amp-principle-card { background: none; border: 0; border-radius: 0; border-top: 1px solid rgba(255, 255, 255, .12); padding: 10px 0; }
+.amp-lab .amp-principle-card.principle { background: none; }
+.amp-lab .amp-principle-card:last-child { grid-column: 1 / -1; }
+.amp-lab-model-note { color: #b8cbc6; font-size: .875rem; line-height: 1.6; margin: 0; }
+.amp-lab-panel > .waveform-tabs:first-child { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.amp-match-description { color: #b8cbc6; font: 9.5px/13px system-ui, sans-serif; margin: 0; text-align: center; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .amp-lab-panel > .waveform-tabs:first-child { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .amp-lab .amp-diagram-figure figcaption { width: auto; max-width: 100%; }
 }
 
 .amp-principle-panel {
@@ -6687,6 +6754,7 @@ body.details-open {
 
 .amp-diagram-figure {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   margin: 0;
 }
@@ -8457,6 +8525,7 @@ body:has(.home-intro) {
 
 .system-topic-page .system-topic-mode-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
@@ -8471,7 +8540,7 @@ body:has(.home-intro) {
 .system-topic-page .system-topic-mode-heading span {
   color: #226d60;
   font: 700 0.72rem/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .system-topic-page .system-topic-mode-grid p {
@@ -8483,6 +8552,14 @@ body:has(.home-intro) {
 
 .system-topic-page .system-topic-key-points article {
   min-height: 108px;
+}
+
+.system-topic-page .sound-topic-section p {
+  max-width: none;
+}
+
+.system-topic-page .sound-topic-glossary article:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 .alsa-topic-page .alsa-topic-path {
@@ -8625,6 +8702,9 @@ body:has(.home-intro) {
 .core-signal-topic-page .core-topic-paths li:not(:last-child)::after { color: #226d60; content: "→"; font-weight: 800; position: absolute; right: -17px; }
 .core-signal-topic-page .core-topic-paths p { font-size: .92rem; }
 .core-signal-topic-page .core-topic-lab-entry { padding-top: 8px; }
+
+.core-signal-topic-page .sound-topic-section p { max-width: none; }
+.core-topic-concept-group .sound-topic-glossary article:last-child:nth-child(odd) { grid-column: 1 / -1; }
 
 @media (max-width: 760px) {
   .core-signal-topic-page .core-topic-jobs { grid-template-columns: 1fr; }
@@ -8887,7 +8967,7 @@ body:has(.home-intro) {
 .audio-units-formulas p { color: #c9d8d4; font-size: .88rem; }
 .digital-topic-page .sound-topic-hero h1 { max-width: 12ch; }
 .listening-topic-page .sound-topic-hero h1 { max-width: 13ch; }
-.digital-topic-flow { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.digital-topic-flow { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .digital-topic-equation-grid {
   display: grid;
   gap: 1px;
@@ -9264,6 +9344,9 @@ body:has(.home-intro) {
   margin: 5px 0 0;
 }
 .amplifier-speaker-anatomy { border-top: 1px solid #d7e3dc; display: grid; gap: 18px; padding-top: 24px; }
+.amplifier-topic-page .sound-topic-section { grid-template-columns: minmax(0, 1fr); }
+.amplifier-topic-page .sound-topic-glossary article:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.amplifier-topic-page .sound-topic-section p { max-width: none; }
 .amplifier-speaker-modes { display: flex; flex-wrap: wrap; gap: 8px; }
 .amplifier-speaker-modes button { align-items: center; background: #f7faf8; border: 1px solid #9bb9b0; border-radius: 6px; color: #234c43; cursor: pointer; display: inline-flex; font: inherit; gap: 8px; min-height: 42px; padding: 9px 13px; }
 .amplifier-speaker-modes button[aria-pressed="true"] { background: #226d60; border-color: #226d60; color: #fff; }
@@ -9292,6 +9375,31 @@ body:has(.home-intro) {
 .microphone-topic-page .microphone-topic-section {
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
+}
+.microphone-topic-page #mic-signal { padding-top: 0; border-top: 0; }
+.microphone-topic-page .microphone-reading-table { width: 100%; border-collapse: collapse; table-layout: fixed; color: #42594f; }
+.microphone-reading-table caption { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+.microphone-reading-table th, .microphone-reading-table td { padding: 12px 10px; border-bottom: 1px solid #cbdcd3; text-align: left; vertical-align: top; line-height: 1.7; overflow-wrap: anywhere; }
+.microphone-reading-table thead th { background: #e8efea; color: #234c43; }
+.microphone-reading-table th:first-child { width: 20%; }
+.microphone-reading-table th:nth-child(2) { width: 44%; }
+.interface-reading-table-wrap { max-width: 100%; overflow-x: auto; }
+.interface-reading-table { width: 100%; min-width: 680px; table-layout: fixed; border-collapse: collapse; }
+.interface-reading-table th:first-child { width: 17%; }
+.interface-reading-table th:nth-child(2) { width: 20%; }
+.interface-reading-table h3 { margin: 0; font-size: .95rem; line-height: 1.6; }
+.interface-reading-checklist { margin: 0; padding-left: 24px; }
+.interface-reading-checklist li { padding: 12px 0; border-bottom: 1px solid #cbdcd3; line-height: 1.8; }
+.interface-reading-flow { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.microphone-topic-page .hardware-topic-lab-entry { padding-block: 16px; }
+.sound-topic-page.microphone-topic-page .topic-reading-layout .sound-topic-cta { grid-template-columns: 24px minmax(0, 1fr) auto; padding: 14px 0; background: none; gap: 8px 12px; }
+.sound-topic-page.microphone-topic-page .topic-reading-layout .sound-topic-cta h2 { font-size: 1.05rem; }
+.sound-topic-page.microphone-topic-page .topic-reading-layout .sound-topic-cta button { grid-column: 3; grid-row: 1 / 3; }
+@media (max-width: 600px) {
+  .microphone-reading-table { font-size: .875rem; }
+  .microphone-reading-table th, .microphone-reading-table td { padding: 10px 6px; }
+  .sound-topic-page.microphone-topic-page .topic-reading-layout .sound-topic-cta { grid-template-columns: 24px minmax(0, 1fr); }
+  .sound-topic-page.microphone-topic-page .topic-reading-layout .sound-topic-cta button { grid-column: 2; grid-row: auto; justify-self: start; }
 }
 .topic-reading-layout { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 32px; align-items: start; }
 .topic-reading-layout > .sound-topic-content { grid-column: 2; grid-row: 1; min-width: 0; }
@@ -9348,7 +9456,7 @@ body:has(.home-intro) {
 .mic-anatomy-visuals { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 24px; margin: 20px 0; }
 .mic-anatomy figure { min-width: 0; margin: 0; }
 .mic-anatomy figure > img, .mic-anatomy figure > svg { display: block; width: 100%; height: 320px; object-fit: contain; background: #fff; border-radius: 6px; }
-.mic-anatomy svg text { fill: #234c43; font: 16px system-ui, sans-serif; }
+.mic-anatomy svg text { fill: #234c43; font: 14px system-ui, sans-serif; }
 .mic-anatomy figcaption { color: #53645e; font-size: .85rem; line-height: 1.7; padding-top: 10px; }
 .mic-anatomy figcaption small { display: block; font-size: .75rem; }
 .mic-anatomy a { color: #226d60; text-underline-offset: 3px; overflow-wrap: anywhere; }
@@ -9363,6 +9471,24 @@ body:has(.home-intro) {
 .codec-model-metrics { display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 16px 0; font-size: .9rem; color: #e0eeea; }
 .codec-model-note { line-height: 1.7; font-size: .9rem; color: #c1d4cd; }
 .codec-guide-flow { display: flex; flex-wrap: wrap; gap: 12px; padding: 0; list-style: none; }
+.dac-reconstruction .digital-lab-panel { align-content: start; gap: 16px; color: #dbe8e4; }
+.dac-reconstruction .digital-lab-panel h2 { color: #fff; font-size: 1.25rem; margin: 0; }
+.dac-reconstruction .digital-lab-panel p { color: #dbe8e4; line-height: 1.65; margin: 0; }
+.dac-reconstruction .digital-lab-panel label { display: grid; gap: 12px; color: #dbe8e4; }
+.dac-reconstruction input { width: 100%; accent-color: #7ee7d8; }
+.digital-conversion-tabs { margin-bottom: 18px; }
+.digital-conversion-tabs .waveform-tab, .dac-stage-tabs .waveform-tab { background: #213d37; color: #e4f2ed; border: 1px solid #52766a; white-space: normal; }
+.digital-conversion-tabs .waveform-tab.active, .dac-stage-tabs .waveform-tab.active { background: #0d3027; color: #fff; border-color: #81d5b9; box-shadow: inset 0 -3px #81d5b9; }
+.dac-stage-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 16px; }
+.dac-stage-tabs .waveform-tab { min-width: 0; overflow-wrap: anywhere; }
+.dac-code-table { width: 100%; border-collapse: collapse; color: #dbe8e4; }
+.dac-code-table th, .dac-code-table td { text-align: left; padding: 6px; border-bottom: 1px solid #41564e; }
+.dac-reconstruction .codec-guide-flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.dac-reconstruction .codec-guide-flow li { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 700px) {
+  .dac-reconstruction .codec-guide-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dac-reconstruction .codec-guide-flow li:last-child { grid-column: 1 / -1; }
+}
 .codec-guide-flow li { flex: 1 1 140px; padding: 14px; border-top: 2px solid #428477; background: #e9f0ed; color: #234c43; line-height: 1.6; }
 .codec-guide-table { width: 100%; border-collapse: collapse; }
 .codec-guide-table th, .codec-guide-table td { padding: 12px; border-bottom: 1px solid #c9d8d1; text-align: left; vertical-align: top; line-height: 1.7; }
@@ -9374,7 +9500,10 @@ body:has(.home-intro) {
 .mic-anatomy-bias svg { display: block; width: 100%; max-width: 640px; background: #fff; border-radius: 6px; }
 .mic-anatomy-bias p { max-width: 80ch; line-height: 1.8; }
 .mic-diaphragm-motion { animation: mic-diaphragm 3s ease-in-out infinite; }
-@keyframes mic-diaphragm { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(2px); } }
+@keyframes mic-diaphragm {
+  0%, 100% { d: path("M72 89 C110 89 120 75 190 75 C260 75 270 89 308 89"); }
+  50% { d: path("M72 89 C110 89 120 103 190 103 C260 103 270 89 308 89"); }
+}
 @media (prefers-reduced-motion: reduce) { .mic-diaphragm-motion { animation: none; } }
 @media (max-width: 600px) {
   .mic-anatomy-visuals { grid-template-columns: minmax(0, 1fr); }
@@ -10486,11 +10615,9 @@ body:has(.home-intro) {
   .speech-enhancement-page .sound-lab-hero .speech-enhancement-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 /* Let the library's body background continue behind the transparent portrait. */
-.digital-study-select { display: grid; gap: 8px; margin-bottom: 16px; color: #edf7f4; }
 .digital-lab-workbench > .digital-lab-visual { align-content: start; }
 .digital-lab-workbench > .digital-lab-visual > p { margin: 0; color: #c5d8d2; font-size: 14px; line-height: 1.7; }
 .digital-lab-metrics > span, .digital-lab-panel .lab-live-note p { color: #c5d8d2; line-height: 1.7; }
-.digital-study-select select { width: 100%; min-width: 0; padding: 10px; font: inherit; color: #edf7f4; background: #192f2c; border: 1px solid #5c7c74; border-radius: 4px; }
 .learning-paths { margin-block: 24px; padding-block: 16px; border-block: 1px solid var(--border); }
 .learning-paths h2 { font-size: 20px; margin: 0 0 16px; }
 .learning-path { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 16px; padding-block: 10px; }

@@ -1,7 +1,8 @@
 import { traditional } from "../content/traditional";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Pause, Play } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import type { Language } from "../content/knowledge";
+import { bitStreamPath, getMicrophoneSignal, makePdmBits, pcmWavePath, pcmWordBits, type MicPrinciple } from "./microphoneSignalModel";
 
 type SupportedLanguage = "zh" | "en" | "ja" | "ko" | "zh-Hant";
 type LocalizedText = Record<SupportedLanguage, string>;
@@ -15,31 +16,7 @@ type MicrophoneLabProps = {
 };
 
 type PolarPattern = "omni" | "cardioid" | "figure8";
-type MicExample = "near" | "far" | "noise" | "plosive" | "clipping" | "offAxis";
-type MicPrinciple = "electret" | "digitalMems" | "dynamicVocal" | "array";
 
-type ActiveMicAudio = {
-  context: AudioContext;
-  directGain: GainNode;
-  filter: BiquadFilterNode;
-  noiseGain: GainNode;
-  outputGain: GainNode;
-  shaper: WaveShaperNode;
-  stopAt: number;
-  timeoutId: number;
-};
-
-type MicPlaybackProfile = {
-  directLevel: number;
-  distortionAmount: number;
-  duration: number;
-  filterFrequency: number;
-  filterQ: number;
-  noiseLevel: number;
-  oscillatorFrequency: number;
-  outputLevel: number;
-  plosiveLevel: number;
-};
 
 type PrincipleCopy = {
   label: LocalizedText;
@@ -68,53 +45,6 @@ const polarLabels: Record<PolarPattern, LocalizedText> = {
   figure8: { zh: "8 字形", "zh-Hant": traditional("8 字形"), en: "Figure-8", ja: "8の字", ko: "8자형" }
 };
 
-const exampleLabels: Record<MicExample, LocalizedText> = {
-  near: { zh: "近讲", "zh-Hant": traditional("近讲"), en: "Close talk", ja: "近接発話", ko: "근접 발화" },
-  far: { zh: "远距离", "zh-Hant": traditional("远距离"), en: "Far field", ja: "遠距離", ko: "원거리" },
-  noise: { zh: "环境底噪", "zh-Hant": traditional("环境底噪"), en: "Room noise", ja: "室内ノイズ", ko: "실내 잡음" },
-  plosive: { zh: "爆破音", "zh-Hant": traditional("爆破音"), en: "Plosive", ja: "破裂音", ko: "파열음" },
-  clipping: { zh: "削波失真", "zh-Hant": traditional("削波失真"), en: "Clipping", ja: "クリッピング", ko: "클리핑" },
-  offAxis: { zh: "离轴衰减", "zh-Hant": traditional("离轴衰减"), en: "Off-axis loss", ja: "軸外減衰", ko: "축외 감쇠" }
-};
-
-const exampleNotes: Record<MicExample, LocalizedText> = {
-  near: {
-    zh: "近讲时直达声占比高，声音更清楚；指向性麦克风还可能出现低频近讲效应。", "zh-Hant": traditional("近讲时直达声占比高，声音更清楚；指向性麦克风还可能出现低频近讲效应。"),
-    en: "Close talk has more direct sound and better clarity; directional microphones may also add proximity bass.",
-    ja: "近接発話では直接音の割合が高く、音が明瞭になります。指向性マイクでは近接効果による低域の増加も起こりえます。",
-    ko: "가까이 말하면 직접음 비율이 높아져 더 선명해집니다. 지향성 마이크에서는 근접 효과로 저역이 늘어날 수도 있습니다."
-  },
-  far: {
-    zh: "距离变远后直达声下降，房间反射和环境噪声更明显，语音会变薄、变远。", "zh-Hant": traditional("距离变远后直达声下降，房间反射和环境噪声更明显，语音会变薄、变远。"),
-    en: "At longer distance, direct sound drops while reflections and ambient noise become more obvious.",
-    ja: "距離が遠くなると直接音が下がり、部屋の反射と環境ノイズが目立つため、音声が薄く遠く感じられます。",
-    ko: "거리가 멀어지면 직접음이 줄고 공간 반사와 환경 잡음이 두드러져 음성이 얇고 멀게 들립니다."
-  },
-  noise: {
-    zh: "底噪来自环境、麦克风自噪声和前级增益。目标声越小，噪声越容易盖住细节。", "zh-Hant": traditional("底噪来自环境、麦克风自噪声和前级增益。目标声越小，噪声越容易盖住细节。"),
-    en: "Noise comes from the room, microphone self-noise, and preamp gain. Lower target level makes noise more exposed.",
-    ja: "ノイズは部屋、マイク自身の雑音、プリアンプのゲインから生じます。目標音が小さいほどノイズが細部を覆いやすくなります。",
-    ko: "잡음은 공간, 마이크 자체 잡음, 프리앰프 이득에서 생깁니다. 목표 음량이 작을수록 잡음이 세부 정보를 덮기 쉽습니다."
-  },
-  plosive: {
-    zh: "爆破音是气流直接冲击振膜造成的低频冲击，常用防喷罩、偏轴摆位和距离控制解决。", "zh-Hant": traditional("爆破音是气流直接冲击振膜造成的低频冲击，常用防喷罩、偏轴摆位和距离控制解决。"),
-    en: "Plosives are low-frequency bursts from air hitting the diaphragm, controlled with pop filters, off-axis placement, and distance.",
-    ja: "破裂音は気流が振動板に直接当たって生じる低域の衝撃です。ポップガード、軸を外した配置、距離の調整で抑えます。",
-    ko: "파열음은 기류가 진동판을 직접 때려 생기는 저주파 충격입니다. 팝 필터, 축을 비껴 둔 배치, 거리 조절로 줄일 수 있습니다."
-  },
-  clipping: {
-    zh: "声源太响或增益太高会让前级过载，波形顶部被削平，听起来破、硬、刺耳。", "zh-Hant": traditional("声源太响或增益太高会让前级过载，波形顶部被削平，听起来破、硬、刺耳。"),
-    en: "A loud source or too much gain overloads the front end, flattening waveform peaks and sounding harsh.",
-    ja: "音源が大きすぎたりゲインが高すぎたりすると前段が過負荷になり、波形の頂部が平らになって荒く鋭い音になります。",
-    ko: "음원이 너무 크거나 이득이 높으면 전단이 과부하되어 파형 꼭대기가 평평해지고 거칠고 날카롭게 들립니다."
-  },
-  offAxis: {
-    zh: "离开主轴后拾音会变小，高频通常先衰减，所以声音会变暗、变远。", "zh-Hant": traditional("离开主轴后拾音会变小，高频通常先衰减，所以声音会变暗、变远。"),
-    en: "Off-axis pickup is weaker and often loses treble first, making the source darker and farther away.",
-    ja: "主軸から外れると収音レベルが下がり、高域から先に減衰することが多いため、音が暗く遠く感じられます。",
-    ko: "주축에서 벗어나면 수음이 약해지고 보통 고역이 먼저 감쇠되어 음원이 어둡고 멀게 들립니다."
-  }
-};
 
 const principleCopy: Record<MicPrinciple, PrincipleCopy> = {
   electret: {
@@ -248,14 +178,6 @@ function getPolarGain(pattern: PolarPattern, angleDegrees: number) {
   return Math.max(0, 0.5 + 0.5 * cosine);
 }
 
-function clamp(value: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function splToTeachingPascal(spl: number) {
-  return 10 ** ((spl - 94) / 20);
-}
-
 function formatPascal(value: number) {
   return `${value.toFixed(3)} Pa`;
 }
@@ -268,14 +190,17 @@ function formatDb(value: number) {
   return `${value.toFixed(1)} dB`;
 }
 
+function digitalLevelNote(dbfs: number, language: Language) {
+  return dbfs > 1e-9 ? localized(language, {
+    zh: `已过载：理论需求超出满量程 ${formatDb(dbfs)}，PCM 削波`, "zh-Hant": traditional(`已过载：理论需求超出满量程 ${formatDb(dbfs)}，PCM 削波`),
+    en: `Overload: linear demand exceeds full scale by ${formatDb(dbfs)}; PCM clips`,
+    ja: `過負荷：線形推定はフルスケールを${formatDb(dbfs)}超え、PCMはクリップ`,
+    ko: `과부하: 선형 추정이 풀 스케일을 ${formatDb(dbfs)} 초과하여 PCM 클리핑`
+  }) : localized(language, { zh: `约 ${formatDb(dbfs)}FS`, "zh-Hant": traditional(`约 ${formatDb(dbfs)}FS`), en: `About ${formatDb(dbfs)}FS`, ja: `約${formatDb(dbfs)}FS`, ko: `약 ${formatDb(dbfs)}FS` });
+}
+
 function getElectretNumericModel(inputSpl: number, language: Language): MicNumericModel {
-  const pressurePa = splToTeachingPascal(inputSpl);
-  const jfetOutputVrms = pressurePa * 0.00631;
-  const capsuleHighImpedanceVrms = jfetOutputVrms / 0.9;
-  const preampVrms = jfetOutputVrms * 10;
-  const dbfs = 20 * Math.log10(Math.max(preampVrms, 0.000001));
-  const diaphragmNm = pressurePa * 20;
-  const capacitanceDeltaPf = pressurePa * 0.02;
+  const { pressurePa, microphoneVrms, preampVrms, requestedDbfs } = getMicrophoneSignal("electret", inputSpl);
 
   return {
     assumption: localized(language, { zh: "教学近似：-44 dBV/Pa，20 dB 前级，1 Vrms ADC 满量程", "zh-Hant": traditional("教学近似：-44 dBV/Pa，20 dB 前级，1 Vrms ADC 满量程"), en: "Teaching approximation: -44 dBV/Pa, 20 dB preamp, 1 Vrms ADC full scale", ja: "教育用近似：-44 dBV/Pa、20 dBプリアンプ、1 Vrms ADCフルスケール", ko: "교육용 근사: -44 dBV/Pa, 20 dB 프리앰프, 1 Vrms ADC 풀 스케일" }),
@@ -286,23 +211,13 @@ function getElectretNumericModel(inputSpl: number, language: Language): MicNumer
         value: localized(language, { zh: `输入声压：${inputSpl} dBSPL`, "zh-Hant": traditional(`输入声压：${inputSpl} dBSPL`), en: `Input SPL: ${inputSpl} dBSPL`, ja: `入力音圧：${inputSpl} dBSPL`, ko: `입력 음압: ${inputSpl} dBSPL` })
       },
       {
-        label: localized(language, { zh: "振膜 / 电容", "zh-Hant": traditional("振膜 / 电容"), en: "Diaphragm / capacitance", ja: "振動板 / 静電容量", ko: "진동판 / 정전용량" }),
-        note: localized(language, { zh: `电容变化约 ${capacitanceDeltaPf.toFixed(3)} pF`, "zh-Hant": traditional(`电容变化约 ${capacitanceDeltaPf.toFixed(3)} pF`), en: `Capacitance change about ${capacitanceDeltaPf.toFixed(3)} pF`, ja: `静電容量の変化：約${capacitanceDeltaPf.toFixed(3)} pF`, ko: `정전용량 변화 약 ${capacitanceDeltaPf.toFixed(3)} pF` }),
-        value: localized(language, { zh: `振膜位移约 ${diaphragmNm.toFixed(1)} nm`, "zh-Hant": traditional(`振膜位移约 ${diaphragmNm.toFixed(1)} nm`), en: `Diaphragm motion about ${diaphragmNm.toFixed(1)} nm`, ja: `振動板の変位：約${diaphragmNm.toFixed(1)} nm`, ko: `진동판 변위 약 ${diaphragmNm.toFixed(1)} nm` })
-      },
-      {
-        label: localized(language, { zh: "高阻节点", "zh-Hant": traditional("高阻节点"), en: "High-Z node", ja: "高インピーダンスノード", ko: "고임피던스 노드" }),
-        note: localized(language, { zh: "电容换能后的微弱高阻抗信号", "zh-Hant": traditional("电容换能后的微弱高阻抗信号"), en: "Weak high-impedance signal after capacitance transduction", ja: "容量変換後の微弱な高インピーダンス信号", ko: "정전용량 변환 후의 미약한 고임피던스 신호" }),
-        value: formatMillivolts(capsuleHighImpedanceVrms)
-      },
-      {
         label: localized(language, { zh: "JFET 输出", "zh-Hant": traditional("JFET 输出"), en: "JFET output", ja: "JFET出力", ko: "JFET 출력" }),
-        note: localized(language, { zh: "缓冲后电压接近不变，输出阻抗降低", "zh-Hant": traditional("缓冲后电压接近不变，输出阻抗降低"), en: "Buffered voltage is similar, with lower output impedance", ja: "バッファ後も電圧はほぼ同じで、出力インピーダンスが下がります", ko: "버퍼 후 전압은 거의 같고 출력 임피던스는 낮아집니다" }),
-        value: formatMillivolts(jfetOutputVrms)
+        note: localized(language, { zh: "按咪头整体灵敏度计算；含 JFET 与规定负载，不假定内部固定增益", "zh-Hant": traditional("按咪头整体灵敏度计算；含 JFET 与规定负载，不假定内部固定增益"), en: "From overall capsule sensitivity, including JFET and specified load; no fixed internal gain assumed", ja: "JFETと規定負荷を含むカプセル感度から計算。内部の固定ゲインは仮定しません", ko: "JFET와 규정 부하를 포함한 캡슐 감도로 계산하며 내부 고정 이득은 가정하지 않음" }),
+        value: formatMillivolts(microphoneVrms)
       },
       {
         label: localized(language, { zh: "20 dB 前级后", "zh-Hant": traditional("20 dB 前级后"), en: "After 20 dB preamp", ja: "20 dBプリアンプ後", ko: "20 dB 프리앰프 후" }),
-        note: localized(language, { zh: `约 ${formatDb(dbfs)}FS`, "zh-Hant": traditional(`约 ${formatDb(dbfs)}FS`), en: `About ${formatDb(dbfs)}FS`, ja: `約${formatDb(dbfs)}FS`, ko: `약 ${formatDb(dbfs)}FS` }),
+        note: digitalLevelNote(requestedDbfs, language),
         value: formatMillivolts(preampVrms)
       }
     ]
@@ -310,13 +225,11 @@ function getElectretNumericModel(inputSpl: number, language: Language): MicNumer
 }
 
 function getPrincipleNumericModel(principle: MicPrinciple, inputSpl: number, language: Language): MicNumericModel {
-  const pressurePa = splToTeachingPascal(inputSpl);
+  const { pressurePa, microphoneVrms, preampVrms, requestedDbfs, arrayNoiseRatio, arraySnrGainDb } = getMicrophoneSignal(principle, inputSpl);
 
   if (principle === "digitalMems") {
-    const pcmDbfs = inputSpl - 120;
-
     return {
-      assumption: localized(language, { zh: "教学近似：数字 MEMS 约 -26 dBFS/Pa，ASIC 内部完成放大和调制", "zh-Hant": traditional("教学近似：数字 MEMS 约 -26 dBFS/Pa，ASIC 内部完成放大和调制"), en: "Teaching approximation: digital MEMS about -26 dBFS/Pa, with gain and modulation inside the ASIC", ja: "教育用近似：デジタルMEMSは約-26 dBFS/Pa、ASIC内部で増幅と変調を実行", ko: "교육용 근사: 디지털 MEMS 약 -26 dBFS/Pa, ASIC 내부에서 증폭과 변조 수행" }),
+      assumption: localized(language, { zh: "教学近似：数字 MEMS 在 94 dB SPL 时约 -26 dBFS，ASIC 内部完成放大和调制", "zh-Hant": traditional("教学近似：数字 MEMS 在 94 dB SPL 时约 -26 dBFS，ASIC 内部完成放大和调制"), en: "Teaching approximation: digital MEMS about -26 dBFS at 94 dB SPL, with gain and modulation inside the ASIC", ja: "教育用近似：デジタルMEMSは94 dB SPLで約-26 dBFS、ASIC内部で増幅と変調を実行", ko: "교육용 근사: 디지털 MEMS는 94 dB SPL에서 약 -26 dBFS, ASIC 내부에서 증폭과 변조 수행" }),
       steps: [
         {
           label: localized(language, { zh: "声波输入", "zh-Hant": traditional("声波输入"), en: "Sound input", ja: "音波入力", ko: "음파 입력" }),
@@ -335,7 +248,7 @@ function getPrincipleNumericModel(principle: MicPrinciple, inputSpl: number, lan
         },
         {
           label: localized(language, { zh: "抽取后 PCM", "zh-Hant": traditional("抽取后 PCM"), en: "Decimated PCM", ja: "デシメーション後PCM", ko: "데시메이션 후 PCM" }),
-          note: localized(language, { zh: `约 ${formatDb(pcmDbfs)}FS`, "zh-Hant": traditional(`约 ${formatDb(pcmDbfs)}FS`), en: `About ${formatDb(pcmDbfs)}FS`, ja: `約${formatDb(pcmDbfs)}FS`, ko: `약 ${formatDb(pcmDbfs)}FS` }),
+          note: digitalLevelNote(requestedDbfs, language),
           value: localized(language, { zh: "多 bit 采样值", "zh-Hant": traditional("多 bit 采样值"), en: "Multi-bit samples", ja: "マルチビットサンプル", ko: "멀티비트 샘플" })
         }
       ]
@@ -343,10 +256,6 @@ function getPrincipleNumericModel(principle: MicPrinciple, inputSpl: number, lan
   }
 
   if (principle === "dynamicVocal") {
-    const coilVrms = pressurePa * 0.002;
-    const preampVrms = coilVrms * 100;
-    const dbfs = 20 * Math.log10(Math.max(preampVrms, 0.000001));
-
     return {
       assumption: localized(language, { zh: "教学近似：动圈约 -54 dBV/Pa，40 dB 前级，1 Vrms ADC 满量程", "zh-Hant": traditional("教学近似：动圈约 -54 dBV/Pa，40 dB 前级，1 Vrms ADC 满量程"), en: "Teaching approximation: dynamic mic about -54 dBV/Pa, 40 dB preamp, 1 Vrms ADC full scale", ja: "教育用近似：ダイナミックマイク約-54 dBV/Pa、40 dBプリアンプ、1 Vrms ADCフルスケール", ko: "교육용 근사: 다이내믹 마이크 약 -54 dBV/Pa, 40 dB 프리앰프, 1 Vrms ADC 풀 스케일" }),
       steps: [
@@ -358,11 +267,11 @@ function getPrincipleNumericModel(principle: MicPrinciple, inputSpl: number, lan
         {
           label: localized(language, { zh: "音圈感应", "zh-Hant": traditional("音圈感应"), en: "Coil induction", ja: "コイル誘導", ko: "코일 유도" }),
           note: localized(language, { zh: "线圈在磁场中运动产生电压", "zh-Hant": traditional("线圈在磁场中运动产生电压"), en: "Moving coil in magnetic field induces voltage", ja: "磁界中でコイルが動くと電圧が誘導されます", ko: "자기장 속에서 코일이 움직이면 전압이 유도됩니다" }),
-          value: formatMillivolts(coilVrms)
+          value: formatMillivolts(microphoneVrms)
         },
         {
           label: localized(language, { zh: "40 dB 前级后", "zh-Hant": traditional("40 dB 前级后"), en: "After 40 dB preamp", ja: "40 dBプリアンプ後", ko: "40 dB 프리앰프 후" }),
-          note: localized(language, { zh: `约 ${formatDb(dbfs)}FS`, "zh-Hant": traditional(`约 ${formatDb(dbfs)}FS`), en: `About ${formatDb(dbfs)}FS`, ja: `約${formatDb(dbfs)}FS`, ko: `약 ${formatDb(dbfs)}FS` }),
+          note: digitalLevelNote(requestedDbfs, language),
           value: formatMillivolts(preampVrms)
         }
       ]
@@ -370,15 +279,12 @@ function getPrincipleNumericModel(principle: MicPrinciple, inputSpl: number, lan
   }
 
   if (principle === "array") {
-    const singleMicVrms = pressurePa * 0.00631;
-    const coherentArrayVrms = singleMicVrms * 2;
-
     return {
       assumption: localized(language, {
-        zh: "教学近似：4 Mic 目标方向延时对齐后，相干目标约 +6 dB", "zh-Hant": traditional("教学近似：4 Mic 目标方向延时对齐后，相干目标约 +6 dB"),
-        en: "Teaching approximation: after delay alignment, a 4-mic target direction can gain about +6 dB",
-        ja: "教育用近似：4本のMicを遅延整列すると、目的方向のコヒーレント信号は約+6 dB向上します",
-        ko: "교육용 근사: 4개 Mic를 지연 정렬하면 목표 방향의 코히어런트 신호가 약 +6 dB 향상됩니다"
+        zh: "理想四麦等权平均：y = Σxᵢ(t + τᵢ) / 4。目标对齐、各路等功率噪声互不相关时，SNR 理论提升约 6 dB，不是电压翻倍。", "zh-Hant": traditional("理想四麦等权平均：y = Σxᵢ(t + τᵢ) / 4。目标对齐、各路等功率噪声互不相关时，SNR 理论提升约 6 dB，不是电压翻倍。"),
+        en: "Ideal 4-mic average: y = Σxᵢ(t + τᵢ) / 4. Aligned target and equal-power, uncorrelated channel noise yield about 6 dB SNR improvement, not doubled voltage.",
+        ja: "理想的な4本の等重み平均：y = Σxᵢ(t + τᵢ) / 4。目標を整列し等電力の雑音が無相関なら、SNRは約6 dB改善。電圧の倍増ではありません。",
+        ko: "이상적인 4개 마이크 동일 가중 평균: y = Σxᵢ(t + τᵢ) / 4. 목표 정렬 및 같은 전력의 비상관 잡음 조건에서 SNR 약 6 dB 개선이며 전압 2배가 아닙니다."
       }),
       steps: [
         {
@@ -404,17 +310,22 @@ function getPrincipleNumericModel(principle: MicPrinciple, inputSpl: number, lan
             ja: "各チャンネルはまず独立したマイク信号です",
             ko: "각 채널은 먼저 독립적인 마이크 신호입니다"
           }),
-          value: formatMillivolts(singleMicVrms)
+          value: formatMillivolts(microphoneVrms)
         },
         {
-          label: localized(language, { zh: "延时对齐求和", "zh-Hant": traditional("延时对齐求和"), en: "Delay-align sum", ja: "遅延整列加算", ko: "지연 정렬 합산" }),
+          label: localized(language, { zh: "对齐后等权平均", "zh-Hant": traditional("对齐后等权平均"), en: "Aligned average", ja: "整列後の等重み平均", ko: "정렬 후 동일 가중 평균" }),
           note: localized(language, {
-            zh: "目标方向相干增强，非目标方向相消", "zh-Hant": traditional("目标方向相干增强，非目标方向相消"),
-            en: "Target direction adds coherently; off-axis sound is reduced",
-            ja: "目的方向はコヒーレントに加算され、軸外音は低減します",
-            ko: "목표 방향은 코히어런트하게 더해지고 축외 소리는 줄어듭니다"
+            zh: `噪声 RMS 为单路的 ${arrayNoiseRatio.toFixed(2)} 倍；离轴衰减取决于频率、间距和方向`, "zh-Hant": traditional(`噪声 RMS 为单路的 ${arrayNoiseRatio.toFixed(2)} 倍；离轴衰减取决于频率、间距和方向`),
+            en: `Noise RMS is ${arrayNoiseRatio.toFixed(2)} × one channel; off-axis attenuation depends on frequency, spacing, and direction`,
+            ja: `雑音RMSは単一チャンネルの${arrayNoiseRatio.toFixed(2)}倍。軸外減衰は周波数・間隔・方向に依存`,
+            ko: `잡음 RMS는 단일 채널의 ${arrayNoiseRatio.toFixed(2)}배. 축외 감쇠는 주파수·간격·방향에 따라 다름`
           }),
-          value: formatMillivolts(coherentArrayVrms)
+          value: localized(language, { zh: "目标分量：单路的 1.00 倍", "zh-Hant": traditional("目标分量：单路的 1.00 倍"), en: "Target: 1.00 × one channel", ja: "目標成分：単一チャンネルの1.00倍", ko: "목표 성분: 단일 채널의 1.00배" })
+        },
+        {
+          label: "SNR",
+          value: `+${formatDb(arraySnrGainDb)}`,
+          note: localized(language, { zh: "10 log₁₀(4) ≈ 6.02 dB；相干干扰、混响或失配会降低收益", "zh-Hant": traditional("10 log₁₀(4) ≈ 6.02 dB；相干干扰、混响或失配会降低收益"), en: "10 log₁₀(4) ≈ 6.02 dB; coherent interference, reverberation, or mismatch reduce the benefit", ja: "10 log₁₀(4) ≈ 6.02 dB。相関干渉・残響・不整合で改善量は低下", ko: "10 log₁₀(4) ≈ 6.02 dB. 상관 간섭·잔향·불일치로 이득 감소" })
         }
       ]
     };
@@ -486,135 +397,6 @@ function getPickupAnalysis({
   };
 }
 
-function createNoiseBuffer(context: AudioContext, duration: number, amount: number) {
-  const sampleRate = context.sampleRate || 44100;
-  const frameCount = Math.floor(sampleRate * duration);
-  const buffer = context.createBuffer(1, frameCount, sampleRate);
-  const data = buffer.getChannelData(0);
-
-  for (let index = 0; index < frameCount; index += 1) {
-    data[index] = (Math.random() * 2 - 1) * amount;
-  }
-
-  return buffer;
-}
-
-function createDistortionCurve(amount: number) {
-  const curve = new Float32Array(512);
-  const drive = 1 + amount * 38;
-
-  for (let index = 0; index < curve.length; index += 1) {
-    const x = (index * 2) / (curve.length - 1) - 1;
-    curve[index] = amount <= 0.01 ? x : Math.tanh(x * drive);
-  }
-
-  return curve;
-}
-
-function createMicPlaybackProfile({
-  analysis,
-  distance,
-  example,
-  gain
-}: {
-  analysis: ReturnType<typeof getPickupAnalysis>;
-  distance: number;
-  example: MicExample;
-  gain: number;
-}): MicPlaybackProfile {
-  const distanceGain = 1 / Math.max(0.35, distance);
-  const preampGain = gain / 50;
-  const offAxisAmount = 1 - analysis.directionalGain;
-  const normalizedPickup = clamp(analysis.directionalGain * distanceGain * preampGain, 0, 1.8);
-  const exampleLevel =
-    example === "near"
-      ? 1.1
-      : example === "far"
-        ? 0.72
-        : example === "noise"
-          ? 0.62
-          : example === "plosive"
-            ? 0.9
-            : example === "clipping"
-              ? 1.35
-              : 0.82;
-  const baseFilter =
-    example === "plosive"
-      ? 190
-      : example === "far"
-        ? 2400
-        : example === "offAxis"
-          ? 1800
-          : example === "noise"
-            ? 3100
-            : 4300;
-  const clippingBoost = example === "clipping" ? 0.55 : 0;
-  const distanceNoise = clamp((distance - 0.8) * 0.014, 0, 0.05);
-
-  return {
-    directLevel: clamp(normalizedPickup * 0.12 * exampleLevel, 0.0006, 0.24),
-    distortionAmount: clamp((analysis.clippingRisk / 100) * 0.9 + clippingBoost, 0, 1),
-    duration: example === "plosive" ? 1.55 : 2.8,
-    filterFrequency: clamp(baseFilter - offAxisAmount * 1900 - distance * 140 + analysis.directionalGain * 260, 150, 4800),
-    filterQ: example === "plosive" ? 0.65 : example === "offAxis" || example === "far" ? 0.82 : 1.05,
-    noiseLevel: clamp(
-      0.005 +
-        analysis.noiseRisk * 0.00052 +
-        offAxisAmount * 0.018 +
-        distanceNoise +
-        (example === "noise" ? 0.048 : 0) +
-        (example === "far" ? 0.022 : 0),
-      0.004,
-      0.12
-    ),
-    oscillatorFrequency: example === "plosive" ? 130 : example === "clipping" ? 230 : 210,
-    outputLevel: clamp(0.72 + gain / 220, 0.76, 1.14),
-    plosiveLevel: clamp(normalizedPickup * 0.16 + (example === "plosive" ? 0.035 : 0), 0.002, 0.26)
-  };
-}
-
-function setParamNow(param: AudioParam, value: number, now: number) {
-  const runtimeParam = param as AudioParam & {
-    cancelScheduledValues?: (startTime: number) => AudioParam;
-    setTargetAtTime?: (target: number, startTime: number, timeConstant: number) => AudioParam;
-  };
-
-  if (typeof runtimeParam.cancelScheduledValues === "function") {
-    runtimeParam.cancelScheduledValues(now);
-  }
-
-  if (typeof runtimeParam.setTargetAtTime === "function") {
-    runtimeParam.setTargetAtTime(value, now, 0.025);
-    return;
-  }
-
-  param.setValueAtTime(value, now);
-}
-
-function applyLiveMicProfile(graph: ActiveMicAudio, profile: MicPlaybackProfile) {
-  const now = graph.context.currentTime;
-
-  setParamNow(graph.directGain.gain, profile.directLevel, now);
-  setParamNow(graph.noiseGain.gain, profile.noiseLevel, now);
-  setParamNow(graph.outputGain.gain, profile.outputLevel, now);
-  setParamNow(graph.filter.frequency, profile.filterFrequency, now);
-  setParamNow(graph.filter.Q, profile.filterQ, now);
-  graph.shaper.curve = createDistortionCurve(profile.distortionAmount);
-
-  if (graph.stopAt > now + 0.08) {
-    graph.directGain.gain.linearRampToValueAtTime(0.0001, graph.stopAt);
-    graph.noiseGain.gain.linearRampToValueAtTime(0.0001, graph.stopAt);
-  }
-}
-
-function stopGraph(graph: ActiveMicAudio | null) {
-  if (!graph) {
-    return;
-  }
-
-  window.clearTimeout(graph.timeoutId);
-  void graph.context.close();
-}
 
 function PrincipleDiagram({
   inputSpl,
@@ -632,6 +414,11 @@ function PrincipleDiagram({
   const isDigital = principle === "digitalMems";
   const isDynamic = principle === "dynamicVocal";
   const numericModel = getPrincipleNumericModel(principle, inputSpl, language);
+  const signal = getMicrophoneSignal(principle, inputSpl);
+  const [digitalOutput, setDigitalOutput] = useState<"pdm" | "i2s">("pdm");
+  const bits = digitalOutput === "pdm" ? makePdmBits(signal.requestedPeak) : pcmWordBits(signal.outputPeak);
+  const visualPressure = 0.15 + 0.85 * (inputSpl - 54) / 70;
+  const diaphragmOffset = visualPressure * 12;
 
   return (
     <section
@@ -652,7 +439,7 @@ function PrincipleDiagram({
             ko: `${copy.label.ko} 원리 다이어그램`
           })}
           role="img"
-          viewBox="0 0 760 360"
+          viewBox="0 0 760 300"
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
@@ -664,38 +451,38 @@ function PrincipleDiagram({
               <path d="M0 0 8 4 0 8Z" fill="#f0b46a" />
             </marker>
           </defs>
-          <rect className="lab-diagram-bg" height="360" rx="14" width="760" />
-          <path className="mic-air-wave" d="M38 178 C62 126 86 126 110 178 S158 230 182 178" />
+          <rect className="lab-diagram-bg" height="300" rx="8" width="760" />
+          <path className="mic-air-wave" d={pcmWavePath(visualPressure, 38, 178, 144, 46)} />
           <text className="lab-label" x="42" y="92">{localized(language, { zh: "声波", "zh-Hant": traditional("声波"), en: "Sound wave", ja: "音波", ko: "음파" })}</text>
 
           {isArray ? (
             <g>
-              {[118, 178, 238, 298].map((y, index) => (
+              {[96, 150, 204, 258].map((y, index) => (
                 <g key={y}>
                   <circle className="mic-array-capsule" cx="238" cy={y} r="14" />
                   <path className="mic-signal-line" d={`M110 ${178 + index * 8} C148 ${130 + index * 30} 188 ${y} 224 ${y}`} />
-                  <text className="lab-label" x="258" y={y + 6}>{`Mic ${index + 1}`}</text>
+                  <text className="lab-label" x="258" y={y - 18}>{`Mic ${index + 1}`}</text>
+                  <path className="mic-signal-line" d={`M252 ${y} C326 ${y} 372 ${166 + index * 12} 404 ${166 + index * 12}`} />
                 </g>
               ))}
               <rect className="mic-stage-box" height="78" rx="8" width="132" x="404" y="139" />
               <text className="mic-stage-text" x="424" y="172">{localized(language, { zh: "延时对齐", "zh-Hant": traditional("延时对齐"), en: "Delay align", ja: "遅延整列", ko: "지연 정렬" })}</text>
-              <text className="mic-stage-text" x="424" y="198">{localized(language, { zh: "加权求和", "zh-Hant": traditional("加权求和"), en: "Weighted sum", ja: "加重合算", ko: "가중 합산" })}</text>
-              <path className="mic-signal-line" d="M326 118 C360 126 372 150 404 166" />
-              <path className="mic-signal-line" d="M326 178 L404 178" />
-              <path className="mic-signal-line" d="M326 238 C360 230 372 206 404 190" />
-              <path className="mic-signal-line" d="M326 298 C370 286 388 220 404 202" />
-              <path className="mic-signal-line" d="M536 178 L650 178" markerEnd="url(#signalArrow)" />
-              <path className="mic-beam-shape" d="M594 178 C626 118 694 102 718 178 C694 254 626 238 594 178Z" />
+              <text className="mic-stage-text" x="424" y="198">{localized(language, { zh: "等权平均", "zh-Hant": traditional("等权平均"), en: "Average / 4", ja: "等重み平均", ko: "동일 가중 평균" })}</text>
+              <path className="mic-signal-line" d="M536 178 L548 178" />
+              <path className="mic-analog-line" d={pcmWavePath(visualPressure, 548, 178, 174, 30)} />
+              <text className="lab-label" x="552" y="248">{localized(language, { zh: "平均后目标分量", "zh-Hant": traditional("平均后目标分量"), en: "Averaged target", ja: "平均後の目標成分", ko: "평균 후 목표 성분" })}</text>
             </g>
           ) : (
             <g>
               <rect className="mic-capsule-shell" height="150" rx="20" width="126" x="218" y="104" />
-              <line className="mic-diaphragm-line" x1="258" x2="258" y1="124" y2="234" />
+              <path className="mic-diaphragm-line" fill="none" d={`M258 124 C${258 + diaphragmOffset} 148 ${258 + diaphragmOffset} 210 258 234`} />
               <path className="mic-signal-line" d="M182 178 C202 160 216 154 246 154" markerEnd="url(#signalArrow)" />
               {isDynamic ? (
                 <>
-                  <path className="mic-coil" d="M278 132 C306 146 306 164 278 178 C306 192 306 210 278 224" />
-                  <rect className="mic-magnet" height="118" rx="10" width="28" x="302" y="120" />
+                  <g className="mic-moving-coil" transform={`translate(${diaphragmOffset * 0.75} 0)`}>
+                    <path className="mic-coil" d="M258 178 H278 M278 132 C306 146 306 164 278 178 C306 192 306 210 278 224" />
+                  </g>
+                  <rect className="mic-magnet" height="118" rx="6" width="18" x="318" y="120" />
                   <text className="lab-label" x="286" y="270">{localized(language, { zh: "音圈 + 磁体", "zh-Hant": traditional("音圈 + 磁体"), en: "Coil + magnet", ja: "ボイスコイル + 磁石", ko: "보이스 코일 + 자석" })}</text>
                 </>
               ) : (
@@ -720,21 +507,22 @@ function PrincipleDiagram({
                     : localized(language, { zh: "缓冲", "zh-Hant": traditional("缓冲"), en: "Buffer", ja: "バッファ", ko: "버퍼" })}
               </text>
               <path className="mic-signal-line" d="M344 178 L410 178" markerEnd="url(#signalArrow)" />
-              <path className={isDigital ? "mic-pdm-line" : "mic-analog-line"} d={isDigital ? "M532 178 L548 156 L564 200 L580 156 L596 200 L612 156 L628 200 L644 178" : "M532 178 C552 138 572 138 592 178 S632 218 652 178"} />
-              <text className="lab-label" x="550" y="248">{localized(language, copy.signal)}</text>
+              <path className="mic-signal-line" d="M532 178 H548" />
+              <path className={isDigital ? "mic-pdm-line" : "mic-analog-line"} d={isDigital ? bitStreamPath(bits, 548, 178, 174, 22) : pcmWavePath(visualPressure, 548, 178, 174, 30)} />
+              <text className="lab-label" x="548" y="248">{isDigital ? (digitalOutput === "pdm" ? "PDM / 1-bit" : "I2S / PCM") : localized(language, { zh: "模拟电压", "zh-Hant": traditional("模拟电压"), en: "Analog voltage", ja: "アナログ電圧", ko: "아날로그 전압" })}</text>
             </g>
           )}
 
-          <g className="mic-stage-flow" transform="translate(54 312)">
-            {copy.stages.map((stage, index) => (
-              <g key={stage.en} transform={`translate(${index * 174} 0)`}>
-                <rect height="32" rx="8" width="138" x="0" y="0" />
-                <text x="14" y="21">{localized(language, stage)}</text>
-                {index < copy.stages.length - 1 ? <path d="M142 16 L166 16" markerEnd="url(#signalArrow)" /> : null}
-              </g>
-            ))}
-          </g>
         </svg>
+        <ol className="mic-principle-stage-flow">
+          {copy.stages.map(stage => <li key={stage.en}>{localized(language, stage)}</li>)}
+        </ol>
+        <p className="mic-model-note">{localized(language, {
+          zh: "上图为功能示意，非封装剖面。振膜形变与波形幅度经夸张，不按真实位移或电压比例；模拟波形代表交流信号，不是空气分子的运动轨迹。", "zh-Hant": traditional("上图为功能示意，非封装剖面。振膜形变与波形幅度经夸张，不按真实位移或电压比例；模拟波形代表交流信号，不是空气分子的运动轨迹。"),
+          en: "Functional schematic, not a package cross-section. Diaphragm deflection and signal icons are exaggerated, not displacement or voltage scales. The curves represent AC signals, not air-particle paths.",
+          ja: "封装断面ではなく機能図です。振動板変形と波形は誇張表示で、変位や電圧の実寸尺度ではありません。曲線は交流信号であり空気粒子の軌跡ではありません。",
+          ko: "패키지 단면이 아닌 기능도입니다. 진동판 변형과 파형은 과장 표시이며 실제 변위나 전압 비율이 아닙니다. 곡선은 교류 신호이며 공기 입자의 이동 경로가 아닙니다."
+        })}</p>
         <section
           className="mic-principle-numeric"
           aria-label={localized(language, {
@@ -747,7 +535,7 @@ function PrincipleDiagram({
           <div className="mic-numeric-heading">
             <div>
               <span className="section-kicker">{localized(language, { zh: "数值链路", "zh-Hant": traditional("数值链路"), en: "Numeric path", ja: "数値経路", ko: "수치 경로" })}</span>
-              <h3>{localized(language, { zh: "声压到电压是多少？", "zh-Hant": traditional("声压到电压是多少？"), en: "How much voltage does SPL create?", ja: "音圧から電圧はいくらになる？", ko: "음압이 만드는 전압은 얼마일까?" })}</h3>
+              <h3>{localized(language, { zh: "调节声压，观察输出", "zh-Hant": traditional("调节声压，观察输出"), en: "Adjust SPL and inspect the output", ja: "音圧を変えて出力を見る", ko: "음압을 바꾸며 출력 확인" })}</h3>
             </div>
             <p>{numericModel.assumption}</p>
           </div>
@@ -777,6 +565,67 @@ function PrincipleDiagram({
               </article>
             ))}
           </div>
+          <figure className="mic-output-preview">
+            <figcaption>{localized(language, { zh: "输出观察", "zh-Hant": traditional("输出观察"), en: "Output inspection", ja: "出力の観察", ko: "출력 관찰" })}</figcaption>
+            {isDigital && <div className="waveform-tabs" role="group" aria-label={localized(language, { zh: "数字输出方式", "zh-Hant": traditional("数字输出方式"), en: "Digital output mode", ja: "デジタル出力形式", ko: "디지털 출력 방식" })}>
+              {(["pdm", "i2s"] as const).map(mode => <button type="button" className={digitalOutput === mode ? "waveform-tab active" : "waveform-tab"} aria-pressed={digitalOutput === mode} key={mode} onClick={() => setDigitalOutput(mode)}>{mode === "pdm" ? "PDM" : "I2S"}</button>)}
+            </div>}
+            {isArray ? <>
+              <svg viewBox="0 0 760 280" role="img" aria-label={localized(language, { zh: "四麦时间差与对齐平均图", "zh-Hant": traditional("四麦时间差与对齐平均图"), en: "Four-mic delay and aligned average", ja: "4マイクの時間差と整列平均", ko: "4개 마이크 시간차와 정렬 평균" })}>
+                {[0, 1, 2, 3, 4].map(i => <g key={i}>
+                  <text x="12" y={44 + i * 45}>{i < 4 ? `Mic ${i + 1}` : "y"}</text>
+                  <path className="mic-preview-grid" d={`M90 ${40 + i * 45} H720`} />
+                  <path className={i === 4 ? "mic-analog-line" : "mic-signal-line"} d={pcmWavePath(1, 90, 40 + i * 45, 630, 15, i < 4 ? i * 0.04 * Math.sin(Math.PI / 6) / 343 : 0)} />
+                </g>)}
+                <text x="90" y="265">0 ms</text><text x="670" y="265">4 ms</text>
+              </svg>
+              <p>{localized(language, {
+                zh: "仅展示 1 kHz 目标分量，各行按同一单位振幅归一化。麦间距 4 cm、相对阵列法线 30°、声速 343 m/s：相邻到达差约 58 μs。补偿后取平均，目标幅度不翻倍；噪声收益见数值条件。这里不模拟各路 ADC 削波。", "zh-Hant": traditional("仅展示 1 kHz 目标分量，各行按同一单位振幅归一化。麦间距 4 cm、相对阵列法线 30°、声速 343 m/s：相邻到达差约 58 μs。补偿后取平均，目标幅度不翻倍；噪声收益见数值条件。这里不模拟各路 ADC 削波。"),
+                en: "Only the 1 kHz target component, with the same unit-amplitude normalization in every row. Spacing 4 cm, 30° from broadside, c = 343 m/s: adjacent delay ≈ 58 μs. Compensation and averaging preserve target amplitude; noise benefits require the stated assumptions. Per-channel ADC clipping is not modeled here.",
+                ja: "1 kHzの目標成分のみを各行で同じ単位振幅に正規化。間隔4 cm、正面から30°、音速343 m/sで隣接到達差は約58 μs。補償後に平均しても目標振幅は倍増しません。雑音改善は記載条件に依存し、各ADCのクリップは未モデル化です。",
+                ko: "1 kHz 목표 성분만 각 행에 동일한 단위 진폭으로 정규화했습니다. 간격 4 cm, 정면 기준 30°, 음속 343 m/s에서 인접 도달차는 약 58 μs. 보상 후 평균은 목표 진폭을 2배로 만들지 않습니다. 잡음 이득에는 명시한 조건이 필요하며 채널별 ADC 클리핑은 모델링하지 않습니다."
+              })}</p>
+            </> : isDigital ? <>
+              <svg viewBox="0 0 760 180" role="img" aria-label={localized(language, { zh: "数字输出比特示意", "zh-Hant": traditional("数字输出比特示意"), en: "Digital output bit illustration", ja: "デジタル出力ビット例", ko: "디지털 출력 비트 예시" })}>
+                <path className="mic-preview-grid" d="M90 50 H720 M90 100 H720" />
+                <text x="45" y="55">1</text><text x="45" y="105">0</text>
+                <path className="mic-pdm-line" d={bitStreamPath(bits, 90, 75, 630, 25)} />
+                <text x="90" y="145">0</text><text x="660" y="145">{bits.length - 1}</text>
+                <text x="285" y="170">{localized(language, { zh: "比特序号", "zh-Hant": traditional("比特序号"), en: "Bit index", ja: "ビット番号", ko: "비트 인덱스" })}</text>
+              </svg>
+              <p>{digitalOutput === "pdm" ? localized(language, {
+                zh: "一阶 Σ-Δ 教学示意：128 个等时长比特表示一个正弦周期。正半周 1 更密，负半周 0 更密；增大声压会增大局部密度差，不改变 0/1 电平高度。PDM 麦需在接收端低通、抽取为 PCM；此图不是器件实际时钟或噪声性能仿真。", "zh-Hant": traditional("一阶 Σ-Δ 教学示意：128 个等时长比特表示一个正弦周期。正半周 1 更密，负半周 0 更密；增大声压会增大局部密度差，不改变 0/1 电平高度。PDM 麦需在接收端低通、抽取为 PCM；此图不是器件实际时钟或噪声性能仿真。"),
+                en: "First-order sigma-delta illustration: 128 equal-duration bits per sine period. Ones are denser in the positive half, zeros in the negative half. SPL changes local density, not logic height. A PDM receiver low-pass filters and decimates to PCM. This is not a device clock or noise-performance simulation.",
+                ja: "一次Σ-Δの教育用例：1正弦周期を等時間の128ビットで表示。正半周期は1、負半周期は0が密になります。音圧は局所密度を変え、論理レベルの高さは変えません。受信側で低域通過・デシメーションしてPCMにします。実機のクロックや雑音性能の再現ではありません。",
+                ko: "1차 Σ-Δ 교육 예시: 정현파 한 주기를 같은 시간 길이의 128비트로 표시합니다. 양의 반주기에는 1, 음의 반주기에는 0이 조밀합니다. 음압은 국소 밀도를 바꾸며 논리 전압 높이는 바꾸지 않습니다. 수신 측에서 저역통과와 데시메이션으로 PCM을 만듭니다. 실제 클록이나 잡음 성능 시뮬레이션은 아닙니다."
+              }) : localized(language, {
+                zh: `I2S 型号在芯片内抽取为 PCM，再串行发送。这里仅示例正峰值处的一个 16-bit PCM 数据字，MSB 在前：${bits.join("")}；不含 I2S 的时钟、声道与一位延迟时序。`, "zh-Hant": traditional(`I2S 型号在芯片内抽取为 PCM，再串行发送。这里仅示例正峰值处的一个 16-bit PCM 数据字，MSB 在前：${bits.join("")}；不含 I2S 的时钟、声道与一位延迟时序。`),
+                en: `I2S models decimate to PCM on chip, then serialize. One illustrative 16-bit PCM word at the positive peak, MSB first: ${bits.join("")}. I2S clocks, channels, and the one-bit delay are not shown.`,
+                ja: `I2S型はチップ内でPCMへデシメーションし直列送信します。正のピークの16-bit PCMワードをMSBから表示：${bits.join("")}。クロック、チャンネル、1ビット遅延の時序は省略しています。`,
+                ko: `I2S형은 칩 내부에서 PCM으로 데시메이션 후 직렬 전송합니다. 양의 피크에 해당하는 16-bit PCM 워드 예시(MSB 우선): ${bits.join("")}. 클록, 채널, 1비트 지연 타이밍은 생략합니다.`
+              })}</p>
+            </> : <>
+              <svg viewBox="0 0 760 190" role="img" aria-label={localized(language, { zh: "ADC 归一化输出波形", "zh-Hant": traditional("ADC 归一化输出波形"), en: "Normalized ADC output waveform", ja: "ADC正規化出力波形", ko: "ADC 정규화 출력 파형" })}>
+                <path className="mic-preview-grid" d="M90 30 H720 M90 85 H720 M90 140 H720" />
+                <text x="12" y="35">+1 FS</text><text x="45" y="90">0</text><text x="12" y="145">-1 FS</text>
+                <path className="mic-analog-line" d={pcmWavePath(signal.requestedPeak, 90, 85, 630, 55)} />
+                <text x="90" y="180">0 ms</text><text x="670" y="180">4 ms</text>
+              </svg>
+              <p>{localized(language, {
+                zh: "图中为前级后、理想 ADC 的 1 kHz 输出，纵轴是固定的归一化满量程。小信号接近中线是正常的；超量程被限制在 ±1，出现平顶。忽略量化噪声，前级饱和与麦克风自身失真可能更早发生。", "zh-Hant": traditional("图中为前级后、理想 ADC 的 1 kHz 输出，纵轴是固定的归一化满量程。小信号接近中线是正常的；超量程被限制在 ±1，出现平顶。忽略量化噪声，前级饱和与麦克风自身失真可能更早发生。"),
+                en: "The plot shows a 1 kHz signal after the preamp and an ideal ADC, on a fixed normalized full-scale axis. Small signals sit near zero; overload clips at ±1. Quantization noise is omitted. Preamp saturation and microphone distortion may occur earlier.",
+                ja: "前段増幅後の理想ADCの1 kHz出力を固定の正規化フルスケールで表示。小信号は中央線に近く、過負荷では±1で平頂化します。量子化雑音は省略し、前段飽和やマイクの歪みはより早く起こる可能性があります。",
+                ko: "프리앰프 뒤 이상적 ADC의 1 kHz 출력을 고정 정규화 풀 스케일 축에 표시합니다. 작은 신호는 중앙선에 가깝고 과부하는 ±1에서 평평하게 잘립니다. 양자화 잡음은 생략하며 프리앰프 포화와 마이크 왜곡이 먼저 발생할 수 있습니다."
+              })}</p>
+            </>}
+            {!isArray && <p className={signal.overloaded ? "mic-overload-warning" : "mic-output-level"} role="status">{digitalLevelNote(signal.requestedDbfs, language)}</p>}
+          </figure>
+          <p className="mic-model-note mic-numeric-assumptions">{localized(language, {
+            zh: "数值以 1 kHz 正弦稳态为例，约定 94 dB SPL ≈ 1 Pa RMS，模拟电压为 RMS；0 dBFS 按满幅正弦标定。前级电压仅为线性需求估算，不保证真实电路可达到。", "zh-Hant": traditional("数值以 1 kHz 正弦稳态为例，约定 94 dB SPL ≈ 1 Pa RMS，模拟电压为 RMS；0 dBFS 按满幅正弦标定。前级电压仅为线性需求估算，不保证真实电路可达到。"),
+            en: "1 kHz steady sine example; 94 dB SPL ≈ 1 Pa RMS. Analog voltages are RMS; 0 dBFS is calibrated to a full-scale sine. Preamp voltages are linear-demand estimates, not guaranteed circuit outputs.",
+            ja: "1 kHz定常正弦波の例。94 dB SPL ≈ 1 Pa RMS、アナログ電圧はRMS、0 dBFSはフルスケール正弦波で校正。前段電圧は線形推定で実回路の出力保証ではありません。",
+            ko: "1 kHz 정상 정현파 예시. 94 dB SPL ≈ 1 Pa RMS, 아날로그 전압은 RMS이며 0 dBFS는 풀 스케일 정현파 기준입니다. 프리앰프 전압은 선형 요구 추정이며 실제 회로 출력을 보장하지 않습니다."
+          })}</p>
         </section>
       </div>
       <div className="mic-principle-copy">
@@ -809,115 +658,11 @@ export function MicrophoneLab({ language, onBack, onBackToDetails }: MicrophoneL
   const [angle, setAngle] = useState(0);
   const [distance, setDistance] = useState(1.2);
   const [gain, setGain] = useState(52);
-  const [example, setExample] = useState<MicExample>("near");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<ActiveMicAudio | null>(null);
   const polar = useMemo(() => createPolarPath(pattern, angle), [angle, pattern]);
   const analysis = useMemo(
     () => getPickupAnalysis({ angle, distance, gain, pattern }),
     [angle, distance, gain, pattern]
   );
-  const playbackProfile = useMemo(
-    () => createMicPlaybackProfile({ analysis, distance, example, gain }),
-    [analysis, distance, example, gain]
-  );
-
-  useEffect(() => {
-    if (!audioRef.current) {
-      return;
-    }
-
-    applyLiveMicProfile(audioRef.current, playbackProfile);
-  }, [playbackProfile]);
-
-  useEffect(() => () => stopGraph(audioRef.current), []);
-
-  function stopAudio() {
-    stopGraph(audioRef.current);
-    audioRef.current = null;
-    setIsPlaying(false);
-  }
-
-  function playExample() {
-    stopAudio();
-    const AudioContextConstructor = window.AudioContext ?? window.webkitAudioContext;
-
-    if (!AudioContextConstructor) {
-      return;
-    }
-
-    const context = new AudioContextConstructor();
-    const now = context.currentTime;
-    const oscillator = context.createOscillator();
-    const directGain = context.createGain();
-    const filter = context.createBiquadFilter();
-    const shaper = context.createWaveShaper();
-    const outputGain = context.createGain();
-    const noiseSource = context.createBufferSource();
-    const noiseGain = context.createGain();
-    const noiseFilter = context.createBiquadFilter();
-    const stopAt = now + playbackProfile.duration;
-
-    oscillator.type = "sawtooth";
-    oscillator.frequency.setValueAtTime(playbackProfile.oscillatorFrequency, now);
-    filter.type = example === "plosive" ? "bandpass" : "lowpass";
-    filter.frequency.setValueAtTime(playbackProfile.filterFrequency, now);
-    filter.Q.setValueAtTime(playbackProfile.filterQ, now);
-    shaper.curve = createDistortionCurve(playbackProfile.distortionAmount);
-    shaper.oversample = "4x";
-    directGain.gain.setValueAtTime(0.0001, now);
-    directGain.gain.linearRampToValueAtTime(playbackProfile.directLevel, now + 0.04);
-    directGain.gain.linearRampToValueAtTime(0.0001, stopAt);
-    outputGain.gain.setValueAtTime(playbackProfile.outputLevel, now);
-
-    noiseSource.buffer = createNoiseBuffer(context, playbackProfile.duration, 0.72);
-    noiseSource.loop = true;
-    noiseFilter.type = "highpass";
-    noiseFilter.frequency.setValueAtTime(example === "plosive" ? 120 : 520, now);
-    noiseGain.gain.setValueAtTime(0.0001, now);
-    noiseGain.gain.linearRampToValueAtTime(playbackProfile.noiseLevel, now + 0.04);
-    noiseGain.gain.linearRampToValueAtTime(0.0001, stopAt);
-
-    oscillator.connect(filter);
-    filter.connect(shaper);
-    shaper.connect(directGain);
-    directGain.connect(outputGain);
-    noiseSource.connect(noiseFilter);
-    noiseFilter.connect(noiseGain);
-    noiseGain.connect(outputGain);
-    outputGain.connect(context.destination);
-
-    oscillator.start(now);
-    oscillator.stop(stopAt + 0.02);
-    noiseSource.start(now);
-    noiseSource.stop(stopAt + 0.02);
-
-    if (example === "plosive") {
-      const burst = context.createOscillator();
-      const burstGain = context.createGain();
-      const burstFilter = context.createBiquadFilter();
-      burst.type = "sine";
-      burst.frequency.setValueAtTime(72, now);
-      burstFilter.type = "lowpass";
-      burstFilter.frequency.setValueAtTime(210, now);
-      burstGain.gain.setValueAtTime(0.0001, now);
-      burstGain.gain.linearRampToValueAtTime(playbackProfile.plosiveLevel, now + 0.03);
-      burstGain.gain.linearRampToValueAtTime(0.0001, now + 0.22);
-      burst.connect(burstFilter);
-      burstFilter.connect(burstGain);
-      burstGain.connect(outputGain);
-      burst.start(now);
-      burst.stop(now + 0.24);
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      audioRef.current = null;
-      setIsPlaying(false);
-    }, playbackProfile.duration * 1000 + 80);
-
-    audioRef.current = { context, directGain, filter, noiseGain, outputGain, shaper, stopAt, timeoutId };
-    setIsPlaying(true);
-  }
 
   return (
     <main className="microphone-lab-page">
@@ -1044,10 +789,10 @@ export function MicrophoneLab({ language, onBack, onBackToDetails }: MicrophoneL
           </dl>
           </div>
           <p className="mic-polar-legend">{localized(language, {
-            zh: "教学模型：评分不是实测 SNR、失真或概率，增益百分比不是 dB。试听为合成信号；距离采用有近场限幅的 1/r 近似，不模拟真实房间。8 字形只展示响应幅度，不演示背瓣的极性反转。", "zh-Hant": traditional("教学模型：评分不是实测 SNR、失真或概率，增益百分比不是 dB。试听为合成信号；距离采用有近场限幅的 1/r 近似，不模拟真实房间。8 字形只展示响应幅度，不演示背瓣的极性反转。"),
-            en: "Teaching model: scores are not measured SNR, distortion, or probabilities; gain percentage is not dB. Playback is synthetic. Distance uses a near-field-clamped 1/r approximation, not a real room. Figure-8 shows magnitude only, not rear-lobe polarity reversal.",
-            ja: "教育用モデル：スコアは実測SNR、歪み、確率ではなく、ゲインの百分率はdBではありません。再生音は合成信号です。距離は近接場で制限した1/r近似で、実際の部屋は再現しません。8の字は振幅だけを示し、背面ローブの極性反転は表しません。",
-            ko: "교육용 모델입니다. 점수는 실측 SNR, 왜곡 또는 확률이 아니며 게인 백분율은 dB가 아닙니다. 재생음은 합성 신호입니다. 거리는 근접장 제한이 있는 1/r 근사이며 실제 공간은 모델링하지 않습니다. 8자형은 크기만 나타내고 후면 로브의 극성 반전은 나타내지 않습니다."
+            zh: "教学模型：评分不是实测 SNR、失真或概率，增益百分比不是 dB。本区域仅作可视化，不提供合成试听；距离采用有近场限幅的 1/r 近似，不模拟真实房间。8 字形只展示响应幅度，不演示背瓣的极性反转。", "zh-Hant": traditional("教学模型：评分不是实测 SNR、失真或概率，增益百分比不是 dB。本区域仅作可视化，不提供合成试听；距离采用有近场限幅的 1/r 近似，不模拟真实房间。8 字形只展示响应幅度，不演示背瓣的极性反转。"),
+            en: "Teaching model: scores are not measured SNR, distortion, or probabilities; gain percentage is not dB. Visual demonstration only, without synthetic playback. Distance uses a near-field-clamped 1/r approximation, not a real room. Figure-8 shows magnitude only, not rear-lobe polarity reversal.",
+            ja: "教育用モデル：スコアは実測SNR、歪み、確率ではなく、ゲインの百分率はdBではありません。合成音の再生は行いません。距離は近接場で制限した1/r近似で、実際の部屋は再現しません。8の字は振幅だけを示し、背面ローブの極性反転は表しません。",
+            ko: "교육용 모델입니다. 점수는 실측 SNR, 왜곡 또는 확률이 아니며 게인 백분율은 dB가 아닙니다. 합성음을 재생하지 않습니다. 거리는 근접장 제한이 있는 1/r 근사이며 실제 공간은 모델링하지 않습니다. 8자형은 크기만 나타내고 후면 로브의 극성 반전은 나타내지 않습니다."
           })}</p>
         </div>
 
@@ -1114,39 +859,6 @@ export function MicrophoneLab({ language, onBack, onBackToDetails }: MicrophoneL
             </label>
           </div>
 
-          <div className="mic-example-grid" role="group" aria-label={localized(language, { zh: "拾音问题示例", "zh-Hant": traditional("拾音问题示例"), en: "Pickup examples", ja: "収音の問題例", ko: "수음 문제 예시" })}>
-            {(Object.keys(exampleLabels) as MicExample[]).map((item) => (
-              <button
-                className={example === item ? "waveform-tab active" : "waveform-tab"}
-                key={item}
-                type="button"
-                onClick={() => setExample(item)}
-              >
-                {localized(language, exampleLabels[item])}
-              </button>
-            ))}
-          </div>
-
-          <div className="sound-lab-actions">
-            <button className="sine-button" type="button" onClick={playExample}>
-              <Play size={16} aria-hidden="true" />
-              {localized(language, { zh: "播放拾音示例", "zh-Hant": traditional("播放拾音示例"), en: "Play pickup example", ja: "収音例を再生", ko: "수음 예시 재생" })}
-            </button>
-            <button className="sine-button" type="button" onClick={stopAudio}>
-              <Pause size={16} aria-hidden="true" />
-              {localized(language, { zh: "停止", "zh-Hant": traditional("停止"), en: "Stop", ja: "停止", ko: "중지" })}
-            </button>
-            <span className={isPlaying ? "sine-status playing" : "sine-status"}>
-              {isPlaying
-                ? localized(language, { zh: "播放中", "zh-Hant": traditional("播放中"), en: "Playing", ja: "再生中", ko: "재생 중" })
-                : localized(language, { zh: "未播放", "zh-Hant": traditional("未播放"), en: "Stopped", ja: "停止中", ko: "정지됨" })}
-            </span>
-          </div>
-
-          <div className="lab-live-note">
-            <strong>{localized(language, exampleLabels[example])}</strong>
-            <span>{localized(language, exampleNotes[example])}</span>
-          </div>
         </div>
       </section>
 

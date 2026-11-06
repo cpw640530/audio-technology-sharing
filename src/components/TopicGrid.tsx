@@ -1,5 +1,5 @@
 import { traditional } from "../content/traditional";
-import { ArrowUpRight, Waves, Ruler, AudioLines, Ear, Mic, Cpu, Cable, Speaker, Layers, Terminal, FileAudio, Timer, SlidersHorizontal, MicVocal, Orbit, Users, Car, Bot, Radio, Bluetooth, BrainCircuit } from "lucide-react";
+import { ArrowUpRight, Waves, Ruler, AudioLines, Ear, Mic, Cable, Speaker, Layers, Terminal, FileAudio, Timer, SlidersHorizontal, MicVocal, Orbit, Users, Car, Bot, Radio, Bluetooth, BrainCircuit } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Category, Language, Topic, TopicLab } from "../content/knowledge";
 import { interfaceCopy } from "../content/knowledge";
@@ -11,7 +11,6 @@ const topicIcons: Record<TopicLab["type"], LucideIcon> = {
   "sampling-quantization": AudioLines,
   "listening-metrics": Ear,
   microphone: Mic,
-  "codec-hardware": Cpu,
   "digital-interface": Cable,
   "amplifier-speaker": Speaker,
   "system-audio": Layers,

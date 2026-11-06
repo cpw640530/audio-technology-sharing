@@ -64,10 +64,10 @@ export function DigitalAudioPage({ relatedTopics, language, onBack, onOpenLab, o
   const detail = digitalAudioTopic.detail;
   const terms = detail.termExplanations ?? [];
   const flow = {
-    zh: ["连续模拟波形", "抗混叠滤波", "按采样率取点", "按位深量化", "PCM 样本", "文件或码流编码"], "zh-Hant": traditional(["连续模拟波形", "抗混叠滤波", "按采样率取点", "按位深量化", "PCM 样本", "文件或码流编码"]),
-    en: ["Continuous analog wave", "Anti-alias filter", "Sample at fs", "Quantize by bit depth", "PCM samples", "File or stream encoding"],
-    ja: ["連続アナログ波形", "アンチエイリアスフィルター", "fs で標本化", "ビット深度に応じた量子化", "PCM サンプル", "ファイル・ストリーム符号化"],
-    ko: ["연속 아날로그 파형", "안티에일리어싱 필터", "fs로 샘플링", "비트 깊이에 따라 양자화", "PCM 샘플", "파일·스트림 인코딩"]
+    zh: ["连续模拟波形", "抗混叠滤波", "按采样率取点", "按位深量化", "PCM 存储 / 处理", "DAC 转换", "重建滤波", "模拟输出"], "zh-Hant": traditional(["连续模拟波形", "抗混叠滤波", "按采样率取点", "按位深量化", "PCM 存储 / 处理", "DAC 转换", "重建滤波", "模拟输出"]),
+    en: ["Continuous analog wave", "Anti-alias filter", "Sample at fs", "Quantize by bit depth", "PCM storage / processing", "DAC conversion", "Reconstruction filter", "Analog output"],
+    ja: ["連続アナログ波形", "アンチエイリアスフィルター", "fs で標本化", "ビット深度に応じた量子化", "PCM保存 / 処理", "DAC変換", "再構成フィルター", "アナログ出力"],
+    ko: ["연속 아날로그 파형", "안티에일리어싱 필터", "fs로 샘플링", "비트 깊이에 따라 양자화", "PCM 저장 / 처리", "DAC 변환", "복원 필터", "아날로그 출력"]
   }[language];
 
   return (
@@ -99,6 +99,7 @@ export function DigitalAudioPage({ relatedTopics, language, onBack, onOpenLab, o
           </div>
         </section>
 
+        <p className="sound-topic-note">{text(language, "沿着模拟输入 → ADC → PCM → DAC → 模拟输出阅读。接口如何搬运样本见数字音频接口，压缩算法详见音频编解码。", "Follow analog input → ADC → PCM → DAC → analog output. See digital interfaces for sample transport and audio codecs for compression algorithms.", "アナログ入力 → ADC → PCM → DAC → アナログ出力の順に読みます。転送はデジタル接続、圧縮は音声コーデックで扱います。", "아날로그 입력 → ADC → PCM → DAC → 아날로그 출력 순으로 읽습니다. 샘플 전송은 디지털 인터페이스, 압축은 오디오 코덱에서 다룹니다.")}</p>
         <section className="sound-topic-section sound-topic-bottom-grid">
           <div>
             <h2>{text(language, "理解取舍，而不是背参数", "Understand trade-offs, not isolated specs", "数値だけでなくトレードオフを理解する", "수치보다 절충 관계를 이해하기")}</h2>
@@ -106,8 +107,8 @@ export function DigitalAudioPage({ relatedTopics, language, onBack, onOpenLab, o
           </div>
           <div className="sound-topic-cta">
             <Calculator size={22} aria-hidden="true" />
-            <h2>{text(language, "进入采样实验室", "Open the sampling lab", "標本化実験室へ", "샘플링 실험실 열기")}</h2>
-            <p>{text(language, "拖动采样点、位深和输入频率，直接观察采样、量化误差以及 PCM 二进制样本如何变化。", "Adjust samples, bit depth, and input frequency to see sampling, quantization error, and PCM binary words change.", "サンプル数、ビット深度、入力周波数を変え、標本化・量子化誤差・PCM の二進数表現の変化を観察しましょう。", "샘플 수, 비트 깊이, 입력 주파수를 조절해 샘플링, 양자화 오차 및 PCM 이진 데이터의 변화를 관찰하세요.")}</p>
+            <h2>{text(language, "进入 ADC / DAC 实验室", "Open the ADC / DAC lab", "ADC / DAC実験室へ", "ADC / DAC 실험실 열기")}</h2>
+            <p>{text(language, "切换 ADC 与 DAC：观察采样、量化、PCM 码字，再逐步查看电压映射、保持和重建滤波。", "Switch ADC and DAC to explore sampling, quantization and PCM words, then voltage mapping, hold and reconstruction filtering.", "ADCとDACを切り替え、標本化・量子化・PCMから、電圧変換・ホールド・再構成フィルターまで観察します。", "ADC와 DAC를 전환하며 샘플링, 양자화, PCM부터 전압 매핑, 홀드, 복원 필터까지 살펴봅니다.")}</p>
             <button className="diagram-open-button" type="button" onClick={onOpenLab}>
               {detail.lab?.buttonLabel[language]}
             </button>
@@ -173,6 +174,24 @@ export function DigitalAudioPage({ relatedTopics, language, onBack, onOpenLab, o
             <p>{text(language, "横轴：时间 0–1 s；纵轴：相对幅度，两行尺度相同，水平线为零。", "Horizontal: time, 0–1 s. Vertical: relative amplitude, same scale in both rows; horizontal lines mark zero.", "横軸：時間 0–1 s。縦軸：相対振幅。上下は同じ尺度で、水平線はゼロです。", "가로축: 시간 0–1 s. 세로축: 상대 진폭. 두 행의 척도는 같으며 수평선은 0입니다.")}</p>
             <p>{text(language, "对于最高频率受限的基带信号，理想重建要求采样率高于 2fₘₐₓ；仅凭几个离散点不能唯一确定任意波形。工程上还要给抗混叠滤波器留过渡带。", "For a band-limited baseband signal, ideal reconstruction requires a sample rate above 2fₘₐₓ. A few isolated samples cannot uniquely determine an arbitrary waveform. Practical anti-alias filters also need a transition band.", "帯域制限されたベースバンド信号の理想再構成には 2fₘₐₓ を超える標本化周波数が必要です。少数の点だけでは任意の波形を一意に決められません。実際のフィルターには遷移帯域も必要です。", "대역 제한된 기저대역 신호의 이상적인 복원에는 2fₘₐₓ보다 높은 샘플링 주파수가 필요합니다. 몇 개의 점만으로 임의의 파형을 유일하게 정할 수는 없습니다. 실제 필터에는 전이 대역도 필요합니다.")}</p>
           </figure>
+        </section>
+
+        <section className="sound-topic-section">
+          <h2>{text(language, "从 ADC 输入范围到 DAC 模拟输出", "From ADC input range to DAC analog output", "ADCの入力範囲からDACのアナログ出力へ", "ADC 입력 범위에서 DAC 아날로그 출력까지")}</h2>
+          <div className="digital-topic-equation-grid">
+            <article className="digital-topic-equation-card">
+              <span>{text(language, "ADC 前：增益与削波", "Before ADC: gain and clipping", "ADCの前：ゲインとクリップ", "ADC 이전: 이득과 클리핑")}</span>
+              <code>Vpeak × G ≤ VFS</code>
+              <p>{text(language, "PGA 是可编程增益放大器。假设 ADC 输入范围相对中点为 ±1 V，0.2 V 峰值经 4 倍增益成为 0.8 V；6 倍则要求 1.2 V，超出范围就会削波。增益太低又会浪费量化范围；增加位深不能恢复已削掉的波峰。", "A PGA is a programmable gain amplifier. With an ADC range of ±1 V relative to its midpoint, a 0.2 V peak at 4× gain becomes 0.8 V; 6× requests 1.2 V and clips. Too little gain wastes quantization range; more bits cannot recover clipped peaks.", "PGAは可変ゲイン増幅器です。入力範囲が中点に対して±1 Vなら、0.2 Vのピークを4倍すると0.8 V、6倍では1.2 Vとなりクリップします。小さすぎるゲインは量子化範囲を生かせず、ビット数を増やしても失われたピークは戻りません。", "PGA는 프로그래머블 이득 증폭기입니다. ADC 범위가 중점 기준 ±1 V라면 0.2 V 피크를 4배 증폭하면 0.8 V, 6배면 1.2 V로 클리핑됩니다. 이득이 너무 작으면 양자화 범위를 낭비하며 비트 수를 늘려도 잘린 피크는 복구되지 않습니다.")}</p>
+            </article>
+            <article className="digital-topic-equation-card">
+              <span>{text(language, "DAC 后：重建与负载", "After DAC: reconstruction and load", "DACの後：再構成と負荷", "DAC 이후: 복원과 부하")}</span>
+              <code>PCM → DAC → LPF → amplifier</code>
+              <p>{text(language, "DAC 按时钟把样本转成模拟输出，重建滤波抑制采样镜像。实验室用零阶保持和一阶 RC 展示这个过程，不代表所有 DAC 的内部结构。线路输出通常还需要功放才能驱动扬声器；播放质量也受输出级和负载影响。", "A clocked DAC converts samples to analog output; reconstruction filtering suppresses sampling images. The lab uses zero-order hold and a first-order RC model, not a universal DAC architecture. Line output generally needs a power amplifier to drive speakers; the output stage and load also matter.", "DACはクロックに従ってサンプルをアナログ出力へ変換し、再構成フィルターでイメージを抑えます。ラボのゼロ次ホールドと一次RCは説明用モデルで、すべてのDACの内部構造ではありません。ライン出力でスピーカーを駆動するには通常パワーアンプが必要です。", "DAC는 클록에 따라 샘플을 아날로그 출력으로 변환하고 복원 필터로 샘플링 이미지를 억제합니다. 실험실의 영차 홀드와 1차 RC는 설명용 모델로 모든 DAC 구조를 뜻하지 않습니다. 라인 출력으로 스피커를 구동하려면 보통 파워 앰프가 필요합니다.")}</p>
+            </article>
+          </div>
+          <h3>{text(language, "硬件 Codec：把转换链路集成到芯片", "Hardware codec: an integrated conversion path", "ハードウェアCodec：変換経路をチップに統合", "하드웨어 Codec: 변환 경로를 칩에 통합")}</h3>
+          <p>{text(language, "音频 Codec 芯片通常集成 ADC、DAC，以及部分 PGA、混音或耳机输出电路，具体以芯片手册为准；它不是 MP3 / AAC 压缩算法。录音侧从模拟输入到 PCM，播放侧从 PCM 到模拟输出。I2S / TDM 搬运样本，I²C / SPI 配置寄存器，它们不负责采样量化本身。", "An audio codec chip typically integrates ADCs, DACs and some PGA, mixer or headphone circuits; check the datasheet. It is not an MP3/AAC compression algorithm. Capture converts analog input to PCM, playback converts PCM to analog. I2S/TDM carry samples; I²C/SPI configure registers, not sampling and quantization.", "音声Codecチップは通常ADC、DAC、一部のPGAやミキサー、ヘッドホン回路を統合します。詳細は仕様書で確認します。MP3/AAC圧縮とは別物です。録音はアナログからPCM、再生はPCMからアナログへ変換します。I2S/TDMはサンプル転送、I²C/SPIはレジスター設定を担います。", "오디오 Codec 칩은 보통 ADC, DAC와 일부 PGA, 믹서 또는 헤드폰 회로를 통합하며 세부 사항은 데이터시트를 따릅니다. MP3/AAC 압축 알고리즘과 다릅니다. 녹음은 아날로그를 PCM으로, 재생은 PCM을 아날로그로 변환합니다. I2S/TDM은 샘플 전송, I²C/SPI는 레지스터 설정을 담당합니다.")}</p>
         </section>
 
         <section className="sound-topic-section digital-topic-principles">

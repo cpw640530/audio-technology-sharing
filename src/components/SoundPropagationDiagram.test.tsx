@@ -31,10 +31,11 @@ it("starts with no future trace and restarts recording when settings change", ()
   render(<SoundPropagationDiagram language="en" />);
   const trace = screen.getByTestId("propagation-pressure-trace");
   expect(trace.getAttribute("d")).toBe("M 40 85");
-  expect(screen.getByRole("slider", { name: /Vibration rate/ })).toBeDisabled();
+  expect(screen.queryByRole("button", { name: "Single pulse" })).not.toBeInTheDocument();
+  expect(screen.getByRole("slider", { name: /Vibration rate/ })).toBeEnabled();
   fireEvent.click(screen.getByRole("button", { name: "Step forward" }));
   expect(trace.getAttribute("d")).toContain("L");
-  fireEvent.click(screen.getByRole("button", { name: "Continuous vibration" }));
+  fireEvent.change(screen.getByRole("slider", { name: /Vibration rate/ }), { target: { value: "1.5" } });
   expect(screen.getByRole("slider", { name: /Vibration rate/ })).toBeEnabled();
   expect(trace.getAttribute("d")).toBe("M 40 85");
   fireEvent.click(screen.getByRole("button", { name: "Step forward" }));
@@ -42,7 +43,7 @@ it("starts with no future trace and restarts recording when settings change", ()
   expect(trace.getAttribute("d")).toBe("M 40 85");
 });
 
-it("records a passing pulse and stops automatically after it leaves", () => {
+it("continues past four demo units until explicitly reset", () => {
   vi.useFakeTimers();
   vi.stubGlobal("IntersectionObserver", class {
     constructor(private callback: (entries: { isIntersecting: boolean }[]) => void) {}
@@ -52,9 +53,8 @@ it("records a passing pulse and stops automatically after it leaves", () => {
   render(<SoundPropagationDiagram language="en" />);
   fireEvent.click(screen.getByRole("button", { name: "Play animation" }));
   act(() => { vi.advanceTimersByTime(4100); });
-  expect(screen.getByRole("button", { name: "Play animation" })).toBeInTheDocument();
-  expect(screen.getByText("Demo time: 4.00")).toBeInTheDocument();
-  expect(screen.getByTestId("propagation-pressure-trace").getAttribute("d")).toMatch(/L 11\d/);
-  fireEvent.click(screen.getByRole("button", { name: "Play animation" }));
+  expect(screen.getByRole("button", { name: "Pause animation" })).toBeInTheDocument();
+  expect(Number(screen.getByText(/^Demo time:/).textContent!.replace("Demo time: ", ""))).toBeGreaterThan(4);
+  fireEvent.click(screen.getByRole("button", { name: "Restart experiment" }));
   expect(screen.getByText("Demo time: 0.00")).toBeInTheDocument();
 });

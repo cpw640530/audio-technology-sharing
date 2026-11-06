@@ -3,6 +3,7 @@ import { ArrowLeft, Play, RotateCcw, Square } from "lucide-react";
 import type { Language } from "../content/knowledge";
 import { text } from "../content/language";
 import { waveSpectrumTopic } from "../content/waveSpectrum";
+import { SoundCompositionExperiment } from "./SoundCompositionExperiment";
 import { componentFrequencies, componentSample, initialAmplitudes, mixtureSample, periodicCoefficients } from "./waveSpectrumModel";
 
 const colors = ["#7ee7d8", "#f0c470", "#f29a9a"];
@@ -57,6 +58,7 @@ export function WaveSpectrumLab({ language, onBack, onBackToDetails }: {
   }
 
   async function play() {
+    document.dispatchEvent(new Event("sound-article-play"));
     stop();
     setError(false);
     let current: Playback | null = null;
@@ -87,8 +89,10 @@ export function WaveSpectrumLab({ language, onBack, onBackToDetails }: {
   useEffect(() => () => stop(false), []);
   useEffect(() => {
     const hide = () => { if (document.hidden) stop(); };
+    const halt = () => stop();
+    document.addEventListener("sound-article-play", halt);
     document.addEventListener("visibilitychange", hide);
-    return () => document.removeEventListener("visibilitychange", hide);
+    return () => { document.removeEventListener("visibilitychange", hide); document.removeEventListener("sound-article-play", halt); };
   }, []);
 
   return <main className="sound-lab-page wave-spectrum-lab">
@@ -144,5 +148,10 @@ export function WaveSpectrumLab({ language, onBack, onBackToDetails }: {
         <p className="wave-spectrum-caption">{t("试听与图形共用系数，固定衰减至 15%，不自动归一化。先调低设备音量；如有背景音乐，请先暂停。切换语言保留参数，离开实验室停止播放。", "Audio uses the same coefficients at a fixed 15% gain, without auto-normalization. Start at low device volume and pause any background music. Language changes keep parameters; leaving stops playback.", "試聴は同じ係数を固定 15% のゲインで再生し、自動正規化しません。機器音量を下げ BGM を停止してください。言語切替では値を保持し、退出時に停止します。", "같은 계수를 고정 15% 게인으로 재생하며 자동 정규화하지 않습니다. 장치 음량을 낮추고 배경 음악을 멈추세요. 언어 전환은 값을 유지하고 나가면 재생을 멈춥니다.")}</p>
       </section>
     </div>
+    <details className="sound-topic-section">
+      <summary>{t("补充实验：同频信号的相消", "Additional experiment: same-frequency cancellation", "補足実験：同周波数信号の相殺", "추가 실험: 같은 주파수 신호의 상쇄")}</summary>
+      <p>{t("此处 A、B 频率相同，不是上方的不同次谐波。振幅相等、相位差 180° 时，播放前合成的信号抵消；这不代表房间内处处都能消声。", "Here A and B share a frequency, unlike the harmonics above. Equal amplitudes at 180° cancel in the summed signal before playback, not everywhere in a room.", "ここではAとBは同周波数です。同振幅・180°で再生前の合成信号が相殺しますが、部屋全体の消音ではありません。", "여기서 A와 B는 같은 주파수입니다. 같은 진폭과 180°에서 재생 전 합성 신호가 상쇄되며 방 전체의 소음 제거는 아닙니다.")}</p>
+      <SoundCompositionExperiment language={language} mode="sum" />
+    </details>
   </main>;
 }
