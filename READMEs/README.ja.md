@@ -4,6 +4,7 @@
 <p align="center">
   <a href="../README.md">English</a> ·
   <a href="./README.zh-CN.md">简体中文</a> ·
+  <a href="./README.zh-TW.md">繁體中文</a> ·
   <a href="./README.ja.md">日本語</a> ·
   <a href="./README.ko.md">한국어</a>
 </p>
@@ -14,7 +15,7 @@ Audio Technology Sharing は、オーディオ技術を検索可能なトピッ�
 
 **[Web サイトを開く](https://cpw640530.github.io/audio-technology-sharing/)**
 
-この README は日本語版です。**Web サイトの画面、解説記事、実験室は英語・中国語・日本語・韓国語に対応しています。**
+この README は日本語版です。**Web サイトの画面、解説記事、実験室は英語・簡体字中国語・繁体字中国語・日本語・韓国語に対応しています。**
 
 ## インタラクティブな実験室
 
@@ -101,9 +102,9 @@ npm run build
 
 Web サイトでは繁体字中国語（`zh-Hant`）も選択できます。簡体字の本文から ICU で字形を変換し、地域固有の専門用語は別途ローカライズしていません。
 
-[English](../README.md) · [简体中文](./README.zh-CN.md) · [日本語](./README.ja.md) · [한국어](./README.ko.md)
+[English](../README.md) · [简体中文](./README.zh-CN.md) · [繁體中文](./README.zh-TW.md) · [日本語](./README.ja.md) · [한국어](./README.ko.md)
 
-README と Web サイトは英語・中国語・日本語・韓国語に対応しています。Web サイトでは言語選択欄で現在のページを切り替え、選択を保存します。標準のモデル名、コード、数式、参考画像内の原文は変更しません。GitHub README では JavaScript を実行できないため、通常のリンクで言語を切り替えます。
+README と Web サイトは英語・簡体字中国語・繁体字中国語・日本語・韓国語に対応しています。Web サイトでは言語選択欄で現在のページを切り替え、選択を保存します。標準のモデル名、コード、数式、参考画像内の原文は変更しません。GitHub README では JavaScript を実行できないため、通常のリンクで言語を切り替えます。
 
 ## ライセンス
 

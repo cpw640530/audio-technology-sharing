@@ -8,6 +8,7 @@
 <p align="center">
   <a href="../README.md">English</a> ·
   <a href="./README.zh-CN.md">简体中文</a> ·
+  <a href="./README.zh-TW.md">繁體中文</a> ·
   <a href="./README.ja.md">日本語</a> ·
   <a href="./README.ko.md">한국어</a>
 </p>
@@ -27,7 +28,7 @@
 
 当前网页可用于浏览音频基础、硬件、软件、信号处理、AI 音频算法和真实应用场景。主题卡片可以打开详细解释和对应实验室，方便用图解或交互方式理解关键概念。
 
-**[在线访问网站](https://cpw640530.github.io/audio-technology-sharing/)** · 支持中文和英文。
+**[在线访问网站](https://cpw640530.github.io/audio-technology-sharing/)** · 支持简体中文、繁体中文、英文、日语和韩语。
 
 ## 交互式实验室：让原理变成看得见的变化
 
@@ -158,12 +159,13 @@ npm run build
 
 ## 语言
 
-README、网页界面、详细文章和实验室支持中文、英文、日语和韩语。使用网页的语言选择框即可原地切换，网站会记住选择。标准模型名称、代码、公式及参考图片内的原始文字保持不变。
+README、网页界面、详细文章和实验室支持简体中文、繁体中文、英文、日语和韩语。使用网页的语言选择框即可原地切换，网站会记住选择。标准模型名称、代码、公式及参考图片内的原始文字保持不变。
 
 网页另提供“繁體中文”（`zh-Hant`），使用 ICU 将简体正文转换为通用繁体字形，尚未单独本地化地区术语。转换表随网站打包，不调用在线翻译服务。维护者更新中文正文后，可在安装 ICU `uconv` 的环境运行 `node scripts/generate-traditional.cjs` 更新词组映射。
 
 - [English](../README.md)
 - [简体中文](./README.zh-CN.md)
+- [繁體中文](./README.zh-TW.md)
 - [日本語](./README.ja.md)
 - [한국어](./README.ko.md)
 

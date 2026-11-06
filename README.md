@@ -8,6 +8,7 @@
 <p align="center">
   <a href="./README.md">English</a> ·
   <a href="./READMEs/README.zh-CN.md">简体中文</a> ·
+  <a href="./READMEs/README.zh-TW.md">繁體中文</a> ·
   <a href="./READMEs/README.ja.md">日本語</a> ·
   <a href="./READMEs/README.ko.md">한국어</a>
 </p>
@@ -163,10 +164,11 @@ This repository provides separate README files for each language:
 
 - [English](./README.md)
 - [简体中文](./READMEs/README.zh-CN.md)
+- [繁體中文](./READMEs/README.zh-TW.md)
 - [日本語](./READMEs/README.ja.md)
 - [한국어](./READMEs/README.ko.md)
 
-The README, website interface, topic guides, and labs support English, Chinese, Japanese, and Korean. Use the website's language selector to switch in place; your choice is remembered. Standard model names, code, equations, and original text embedded in reference images remain unchanged.
+The README, website interface, topic guides, and labs support English, Simplified Chinese, Traditional Chinese, Japanese, and Korean. Use the website's language selector to switch in place; your choice is remembered. Standard model names, code, equations, and original text embedded in reference images remain unchanged.
 
 The website also offers Traditional Chinese (`zh-Hant`), derived from the Simplified Chinese content using ICU character conversion. Regional terminology is not separately localized. Conversion data is bundled locally; no translation service is contacted. After changing Chinese copy, maintainers with ICU `uconv` installed can refresh phrase mappings with `node scripts/generate-traditional.cjs`.
 

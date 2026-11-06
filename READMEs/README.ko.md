@@ -4,6 +4,7 @@
 <p align="center">
   <a href="../README.md">English</a> ·
   <a href="./README.zh-CN.md">简体中文</a> ·
+  <a href="./README.zh-TW.md">繁體中文</a> ·
   <a href="./README.ja.md">日本語</a> ·
   <a href="./README.ko.md">한국어</a>
 </p>
@@ -101,9 +102,9 @@ npm run build
 
 웹사이트에서는 중국어 번체(`zh-Hant`)도 선택할 수 있습니다. 간체 본문을 ICU로 변환하며 지역별 전문 용어는 별도로 현지화하지 않았습니다.
 
-[English](../README.md) · [简体中文](./README.zh-CN.md) · [日本語](./README.ja.md) · [한국어](./README.ko.md)
+[English](../README.md) · [简体中文](./README.zh-CN.md) · [繁體中文](./README.zh-TW.md) · [日本語](./README.ja.md) · [한국어](./README.ko.md)
 
-README와 웹사이트는 영어, 중국어, 일본어, 한국어를 지원합니다. 웹사이트의 언어 선택기로 현재 페이지에서 전환할 수 있으며 선택은 저장됩니다. 표준 모델명, 코드, 수식 및 참고 이미지 속 원문은 변경하지 않습니다. GitHub README에서는 JavaScript가 실행되지 않으므로 일반 링크로 언어를 전환합니다.
+README와 웹사이트는 영어, 중국어 간체, 중국어 번체, 일본어, 한국어를 지원합니다. 웹사이트의 언어 선택기로 현재 페이지에서 전환할 수 있으며 선택은 저장됩니다. 표준 모델명, 코드, 수식 및 참고 이미지 속 원문은 변경하지 않습니다. GitHub README에서는 JavaScript가 실행되지 않으므로 일반 링크로 언어를 전환합니다.
 
 ## 라이선스
 
