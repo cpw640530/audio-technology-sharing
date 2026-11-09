@@ -4,11 +4,12 @@ Run with Python, numpy and scipy. Generates model weights, activations and WAVs.
 import json
 from pathlib import Path
 import numpy as np
-from scipy.signal import stft, istft
+from scipy.signal import stft, istft, get_window
 from scipy.io.wavfile import write
 
 rng = np.random.default_rng(640530)
 rate, window, hop = 8000, 256, 128
+win = get_window("hann", window)
 out = Path(__file__).resolve().parents[1] / "public" / "ai-denoise"
 out.mkdir(parents=True, exist_ok=True)
 
@@ -23,7 +24,8 @@ def example():
 
 
 def spectrum(x):
-    return stft(x, fs=rate, nperseg=window, noverlap=window-hop)[2]
+    return stft(x, fs=rate, window=win, nperseg=window, noverlap=window-hop,
+                boundary="zeros", padded=True, scaling="spectrum")[2]
 
 
 def features(z):
@@ -62,11 +64,24 @@ clean, noisy = example()  # Held-out signal, never used in training.
 z = spectrum(noisy); f = features(z)
 pre = patches(f) @ w + b; activations = np.maximum(0, pre)
 mask = (1/(1+np.exp(-np.clip(activations @ v+c,-30,30)))).reshape(z.shape)
-enhanced = istft(z*mask, fs=rate, nperseg=window, noverlap=window-hop)[1][:len(noisy)]
-identity = istft(z, fs=rate, nperseg=window, noverlap=window-hop)[1][:len(noisy)]
+assert z.shape == (129, 126)
+enhanced = istft(z*mask, fs=rate, window=win, nperseg=window, noverlap=window-hop,
+                 boundary=True, scaling="spectrum")[1][:len(noisy)]
+identity = istft(z, fs=rate, window=win, nperseg=window, noverlap=window-hop,
+                boundary=True, scaling="spectrum")[1][:len(noisy)]
 assert np.max(np.abs(identity-noisy)) < 1e-10
 assert np.isfinite(enhanced).all() and mask.min() >= 0 and mask.max() <= 1
 scale = 0.9 / max(np.max(np.abs(noisy)), np.max(np.abs(clean)), np.max(np.abs(enhanced)))
+# Undo SciPy's spectrum scaling before synthesis-window multiplication.
+contributions = np.fft.irfft(z*mask, n=window, axis=0) * win.sum() * win[:, None]
+overlap, weights = np.zeros(len(noisy)), np.zeros(len(noisy))
+for frame in range(z.shape[1]):
+    start = frame*hop-window//2
+    lo, hi = max(0, start), min(len(noisy), start+window)
+    overlap[lo:hi] += contributions[lo-start:hi-start, frame]
+    weights[lo:hi] += win[lo-start:hi-start]**2
+assert weights.min() > 0
+assert np.max(np.abs(overlap/weights-enhanced)) < 1e-10
 for name, audio in [("input", noisy), ("output", enhanced), ("target", clean)]:
     write(out / f"{name}.wav", rate, (audio*scale*32767).astype(np.int16))
 def matrix(a):
@@ -74,10 +89,14 @@ def matrix(a):
 def snr(a):
     return float(10*np.log10(np.sum(clean**2)/np.sum((clean-a)**2)))
 data = dict(rate=rate, window=window, hop=hop, waves=[(a[4000:4256]*scale).tolist() for a in [noisy, enhanced]], input=matrix(f),
-            output=matrix(features(z*mask)), mask=matrix(mask), magnitude=np.abs(z[:64, :64]).tolist(),
+            output=matrix(features(z*mask)), target=matrix(features(spectrum(clean))), mask=matrix(mask), magnitude=np.abs(z[:64, :64]).tolist(),
             activations=[matrix(activations[:,i].reshape(z.shape)) for i in range(4)],
             kernels=np.round(w.T.reshape(4,3,3),6).tolist(), bias=b.tolist(),
             head=v.ravel().tolist(), headBias=float(c[0]), snr=[snr(noisy),snr(enhanced)],
-            loss=float(np.mean((pred-goal)**2)))
+            loss=float(np.mean((pred-goal)**2)),
+            trace=dict(scale=scale, input=np.round(noisy[:8192]*scale, 7).tolist(),
+                       output=np.round(enhanced[:8192]*scale, 7).tolist(),
+                       target=np.round(clean[:8192]*scale, 7).tolist(),
+                       contributions=np.round(contributions[:, :65].T*scale, 7).tolist()))
 (out / "demo.json").write_text(json.dumps(data, separators=(",", ":")))
 print(f"Generated synthetic CNN demo; input/output SNR: {data['snr']}; final batch MSE: {data['loss']:.4f}")

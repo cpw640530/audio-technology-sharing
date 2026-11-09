@@ -29,14 +29,16 @@ export function hannPsd(samples: number[]) {
   for (let k = 0; k <= fftSize / 2; k++) {
     const angle = -2 * Math.PI * k / fftSize;
     const stepReal = Math.cos(angle), stepImag = Math.sin(angle);
-    let real = 1, imag = 0;
+    let real = 1, imag = 0, sumReal = 0, sumImag = 0;
     for (let i = 0; i < n; i++) {
-      complex[2 * k] += windowed[i] * real;
-      complex[2 * k + 1] += windowed[i] * imag;
+      sumReal += windowed[i] * real;
+      sumImag += windowed[i] * imag;
       const nextReal = real * stepReal - imag * stepImag;
       imag = real * stepImag + imag * stepReal;
       real = nextReal;
     }
+    complex[2 * k] = sumReal;
+    complex[2 * k + 1] = sumImag;
   }
   // One-sided PSD: integration in Hz recovers window-weighted mean-square power.
   const psd = Array.from({ length: fftSize / 2 + 1 }, (_, k) =>

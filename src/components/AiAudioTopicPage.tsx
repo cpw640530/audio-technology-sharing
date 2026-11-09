@@ -4,6 +4,12 @@ import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
 import type { AiAudioLabId, Category, Language, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
+import { AiAudioOverview } from "./AiAudioOverview";
+import { AiEnhancementPrinciple } from "./AiEnhancementPrinciple";
+import { AsrSignalJourney } from "./AsrVisuals";
+import { AsrPrinciple } from "./AsrPrinciple";
+import { TtsPrinciple } from "./TtsPrinciple";
+import { AudioGenerationPrinciple } from "./AudioGenerationPrinciple";
 
 type DisplayTopic = Topic & { category: Category };
 type Locale = "zh" | "en" | "ja" | "ko" | "zh-Hant";
@@ -17,22 +23,17 @@ type AiAudioTopicPageProps = {
   mode: AiAudioLabId;
   onBack: () => void;
   onOpenLab: () => void;
+  onOpenTopic?: (id: Exclude<AiAudioLabId, "overview">) => void;
   onOpenPrevious?: () => void;
   onOpenNext?: () => void;
 };
 
-const flows: Record<AiAudioLabId, Array<{ title: LocalizedText; detail: LocalizedText }>> = {
-  overview: [
-    { title: l("采集 PCM", "Capture PCM", "PCM を収録", "PCM 캡처"), detail: l("麦克风和 ADC 把声音变成数字波形。", "Microphones and ADC turn sound into digital waveforms.", "マイクと ADC が音をデジタル波形に変換します。", "마이크와 ADC가 소리를 디지털 파형으로 변환합니다.") },
-    { title: l("选择表示", "Choose representation", "表現を選ぶ", "표현 선택"), detail: l("按任务选择波形、频谱、Mel、embedding 或 token。", "Choose waveform, spectra, Mel, embeddings, or tokens for the task.", "タスクに応じて波形、スペクトル、Mel、embedding、token を選びます。", "작업에 따라 파형, 스펙트럼, Mel, embedding 또는 token을 선택합니다.") },
-    { title: l("任务模型", "Task model", "タスクモデル", "작업 모델"), detail: l("识别、增强、生成或编码使用不同模型。", "Recognition, enhancement, generation, and coding use different models.", "認識、強調、生成、符号化では異なるモデルを使います。", "인식·향상·생성·코딩에는 서로 다른 모델을 사용합니다.") },
-    { title: l("后处理", "Post-process", "後処理", "후처리"), detail: l("把模型输出变成文字、类别、PCM 或码流。", "Turn model outputs into text, labels, PCM, or bitstreams.", "モデル出力をテキスト、ラベル、PCM、ビットストリームに変換します。", "모델 출력을 텍스트, 레이블, PCM 또는 비트스트림으로 변환합니다.") }
-  ],
+const flows: Record<Exclude<AiAudioLabId, "overview">, Array<{ title: LocalizedText; detail: LocalizedText }>> = {
   asr: [
-    { title: l("PCM 与前端", "PCM and front end", "PCM とフロントエンド", "PCM과 프런트엔드"), detail: l("匹配模型采样率；频谱路线常用 25 ms 窗、10 ms 步长，两者不同。", "Match the model sample rate; spectral routes often use 25 ms windows and 10 ms hops, which are different quantities.", "モデルのサンプルレートを合わせます。スペクトル経路では 25 ms 窓と 10 ms ホップがよく使われますが、異なる量です。", "모델 샘플레이트를 맞춥니다. 스펙트럼 경로에서는 25 ms 창과 10 ms 홉을 자주 사용하지만 서로 다른 값입니다.") },
-    { title: l("声学表示", "Acoustic representation", "音響表現", "음향 표현"), detail: l("可选 log-Mel/MFCC，或从波形学习表示；并非都必须先做 FFT。", "Use log-Mel/MFCC or learned waveform features; an FFT is not always required.", "log-Mel/MFCC、または波形から学習した表現を使えます。常に FFT が必要とは限りません。", "log-Mel/MFCC 또는 파형에서 학습한 표현을 사용하며 항상 FFT가 필요한 것은 아닙니다.") },
-    { title: l("Encoder 与识别头", "Encoder and head", "Encoder と認識ヘッド", "Encoder와 인식 헤드"), detail: l("Encoder 建立上下文，CTC、RNNT 或 Attention 预测 token。", "The encoder builds context while CTC, RNNT, or attention predicts tokens.", "Encoder がコンテキストを作り、CTC、RNNT、Attention が token を予測します。", "Encoder가 문맥을 만들고 CTC, RNNT 또는 Attention이 token을 예측합니다.") },
-    { title: l("解码与文本处理", "Decoding and text processing", "デコードとテキスト処理", "디코딩과 텍스트 처리"), detail: l("热词可参与解码；标点与时间戳由模型或专门后处理提供。", "Hotwords may guide decoding; punctuation and timestamps come from the model or dedicated post-processing.", "ホットワードはデコードを誘導できます。句読点とタイムスタンプはモデルまたは専用後処理が提供します。", "핫워드는 디코딩을 유도할 수 있고 구두점과 타임스탬프는 모델 또는 전용 후처리가 제공합니다.") }
+    { title: l("先得到 PCM", "Start with PCM", "まず PCM を得る", "먼저 PCM 수집"), detail: l("以说“你好”为例：16 kHz 每秒采集 16000 个幅度值，采样值本身不是汉字。", "For “你好”: 16 kHz captures 16,000 amplitude values per second, not characters.", "「你好」を例に、16 kHz では毎秒 16000 個の振幅値を収録します。値自体は文字ではありません。", "‘你好’를 예로 들면 16 kHz는 초당 16000개의 진폭 값을 수집하며 값 자체는 문자가 아닙니다.") },
+    { title: l("提取短时声学模式", "Extract acoustic patterns", "短時間の音響パターン", "단시간 음향 패턴 추출"), detail: l("例如 25 ms 窗取 400 点，每 10 ms 移动 160 点，提取 log-Mel；波形学习前端是另一条路线，不必先做 MFCC。", "A 25 ms window takes 400 samples and a 10 ms hop advances 160 to form log-Mel features. Learned waveform front ends are an alternative; MFCC is not mandatory.", "25 ms 窓は 400 サンプル、10 ms ホップは 160 サンプルで log-Mel を作ります。波形学習は別経路で、MFCC は必須ではありません。", "25 ms 창은 400샘플, 10 ms 홉은 160샘플로 log-Mel을 만듭니다. 파형 학습 프런트엔드는 대안이며 MFCC는 필수가 아닙니다.") },
+    { title: l("上下文与 token 决策", "Context and token decisions", "文脈と token の判断", "문맥과 token 판단"), detail: l("Encoder 从连续声学模式建立上下文，再用选定的识别机制估计 token 序列。一个 token 不一定对应一个汉字或一个输入帧。", "The encoder builds context from acoustic patterns; the chosen recognition mechanism estimates tokens. One token need not equal a character or an input frame.", "Encoder が音響パターンから文脈を作り、選択した認識機構で token 列を推定します。token と文字や入力フレームは一対一ではありません。", "Encoder가 음향 패턴에서 문맥을 만들고 선택한 인식 방식으로 token을 추정합니다. token 하나가 문자나 입력 프레임 하나와 일치하지 않을 수 있습니다.") },
+    { title: l("解码为可用文本", "Decode usable text", "使える文字列へデコード", "사용할 텍스트로 디코딩"), detail: l("候选 token 经解码得到“你好”。热词可参与候选选择；标点、时间戳按模型或额外模块提供，说话人分离是独立任务。", "Decode candidate tokens into “你好”. Hotwords may guide selection; punctuation and timestamps depend on the model or extra modules. Speaker diarization is a separate task.", "候補 token を「你好」へデコードします。ホットワードは選択に参加でき、句読点と時刻はモデルか追加機構が提供します。話者分離は別タスクです。", "후보 token을 ‘你好’로 디코딩합니다. 핫워드는 선택을 도울 수 있고 구두점·시간 정보는 모델이나 추가 모듈이 제공합니다. 화자 분리는 별도 작업입니다.") }
   ],
   tts: [
     { title: l("文本规范化", "Normalize text", "テキスト正規化", "텍스트 정규화"), detail: l("数字、单位和缩写先转换为可朗读形式。", "Convert numbers, units, and abbreviations into speakable text.", "数字、単位、略語を先に読み上げ可能な形へ変換します。", "숫자·단위·약어를 먼저 읽을 수 있는 형태로 변환합니다.") },
@@ -76,12 +77,12 @@ const modeLabels: Record<AiAudioLabId, LocalizedText> = {
   codec: l("神经编码", "Neural coding", "ニューラル符号化", "신경 코딩")
 };
 
-export function AiAudioTopicPage({ relatedTopics, language, topic, mode, onBack, onOpenLab, onOpenPrevious, onOpenNext }: AiAudioTopicPageProps) {
+export function AiAudioTopicPage({ relatedTopics, language, topic, mode, onBack, onOpenLab, onOpenTopic, onOpenPrevious, onOpenNext }: AiAudioTopicPageProps) {
   const detail = topic.detail;
-  const steps = flows[mode];
+  const steps = mode === "overview" ? [] : flows[mode];
   const t = (zh: string, en: string, ja: string, ko: string) => ({ zh, "zh-Hant": traditional(zh), en, ja, ko })[language];
   return (
-    <main className="sound-topic-page ai-topic-page" aria-labelledby="ai-topic-title">
+    <main className={`sound-topic-page ai-topic-page${mode === "overview" ? " ai-overview-page" : ""}`} aria-labelledby="ai-topic-title">
       <header className="sound-topic-hero">
         <button className="sound-topic-back" type="button" onClick={onBack}><ArrowLeft size={17} aria-hidden="true" />{t("返回知识库", "Back to knowledge base", "ナレッジベースに戻る", "지식 베이스로 돌아가기")}</button>
         <div className="sound-topic-kicker"><BookOpen size={16} aria-hidden="true" />{t("AI 音频 · 专业内容", "AI audio · Deep dive", "AI オーディオ · 詳細解説", "AI 오디오 · 심층 내용")}</div>
@@ -90,9 +91,17 @@ export function AiAudioTopicPage({ relatedTopics, language, topic, mode, onBack,
         <div className="sound-topic-meta"><span>{modeLabels[mode][language]}</span><span>{t("模型与部署", "Models and deployment", "モデルとデプロイ", "모델과 배포")}</span><span>{t("实验验证", "Hands-on lab", "実験で検証", "실험 검증")}</span></div>
       </header>
       <TopicReadingLayout language={language}>
-        <section className="sound-topic-section sound-topic-intro"><div><h2>{t("先明确任务，再选择模型", "Define the task before choosing the model", "まずタスクを定義してからモデルを選ぶ", "먼저 작업을 정의한 뒤 모델을 선택하세요")}</h2>{detail.explanation[language].split("\n\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></section>
+        {mode === "overview" ? <AiAudioOverview language={language} onOpen={onOpenTopic} /> : <>
+        <section className="sound-topic-section sound-topic-intro"><div><h2>{t("先明确任务，再选择模型", "Define the task before choosing the model", "まずタスクを定義してからモデルを選ぶ", "먼저 작업을 정의한 뒤 모델을 선택하세요")}</h2>{mode === "asr" ? <><p>{detail.explanation[language].split("\n\n")[0]}</p><details className="asr-reading-more"><summary>{t("展开输入与输出说明", "Input and output details", "入力と出力の説明", "입력과 출력 설명")}</summary>{detail.explanation[language].split("\n\n").slice(1).map((paragraph,index)=><p key={index}>{paragraph}</p>)}</details></> : detail.explanation[language].split("\n\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></section>
+        {mode === "asr" ? <AsrSignalJourney language={language} /> : mode === "tts" ? <TtsPrinciple language={language} /> : mode === "generation" ? <AudioGenerationPrinciple language={language} /> : <>
         <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{t("这张卡片的 AI 音频链路", "The AI audio path for this topic", "このテーマの AI オーディオ経路", "이 주제의 AI 오디오 경로")}</h2><p>{t("输入表示、模型输出和工程后处理会随任务变化，不能把所有 AI 音频都当成频谱图像分类。", "Input representations, model outputs, and engineering post-processing vary by task; not all AI audio is spectrogram classification.", "入力表現、モデル出力、実装上の後処理はタスクごとに異なり、すべての AI オーディオをスペクトログラム分類とみなすことはできません。", "입력 표현·모델 출력·엔지니어링 후처리는 작업마다 다르며 모든 AI 오디오를 스펙트로그램 분류로 볼 수 없습니다.")}</p></div></div><ol className="ai-topic-flow" aria-label={t("AI 音频处理流程", "AI audio processing flow", "AI オーディオ処理フロー", "AI 오디오 처리 흐름")}>{steps.map((step, index) => <li key={step.title.en}><span>{String(index + 1).padStart(2, "0")}</span><h3>{step.title[language]}</h3><p>{step.detail[language]}</p></li>)}</ol></section>
+        </>}
+        {mode === "enhancement" && <section className="sound-topic-section"><AiEnhancementPrinciple language={language} /></section>}
+        {mode === "asr" && <AsrPrinciple language={language} />}
+        </>}
+        {detail.lab &&
         <section className="sound-topic-section ai-topic-lab-entry" aria-label={t("当前主题实验室入口", "Current topic lab entry", "現在のテーマのラボ入口", "현재 주제 실험실 입구")}><div className="sound-topic-cta"><CircuitBoard size={22} aria-hidden="true" /><h2>{detail.lab?.title[language]}</h2><p>{detail.lab?.description[language]}</p><button className="diagram-open-button" type="button" onClick={onOpenLab}>{detail.lab?.buttonLabel[language]}</button></div></section>
+        }
         <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{t("核心知识点", "Core concepts", "核心概念", "핵심 개념")}</h2><p>{t("先掌握任务边界，再深入实验室中的公式、模型和案例。", "Understand the task boundary before diving into formulas, models, and cases in the lab.", "まずタスクの境界を理解し、ラボの式・モデル・事例へ進みます。", "먼저 작업의 경계를 이해한 뒤 실험실의 공식·모델·사례로 들어갑니다.")}</p></div></div><ul className="ai-topic-concepts">{detail.keyConcepts.map((concept) => <li key={concept.en}>{concept[language]}</li>)}</ul></section>
         <section className="sound-topic-section"><div><h2>{t("工程边界", "Engineering boundary", "実装上の境界", "엔지니어링 경계")}</h2><p>{detail.misconception[language]}</p></div></section>
         <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{t("相关术语", "Related terms", "関連用語", "관련 용어")}</h2></div></div><div className="ai-topic-terms">{detail.termExplanations?.map((term) => <details key={term.name.en}><summary>{term.name[language]}</summary><p>{term.explanation[language]}</p></details>)}</div></section>

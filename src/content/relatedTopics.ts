@@ -4,6 +4,7 @@ import type { AiAudioLabId, LocalizedText, Topic, TopicLab } from "./knowledge";
 export type TopicKey = Exclude<TopicLab["type"], "ai-audio"> | `ai-${AiAudioLabId}`;
 
 export function getTopicKey(topic: Topic): TopicKey | undefined {
+  if (topic.title.en === "AI Audio Overall Flow") return "ai-overview";
   if (topic.title.en === "System Audio Architecture") return "system-audio";
   const lab = topic.detail.lab;
   if (!lab) return undefined;

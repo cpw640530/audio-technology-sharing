@@ -1,0 +1,67 @@
+import { useEffect, useRef, useState } from "react";
+import { animate, createScope } from "animejs";
+import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import type { Language } from "../content/knowledge";
+import { text } from "../content/language";
+import { aceStepBudget } from "./audioGenerationModel";
+
+export function AudioGenerationWalkthrough({ language }: { language: Language }) {
+  const t = (zh: string, en: string, ja: string, ko: string) => text(language, zh, en, ja, ko);
+  const [stage, setStage] = useState(0);
+  const [route, setRoute] = useState(0);
+  const [tick, setTick] = useState(0);
+  const [seconds, setSeconds] = useState(10);
+  const root = useRef<HTMLElement>(null);
+  const budget = aceStepBudget(seconds);
+  const stages = [t("描述与条件", "Prompt & conditions", "記述と条件", "설명과 조건"), t("声音的表示", "Audio representation", "音の表現", "소리 표현"), t("模型怎样生成", "How generation works", "生成の仕組み", "생성 원리"), t("解码与交付", "Decode & deliver", "復号と出力", "디코딩과 전달")];
+  useEffect(() => {
+    const scope = createScope({ root, mediaQueries: { reduceMotion: "(prefers-reduced-motion: reduce)" } }).add(self => {
+      if (!self?.matches.reduceMotion) animate(".generation-stage-content", { opacity: [.55, 1], duration: 180, ease: "linear" });
+    });
+    return () => scope.revert();
+  }, [stage, route]);
+  const routeNames = ["ACE-Step 1.5 · 2026", "Stable Audio 3 Medium · 2026"];
+  return <section ref={root} className="tts-walkthrough generation-walkthrough" aria-label={t("音频生成逐步可视化", "Audio generation walkthrough", "音声生成の段階的可視化", "오디오 생성 단계별 시각화")}>
+    <header className="tts-toolbar"><div><h2>{t("从一句描述，到一段新声音", "From a description to new audio", "一つの記述から新しい音へ", "설명에서 새로운 소리로")}</h2><span>{t("同一任务，不同模型路线", "One task, different model paths", "同じ課題、異なるモデル経路", "같은 작업, 다른 모델 경로")}</span></div><div className="robot-buttons">
+      <button disabled={stage === 0} onClick={() => setStage(stage - 1)} aria-label={t("上一步", "Previous step", "前のステップ", "이전 단계")} title={t("上一步", "Previous step", "前のステップ", "이전 단계")}><ChevronLeft size={18}/></button>
+      <button disabled={stage === 3} onClick={() => setStage(stage + 1)} aria-label={t("下一步", "Next step", "次のステップ", "다음 단계")} title={t("下一步", "Next step", "次のステップ", "다음 단계")}><ChevronRight size={18}/></button>
+      <button onClick={() => { setStage(0); setRoute(0); setTick(0); setSeconds(10); }} aria-label={t("重置生成演示", "Reset generation walkthrough", "生成デモをリセット", "생성 데모 초기화")} title={t("重置", "Reset", "リセット", "초기화")}><RotateCcw size={18}/></button>
+    </div></header>
+    <div className="tts-route-options" role="group" aria-label={t("生成模型路线", "Generation model route", "生成モデル経路", "생성 모델 경로")}>{routeNames.map((name, i) => <button key={name} aria-pressed={route === i} onClick={() => setRoute(i)}>{name}</button>)}</div>
+    <ol className="tts-stage-nav">{stages.map((name, i) => <li key={i}><button aria-current={stage === i ? "step" : undefined} onClick={() => setStage(i)}>{i + 1}. {name}</button></li>)}</ol>
+    <div className="generation-stage-content" key={`${stage}-${route}`}>
+      {stage === 0 && <>
+        <blockquote className="generation-prompt">{t("轻柔的钢琴，背景中有雨声。", "Soft piano with rain in the background.", "雨音を背景にした穏やかなピアノ。", "빗소리를 배경으로 한 부드러운 피아노.")}</blockquote>
+        <ol className="tts-text-chain"><li><strong>{t("描述想听见什么", "Describe what to hear", "聴きたい音を記述", "듣고 싶은 소리 설명")}</strong><span>{t("乐器、环境、情绪", "Instrument, setting, mood", "楽器・環境・雰囲気", "악기·환경·분위기")}</span></li><li><strong>{route === 0 ? "Optional LM → plan + codes" : "Text + duration → conditioning"}</strong><span>{t("把条件编码为模型表示", "Encode conditions for the model", "条件をモデル表現へ符号化", "조건을 모델 표현으로 인코딩")}</span></li><li><strong>{t("生成新声音", "Generate new audio", "新しい音を生成", "새 소리 생성")}</strong><span>{t("不是把这句话朗读出来", "Not a reading of this sentence", "この文を読み上げるのではない", "이 문장을 읽는 것이 아님")}</span></li></ol>
+        <p>{t("TTS 主要控制词句与读音；这里控制声音内容与场景。提示词约束的是分布而非唯一波形，同一句描述可生成不同结果，也可能漏掉雨声等条件。文本并不会直接按字变成频率。", "TTS primarily controls words and pronunciation; here the condition describes sound content and setting. A prompt constrains a distribution, not a unique waveform: outputs can differ or omit rain. Text characters do not directly become frequencies.", "TTS は主に言葉と発音を制御しますが、ここでは音の内容や場面を指定します。記述は唯一の波形ではなく分布を条件付けるため、結果は異なり、雨音が欠落する場合もあります。文字が直接周波数になるわけではありません。", "TTS는 주로 단어와 발음을 제어하지만 여기서는 소리 내용과 장면을 지정합니다. 설명은 유일한 파형이 아닌 분포를 조건화하므로 결과가 달라지거나 빗소리가 누락될 수 있습니다. 글자가 직접 주파수가 되지는 않습니다.")}</p>
+      </>}
+      {stage === 1 && <>
+        <ol className="tts-text-chain">{(route === 0 ? ["5 Hz · semantic codes", "25 Hz · continuous latents", "48 kHz · stereo PCM"] : ["Text + duration → conditioning", "256-dim SAME latents · ≈10.77 Hz", "SAME decoder → 44.1 kHz stereo PCM"]).map(item => <li key={item}><strong>{item}</strong></li>)}</ol>
+        <p>{route === 0 ? t("ACE-Step 1.5 将规划与声学生成分开：可选 LM 规划元数据、歌词和 5 Hz 语义码；DiT 生成 25 Hz、每帧 64 维的连续潜变量；1D 波形 VAE 再解码成 48 kHz 双声道。语义码不是 PCM，64 维也不是 64 个声道。下方是名义长度预算，真实输出还涉及边界填充与裁剪。", "ACE-Step 1.5 separates planning from acoustics: an optional LM plans metadata, lyrics and 5 Hz semantic codes; a DiT generates continuous 25 Hz latents with 64 dimensions per frame; a waveform VAE decodes 48 kHz stereo. Codes are not PCM and 64 dimensions are not 64 audio channels. Below are nominal length budgets, before boundary padding and trimming.", "ACE-Step 1.5 は計画と音響生成を分離します。任意の LM がメタデータ・歌詞・5 Hz 意味コードを計画し、DiT が25 Hz・64次元の連続潜在変数を生成、波形 VAE が48 kHz ステレオへ復号します。64次元は64音声チャンネルではありません。下の数はパディングや切り詰め前の名目値です。", "ACE-Step 1.5는 계획과 음향 생성을 분리합니다. 선택적 LM이 메타데이터·가사·5 Hz 의미 코드를 계획하고 DiT가 25 Hz·64차원 연속 잠재 변수를 생성하며 파형 VAE가 48 kHz 스테레오로 복원합니다. 64차원은 64오디오 채널이 아닙니다. 아래 수치는 패딩·자르기 전 명목 길이입니다.") : t("Stable Audio 3 Medium 用 SAME-L 将声音表示为每帧 256 维的连续潜变量；44.1 kHz 波形按时间压缩 4096 倍，名义帧率约为 10.77 Hz。256 维不是声道数，10.77 Hz 也不是可听频率上限。文本和目标时长是生成条件；输出由 SAME 直接解码为双声道 PCM，不经过 LOA、Mel 或独立声码器。", "Stable Audio 3 Medium uses SAME-L with 256-dimensional continuous latents. Temporal downsampling by 4096 at 44.1 kHz gives a nominal latent rate of about 10.77 Hz. Dimensions are not audio channels, and latent rate is not the audible frequency limit. Text and target duration condition generation; SAME decodes directly to stereo PCM without LOA, Mel or a separate vocoder.", "Stable Audio 3 Medium は SAME-L の256次元連続潜在変数を使います。44.1 kHz 波形を時間方向に4096倍圧縮し、名目約10.77 Hz の潜在系列にします。次元数はチャンネル数でなく、潜在レートは可聴周波数上限でもありません。テキストと長さを条件に生成し、LOA・Mel・別のボコーダを介さず SAME がステレオ PCM に復号します。", "Stable Audio 3 Medium은 SAME-L의 256차원 연속 잠재 변수를 사용합니다. 44.1 kHz 파형을 시간축에서 4096배 압축해 명목 약 10.77 Hz 잠재 시퀀스로 만듭니다. 차원은 채널 수가 아니며 잠재 속도는 가청 주파수 상한이 아닙니다. 텍스트와 목표 길이로 조건화하고 LOA·Mel·별도 보코더 없이 SAME이 스테레오 PCM으로 복원합니다.")}</p>
+        {route === 0 && <><label className="tts-frame-control">{t("目标音频时长", "Target audio duration", "目標音声の長さ", "목표 오디오 길이")} · {seconds} s<input type="range" min="10" max="60" step="10" value={seconds} onChange={e => setSeconds(Number(e.target.value))}/></label><div className="tts-duration-result" data-testid="generation-budget"><code>{seconds} × 5 = {budget.semanticSteps} codes</code><code>{seconds} × 25 = {budget.latentFrames} latent frames</code><code>{seconds} × 48,000 = {budget.samplesPerChannel} samples/ch</code></div></>}
+      </>}
+      {stage === 2 && (route === 0 ? <>
+        <h3>{t("DiT + Flow Matching：逐步更新整段潜变量", "DiT + Flow Matching: update the whole latent sequence", "DiT + Flow Matching：潜在系列全体を更新", "DiT + Flow Matching: 전체 잠재 시퀀스 갱신")}</h3>
+        <ol className="tts-text-chain"><li><strong>{t("条件 c", "Conditions c", "条件 c", "조건 c")}</strong><span>caption / lyrics / codes</span></li><li><strong>dxτ / dτ = vθ(xτ, τ, c)</strong><span>DiT → ODE solver</span></li><li><strong>{t("波形潜变量", "Waveform latents", "波形潜在変数", "파형 잠재 변수")}</strong><span>1D VAE → PCM</span></li></ol>
+        <label className="tts-frame-control">{t("教学迭代位置", "Teaching iteration position", "教材の反復位置", "교육용 반복 위치")} · {tick}/8<input type="range" min="0" max="8" step="1" value={tick} onChange={e => setTick(Number(e.target.value))}/></label>
+        <div className="generation-latent-strip" role="img" aria-label={t("同一时间窗内整段潜变量的迭代状态示意", "Iteration state across the same latent time window", "同一時間窓の潜在変数全体の反復状態", "동일 시간 창의 전체 잠재 변수 반복 상태")}>
+          {Array.from({length:8}, (_, i) => <span key={i}>z<sub>{i + 1}</sub><sup>({tick})</sup></span>)}
+        </div>
+        <div className="tts-duration-result"><strong data-testid="generation-iteration">k = {tick}/8</strong><code data-testid="generation-latent-count">T = {seconds} s · Nlatent = {budget.latentFrames}</code></div>
+        <p>{t("方块仅代表同一音频时间窗内的 8 个区段，不是能量图；上标 k 表示更新轮次。k=0 是初始噪声状态，后续每轮更新整段潜变量，长度不随轮次增长。这里用 8 步说明 turbo 路线，但不计算模型数值，也不暗示步数越多一定越好。真实时间步由采样器设定，不能把 k/8 当作线性噪声强度。", "Blocks symbolize eight regions of the same audio window, not energy values; superscript k is the iteration. k=0 is initial noise. Each update covers the whole latent sequence without extending it. Eight steps illustrate the turbo route, not computed model states or guaranteed quality gains. The sampler sets actual timesteps; k/8 is not a linear noise level.", "ブロックは同じ音声窓の8区間の記号で、エネルギー値ではありません。上付き k は反復位置、k=0 は初期ノイズです。各回で系列全体を更新し、長さは増えません。turbo 経路を8回で説明する図で、実計算や品質向上の保証ではありません。実時間刻みはサンプラーが決め、k/8 は線形ノイズ量ではありません。", "블록은 같은 오디오 창의 여덟 구간을 뜻하며 에너지 값이 아닙니다. 위첨자 k는 반복 위치이고 k=0은 초기 잡음입니다. 매번 전체 시퀀스를 갱신하며 길이는 늘지 않습니다. turbo 경로를 8회로 설명할 뿐 실제 계산이나 품질 향상 보장은 아닙니다. 실제 시간 간격은 샘플러가 정하며 k/8은 선형 잡음 강도가 아닙니다.")}</p>
+      </> : <>
+        <h3>{t("从 Flow Matching 到少步生成", "From flow matching to few-step generation", "Flow Matching から少数ステップ生成へ", "Flow Matching에서 소수 단계 생성으로")}</h3>
+        <ol className="tts-text-chain"><li><strong>xₜ + c</strong><span>T5Gemma text + duration</span></li><li><strong>vθ(xₜ, t, c)</strong><span>DiT → x̂₀ = xₜ − t · vθ</span></li><li><strong>Ping-pong sampling</strong><span>{t("估计干净潜变量，再以更低噪声级重新加噪", "Estimate clean latents, then re-noise at a lower level", "クリーンな潜在変数を推定し低いノイズ量で再加ノイズ", "깨끗한 잠재 변수를 추정한 뒤 더 낮은 수준으로 재가잡음")}</span></li></ol>
+        <code className="tts-route-equation">xₜ → x̂₀ → (1 − t′)x̂₀ + t′ε′ → … → SAME decoder</code>
+        <p>{t("先用 Flow Matching 学习速度场，再经蒸馏与对抗后训练学习少步生成。上式表示后训练模型的干净潜变量估计与 ping-pong 采样，不是简单把噪声音量调小。t 是噪声级，t′ 小于 t，不是歌曲时间；条件 c 含文本和时长。局部编辑时，还可加入已有录音的潜变量与保留掩码。这里不伪造模型数值，也不把 ACE-Step 的迭代状态套到此模型上。", "Flow matching learns a velocity field, followed by distillation and adversarial post-training for few-step generation. The equation shows clean-latent estimation and ping-pong sampling, not merely reducing noise volume. t is a noise level, not song time, and t′ is lower than t; c includes text and duration. Inpainting can also condition on source-audio latents and a preservation mask. No model values or ACE-Step iteration states are substituted here.", "Flow Matching で速度場を学び、蒸留と敵対的な後学習で少数ステップ生成へ進みます。式はクリーン潜在推定と ping-pong サンプリングで、ノイズ音量を下げるだけではありません。t は曲の時刻でなくノイズ量、t′ は t より低く、c はテキストと長さです。部分編集には元音声の潜在変数と保持マスクも条件に使えます。モデル数値や ACE-Step の反復状態で代用しません。", "Flow Matching으로 속도장을 학습한 뒤 증류와 적대적 후학습으로 소수 단계 생성을 학습합니다. 식은 깨끗한 잠재 추정과 ping-pong 샘플링이며 잡음 음량만 줄이는 것이 아닙니다. t는 곡 시간이 아닌 잡음 수준이고 t′는 t보다 낮으며 c는 텍스트와 길이를 포함합니다. 부분 편집에는 원본 잠재 변수와 보존 마스크도 조건으로 사용합니다. 모델 수치나 ACE-Step 반복 상태로 대체하지 않습니다.")}</p>
+      </>)}
+      {stage === 3 && <>
+        <ol className="tts-text-chain">{(route === 0 ? ["25 Hz waveform latents", "1D VAE decoder", "48 kHz stereo PCM"] : ["256-dim SAME latents", "SAME-L decoder", "44.1 kHz stereo PCM"]).map(item => <li key={item}><strong>{item}</strong></li>)}</ol>
+        {route === 0 && <code className="tts-route-equation">{seconds} s × 48,000 = {budget.samplesPerChannel} samples/ch · 2 channels</code>}
+        <p>{t("上方是表示到波形的结构，不是普通 MP3 解码，也不是直接对 Mel 做逆 FFT。采样率、解码器和潜变量必须与模型配置匹配。最后还要检查削波、响度、首尾接缝、提示词符合程度和使用授权；响度归一化不能修复漏掉的乐器或错误内容。", "This is representation-to-waveform synthesis, not ordinary MP3 decoding or a direct inverse FFT of Mel. Sample rate, decoder and latents must match the model configuration. Delivery still requires checks for clipping, loudness, joins, prompt alignment and licensing; normalization cannot fix missing instruments or incorrect content.", "これは表現から波形を合成する構造で、通常の MP3 復号や Mel の直接逆 FFT ではありません。標本化周波数・復号器・潜在変数はモデル設定と一致させます。クリッピング・ラウドネス・接続部・条件整合・利用許諾を確認し、音量正規化で楽器の欠落は直せません。", "이는 표현에서 파형을 합성하는 구조로 일반 MP3 디코딩이나 Mel의 직접 역 FFT가 아닙니다. 샘플레이트·디코더·잠재 변수는 모델 설정과 맞아야 합니다. 클리핑·음량·연결부·조건 일치·이용 허가를 확인해야 하며 정규화로 누락된 악기를 고칠 수는 없습니다.")}</p>
+      </>}
+    </div>
+    <p className="tts-demo-boundary">{t("教学边界：两条路线都以 2026 年模型为例，只演示结构，不运行推理。ACE-Step 侧重音乐，Stable Audio 3 Medium 支持音乐与音效；Small 分为音乐与音效专用版本，Large 仅通过 API 提供。模型权重的授权需分别核对，不能因代码开放就默认可任意商用。", "Teaching boundary: both examples are 2026 models; this explains architecture without inference. ACE-Step focuses on music; Stable Audio 3 Medium supports music and sound effects. Small has separate music/SFX variants; Large is API-only. Check weight licenses separately: open code does not imply unrestricted commercial use.", "どちらも2026年のモデルを使う構造教材で、推論は実行しません。ACE-Step は音楽中心、Stable Audio 3 Medium は音楽と効果音に対応。Small は音楽用と効果音用に分かれ、Large は API のみです。コード公開と重みの無制限な商用利用は別なので許諾を確認してください。", "두 경로 모두 2026년 모델 구조를 설명하며 추론하지 않습니다. ACE-Step은 음악 중심이고 Stable Audio 3 Medium은 음악과 효과음을 지원합니다. Small은 음악·효과음 전용으로 나뉘며 Large는 API 전용입니다. 공개 코드가 무제한 상업 이용을 뜻하지 않으므로 가중치 허가를 따로 확인하세요.")}</p>
+    <a href={route === 0 ? "https://github.com/ace-step/ACE-Step-1.5" : "https://github.com/Stability-AI/stable-audio-3"} target="_blank" rel="noreferrer">{routeNames[route]} · {t("原理与官方示例", "Principles & official examples", "原理と公式例", "원리와 공식 예시")}</a>
+  </section>;
+}

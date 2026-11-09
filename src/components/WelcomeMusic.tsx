@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Music2, Pause, Volume2 } from "lucide-react";
 import type { Language } from "../content/knowledge";
 import { text } from "../content/language";
+import { animationLoop } from "./animationLoop";
 
 export function WelcomeMusic({ language, autoplay = true }: { language: Language; autoplay?: boolean }) {
   const audio = useRef<{ context: AudioContext; gain: GainNode; analyser: AnalyserNode; media: HTMLAudioElement } | null>(null);
@@ -16,31 +17,23 @@ export function WelcomeMusic({ language, autoplay = true }: { language: Language
   useEffect(() => {
     const pen = canvas.current?.getContext("2d");
     if (!pen) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const samples = new Float32Array(512);
-    let frame = 0;
-    let last = -Infinity;
-    const draw = (now: number) => {
-      if (now - last >= 1000 / 30 && !document.hidden) {
-        last = now;
-        samples.fill(0);
-        if (playing) audio.current?.analyser.getFloatTimeDomainData(samples);
-        pen.clearRect(0, 0, 160, 80);
-        pen.fillStyle = "#245c50";
-        for (let bar = 0; bar < 12; bar++) {
-          let energy = 0;
-          for (let i = 0; i < 42; i++) energy += samples[bar * 42 + i] ** 2;
-          // Short-time levels with fixed visual gain, not frequency bands or calibrated meters.
-          const height = 4 + Math.min(1, Math.sqrt(energy / 42) * 16) * 68;
-          pen.fillRect(4 + bar * 13, (80 - height) / 2, 6, height);
-        }
+    const draw = () => {
+      samples.fill(0);
+      if (playing) audio.current?.analyser.getFloatTimeDomainData(samples);
+      pen.clearRect(0, 0, 160, 80);
+      pen.fillStyle = "#245c50";
+      for (let bar = 0; bar < 12; bar++) {
+        let energy = 0;
+        for (let i = 0; i < 42; i++) energy += samples[bar * 42 + i] ** 2;
+        // Short-time levels with fixed visual gain, not frequency bands or calibrated meters.
+        const height = 4 + Math.min(1, Math.sqrt(energy / 42) * 16) * 68;
+        pen.fillRect(4 + bar * 13, (80 - height) / 2, 6, height);
       }
-      if (playing && !reduced.matches) frame = requestAnimationFrame(draw);
     };
-    const restart = () => { cancelAnimationFrame(frame); last = -Infinity; draw(performance.now()); };
-    restart();
-    reduced.addEventListener("change", restart);
-    return () => { cancelAnimationFrame(frame); reduced.removeEventListener("change", restart); };
+    const animation = animationLoop(canvas.current!, draw);
+    animation.setPlaying(playing);
+    return () => animation.dispose();
   }, [playing]);
 
   useEffect(() => () => {

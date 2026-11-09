@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.1",
+    "animejs": "^4.5.0",
     "cannon-es": "0.20.0",
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",

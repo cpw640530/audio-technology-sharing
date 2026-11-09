@@ -2,15 +2,15 @@ import { traditional } from "../content/traditional";
 import { ArrowLeft } from "lucide-react";
 import { AiDenoiseWalkthrough } from "./AiDenoiseWalkthrough";
 import { AsrWalkthrough } from "./AsrWalkthrough";
-import { AiAudioOverview } from "./AiAudioOverview";
+import { TtsWalkthrough } from "./TtsWalkthrough";
+import { AudioGenerationWalkthrough } from "./AudioGenerationWalkthrough";
 import type { AiAudioLabId, Language } from "../content/knowledge";
 
 type AiAudioLabProps = {
-  labId?: AiAudioLabId;
+  labId?: Exclude<AiAudioLabId, "overview">;
   language: Language;
   onBack: () => void;
   onBackToDetails?: () => void;
-  onOpen?: (id: AiAudioLabId) => void;
 };
 
 type LocalizedText = Record<Language, string>;
@@ -709,7 +709,7 @@ const aiArticlesSource: Record<AiAudioLabId, AiArticle> = {
       input: { zh: "文本、旋律、参考音频、视频、节拍或局部编辑掩码", en: "Text, melody, reference audio, video, tempo, or local edit masks" },
       representation: { zh: "连续潜变量、Mel 谱或神经 codec 离散 token", en: "Continuous latents, Mel spectra, or discrete neural-codec tokens" },
       output: { zh: "音乐、环境声、音效或编辑后的 PCM 音频", en: "Music, ambience, sound effects, or edited PCM audio" },
-      objective: { zh: "自回归 token 似然或扩散噪声预测，并用条件对齐约束提示词一致性", en: "Autoregressive token likelihood or diffusion noise prediction with conditioning alignment" },
+      objective: { zh: "token 似然、Flow Matching 速度场或扩散目标，按模型与训练阶段选择", en: "Token likelihood, flow-matching velocity fields or diffusion objectives, depending on model and training stage" },
       metrics: { zh: "主观偏好、FAD、文本-音频对齐、生成多样性、结构一致性和生成速度", en: "Human preference, FAD, text-audio alignment, diversity, structural consistency, and generation speed" },
       deployment: { zh: "区分离线创作与交互生成，并处理时长、显存、来源标记、版权和安全过滤", en: "Separate offline creation from interactive generation; handle duration, memory, provenance, licensing, and safety filters" }
     },
@@ -723,15 +723,20 @@ const aiArticlesSource: Record<AiAudioLabId, AiArticle> = {
         expression: "Ldiff = E[||ε - εθ(zt, t, c)||²]",
         title: { zh: "扩散模型训练", en: "Diffusion training" },
         explanation: { zh: "噪声预测参数化的一种目标：zₜ = √ᾱₜ z₀ + √(1−ᾱₜ) ε，模型预测构造 zₜ 时的整体噪声 ε。t 是扩散步，不是音频采样时刻；并非所有生成模型都预测 ε。", en: "One noise-prediction objective: zₜ = √ᾱₜ z₀ + √(1−ᾱₜ) ε, predicting the total noise used to construct zₜ. Here t is a diffusion step, not an audio sample time; not all generative models predict ε." }
+      },
+      {
+        expression: "Lflow = E[||vθ(xτ, τ, c) − (ε − x₀)||²]",
+        title: { zh: "Flow Matching 基础目标", en: "Basic flow-matching objective" },
+        explanation: { zh: "线性路径教学式：xτ = (1−τ)x₀ + τε，τ=0 是数据、τ=1 是噪声，模型学习速度 ε−x₀；生成时从噪声反向积分。它不是 ACE-Step 蒸馏训练的全部损失。", en: "Teaching linear path: xτ = (1−τ)x₀ + τε, with data at τ=0 and noise at τ=1. The model learns velocity ε−x₀; generation integrates back from noise. This is not the complete ACE-Step distillation loss." }
       }
     ],
     models: [
       {
-        name: "MusicGen",
-        task: { zh: "文本/旋律条件音乐生成", en: "Text or melody-conditioned music generation" },
+        name: "ACE-Step 1.5 · 2026",
+        task: { zh: "文本条件音乐生成与编辑", en: "Text-conditioned music generation and editing" },
         principle: {
-          zh: "基于 EnCodec token 做生成，文本或旋律条件控制音乐内容。",
-          en: "Generates over EnCodec tokens while text or melody conditions steer the music."
+          zh: "可选 LM 规划语义码与音乐条件，DiT 经 Flow Matching 生成连续潜变量，1D 波形 VAE 输出 48 kHz 双声道 PCM。",
+          en: "An optional LM plans semantic codes and musical conditions; a DiT uses flow matching to generate continuous latents, and a waveform VAE outputs 48 kHz stereo PCM."
         },
         deployment: {
           zh: "适合配乐草稿、短视频音乐、音乐创意辅助和素材预览。",
@@ -759,19 +764,19 @@ const aiArticlesSource: Record<AiAudioLabId, AiArticle> = {
         }
       },
       {
-        name: "AudioLDM",
-        task: { zh: "扩散式文本到音频", en: "Diffusion-based text-to-audio" },
+        name: "Stable Audio 3 Medium · 2026",
+        task: { zh: "文本条件音乐、音效与局部编辑", en: "Text-conditioned music, sound effects and inpainting" },
         principle: {
-          zh: "在 latent 空间逐步去噪生成音频表示，再解码成可播放声音。",
-          en: "Denoises latent audio representations step by step, then decodes them into playable sound."
+          zh: "DiT 在 SAME 连续潜空间生成，结合 Flow Matching、蒸馏和对抗后训练，SAME-L 解码为 44.1 kHz 双声道 PCM。",
+          en: "A DiT generates continuous SAME latents using flow matching, distillation and adversarial post-training; SAME-L decodes 44.1 kHz stereo PCM."
         },
         deployment: {
-          zh: "适合通用音效生成、声音实验和多样化候选生成。",
-          en: "Fits general sound generation, audio experiments, and diverse candidate generation."
+          zh: "Medium 支持音乐和音效，可按目标时长生成或用掩码编辑局部片段。",
+          en: "Medium supports music and sound effects, target-duration generation and masked local editing."
         },
         caution: {
-          zh: "扩散采样通常更耗时，实时互动要看模型和推理优化。",
-          en: "Diffusion sampling is often heavier; real-time interaction depends on model and inference optimization."
+          zh: "Small 分音乐与音效专用版，Large 仅 API；实际速度取决于硬件、时长和采样设置，权重授权需单独核对。",
+          en: "Small has music/SFX-specific variants; Large is API-only. Speed depends on hardware, duration and sampling; check weight licenses separately."
         }
       },
       {
@@ -1406,6 +1411,8 @@ const aiArticlesSource: Record<AiAudioLabId, AiArticle> = {
 };
 
 Object.assign(ja, {
+  "文本条件音乐生成与编辑": "テキスト条件付き音楽生成と編集",
+  "token 似然、Flow Matching 速度场或扩散目标，按模型与训练阶段选择": "モデルと学習段階に応じ、token 尤度・Flow Matching の速度場・拡散目的関数を使い分けます。",
   "全面概述": "全体概要",
   "基本原理": "基本原理",
   "核心技术": "コア技術",
@@ -1469,6 +1476,8 @@ Object.assign(ja, {
 });
 
 Object.assign(ko, {
+  "文本条件音乐生成与编辑": "텍스트 조건 음악 생성 및 편집",
+  "token 似然、Flow Matching 速度场或扩散目标，按模型与训练阶段选择": "모델과 학습 단계에 따라 token 우도·Flow Matching 속도장·확산 목표를 사용합니다.",
   "全面概述": "전체 개요",
   "基本原理": "기본 원리",
   "核心技术": "핵심 기술",
@@ -2197,6 +2206,30 @@ Object.assign(ko, {
   "趋势是语义 token 与音频 codec 结合、极低码率语音、生成式重建、端侧神经 codec 和与大模型音频 token 的统一。": "동향은 의미 토큰과 오디오 코덱 결합, 초저비트레이트 음성, 생성형 재구성, 엣지 신경 코덱, 파운데이션 모델 오디오 토큰과의 통합입니다."
 });
 
+Object.assign(ja, {
+  "Flow Matching 基础目标": "Flow Matching の基本目的関数",
+  "线性路径教学式：xτ = (1−τ)x₀ + τε，τ=0 是数据、τ=1 是噪声，模型学习速度 ε−x₀；生成时从噪声反向积分。它不是 ACE-Step 蒸馏训练的全部损失。": "教材の線形経路 xτ = (1−τ)x₀ + τε では τ=0 がデータ、τ=1 がノイズです。速度 ε−x₀ を学習し、生成時はノイズから逆に積分します。ACE-Step の蒸留損失すべてを表す式ではありません。",
+  "可选 LM 规划语义码与音乐条件，DiT 经 Flow Matching 生成连续潜变量，1D 波形 VAE 输出 48 kHz 双声道 PCM。": "任意の LM が意味コードと音楽条件を計画し、DiT が Flow Matching で連続潜在変数を生成、1D 波形 VAE が48 kHz ステレオ PCM を出力します。"
+});
+Object.assign(ko, {
+  "Flow Matching 基础目标": "Flow Matching 기본 목표",
+  "线性路径教学式：xτ = (1−τ)x₀ + τε，τ=0 是数据、τ=1 是噪声，模型学习速度 ε−x₀；生成时从噪声反向积分。它不是 ACE-Step 蒸馏训练的全部损失。": "교육용 선형 경로 xτ = (1−τ)x₀ + τε에서 τ=0은 데이터, τ=1은 잡음입니다. 속도 ε−x₀를 학습하고 생성 시 잡음에서 역방향 적분합니다. ACE-Step 증류 학습의 전체 손실은 아닙니다.",
+  "可选 LM 规划语义码与音乐条件，DiT 经 Flow Matching 生成连续潜变量，1D 波形 VAE 输出 48 kHz 双声道 PCM。": "선택적 LM이 의미 코드와 음악 조건을 계획하고 DiT가 Flow Matching으로 연속 잠재 변수를 생성하며 1D 파형 VAE가 48 kHz 스테레오 PCM을 출력합니다."
+});
+
+Object.assign(ja, {
+  "文本条件音乐、音效与局部编辑": "テキスト条件付き音楽・効果音・部分編集",
+  "DiT 在 SAME 连续潜空间生成，结合 Flow Matching、蒸馏和对抗后训练，SAME-L 解码为 44.1 kHz 双声道 PCM。": "DiT が SAME 連続潜在空間で生成し、Flow Matching・蒸留・敵対的な後学習を組み合わせ、SAME-L が44.1 kHz ステレオ PCM に復号します。",
+  "Medium 支持音乐和音效，可按目标时长生成或用掩码编辑局部片段。": "Medium は音楽と効果音に対応し、指定長の生成やマスクによる部分編集が可能です。",
+  "Small 分音乐与音效专用版，Large 仅 API；实际速度取决于硬件、时长和采样设置，权重授权需单独核对。": "Small は音楽用と効果音用、Large は API のみです。速度は機器・長さ・サンプリング設定に依存し、重みの許諾は個別確認が必要です。"
+});
+Object.assign(ko, {
+  "文本条件音乐、音效与局部编辑": "텍스트 조건 음악·효과음·부분 편집",
+  "DiT 在 SAME 连续潜空间生成，结合 Flow Matching、蒸馏和对抗后训练，SAME-L 解码为 44.1 kHz 双声道 PCM。": "DiT가 SAME 연속 잠재 공간에서 생성하고 Flow Matching·증류·적대적 후학습을 결합하며 SAME-L이 44.1 kHz 스테레오 PCM으로 복원합니다.",
+  "Medium 支持音乐和音效，可按目标时长生成或用掩码编辑局部片段。": "Medium은 음악과 효과음을 지원하며 목표 길이 생성이나 마스크 기반 부분 편집이 가능합니다.",
+  "Small 分音乐与音效专用版，Large 仅 API；实际速度取决于硬件、时长和采样设置，权重授权需单独核对。": "Small은 음악·효과음 전용으로 나뉘며 Large는 API 전용입니다. 속도는 하드웨어·길이·샘플링 설정에 따라 달라지며 가중치 허가는 따로 확인해야 합니다."
+});
+
 const localizeText = (text: SourceText): LocalizedText => ({
   zh: text.zh, "zh-Hant": traditional(text.zh),
   en: text.en,
@@ -2373,13 +2406,15 @@ function AiArticleSections({
   );
 }
 
-export function AiAudioLab({ labId = "event", language, onBack, onBackToDetails, onOpen }: AiAudioLabProps) {
+export function AiAudioLab({ labId = "event", language, onBack, onBackToDetails }: AiAudioLabProps) {
   const article = aiArticles[labId] ?? aiArticles.event;
   const principle = article.sections.find(section => section.title.en === "Principles");
-  const interactive = labId === "asr" || labId === "enhancement";
+  const interactive = labId === "asr" || labId === "enhancement" || labId === "tts" || labId === "generation";
   const chapters = [
-    ["ai-principle", aiUiText(language, "基本原理", "Principle", "基本原理", "기본 원리")],
-    ["ai-flow", aiUiText(language, "处理流程", "Flow", "処理フロー", "처리 흐름")],
+    ...(interactive ? [] : [
+      ["ai-principle", aiUiText(language, "基本原理", "Principle", "基本原理", "기본 원리")],
+      ["ai-flow", aiUiText(language, "处理流程", "Flow", "処理フロー", "처리 흐름")]
+    ]),
     ...(interactive ? [["ai-demo", aiUiText(language, "交互演示", "Walkthrough", "インタラクティブデモ", "인터랙티브 데모")]] : []),
     ["ai-engineering", aiUiText(language, "指标与公式", "Metrics and equations", "指標と式", "지표와 공식")],
     ["ai-models", aiUiText(language, "模型选型", "Model selection", "モデル選定", "모델 선택")],
@@ -2403,21 +2438,17 @@ export function AiAudioLab({ labId = "event", language, onBack, onBackToDetails,
         </div>
       </section>
 
-      {labId === "overview" ? <>
-        <AiAudioOverview language={language} onOpen={onOpen} />
-        <details className="ai-further-reading"><summary>{aiUiText(language, "延伸阅读：工程指标与代表模型", "Further reading: engineering metrics and models", "参考資料：技術指標と代表モデル", "추가 읽기: 엔지니어링 지표와 대표 모델")}</summary><AiTechnicalSection article={article} language={language} /><AiModelCards article={article} language={language} /></details>
-      </> : <>
         <nav className="ai-reading-nav" aria-label={aiUiText(language, "AI 实验室章节", "AI lab chapters", "AIラボの章", "AI 랩 장")}>
           {chapters.map(([id, label], index) => <a key={id} href={`#${id}`}>{String(index + 1).padStart(2, "0")} · {label}</a>)}
         </nav>
-        <section className="ai-principle-intro ai-reading-section" id="ai-principle" aria-labelledby="ai-principle-title">
+        {!interactive && <><section className="ai-principle-intro ai-reading-section" id="ai-principle" aria-labelledby="ai-principle-title">
           <h2 id="ai-principle-title">{aiUiText(language, "基本原理", "Basic principle", "基本原理", "기본 원리")}</h2>
           <p>{principle?.body[language]}</p>
           {principle?.points && <ul>{principle.points.map(point => <li key={point.en}>{point[language]}</li>)}</ul>}
         </section>
-        <div className="ai-reading-section" id="ai-flow"><AiArticleFlow article={article} language={language} /></div>
+        <div className="ai-reading-section" id="ai-flow"><AiArticleFlow article={article} language={language} /></div></>}
         {interactive && <div className="ai-reading-section" id="ai-demo">
-          {labId === "enhancement" ? <AiDenoiseWalkthrough language={language} /> : <AsrWalkthrough language={language} />}
+          {labId === "enhancement" ? <AiDenoiseWalkthrough language={language} /> : labId === "tts" ? <TtsWalkthrough language={language} /> : labId === "generation" ? <AudioGenerationWalkthrough language={language} /> : <AsrWalkthrough language={language} />}
         </div>}
         <div className="ai-reading-section" id="ai-engineering"><AiTechnicalSection article={article} language={language} /></div>
         <div className="ai-reading-section" id="ai-models"><AiModelCards article={article} language={language} /></div>
@@ -2425,7 +2456,6 @@ export function AiAudioLab({ labId = "event", language, onBack, onBackToDetails,
           <h2 id="ai-reading-title">{aiUiText(language, "延伸阅读", "Further reading", "参考資料", "추가 읽기")}</h2>
           <AiArticleSections article={article} language={language} />
         </section>
-      </>}
     </main>
   );
 }

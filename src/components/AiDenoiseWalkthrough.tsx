@@ -1,24 +1,13 @@
 import { traditional } from "../content/traditional";
 /// <reference types="vite/client" />
 import { useEffect, useRef, useState } from "react";
+import { animate, createScope, stagger } from "animejs";
 import type { Language } from "../content/knowledge";
-type Demo = { waves: number[][]; input: number[][]; output: number[][]; mask: number[][]; magnitude: number[][]; activations: number[][][]; kernels: number[][][]; bias: number[]; head: number[]; headBias: number; snr: number[] };
-
-function Map({ values, label, max = 1, selection, selectionSize = 3 }: { values: number[][]; label: string; max?: number; selection?: number[]; selectionSize?: number }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(()=>{
-    if (/jsdom/i.test(navigator.userAgent)) return;
-    const ctx = ref.current?.getContext("2d");
-    if (!ctx) return;
-    values.forEach((row,f)=>row.forEach((v,t)=>{
-      const a = Math.max(0,Math.min(1,v/max));
-      ctx.fillStyle = `rgb(${15+230*a},${35+155*a},${65-30*a})`;
-      ctx.fillRect(t*4,(63-f)*4,4,4);
-    }));
-  },[values,max]);
-  const radius = (selectionSize - 1) / 2;
-  return <div style={{position:"relative"}}><canvas ref={ref} width="256" height="256" role="img" aria-label={label} />{selection && <span className="denoise-selection" aria-hidden="true" style={{position:"absolute", outline:"2px solid white",boxShadow:"0 0 0 3px #16372e",pointerEvents:"none",left:`${(selection[0]-radius)/64*100}%`,top:`${(63-selection[1]-radius)/64*100}%`,width:`${selectionSize/64*100}%`,height:`${selectionSize/64*100}%`}} />}</div>;
-}
+import { text } from "../content/language";
+import { DenoiseFrameView, type DenoiseTrace } from "./DenoiseFrameView";
+import { DenoisePipelineAnimation } from "./DenoisePipelineAnimation";
+import { DenoiseSpectrumMap as Map } from "./DenoiseSpectrumMap";
+export type DenoiseDemo = { trace: DenoiseTrace & { target: number[] }; target: number[][]; input: number[][]; output: number[][]; mask: number[][]; magnitude: number[][]; activations: number[][][]; kernels: number[][][]; bias: number[]; head: number[]; headBias: number; snr: number[] };
 
 export function AiDenoiseWalkthrough({ language }: { language: Language }) {
   const ja: Record<string, string> = {
@@ -98,7 +87,8 @@ export function AiDenoiseWalkthrough({ language }: { language: Language }) {
     "横轴：时间帧 0–63（0–1.008 s）；纵轴：下方 0 Hz，上方 1968.75 Hz（bin 0–63）。局部展示，模型实际处理完整 0–4 kHz 频谱和 2 秒音频。": "横軸：時間フレーム 0–63（0–1.008 s）、縦軸：下が 0 Hz、上が 1968.75 Hz（bin 0–63）。局所表示で、モデルは 0–4 kHz の全スペクトルと 2 秒音声を処理します。",
     "带噪输入": "ノイズ付き入力",
     "模型输出": "モデル出力",
-    "干净参考": "クリーン参照"
+    "干净参考": "クリーン参照",
+    "本步原理": "このステップの原理"
   };
   const ko: Record<string, string> = {
     "模型逐步可视化": "모델 단계별 시각화",
@@ -177,15 +167,25 @@ export function AiDenoiseWalkthrough({ language }: { language: Language }) {
     "横轴：时间帧 0–63（0–1.008 s）；纵轴：下方 0 Hz，上方 1968.75 Hz（bin 0–63）。局部展示，模型实际处理完整 0–4 kHz 频谱和 2 秒音频。": "가로축: 시간 프레임 0–63(0–1.008 s), 세로축: 아래 0 Hz, 위 1968.75 Hz(bin 0–63)입니다. 부분 표시이며 모델은 0–4 kHz 전체 스펙트럼과 2초 오디오를 처리합니다.",
     "带噪输入": "잡음 입력",
     "模型输出": "모델 출력",
-    "干净参考": "깨끗한 참조"
+    "干净参考": "깨끗한 참조",
+    "本步原理": "이 단계의 원리"
   };
   const t = (zh: string, en: string) => language === "zh-Hant" ? traditional(zh) : language === "zh" ? zh : language === "en" ? en : (language === "ja" ? ja[zh] : ko[zh]);
-  const [data,setData] = useState<Demo | null>(null);
+  const [data,setData] = useState<DenoiseDemo | null>(null);
   const [failed,setFailed] = useState(false);
   const [step,setStep] = useState(0);
   const [channel,setChannel] = useState(0);
   const [frame,setFrame] = useState(20);
   const [bin,setBin] = useState(8);
+  const inspection = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!data) return;
+    const scope = createScope({ root: inspection, mediaQueries: { reduceMotion: "(prefers-reduced-motion: reduce)" } }).add(self => {
+      if (self?.matches.reduceMotion) return;
+      if (step===1) animate(".denoise-products code", { opacity: [0.35,1], delay: stagger(12), duration: 120, ease: "linear" });
+    });
+    return () => scope.revert();
+  }, [data, step, frame, bin, channel]);
   const root = `${import.meta.env.BASE_URL}ai-denoise/`;
   useEffect(()=>{
     const controller = new AbortController();
@@ -205,7 +205,8 @@ export function AiDenoiseWalkthrough({ language }: { language: Language }) {
   const headProducts = data ? data.head.map((w,i)=>({w,x:data.activations[i][bin][frame]})) : [];
   const logit = data ? headProducts.reduce((s,p)=>s+p.x*p.w,data.headBias) : 0;
   const predictedMask = 1 / (1 + Math.exp(-Math.max(-30,Math.min(30,logit))));
-  const selected = step===3 ? [frame,bin] : undefined;
+  const selected = [frame,bin];
+  const activationMax = data ? Math.max(1e-8,...data.activations.flat(2)) : 1;
   const explanations = [
     [t("输入：带噪 PCM", "Input: noisy PCM"), t("PCM 是按时间排列的振幅数值。这里是合成谐波加白噪声，不是真人说话。", "PCM stores amplitude samples over time. Here it contains synthetic harmonics plus white noise, not recorded speech."),
       t("运算：分帧、加窗、FFT", "Operation: frame, window, FFT"), t("每 32 ms 取一帧，每 16 ms 前进一步。Hann 窗减轻截断引起的频谱泄漏；逐帧 FFT 组成 STFT，展示不同频率随时间的变化。", "Take a 32 ms frame every 16 ms. A Hann window reduces spectral leakage from truncation; frame-by-frame FFTs form the STFT, showing frequency content over time."),
@@ -227,12 +228,43 @@ export function AiDenoiseWalkthrough({ language }: { language: Language }) {
     <h2>{t("从频谱到降噪：看见模型计算","From spectrum to denoising: inspect the computation")}</h2>
     <p>{t("教学 CNN：用 24 段合成谐波与白噪声训练，展示独立测试片段的真实中间结果；不是经过真实语音验证的降噪产品。结构为 3×3 卷积（4 通道）→ ReLU → 1×1 卷积 → Sigmoid。", "Teaching CNN: trained on 24 synthetic harmonic signals with white noise. These are real intermediate results on a held-out clip, not a validated speech denoiser. Architecture: 3×3 convolution (4 channels) → ReLU → 1×1 convolution → sigmoid.")}</p>
     <p>{t("时序边界：这是离线预计算。STFT 窗以帧时间为中心、两端补零；3×3 卷积还读取下一帧。以帧中心计，特征窗需 16 ms 未来样本，再加 16 ms 下一帧上下文，掩码至少需 32 ms 前视；这还不是端到端延迟。", "Timing boundary: results are precomputed offline. STFT windows are centered with zero-padded boundaries; the 3×3 convolution also reads the next frame. Relative to the frame center, the feature window needs 16 ms of future samples plus 16 ms for the next frame: at least 32 ms of lookahead for the mask, not total end-to-end latency.")}</p>
-    <div className="robot-buttons">{names.map((s,i)=><button key={s} onClick={()=>setStep(i)} aria-pressed={step===i}>{i+1}. {s}</button>)}</div>
     {failed ? <p role="alert">{t("数据加载失败，请刷新重试。","Data failed to load. Reload to retry.")}</p> : !data ? <p role="status">{t("加载计算结果…","Loading results…")}</p> : <>
-      <h3>{names[step]}</h3><p>{descriptions[step]}</p>
-      <dl className="denoise-explanation">{[0,2,4].map(i=><div key={i}><dt>{explanations[step][i]}</dt><dd>{explanations[step][i+1]}</dd></div>)}</dl>
-      {(step===0 || step===4) && data.waves && <figure style={{margin:0}}><svg viewBox="0 0 600 220" role="img" aria-label={t("PCM 波形对照","PCM waveform comparison")} style={{width:"100%",maxHeight:220,background:"#f0f5f3"}}>{data.waves.map((wave,i)=><g key={i}><text x="12" y={20+i*100} fill="#285c50">{i===0 ? t("带噪 PCM","Noisy PCM") : t("输出 PCM","Output PCM")}</text><path d={`M0 ${60+i*100} H600`} stroke="#99b8b0" /><path d={wave.map((v,j)=>`${j===0 ? "M" : "L"}${j/255*600} ${60+i*100-v*40}`).join(" ")} fill="none" stroke={i===0 ? "#a26a2e" : "#158571"} /></g>)}</svg><figcaption>{t("同一片段 0.500–0.532 s；横轴为时间，纵轴为归一化 PCM 幅度，两图零线及幅度比例相同（每单位 40 图像坐标）。", "Same excerpt, 0.500–0.532 s; horizontal time, vertical normalized PCM amplitude. Both use identical zero-line conventions and amplitude scale (40 drawing units per amplitude unit).")}</figcaption></figure>}
-      {(step>=1 && step<=3) && <div className="robot-controls">{step<3 && <label>{t("输出通道","Output channel")}<select value={channel} onChange={e=>setChannel(+e.target.value)}>{[0,1,2,3].map(i=><option key={i} value={i}>{i+1}</option>)}</select></label>}<label>{t("时间帧","Time frame")} {frame}<input type="range" min="1" max="62" value={frame} onChange={e=>setFrame(+e.target.value)} /></label><label>{t("频率 bin","Frequency bin")} {bin} ({bin*31.25} Hz)<input type="range" min="1" max="62" value={bin} onChange={e=>setBin(+e.target.value)} /></label></div>}
+      <div className="denoise-audio">{["input","output","target"].map((name,i)=><div key={name}><h4 id={`denoise-audio-${name}`}>{[t("带噪输入","Noisy input"),t("模型输出","Model output"),t("干净参考","Clean reference")][i]}</h4><audio aria-labelledby={`denoise-audio-${name}`} controls preload="none" src={`${root}${name}.wav`} onPlay={e=>{e.currentTarget.closest("section")?.querySelectorAll("audio").forEach(a=>{if(a!==e.currentTarget) a.pause();});}} /></div>)}</div>
+      <p>SNR: {data.snr[0].toFixed(2)} dB → {data.snr[1].toFixed(2)} dB {t("（仅此合成测试片段）","(this synthetic clip only)")}</p>
+      <DenoisePipelineAnimation data={data} frame={frame} bin={bin} channel={channel} language={language} onFrameChange={setFrame} onBinChange={setBin} onChannelChange={setChannel}/>
+      <details className="denoise-numeric-inspector">
+      <summary>{text(language,"逐项检查数值与频谱","Inspect individual values and spectra","値とスペクトルを詳しく確認","개별 수치와 스펙트럼 확인")}</summary>
+      <div className="robot-buttons">{names.map((s,i)=><button key={s} onClick={()=>setStep(i)} aria-pressed={step===i}>{i+1}. {s}</button>)}</div>
+      <h3>{names[step]}</h3>
+      <DenoiseFrameView trace={data.trace} frame={frame} step={step} onFrameChange={setFrame} language={language}/>
+      <div className="robot-controls">{(step===1 || step===2) && <label>{t("输出通道","Output channel")}<select value={channel} onChange={e=>setChannel(+e.target.value)}>{[0,1,2,3].map(i=><option key={i} value={i}>{i+1}</option>)}</select></label>}<label>{t("频率 bin","Frequency bin")} {bin} ({bin*31.25} Hz)<input type="range" min="1" max="62" value={bin} onChange={e=>setBin(+e.target.value)} /></label></div>
+      <div className="denoise-stage-inspection" data-stage={step} ref={inspection}>
+      <div className="denoise-maps" data-stage={step}>
+        {(step<=1 || step===4) && <figure><Map values={data.input} selection={selected} selectionSize={step===1 ? 3 : 1} label={t("输入频谱","Input spectrum")} scale={["−80 dB", "−40 dB", "0 dB"]}/><figcaption>{t("输入幅度：暗 -80 dB → 亮 0 dB","Input magnitude: dark -80 dB → bright 0 dB")}</figcaption></figure>}
+        {(step===2 || step===3) && <figure><Map values={data.activations[channel]} selection={selected} selectionSize={1} max={activationMax} label={`ReLU · ${channel+1}`} scale={["0", (activationMax/2).toFixed(2), activationMax.toFixed(2)]}/><figcaption>{t("ReLU 激活；四通道共用色标，非能量","ReLU activation; shared scale across channels, not energy")}</figcaption></figure>}
+        {step>=3 && <figure><Map values={data.mask} selection={selected} selectionSize={1} label={t("掩码", "Mask")} scale={["0", "0.5", "1"]}/><figcaption>{t("掩码：暗 0（抑制）→ 亮 1（保留）","Mask: dark 0 (suppress) → bright 1 (retain)")}</figcaption></figure>}
+        {step===4 && <figure><Map values={data.output} selection={selected} selectionSize={1} label={t("输出频谱","Output spectrum")} scale={["−80 dB", "−40 dB", "0 dB"]}/><figcaption>{t("输出幅度：与输入相同色标","Output magnitude: same scale as input")}</figcaption></figure>}
+      </div>
+      {step===0 && <div className="denoise-local-calculation">
+        <h4>{text(language,"选中这一格：从样本到模型输入","Selected cell: samples to model input","選択セル：サンプルからモデル入力へ","선택한 칸: 샘플에서 모델 입력으로")}</h4>
+        <ol className="denoise-head-flow">
+          <li><strong>PCM × Hann → FFT</strong><code>{frame*16} ms · {bin*31.25} Hz</code></li>
+          <li><strong>|Y|</strong><code>{data.magnitude[bin][frame].toExponential(5)}</code></li>
+          <li><strong>clip((20 log₁₀(|Y| + 10⁻⁸) + 80) / 80, 0, 1)</strong><code>{data.input[bin][frame].toFixed(5)}</code></li>
+        </ol>
+        <p>{descriptions[0]}</p>
+      </div>}
+      {step===1 && <div className="denoise-local-calculation"><p>{text(language,"白框内的九个位置与下方逐格对应：上方高频、下方低频；时间从左到右。","The nine cells match the outlined patch: high frequencies above, low frequencies below; time runs left to right.","9セルは白枠内に対応。上は高域、下は低域、時間は左から右です。","아홉 칸은 흰 테두리에 대응합니다. 위는 고주파, 아래는 저주파이며 시간은 왼쪽에서 오른쪽입니다.")}</p><div className="denoise-products">{[6,7,8,3,4,5,0,1,2].map(i=>{const p=products[i];return <code key={i} data-bin={bin+Math.floor(i/3)-1} data-frame={frame+i%3-1}><small>{(bin+Math.floor(i/3)-1)*31.25} Hz · {(frame+i%3-1)*16} ms</small>{p.x.toFixed(3)} × {p.w.toFixed(3)}<br />= {(p.x*p.w).toFixed(3)}</code>;})}</div><p data-testid="denoise-sum"><code>Σ(x×w) + b ({data.bias[channel].toFixed(4)}) = {sum.toFixed(4)} → ReLU = {Math.max(0,sum).toFixed(4)}</code></p></div>}
+      {step===2 && <div className="denoise-local-calculation">
+        <h4>{text(language,"选中这一格：非线性激活","Selected cell: nonlinear activation","選択セル：非線形活性化","선택한 칸: 비선형 활성화")}</h4>
+        <ol className="denoise-head-flow">
+          <li><strong>z = Σ(x × w) + b</strong><code>{sum.toFixed(5)}</code></li>
+          <li><strong>h = max(0, z)</strong><code>{data.activations[channel][bin][frame].toFixed(5)}</code></li>
+        </ol>
+        <p>{descriptions[2]}</p>
+      </div>}
+      </div>
+      <p>{t("横轴：时间帧 0–63（0–1.008 s）；纵轴：下方 0 Hz，上方 1968.75 Hz（bin 0–63）。局部展示，模型实际处理完整 0–4 kHz 频谱和 2 秒音频。", "Horizontal: frames 0–63 (0–1.008 s). Vertical: 0 Hz at bottom, 1968.75 Hz at top (bins 0–63). Cropped display; inference covers the full 0–4 kHz spectrum and 2-second clip.")}</p>
       {step===3 && <p data-testid="denoise-mask-value">{t("所选位置", "Selected position")}: M = {data.mask[bin][frame].toFixed(4)}; {t("幅度增益", "Magnitude gain")} = {(20*Math.log10(data.mask[bin][frame])).toFixed(2)} dB. {t("滑动仅检查固定推理结果，不会重新训练或改变音频。", "Sliders inspect fixed inference results; they do not retrain the model or change the audio.")}</p>}
       {step===3 && <section className="denoise-head" aria-label={t("掩码计算图解", "Mask calculation walkthrough")}>
         <h4>{t("四路特征如何变成一个掩码", "How four features become one mask")}</h4>
@@ -243,17 +275,11 @@ export function AiDenoiseWalkthrough({ language }: { language: Language }) {
           <li><strong>{t("缩放线性频谱幅度", "Scale linear spectral magnitude")}</strong><code data-testid="denoise-amplitude-product">|Ŝ| = |Y| × M ≈ {data.magnitude[bin][frame].toExponential(4)} × {data.mask[bin][frame].toFixed(5)} = {(data.magnitude[bin][frame]*data.mask[bin][frame]).toExponential(4)}</code></li>
         </ol>
         <p>{t("h 是激活值，w 和偏置是训练得到的参数。显示数值经过舍入，因此复算与保存的掩码可能有微小差异。幅度取自原始 STFT 系数，既不是 0–1 着色特征，也不是 PCM 单点振幅。", "h denotes an activation; weights w and the bias are learned. Rounded values can cause small differences from the saved mask. Magnitudes come from the original STFT coefficients, not the 0–1 color features or individual PCM samples.")}</p>
-        <p>{t("三张图的白框对应同一时间帧和频率 bin；掩码图亮度表示保留比例，输入与输出图亮度表示对数幅度。", "White outlines mark the same frame and frequency bin in all three maps. Mask brightness shows the retained fraction; input and output brightness shows log magnitude.")}</p>
+        <p>{text(language,"白框对应同一时间帧和频率 bin；左侧是激活响应，右侧是四通道合并后的幅度增益，二者亮度不可直接比较。","White outlines mark the same frame and bin. Left: activation response; right: magnitude gain from all four channels. Their brightness values are not directly comparable.","白枠は同じフレームと bin。左は活性化、右は4チャネルを合成した振幅ゲインです。明るさは直接比較できません。","흰 테두리는 같은 프레임과 bin입니다. 왼쪽은 활성화, 오른쪽은 네 채널로 계산한 진폭 이득이며 밝기는 직접 비교할 수 없습니다。")}</p>
       </section>}
-      <div className="denoise-maps">
-        <figure><Map values={data.input} selection={step===1 ? [frame,bin] : selected} selectionSize={step===1 ? 3 : 1} label={t("输入频谱","Input spectrum")} /><figcaption>{t("输入幅度：暗 -80 dB → 亮 0 dB","Input magnitude: dark -80 dB → bright 0 dB")}</figcaption></figure>
-        <figure><Map values={step<3 ? data.activations[channel] : data.mask} selection={selected} selectionSize={1} max={step<3 ? Math.max(1e-8,...data.activations.flat(2)) : 1} label={step<3 ? "ReLU" : t("掩码", "Mask")} /><figcaption>{step<3 ? t("ReLU 激活；四通道共用色标，非能量","ReLU activation; shared scale across channels, not energy") : t("掩码：暗 0（抑制）→ 亮 1（保留）","Mask: dark 0 (suppress) → bright 1 (retain)")}</figcaption></figure>
-        <figure><Map values={data.output} selection={selected} selectionSize={1} label={t("输出频谱","Output spectrum")} /><figcaption>{t("输出幅度：与输入相同色标","Output magnitude: same scale as input")}</figcaption></figure>
-      </div>
-      <p>{t("横轴：时间帧 0–63（0–1.008 s）；纵轴：下方 0 Hz，上方 1968.75 Hz（bin 0–63）。局部展示，模型实际处理完整 0–4 kHz 频谱和 2 秒音频。", "Horizontal: frames 0–63 (0–1.008 s). Vertical: 0 Hz at bottom, 1968.75 Hz at top (bins 0–63). Cropped display; inference covers the full 0–4 kHz spectrum and 2-second clip.")}</p>
-      {step===1 && <><div className="denoise-products">{products.map((p,i)=><code key={i}>{p.x.toFixed(3)} × {p.w.toFixed(3)}<br />= {(p.x*p.w).toFixed(3)}</code>)}</div><p data-testid="denoise-sum"><code>Σ(x×w) + b ({data.bias[channel].toFixed(4)}) = {sum.toFixed(4)} → ReLU = {Math.max(0,sum).toFixed(4)}</code></p></>}
-      {step===4 && <><div className="denoise-audio">{["input","output","target"].map((name,i)=><div key={name}><h4>{[t("带噪输入","Noisy input"),t("模型输出","Model output"),t("干净参考","Clean reference")][i]}</h4><audio controls preload="none" src={`${root}${name}.wav`} onPlay={e=>{e.currentTarget.closest("section")?.querySelectorAll("audio").forEach(a=>{if(a!==e.currentTarget) a.pause();});}} /></div>)}</div><p>SNR: {data.snr[0].toFixed(2)} dB → {data.snr[1].toFixed(2)} dB {t("（仅此合成测试片段）","(this synthetic clip only)")}</p></>}
+      <details className="denoise-stage-explanation"><summary>{t("本步原理","This step explained")}</summary><p>{descriptions[step]}</p><dl className="denoise-explanation">{[0,2,4].map(i=><div key={i}><dt>{explanations[step][i]}</dt><dd>{explanations[step][i+1]}</dd></div>)}</dl></details>
       <details><summary>{t("训练方式与可复现源码","Training and reproducible source")}</summary><p>{t("目标为 clip(|S|/(|Y|+ε),0,1)，以掩码 MSE 训练，NumPy 反向传播与 Adam 更新权重。固定随机种子，测试片段未参与训练。真实语音、混响与其他噪声尚未验证。", "Target: clip(|S|/(|Y|+ε),0,1), trained with mask MSE, NumPy backpropagation, and Adam. Fixed seed; test clip excluded from training. Real speech, reverberation, and other noise types are untested.")}</p><code>scripts/generate-ai-denoise-demo.py</code></details>
+      </details>
     </>}
   </section>;
 }

@@ -179,7 +179,7 @@ function AppContent({ language }: { language: Language }) {
     | "aiAudioLab"
     | "applicationTopicPage"
   >("knowledge");
-  const [aiAudioLabId, setAiAudioLabId] = useState<AiAudioLabId>("event");
+  const [aiAudioLabId, setAiAudioLabId] = useState<Exclude<AiAudioLabId, "overview">>("event");
   const [query, setQuery] = useState("");
   const [outlineTargetId, setOutlineTargetId] = useState<string | null>(null);
 
@@ -973,7 +973,18 @@ function AppContent({ language }: { language: Language }) {
           topic={activeAiTopic}
           mode={mode}
           onBack={returnToAiAudio}
-          onOpenLab={() => { setAiAudioLabId(mode); setActiveView("aiAudioLab"); }}
+          onOpenTopic={(id) => {
+            const topic = aiTopics.find(topic => topic.detail.lab?.initialMode === id);
+            if (topic) {
+              openTopic(topic);
+              window.scrollTo({ top: 0, behavior: "instant" });
+            }
+          }}
+          onOpenLab={() => {
+            if (mode === "overview") return;
+            setAiAudioLabId(mode);
+            setActiveView("aiAudioLab");
+          }}
           onOpenPrevious={activeAiTopicIndex > 0 ? () => openAdjacentAiTopic(-1) : undefined}
           onOpenNext={activeAiTopicIndex < aiTopics.length - 1 ? () => openAdjacentAiTopic(1) : undefined}
         />
@@ -990,7 +1001,6 @@ function AppContent({ language }: { language: Language }) {
         />
         <AiAudioLab
           labId={aiAudioLabId}
-          onOpen={(id) => { setAiAudioLabId(id); window.scrollTo({ top: 0, behavior: "instant" }); }}
           language={language}
           onBack={returnToAiAudio}
           onBackToDetails={() => setActiveView("aiAudioPage")}
@@ -1093,6 +1103,7 @@ function AppContent({ language }: { language: Language }) {
                 setActiveView("iotContentLab");
               }}
               onOpenAiAudioLab={(initialMode) => {
+                if (initialMode === "overview") return;
                 setSelectedTopic(null);
                 setAiAudioLabId(initialMode ?? "event");
                 setActiveView("aiAudioLab");

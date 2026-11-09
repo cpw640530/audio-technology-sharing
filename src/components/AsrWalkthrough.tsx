@@ -20,7 +20,7 @@ export function AsrWalkthrough({ language }: { language: Language }) {
     "RNN-T 流式识别": "RNN-T ストリーミング認識",
     "注意力 Encoder–Decoder": "Attention Encoder–Decoder",
     "ASR 逐步可视化": "ASR の段階的な可視化",
-    "声音怎样变成文字：CTC 与 RNN-T": "音声が文字になる仕組み：CTC と RNN-T",
+    "声音怎样变成文字：CTC、RNN-T 与注意力": "音声が文字になる仕組み：CTC・RNN-T・Attention",
     "从声学特征到文字，比较 CTC 对齐与 RNN-T 输出机制。以下为人工教学示例，不是真实录音的推理结果。Whisper 等注意力编码器–解码器属于另一条路线。": "音響特徴から文字まで、CTC のアラインメントと RNN-T の出力機構を比較します。以下は手作りの教材例で、実録音の推論結果ではありません。Whisper などの Attention encoder–decoder は別の経路です。",
     "16 kHz 单声道 PCM": "16 kHz モノラル PCM",
     "每秒 16000 个振幅样本，样本本身没有汉字。以 25 ms 窗、10 ms 步长为例，每帧取 400 个样本，每次移动 160 个样本。": "1 秒あたり 16000 個の振幅サンプルで、サンプル自体に漢字はありません。25 ms 窓と 10 ms ホップなら、各フレームは 400 サンプルで 160 サンプルずつ移動します。",
@@ -53,7 +53,7 @@ export function AsrWalkthrough({ language }: { language: Language }) {
     "RNN-T 流式识别": "RNN-T 스트리밍 인식",
     "注意力 Encoder–Decoder": "Attention Encoder–Decoder",
     "ASR 逐步可视化": "ASR 단계별 시각화",
-    "声音怎样变成文字：CTC 与 RNN-T": "소리가 문자로 변하는 과정: CTC와 RNN-T",
+    "声音怎样变成文字：CTC、RNN-T 与注意力": "소리가 문자로 변하는 과정: CTC·RNN-T·Attention",
     "从声学特征到文字，比较 CTC 对齐与 RNN-T 输出机制。以下为人工教学示例，不是真实录音的推理结果。Whisper 等注意力编码器–解码器属于另一条路线。": "음향 특징에서 문자까지 CTC 정렬과 RNN-T 출력 메커니즘을 비교합니다. 아래는 수작업 교육 예시이며 실제 녹음의 추론 결과가 아닙니다. Whisper 같은 Attention encoder–decoder는 별도의 경로입니다.",
     "16 kHz 单声道 PCM": "16 kHz 모노 PCM",
     "每秒 16000 个振幅样本，样本本身没有汉字。以 25 ms 窗、10 ms 步长为例，每帧取 400 个样本，每次移动 160 个样本。": "초당 16,000개의 진폭 샘플이며 샘플 자체에는 한자가 없습니다. 25 ms 창과 10 ms 홉을 사용하면 프레임마다 400개 샘플을 취하고 160개씩 이동합니다.",
@@ -96,7 +96,7 @@ export function AsrWalkthrough({ language }: { language: Language }) {
   const names = [t("声学特征", "Acoustic features"), t("模型与 token", "Model and tokens"), t("CTC 解码", "CTC decoding"), t("RNN-T 流式识别", "RNN-T streaming"), t("注意力 Encoder–Decoder", "Attention encoder-decoder")];
   const sequence = (values: number[]) => values.map(token => tokens[token]).join(" → ");
   return <section className="ai-denoise-walkthrough" aria-label={t("ASR 逐步可视化", "ASR walkthrough")}>
-    <h2>{t("声音怎样变成文字：CTC 与 RNN-T", "How sound becomes text: CTC and RNN-T")}</h2>
+    <h2>{t("声音怎样变成文字：CTC、RNN-T 与注意力", "How sound becomes text: CTC, RNN-T and attention")}</h2>
     <p>{t("从声学特征到文字，比较 CTC 对齐与 RNN-T 输出机制。以下为人工教学示例，不是真实录音的推理结果。Whisper 等注意力编码器–解码器属于另一条路线。", "Compare CTC alignment and RNN-T emission from acoustic features to text. These are hand-built teaching examples, not inference on recorded speech. Attention encoder-decoders such as Whisper follow another route.")}</p>
     <div className="robot-buttons">{names.map((name, i) => <button key={name} aria-pressed={step === i} onClick={() => setStep(i)}>{i + 1}. {name}</button>)}</div>
     <h3>{names[step]}</h3>

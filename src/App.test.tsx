@@ -234,7 +234,7 @@ describe("Audio knowledge app", () => {
     expect(card).toBeDefined();
     await user.click(card!);
     const title = screen.getByRole("main").querySelector("h1")?.textContent;
-    if (topic.detail.lab?.type === "ai-audio") {
+    if (topic.detail.lab?.type === "ai-audio" && topic.detail.lab.initialMode !== "overview") {
       const paragraphs = Array.from(document.querySelectorAll(".sound-topic-intro p"));
       expect(paragraphs.length).toBeGreaterThan(1);
       expect(paragraphs.map(p => p.textContent).join(" ").replace(/\s+/g, " "))
@@ -481,7 +481,7 @@ describe("Audio knowledge app", () => {
 
     expect(screen.getByRole("heading", { name: "音频技术分享" })).toBeInTheDocument();
     const backgroundWave = container.querySelector(".background-wave");
-    expect(backgroundWave).toBeInstanceOf(HTMLCanvasElement);
+    expect(backgroundWave?.querySelector("canvas")).toBeInstanceOf(HTMLCanvasElement);
     expect(backgroundWave).toHaveAttribute("aria-hidden", "true");
     expect(screen.queryByRole("heading", { name: "内容路线图" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "写作原则" })).not.toBeInTheDocument();
@@ -598,30 +598,28 @@ describe("Audio knowledge app", () => {
     await user.click(screen.getByRole("button", { name: /语音识别 ASR/ }));
 
     const details = screen.getByRole("main", { name: "语音识别 ASR" });
-    expect(within(details).getByText(/PCM 只是连续的压力变化数字/)).toBeInTheDocument();
+    expect(within(details).getByText(/PCM 每秒有 16000 个振幅值/)).toBeInTheDocument();
     await user.click(within(details).getByText("分帧加窗", { selector: "summary" }));
-    expect(within(details).getByText(/例如 10 ms 或 20 ms/)).toBeInTheDocument();
+    expect(within(details).getByText(/相邻帧重叠 240 点/)).toBeInTheDocument();
     expect(within(details).getAllByText("log-mel / MFCC").length).toBeGreaterThan(0);
     expect(within(details).getByText(/把每帧语音变成更接近人耳听感的频率能量图/)).toBeInTheDocument();
     await user.click(within(details).getByText("Encoder 编码器", { selector: "summary" }));
     await user.click(within(details).getByText("CTC / Attention / Transducer", { selector: "summary" }));
     expect(within(details).getByText(/CTC 适合把很多帧对齐到较短 token 序列/)).toBeInTheDocument();
     await user.click(within(details).getByText("解码与后处理", { selector: "summary" }));
-    expect(within(details).getByText(/热词、标点、时间戳和说话人信息/)).toBeInTheDocument();
+    expect(within(details).getByText(/热词可参与解码而非事后替换/)).toBeInTheDocument();
+    expect(within(details).getByRole("group", { name: "识别路线" })).toBeInTheDocument();
 
     await user.click(within(details).getByRole("button", { name: "打开语音识别 ASR 实验室" }));
     const lab = screen.getByRole("main", { name: "语音识别 ASR 实验室" });
     expect(within(lab).getByRole("region", { name: "ASR 逐步可视化" })).toBeInTheDocument();
     await user.click(within(lab).getByRole("button", { name: "5. 注意力 Encoder–Decoder" }));
     expect(within(lab).getByRole("region", { name: "注意力 ASR 图解" })).toBeInTheDocument();
-    expect(within(lab).getByRole("list", { name: "语音识别 ASR 图解流程" })).toBeInTheDocument();
-    expect(within(lab).getByText("PCM 输入")).toBeInTheDocument();
-    expect(within(lab).getByText("模型前端")).toBeInTheDocument();
-    expect(within(lab).getByText("声学表示")).toBeInTheDocument();
-    expect(within(lab).getByText(/25 ms 窗、10 ms 步长/)).toBeInTheDocument();
-    expect(within(lab).getByText("Encoder 编码器")).toBeInTheDocument();
-    expect(within(lab).getByText("识别头 / Decoder")).toBeInTheDocument();
-    expect(within(lab).getByText("文本后处理")).toBeInTheDocument();
+    expect(within(lab).queryByRole("list", { name: "语音识别 ASR 图解流程" })).not.toBeInTheDocument();
+    expect(within(lab).getByRole("navigation", { name: "AI 实验室章节" }).querySelector("a"))
+      .toHaveAttribute("href", "#ai-demo");
+    await user.click(within(lab).getByRole("button", { name: "1. 声学特征" }));
+    expect(within(lab).getByText(/每帧取 400 个样本，每次移动 160 个样本/)).toBeInTheDocument();
     expect(within(lab).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
     expect(within(lab).getByText("WER = (S + D + I) / N")).toBeInTheDocument();
     expect(within(lab).getByText(/流式系统需要控制 chunk/)).toBeInTheDocument();
@@ -646,34 +644,24 @@ describe("Audio knowledge app", () => {
     await user.click(screen.getByRole("button", { name: /AI 音频总流程/ }));
 
     const details = screen.getByRole("main", { name: "AI 音频总流程" });
-    expect(within(details).getByText(/先采集得到 PCM 数字音频/)).toBeInTheDocument();
-    expect(within(details).getByText(/PCM 只是数字波形/)).toBeInTheDocument();
+    expect(within(details).getByRole("heading", { name: "AI 如何处理声音" })).toBeInTheDocument();
+    const taskMap = within(details).getByRole("list", { name: "任务总览流程" });
+    expect(taskMap).toHaveTextContent("文字、事件标签");
+    expect(within(details).getByRole("heading", { name: "训练会更新权重" })).toBeInTheDocument();
+    expect(within(details).getByRole("list", { name: "语音助手工程链路" })).toBeInTheDocument();
     await user.click(within(details).getByText("FFT / STFT / Mel / MFCC", { selector: "summary" }));
-    expect(within(details).getByText(/声音分类常把频谱图作为二维特征/)).toBeInTheDocument();
-    expect(within(details).getByText(/这不是所有 AI 音频的统一前端/)).toBeInTheDocument();
-    expect(within(details).getByRole("button", { name: "打开 AI 音频总流程实验室" })).toBeInTheDocument();
-
-    await user.click(within(details).getByRole("button", { name: "打开 AI 音频总流程实验室" }));
-    const lab = screen.getByRole("main", { name: "AI 音频总流程实验室" });
-    expect(within(lab).getByRole("heading", { name: "AI 音频总流程实验室" })).toBeInTheDocument();
-    expect(within(lab).getByRole("list", { name: "任务总览流程" })).toHaveTextContent("文字、事件标签");
-    await user.click(within(lab).getByRole("button", { name: "生成声音" }));
-    expect(within(lab).getByRole("list", { name: "任务总览流程" })).toHaveTextContent("文字、音色或音乐条件");
-    await user.click(within(lab).getByRole("button", { name: "压缩声音" }));
-    expect(within(lab).getByRole("list", { name: "任务总览流程" })).toHaveTextContent("量化为离散索引并封装");
-    await user.click(within(lab).getByRole("button", { name: "改善声音" }));
-    expect(within(lab).getByRole("list", { name: "任务总览流程" })).toHaveTextContent("重建增强 PCM");
-    await user.click(within(lab).getByText("延伸阅读：工程指标与代表模型"));
-    expect(within(lab).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
-    expect(within(lab).getByText("ŷ = fθ(R(x), c)")).toBeInTheDocument();
-    expect(within(lab).getByText(/实时性不是只看模型推理时间/)).toBeInTheDocument();
-    const modelSection = within(lab).getByRole("region", { name: "代表模型与工程定位" });
-    expect(within(modelSection).getByText("Whisper")).toBeInTheDocument();
-    expect(within(modelSection).getByText("CLAP")).toBeInTheDocument();
-    expect(within(modelSection).getByText("EnCodec")).toBeInTheDocument();
-    expect(within(modelSection).getByText("SoundStream")).toBeInTheDocument();
-    await user.click(within(lab).getByRole("button", { name: "识别内容" }));
-    await user.click(within(lab).getByRole("button", { name: "进入 ASR" }));
+    expect(within(details).queryByRole("button", { name: "打开 AI 音频总流程实验室" })).not.toBeInTheDocument();
+    expect(categories.find(category => category.id === "ai")!.topics[0].detail.lab).toBeUndefined();
+    await user.click(within(details).getByRole("button", { name: "生成声音" }));
+    expect(taskMap).toHaveTextContent("文字、音色或音乐条件");
+    await user.click(within(details).getByRole("button", { name: "压缩声音" }));
+    expect(taskMap).toHaveTextContent("量化为离散索引并封装");
+    await user.click(within(details).getByRole("button", { name: "改善声音" }));
+    expect(taskMap).toHaveTextContent("重建增强 PCM");
+    await user.click(within(details).getByRole("button", { name: "识别内容" }));
+    await user.click(within(details).getByRole("button", { name: "进入 ASR" }));
+    const asr = screen.getByRole("main", { name: "语音识别 ASR" });
+    await user.click(within(asr).getByRole("button", { name: "打开语音识别 ASR 实验室" }));
     expect(screen.getByRole("main", { name: "语音识别 ASR 实验室" })).toBeInTheDocument();
     expect(scroll).toHaveBeenCalledWith({ top: 0, behavior: "instant" });
     scroll.mockRestore();
@@ -716,6 +704,27 @@ describe("Audio knowledge app", () => {
 
     const lab = screen.getByRole("main", { name: labName });
     expect(within(lab).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
+    if (topic === "AI 音频增强") {
+      expect(within(lab).queryByRole("heading", { name: "基本原理" })).not.toBeInTheDocument();
+      expect(within(lab).getByRole("navigation", { name: "AI 实验室章节" }).querySelector("a"))
+        .toHaveAttribute("href", "#ai-demo");
+    }
+    if (topic === "语音合成 TTS") {
+      expect(within(lab).getByRole("region", { name: "TTS 逐步可视化" })).toBeInTheDocument();
+      expect(within(lab).queryByRole("heading", { name: "基本原理" })).not.toBeInTheDocument();
+      await user.click(within(lab).getByRole("button", { name: "2. 时长与对齐" }));
+      expect(within(lab).getByTestId("tts-duration-total")).toHaveTextContent("97");
+    }
+    if (topic === "音频生成") {
+      expect(within(lab).getByRole("region", { name: "音频生成逐步可视化" })).toBeInTheDocument();
+      expect(within(lab).queryByRole("heading", { name: "基本原理" })).not.toBeInTheDocument();
+      await user.click(within(lab).getByRole("button", { name: "3. 模型怎样生成" }));
+      expect(within(lab).getByRole("button", { name: "ACE-Step 1.5 · 2026" })).toBeInTheDocument();
+      expect(within(lab).getByTestId("generation-iteration")).toHaveTextContent("k = 0/8");
+      await user.click(within(lab).getByRole("button", { name: "Stable Audio 3 Medium · 2026" }));
+      expect(within(lab).queryByRole("slider")).not.toBeInTheDocument();
+      expect(within(lab).getByText("Ping-pong sampling")).toBeInTheDocument();
+    }
     expect(within(lab).getByText(equation)).toBeInTheDocument();
     expect(within(lab).getByText(new RegExp(metric))).toBeInTheDocument();
   });

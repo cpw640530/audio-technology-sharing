@@ -1944,23 +1944,11 @@ export const categories: Category[] = [
             }
           ],
           keyConcepts: [
-            { zh: "先采集得到 PCM 数字音频；PCM 是波形数字，不是语义。", "zh-Hant": traditional("先采集得到 PCM 数字音频；PCM 是波形数字，不是语义。"), en: "Capture first produces PCM digital audio; PCM is waveform data, not semantic meaning.", ja: "まず収音して PCM デジタル音声を得ます。PCM は波形データであり、意味ではありません。", ko: "먼저 캡처해 PCM 디지털 오디오를 얻습니다. PCM은 파형 데이터이지 의미가 아닙니다." },
+            { zh: "识别与增强通常输入 PCM；生成也可从文字或参考条件开始，不必先录音。", "zh-Hant": traditional("识别与增强通常输入 PCM；生成也可从文字或参考条件开始，不必先录音。"), en: "Recognition and enhancement usually take PCM; generation can start from text or reference conditions without recording first.", ja: "認識と強調は通常 PCM を入力します。生成はテキストや参照条件から始めることもでき、先に録音する必要はありません。", ko: "인식과 향상은 보통 PCM을 입력받지만 생성은 먼저 녹음하지 않고 텍스트나 참조 조건에서 시작할 수도 있습니다." },
             { zh: "表示方式取决于任务：可使用波形、频谱/Mel/MFCC、学习型 embedding 或 codec token。", "zh-Hant": traditional("表示方式取决于任务：可使用波形、频谱/Mel/MFCC、学习型 embedding 或 codec token。"), en: "Representations depend on the task: waveform, spectrum/Mel/MFCC, learned embeddings, or codec tokens may be used.", ja: "表現方法はタスクによって異なり、波形、スペクトル／Mel／MFCC、学習型 embedding、Codec token などを使います。", ko: "표현 방식은 작업에 따라 달라지며 파형, 스펙트럼/Mel/MFCC, 학습형 embedding 또는 코덱 token을 사용할 수 있습니다." },
             { zh: "把频谱图当图像识别是声音事件识别的一种常见解释方式，但不是所有 AI 音频任务都等同于图像识别。", "zh-Hant": traditional("把频谱图当图像识别是声音事件识别的一种常见解释方式，但不是所有 AI 音频任务都等同于图像识别。"), en: "Treating spectrograms like images is a common way to explain sound event detection, but not every AI audio task is simply image recognition.", ja: "スペクトログラムを画像のように扱うのは音響イベント認識の説明として一般的ですが、すべての AI 音声タスクが画像認識と同じわけではありません。", ko: "스펙트로그램을 이미지처럼 다루는 것은 소리 이벤트 인식을 설명하는 일반적인 방식이지만 모든 AI 오디오 작업이 이미지 인식과 같은 것은 아닙니다." },
             { zh: "AI 音频的关键问题是：输入是什么、特征如何表示、模型输出什么、后处理如何变成用户可理解结果。", "zh-Hant": traditional("AI 音频的关键问题是：输入是什么、特征如何表示、模型输出什么、后处理如何变成用户可理解结果。"), en: "The key AI audio questions are: what is the input, how are features represented, what does the model output, and how does post-processing turn it into a user-understandable result.", ja: "AI 音声の重要な問いは、入力は何か、特徴をどう表すか、モデルは何を出力するか、後処理でどうユーザーが理解できる結果にするかです。", ko: "AI 오디오의 핵심 질문은 입력이 무엇인지, 특징을 어떻게 표현하는지, 모델이 무엇을 출력하는지, 후처리로 어떻게 사용자가 이해할 수 있는 결과로 바꾸는지입니다." }
           ],
-          lab: {
-            type: "ai-audio",
-            initialMode: "overview",
-            title: { zh: "AI 音频总流程实验室", "zh-Hant": traditional("AI 音频总流程实验室"), en: "AI Audio Overall Flow Lab", ja: "AI 音声全体フローラボ", ko: "AI 오디오 전체 흐름 실험실" },
-            description: {
-              zh: "进入独立文章界面，用总流程图理解 PCM、特征、模型、任务输出和后处理的关系。", "zh-Hant": traditional("进入独立文章界面，用总流程图理解 PCM、特征、模型、任务输出和后处理的关系。"),
-              en: "Open an independent article page with a flow diagram explaining PCM, features, models, task outputs, and post-processing.",
-              ja: "独立した記事ページで全体フロー図を確認し、PCM、特徴、モデル、タスク出力、後処理の関係を理解します。",
-              ko: "독립 문서 페이지에서 전체 흐름 도해를 보고 PCM, 특징, 모델, 작업 출력과 후처리의 관계를 이해합니다."
-            },
-            buttonLabel: { zh: "打开 AI 音频总流程实验室", "zh-Hant": traditional("打开 AI 音频总流程实验室"), en: "Open AI audio overall flow lab", ja: "AI 音声全体フローラボを開く", ko: "AI 오디오 전체 흐름 실험실 열기" }
-          },
           misconception: {
             zh: "不要把所有 AI 音频都理解成“频谱图像识别”。频谱图分类确实常见，但语音识别、降噪、编码和生成会使用不同网络结构、训练目标和输出形式。", "zh-Hant": traditional("不要把所有 AI 音频都理解成“频谱图像识别”。频谱图分类确实常见，但语音识别、降噪、编码和生成会使用不同网络结构、训练目标和输出形式。"),
             en: "Do not treat all AI audio as spectrogram image recognition. Spectrogram classification is common, but speech recognition, denoising, coding, and generation use different network structures, training objectives, and outputs.",
@@ -1990,10 +1978,10 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "语音识别把连续的语音波形转换成可编辑、可检索的文字，但 ASR 并不是把每个采样点直接翻译成文字。\n\nPCM 只是连续的压力变化数字，系统通常先把它切成 10 ms 或 20 ms 左右的短帧，再提取每帧的频率能量结构，形成 log-mel、MFCC 或神经网络 embedding。\n\n随后 Encoder 把这些连续声学变化压成更稳定的上下文表示，CTC、Attention 或 Transducer 等识别头再估计最可能的 token 序列，最后经过语言上下文、热词、标点、时间戳和说话人信息等后处理，得到最终文本。", "zh-Hant": traditional("语音识别把连续的语音波形转换成可编辑、可检索的文字，但 ASR 并不是把每个采样点直接翻译成文字。\n\nPCM 只是连续的压力变化数字，系统通常先把它切成 10 ms 或 20 ms 左右的短帧，再提取每帧的频率能量结构，形成 log-mel、MFCC 或神经网络 embedding。\n\n随后 Encoder 把这些连续声学变化压成更稳定的上下文表示，CTC、Attention 或 Transducer 等识别头再估计最可能的 token 序列，最后经过语言上下文、热词、标点、时间戳和说话人信息等后处理，得到最终文本。"),
-            en: "Speech recognition turns continuous speech waveforms into editable, searchable text, but ASR does not translate each sample directly into words.\n\nPCM is only a sequence of pressure-change numbers. A system usually slices it into short frames of about 10 ms or 20 ms, extracts frequency-energy structure from each frame, and forms log-mel features, MFCCs, or neural embeddings.\n\nAn encoder then compresses those acoustic changes into more stable contextual representations; CTC, attention, or transducer heads estimate the most likely token sequence; and language context, hotwords, punctuation, timestamps, and speaker metadata produce the final text.",
-            ja: "音声認識は連続する音声波形を編集・検索できる文字へ変換しますが、ASR は各サンプルを直接単語へ翻訳するものではありません。\n\nPCM は圧力変化を数値化した列にすぎません。システムは通常、約 10 ms または 20 ms の短いフレームに分け、各フレームの周波数エネルギー構造を抽出して log-mel、MFCC、ニューラル embedding を作ります。\n\n次に Encoder が音響変化を安定した文脈表現へ圧縮し、CTC、Attention、Transducer などの認識ヘッドが最も可能性の高い token 列を推定します。最後に言語コンテキスト、ホットワード、句読点、タイムスタンプ、話者情報を後処理して最終テキストを得ます。",
-            ko: "음성 인식은 연속적인 음성 파형을 편집·검색 가능한 텍스트로 바꾸지만 ASR이 각 샘플을 직접 단어로 번역하는 것은 아닙니다.\n\nPCM은 압력 변화의 수치열일 뿐입니다. 시스템은 보통 약 10 ms 또는 20 ms의 짧은 프레임으로 나누고 각 프레임의 주파수 에너지 구조를 추출해 log-mel, MFCC 또는 신경망 embedding을 만듭니다.\n\n그 다음 Encoder가 연속적인 음향 변화를 더 안정적인 문맥 표현으로 압축하고 CTC, Attention 또는 Transducer 같은 인식 헤드가 가장 가능성 높은 token 시퀀스를 추정합니다. 마지막으로 언어 문맥, 핫워드, 구두점, 타임스탬프와 화자 정보를 후처리해 최종 텍스트를 얻습니다."
+            zh: "语音识别把连续的语音波形转换成可编辑、可检索的文字，但 ASR 并不是把每个采样点直接翻译成文字。\n\n以 16 kHz 语音为例，PCM 每秒有 16000 个振幅值。频谱路线可用 25 ms 分析窗、10 ms 步长得到 log-Mel；MFCC 或从波形学习的表示是其他选择，不是依次必经的步骤。\n\nEncoder 建立声学上下文，CTC、RNN-T 或注意力解码等路线估计 token 序列，再解码为文字。热词可在解码中介入；标点与时间戳可由模型或额外模块提供，说话人分离则是独立任务，不是 ASR 自动附带的能力。", "zh-Hant": traditional("语音识别把连续的语音波形转换成可编辑、可检索的文字，但 ASR 并不是把每个采样点直接翻译成文字。\n\n以 16 kHz 语音为例，PCM 每秒有 16000 个振幅值。频谱路线可用 25 ms 分析窗、10 ms 步长得到 log-Mel；MFCC 或从波形学习的表示是其他选择，不是依次必经的步骤。\n\nEncoder 建立声学上下文，CTC、RNN-T 或注意力解码等路线估计 token 序列，再解码为文字。热词可在解码中介入；标点与时间戳可由模型或额外模块提供，说话人分离则是独立任务，不是 ASR 自动附带的能力。"),
+            en: "Speech recognition turns continuous speech waveforms into editable, searchable text, but ASR does not translate each sample directly into words.\n\nAt 16 kHz, PCM has 16,000 amplitude samples per second. A spectral route may use 25 ms analysis windows and 10 ms hops to form log-Mel features; MFCCs or learned waveform representations are alternatives, not mandatory consecutive stages.\n\nAn encoder builds acoustic context; CTC, RNN-T, or attention decoding estimates tokens, which are decoded to text. Hotwords may guide decoding; punctuation and timestamps can come from the model or extra modules. Speaker diarization is a separate task, not an automatic ASR capability.",
+            ja: "音声認識は連続する音声波形を編集・検索できる文字へ変換しますが、ASR は各サンプルを直接単語へ翻訳するものではありません。\n\n16 kHz の PCM は毎秒 16000 個の振幅値です。スペクトル経路では例えば 25 ms 窓と 10 ms ホップで log-Mel を作ります。MFCC や波形からの学習表現は別の選択肢で、必須の直列工程ではありません。\n\nEncoder が音響文脈を作り、CTC、RNN-T、Attention などで token 列を推定して文字へデコードします。ホットワードはデコードに参加でき、句読点と時刻はモデルか追加機構が提供します。話者分離は独立タスクで、自動的に備わる能力ではありません。",
+            ko: "음성 인식은 연속적인 음성 파형을 편집·검색 가능한 텍스트로 바꾸지만 ASR이 각 샘플을 직접 단어로 번역하는 것은 아닙니다.\n\n16 kHz PCM은 초당 16000개의 진폭 값입니다. 스펙트럼 경로는 예를 들어 25 ms 창과 10 ms 홉으로 log-Mel을 만듭니다. MFCC나 학습한 파형 표현은 대안이며 순서대로 거치는 필수 단계가 아닙니다.\n\nEncoder가 음향 문맥을 만들고 CTC, RNN-T 또는 Attention 방식이 token을 추정해 텍스트로 디코딩합니다. 핫워드는 디코딩에 참여하고 구두점·시간 정보는 모델이나 추가 모듈이 제공합니다. 화자 분리는 별도 작업이며 ASR에 자동 포함되지 않습니다."
           },
           termExplanations: [
             {
@@ -2008,10 +1996,10 @@ export const categories: Category[] = [
             {
               name: { zh: "分帧加窗", "zh-Hant": traditional("分帧加窗"), en: "Framing and windowing", ja: "フレーム分割と窓関数", ko: "프레임 분할과 윈도잉" },
               explanation: {
-                zh: "语音在很短时间内可以近似看成稳定信号，所以 ASR 会把长波形切成短帧，例如 10 ms 或 20 ms，并用窗函数减少帧边界突变。输出是一串短时分析片段，后面才能计算频谱或送入神经网络。", "zh-Hant": traditional("语音在很短时间内可以近似看成稳定信号，所以 ASR 会把长波形切成短帧，例如 10 ms 或 20 ms，并用窗函数减少帧边界突变。输出是一串短时分析片段，后面才能计算频谱或送入神经网络。"),
-                en: "Speech can be treated as roughly stable over a short interval, so ASR slices a long waveform into frames such as 10 ms or 20 ms and applies a window to reduce boundary jumps. The output is a sequence of short analysis segments ready for spectral features or neural input.",
-                ja: "音声は短い時間ではほぼ定常信号とみなせるため、ASR は長い波形を 10 ms や 20 ms のフレームに分け、窓関数で境界の急変を抑えます。出力は、スペクトル特徴の計算やニューラルネットワーク入力に使える短時間解析片の列です。",
-                ko: "음성은 짧은 구간에서는 대략 안정적인 신호로 볼 수 있으므로 ASR은 긴 파형을 10 ms나 20 ms 프레임으로 나누고 윈도 함수로 경계의 급격한 변화를 줄입니다. 출력은 스펙트럼 특징 계산이나 신경망 입력에 사용할 수 있는 짧은 분석 구간의 시퀀스입니다."
+                zh: "频谱前端常在短时近似平稳的假设下分析语音。例如 16 kHz、25 ms 窗取 400 点，10 ms 步长移动 160 点，相邻帧重叠 240 点。窗长是每次看多久，步长是多久再看一次；具体配置取决于模型。", "zh-Hant": traditional("频谱前端常在短时近似平稳的假设下分析语音。例如 16 kHz、25 ms 窗取 400 点，10 ms 步长移动 160 点，相邻帧重叠 240 点。窗长是每次看多久，步长是多久再看一次；具体配置取决于模型。"),
+                en: "Spectral front ends assume approximate short-time stationarity. At 16 kHz, a 25 ms window has 400 samples and a 10 ms hop advances 160, overlapping by 240. Window length is the interval analyzed; hop is the interval between analyses. Configuration is model-specific.",
+                ja: "スペクトル前段は短時間での近似定常性を仮定します。16 kHz、25 ms 窓は 400 サンプル、10 ms ホップは 160 サンプルで、240 サンプルが重なります。窓長は解析区間、ホップは解析間隔で、設定はモデル次第です。",
+                ko: "스펙트럼 프런트엔드는 단시간의 근사 정상성을 가정합니다. 16 kHz에서 25 ms 창은 400샘플, 10 ms 홉은 160샘플이므로 240샘플이 겹칩니다. 창 길이는 분석 구간, 홉은 분석 간격이며 설정은 모델에 따라 다릅니다."
               }
             },
             {
@@ -2044,10 +2032,10 @@ export const categories: Category[] = [
             {
               name: { zh: "解码与后处理", "zh-Hant": traditional("解码与后处理"), en: "Decoding and post-processing", ja: "デコードと後処理", ko: "디코딩과 후처리" },
               explanation: {
-                zh: "模型输出通常是多个 token 候选和概率，解码器会结合语言约束、热词和上下文选择更合理的句子。后处理再补标点、大小写、数字格式、时间戳和说话人信息，让输出更适合字幕、会议纪要或语音控制。", "zh-Hant": traditional("模型输出通常是多个 token 候选和概率，解码器会结合语言约束、热词和上下文选择更合理的句子。后处理再补标点、大小写、数字格式、时间戳和说话人信息，让输出更适合字幕、会议纪要或语音控制。"),
-                en: "The model usually outputs token candidates and probabilities. A decoder uses language constraints, hotwords, and context to choose a more plausible sentence. Post-processing adds punctuation, casing, number formatting, timestamps, and speaker metadata for captions, meeting notes, or voice control.",
-                ja: "モデルは通常、複数の token 候補と確率を出力します。デコーダーは言語制約、ホットワード、文脈を使ってより妥当な文を選びます。後処理で句読点、大文字小文字、数値形式、タイムスタンプ、話者メタデータを加え、字幕、議事録、音声操作に適した出力にします。",
-                ko: "모델은 보통 여러 token 후보와 확률을 출력합니다. 디코더는 언어 제약, 핫워드와 문맥을 이용해 더 타당한 문장을 선택합니다. 후처리에서 구두점, 대소문자, 숫자 형식, 타임스탬프와 화자 메타데이터를 추가해 자막, 회의록이나 음성 제어에 적합하게 만듭니다."
+                zh: "解码器按候选 token 分数选择文字，热词可参与解码而非事后替换。文本规范化可统一数字和大小写；标点、时间戳依模型或额外模块实现，说话人分离还需要独立模型。", "zh-Hant": traditional("解码器按候选 token 分数选择文字，热词可参与解码而非事后替换。文本规范化可统一数字和大小写；标点、时间戳依模型或额外模块实现，说话人分离还需要独立模型。"),
+                en: "A decoder selects text using candidate token scores; hotwords may guide decoding rather than replace text afterwards. Normalization handles numbers and casing. Punctuation and timestamps depend on the model or additional modules; speaker diarization requires a separate model.",
+                ja: "デコーダーは候補 token のスコアから文字を選び、ホットワードは事後置換ではなくデコードに参加できます。数字や大文字小文字は正規化し、句読点や時刻はモデルか追加機構が提供します。話者分離には別モデルが必要です。",
+                ko: "디코더는 후보 token 점수로 텍스트를 선택하며 핫워드는 사후 치환 대신 디코딩에 참여할 수 있습니다. 숫자·대소문자는 정규화하고 구두점·시간 정보는 모델이나 추가 모듈이 제공합니다. 화자 분리는 별도 모델이 필요합니다."
               }
             },
             {
@@ -2082,10 +2070,10 @@ export const categories: Category[] = [
             initialMode: "asr",
             title: { zh: "语音识别 ASR 实验室", "zh-Hant": traditional("语音识别 ASR 实验室"), en: "Speech Recognition ASR Lab", ja: "音声認識 ASR ラボ", ko: "음성 인식 ASR 실험실" },
             description: {
-              zh: "进入独立文章界面，理解语音从 PCM、特征、Encoder、CTC/RNNT 到文本后处理的流程。", "zh-Hant": traditional("进入独立文章界面，理解语音从 PCM、特征、Encoder、CTC/RNNT 到文本后处理的流程。"),
-              en: "Open an independent article page explaining speech from PCM, features, encoder, CTC/RNNT, and text post-processing.",
-              ja: "独立した記事ページで、PCM、特徴、Encoder、CTC/RNNT からテキスト後処理までの音声認識フローを理解します。",
-              ko: "독립 문서 페이지에서 PCM, 특징, Encoder, CTC/RNNT부터 텍스트 후처리까지 음성 인식 흐름을 이해합니다."
+              zh: "用人工教学示例检查 token 概率、CTC 折叠、RNN-T 推进与注意力解码；不是上传录音后的真实识别。", "zh-Hant": traditional("用人工教学示例检查 token 概率、CTC 折叠、RNN-T 推进与注意力解码；不是上传录音后的真实识别。"),
+              en: "Inspect token probabilities, CTC collapse, RNN-T transitions, and attention decoding using hand-built teaching examples, not live recognition of uploaded recordings.",
+              ja: "手作りの教材例で token 確率、CTC 折りたたみ、RNN-T の遷移、Attention デコードを確認します。録音を認識する実モデルではありません。",
+              ko: "수작업 교육 예시로 token 확률, CTC 병합, RNN-T 전이와 Attention 디코딩을 확인합니다. 업로드 녹음을 인식하는 실제 모델은 아닙니다."
             },
             buttonLabel: { zh: "打开语音识别 ASR 实验室", "zh-Hant": traditional("打开语音识别 ASR 实验室"), en: "Open speech recognition ASR lab", ja: "音声認識 ASR ラボを開く", ko: "음성 인식 ASR 실험실 열기" }
           },
@@ -2361,19 +2349,19 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "AI 音频增强把带噪、混响或多人叠加的音频输入神经网络，让模型估计干净语音、目标声源或频谱掩蔽。\n\n它常用于会议、耳机、直播、助听、车载和短视频处理。和传统 DSP 的固定滤波不同，AI 增强依赖训练数据学习噪声、语音和房间模式，但也可能引入音乐噪声、语音发闷、断字和过度抑制。", "zh-Hant": traditional("AI 音频增强把带噪、混响或多人叠加的音频输入神经网络，让模型估计干净语音、目标声源或频谱掩蔽。\n\n它常用于会议、耳机、直播、助听、车载和短视频处理。和传统 DSP 的固定滤波不同，AI 增强依赖训练数据学习噪声、语音和房间模式，但也可能引入音乐噪声、语音发闷、断字和过度抑制。"),
-            en: "AI audio enhancement feeds noisy, reverberant, or overlapping audio into neural networks so the model can estimate clean speech, a target source, or a spectral mask.\n\nIt is common in conferencing, headsets, live streaming, hearing assistance, cars, and short-video processing. Unlike fixed traditional DSP filters, AI enhancement learns noise, speech, and room patterns from data, but can introduce artifacts such as musical noise, muffled speech, clipped words, or over-suppression.",
-            ja: "AI 音声強調は、ノイズ、残響、複数話者が重なった音声をニューラルネットワークへ入力し、モデルにクリーン音声、目標音源、スペクトルマスクを推定させます。\n\n会議、ヘッドセット、ライブ配信、補聴、車載、短編動画処理でよく使われます。固定フィルター中心の従来 DSP と異なり、AI 強調はデータからノイズ、音声、部屋のパターンを学びますが、ミュージカルノイズ、こもり、語切れ、過抑制などのアーティファクトを生む可能性もあります。",
-            ko: "AI 오디오 향상은 잡음, 잔향 또는 여러 화자가 겹친 오디오를 신경망에 입력해 모델이 깨끗한 음성, 목표 음원이나 스펙트럼 마스크를 추정하도록 합니다.\n\n회의, 헤드셋, 라이브 스트리밍, 보청, 차량과 숏폼 영상 처리에서 흔히 사용합니다. 고정 필터 중심의 전통 DSP와 달리 AI 향상은 데이터에서 잡음, 음성과 공간 패턴을 학습하지만 음악성 잡음, 먹먹한 음성, 단어 잘림이나 과도한 억제 같은 아티팩트를 만들 수도 있습니다."
+            zh: "AI 音频增强把带噪、混响或多人叠加的音频输入神经网络，让模型估计干净语音、目标声源或频谱掩蔽。\n\n它常用于会议、耳机、直播、助听、车载和短视频处理。传统 DSP 也能进行自适应处理；AI 增强的特点是依赖训练数据学习输入到目标的映射，但也可能引入音乐噪声、语音发闷、断字和过度抑制。", "zh-Hant": traditional("AI 音频增强把带噪、混响或多人叠加的音频输入神经网络，让模型估计干净语音、目标声源或频谱掩蔽。\n\n它常用于会议、耳机、直播、助听、车载和短视频处理。传统 DSP 也能进行自适应处理；AI 增强的特点是依赖训练数据学习输入到目标的映射，但也可能引入音乐噪声、语音发闷、断字和过度抑制。"),
+            en: "AI audio enhancement feeds noisy, reverberant, or overlapping audio into neural networks so the model can estimate clean speech, a target source, or a spectral mask.\n\nIt is common in conferencing, headsets, live streaming, hearing assistance, cars, and short-video processing. Traditional DSP can also adapt; AI enhancement learns an input-to-target mapping from training data, but can introduce artifacts such as musical noise, muffled speech, clipped words, or over-suppression.",
+            ja: "AI 音声強調は、ノイズ、残響、複数話者が重なった音声をニューラルネットワークへ入力し、モデルにクリーン音声、目標音源、スペクトルマスクを推定させます。\n\n会議、ヘッドセット、ライブ配信、補聴、車載、短編動画処理でよく使われます。従来 DSP も適応処理が可能です。AI 強調は学習データから入力と目標の対応を学びますが、ミュージカルノイズ、こもり、語切れ、過抑制などのアーティファクトを生む可能性もあります。",
+            ko: "AI 오디오 향상은 잡음, 잔향 또는 여러 화자가 겹친 오디오를 신경망에 입력해 모델이 깨끗한 음성, 목표 음원이나 스펙트럼 마스크를 추정하도록 합니다.\n\n회의, 헤드셋, 라이브 스트리밍, 보청, 차량과 숏폼 영상 처리에서 흔히 사용합니다. 전통 DSP도 적응 처리가 가능합니다. AI 향상은 학습 데이터로 입력과 목표의 대응을 배우지만 음악성 잡음, 먹먹한 음성, 단어 잘림이나 과도한 억제 같은 아티팩트를 만들 수도 있습니다."
           },
           termExplanations: [
             {
               name: { zh: "神经降噪", "zh-Hant": traditional("神经降噪"), en: "Neural denoising", ja: "ニューラルノイズ除去", ko: "신경망 잡음 제거" },
               explanation: {
-                zh: "模型估计每个时间频率区域中语音和噪声的占比，再保留语音、压低噪声。强降噪会降低底噪，但可能损伤辅音和空气感。", "zh-Hant": traditional("模型估计每个时间频率区域中语音和噪声的占比，再保留语音、压低噪声。强降噪会降低底噪，但可能损伤辅音和空气感。"),
-                en: "The model estimates how much speech and noise exist in each time-frequency region, preserving speech while reducing noise. Strong denoising lowers background noise but may damage consonants and airiness.",
-                ja: "モデルは各時間周波数領域に含まれる音声とノイズの割合を推定し、音声を残してノイズを抑えます。強いノイズ低減は背景ノイズを下げますが、子音や空気感を損なうことがあります。",
-                ko: "모델은 각 시간-주파수 영역의 음성과 잡음 비율을 추정해 음성을 보존하면서 잡음을 줄입니다. 강한 잡음 제거는 배경 잡음을 낮추지만 자음과 공기감을 손상할 수 있습니다."
+                zh: "掩码型模型估计每个时频区域的幅度增益，而非直接读出语音概率；同一区域的语音和噪声都会被缩放。强降噪会降低底噪，但可能损伤辅音和空气感。", "zh-Hant": traditional("掩码型模型估计每个时频区域的幅度增益，而非直接读出语音概率；同一区域的语音和噪声都会被缩放。强降噪会降低底噪，但可能损伤辅音和空气感。"),
+                en: "Mask-based models estimate magnitude gains, not speech probabilities; speech and noise in the same region are both scaled. Strong denoising lowers background noise but may damage consonants and airiness.",
+                ja: "マスク型モデルは音声確率ではなく時周波数ごとの振幅ゲインを推定し、同じ領域の音声と雑音を共にスケーリングします。強いノイズ低減は背景ノイズを下げますが、子音や空気感を損なうことがあります。",
+                ko: "마스크 모델은 음성 확률이 아닌 시간-주파수별 진폭 이득을 추정하며 같은 영역의 음성과 잡음을 함께 조절합니다. 강한 잡음 제거는 배경 잡음을 낮추지만 자음과 공기감을 손상할 수 있습니다."
               }
             },
             {
@@ -2388,10 +2376,10 @@ export const categories: Category[] = [
             {
               name: { zh: "神经后滤波", "zh-Hant": traditional("神经后滤波"), en: "Neural post-filter", ja: "ニューラルポストフィルター", ko: "신경망 후처리 필터" },
               explanation: {
-                zh: "在传统 AEC/NS/AGC 之后再用小模型修补残留噪声、回声和音色损伤，是很多实时产品折中质量和算力的方式。", "zh-Hant": traditional("在传统 AEC/NS/AGC 之后再用小模型修补残留噪声、回声和音色损伤，是很多实时产品折中质量和算力的方式。"),
-                en: "A small model after traditional AEC/NS/AGC can clean residual noise, echo, and timbre damage, which is a common compromise between quality and compute.",
-                ja: "従来の AEC/NS/AGC の後段に小型モデルを置いて残留ノイズ、エコー、音色の損傷を補修します。多くのリアルタイム製品で品質と計算量を両立する方法です。",
-                ko: "전통적인 AEC/NS/AGC 뒤에 소형 모델을 배치해 남은 잡음, 에코와 음색 손상을 정리하는 방식으로 많은 실시간 제품에서 품질과 연산량을 절충합니다."
+                zh: "在前级处理后用小模型抑制残留噪声或回声；具体顺序由系统设计决定，不能保证恢复前级已经丢失的语音。", "zh-Hant": traditional("在前级处理后用小模型抑制残留噪声或回声；具体顺序由系统设计决定，不能保证恢复前级已经丢失的语音。"),
+                en: "A small model suppresses residual noise or echo after earlier processing. Ordering depends on system design; it cannot guarantee recovery of speech already removed.",
+                ja: "前段処理後に小型モデルで残留ノイズやエコーを抑制します。順序はシステム設計次第で、失われた音声の復元は保証できません。",
+                ko: "앞단 처리 후 소형 모델로 잔류 잡음이나 에코를 억제합니다. 순서는 시스템 설계에 따르며 이미 제거된 음성의 복원은 보장하지 않습니다."
               }
             }
           ],
@@ -2406,10 +2394,10 @@ export const categories: Category[] = [
             initialMode: "enhancement",
             title: { zh: "AI 音频增强实验室", "zh-Hant": traditional("AI 音频增强实验室"), en: "AI Audio Enhancement Lab", ja: "AI 音声強調ラボ", ko: "AI 오디오 향상 실험실" },
             description: {
-              zh: "进入独立文章界面，理解 AI 降噪、语音分离、去混响和神经后滤波的基本链路。", "zh-Hant": traditional("进入独立文章界面，理解 AI 降噪、语音分离、去混响和神经后滤波的基本链路。"),
-              en: "Open an independent article page explaining AI denoising, speech separation, dereverberation, and neural post-filtering.",
-              ja: "独立した記事ページで、AI ノイズ低減、音声分離、残響除去、ニューラルポストフィルターの基本経路を理解します。",
-              ko: "독립 문서 페이지에서 AI 잡음 제거, 음성 분리, 잔향 제거와 신경망 후처리 필터의 기본 경로를 이해합니다."
+              zh: "对比同一合成片段的带噪输入、模型输出和干净参考，再检查卷积、掩码与 PCM 重建的真实计算结果。", "zh-Hant": traditional("对比同一合成片段的带噪输入、模型输出和干净参考，再检查卷积、掩码与 PCM 重建的真实计算结果。"),
+              en: "Compare noisy input, model output, and clean reference for one synthetic clip, then inspect actual convolution, mask, and PCM reconstruction results.",
+              ja: "同じ合成区間のノイズ入力、モデル出力、クリーン参照を比較し、畳み込み、マスク、PCM 復元の実際の計算結果を調べます。",
+              ko: "동일한 합성 구간의 잡음 입력·모델 출력·깨끗한 참조를 비교하고 합성곱·마스크·PCM 복원의 실제 계산 결과를 확인합니다."
             },
             buttonLabel: { zh: "打开 AI 音频增强实验室", "zh-Hant": traditional("打开 AI 音频增强实验室"), en: "Open AI audio enhancement lab", ja: "AI 音声強調ラボを開く", ko: "AI 오디오 향상 실험실 열기" }
           },

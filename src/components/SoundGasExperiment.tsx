@@ -5,18 +5,19 @@ import { Pause, Play, RotateCcw } from "lucide-react";
 import type { Language } from "../content/knowledge";
 import { text } from "../content/language";
 import { createSoundGas } from "./soundGasModel";
+import { animationLoop } from "./animationLoop";
 
 export default function SoundGasExperiment({ language }: { language: Language }) {
   const host = useRef<HTMLDivElement>(null);
   const run = useRef(false);
-  const api = useRef<{ reset: () => void }>();
+  const api = useRef<{ reset: () => void; setPlaying?: (playing: boolean) => void }>();
   const [running, setRunning] = useState(false);
   const [volume, setVolume] = useState(1);
   const [reset, setReset] = useState(0);
   const [hits, setHits] = useState(0);
   const [unavailable, setUnavailable] = useState(false);
   const t = (zh: string, en: string, ja: string, ko: string) => text(language, zh, en, ja, ko);
-  useEffect(() => { run.current = running; }, [running]);
+  useEffect(() => { run.current = running; api.current?.setPlaying?.(running); }, [running]);
   useEffect(() => {
     setHits(0);
     if (!window.WebGLRenderingContext) { setUnavailable(true); return; }
@@ -53,19 +54,22 @@ export default function SoundGasExperiment({ language }: { language: Language })
       camera.aspect = width / height; camera.zoom = Math.min(1.2, width / height); camera.updateProjectionMatrix();
       renderer.setSize(width, height); draw();
     };
-    let visible = true, ticks = 0;
-    const visibility = typeof IntersectionObserver === "undefined" ? undefined : new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; });
-    visibility?.observe(container);
     const observer = new ResizeObserver(resize); observer.observe(container);
     controls.addEventListener("change", draw);
-    const timer = window.setInterval(() => {
-      if (!run.current || !visible || document.hidden) return;
-      for (let i = 0; i < 4; i++) gas.step();
-      draw(); if (++ticks % 8 === 0) setHits(gas.wallHits);
-    }, 1000 / 30);
     api.current.reset(); resize();
+    let accumulator = 0, statsElapsed = 0;
+    const animation = animationLoop(container, delta => {
+      // Preserve the model's 120 fixed physics steps per simulated second.
+      accumulator += delta;
+      while (accumulator >= 1 / 120) { gas.step(); accumulator -= 1 / 120; }
+      draw();
+      statsElapsed += delta;
+      if (statsElapsed >= .25) { setHits(gas.wallHits); statsElapsed %= .25; }
+    }, { fps: 60, respectReducedMotion: false });
+    api.current.setPlaying = animation.setPlaying;
+    animation.setPlaying(run.current);
     return () => {
-      clearInterval(timer); observer.disconnect(); visibility?.disconnect(); controls.dispose(); api.current = undefined;
+      animation.dispose(); observer.disconnect(); controls.dispose(); api.current = undefined;
       geometry.dispose(); material.dispose(); edges.dispose(); lineMaterial.dispose(); renderer.dispose(); renderer.domElement.remove();
     };
   }, [volume, reset]);

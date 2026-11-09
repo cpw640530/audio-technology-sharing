@@ -33,3 +33,33 @@ it("uses fixed scaling and keeps all supported settings bounded and ordered", ()
     expect(Math.abs(propagationSample(4, time, settings).pressure)).toBeLessThanOrEqual(1);
   }
 });
+
+it("records exact rolling-window endpoints between sample ticks without future samples", () => {
+  for (const time of [0, .001, .047, 8, 8.012, 12.017]) {
+    const history = pressureHistory(time, pulse);
+    expect(history[0].time).toBe(Math.max(0, time - 8));
+    expect(history[history.length - 1].time).toBe(time);
+    expect(history.length).toBeLessThanOrEqual(242);
+    history.forEach((sample, i) => {
+      expect(sample.time).toBeLessThanOrEqual(time);
+      if (i) expect(sample.time).toBeGreaterThan(history[i - 1].time);
+      expect(sample.pressure).toBe(propagationSample(4, sample.time, pulse).pressure);
+    });
+  }
+});
+
+it("keeps rightward stroke and pressure quadrature consistent at the tracked parcel", () => {
+  const settings: PropagationSettings = { mode: "continuous", amplitude: 1, rate: 1 };
+  const at = (time: number) => propagationSample(4, time, settings);
+  expect(at(1).displacement).toBe(0);
+  expect(at(1.25).pressure).toBeCloseTo(2 / 3);
+  expect(at(1.5).displacement).toBeCloseTo(.22);
+  expect(at(1.5).pressure).toBeCloseTo(0);
+  expect(at(1.75).pressure).toBeCloseTo(-2 / 3);
+  expect(at(2).displacement).toBeCloseTo(0);
+  expect(at(2).pressure).toBeCloseTo(0);
+  for (const rate of [.5, 1, 1.5]) {
+    expect(propagationSample(4, 1 + .25 / rate, { ...settings, rate }).pressure).toBeCloseTo(rate / 1.5);
+    expect(propagationSample(4, 1 + .5 / rate, { ...settings, rate }).displacement).toBeCloseTo(.22);
+  }
+});

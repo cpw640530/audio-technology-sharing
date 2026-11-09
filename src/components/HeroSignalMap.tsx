@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
-
-const FRAME_INTERVAL_MS = 1000 / 24;
+import { animationLoop } from "./animationLoop";
 
 export function HeroSignalMap() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -21,8 +20,7 @@ export function HeroSignalMap() {
     const activeCanvas = canvas;
     const activeContext = context;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0;
-    let lastFrame = 0;
+    let elapsed = 0;
     let width = 0;
     let height = 0;
 
@@ -36,14 +34,9 @@ export function HeroSignalMap() {
       activeContext.setTransform(scale, 0, 0, scale, 0, 0);
     }
 
-    function draw(timestamp: number, keepAnimating = true) {
-      if (keepAnimating && timestamp - lastFrame < FRAME_INTERVAL_MS) {
-        frame = window.requestAnimationFrame(draw);
-        return;
-      }
-
-      lastFrame = timestamp;
-      const phase = timestamp * 0.0022;
+    function draw(delta: number) {
+      elapsed += delta;
+      const phase = elapsed * 2.2;
       const sectionWidth = width / 3;
       const centerY = height * 0.57;
       const amplitude = Math.min(42, height * 0.25);
@@ -109,25 +102,20 @@ export function HeroSignalMap() {
       activeContext.fillText("time", 10, height - 17);
       activeContext.fillText("samples", sectionWidth + 10, height - 17);
       activeContext.fillText("frequency", sectionWidth * 2 + 10, height - 17);
-
-      if (keepAnimating) {
-        frame = window.requestAnimationFrame(draw);
-      }
     }
 
     const observer = new ResizeObserver(() => {
       resize();
-      if (reducedMotion.matches) draw(FRAME_INTERVAL_MS, false);
+      draw(0);
     });
     observer.observe(activeCanvas);
     resize();
 
-    if (reducedMotion.matches) draw(FRAME_INTERVAL_MS, false);
-    else frame = window.requestAnimationFrame(draw);
+    const animation = animationLoop(activeCanvas, draw);
 
     return () => {
       observer.disconnect();
-      window.cancelAnimationFrame(frame);
+      animation.dispose();
     };
   }, []);
 

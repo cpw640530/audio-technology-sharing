@@ -2,8 +2,9 @@ import {
   Color, DoubleSide, Mesh, OrthographicCamera, PlaneGeometry,
   Scene, ShaderMaterial, WebGLRenderer
 } from "three";
+import { animationLoop } from "./animationLoop";
 
-export function createWaveSurface(canvas: HTMLCanvasElement) {
+export function createWaveSurface(canvas: HTMLCanvasElement, onAvailable: (available: boolean) => void = () => {}) {
   const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "low-power" });
   renderer.setClearColor(0x000000, 0);
   const scene = new Scene();
@@ -62,10 +63,7 @@ export function createWaveSurface(canvas: HTMLCanvasElement) {
   surface.frustumCulled = false;
   scene.add(surface);
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
-  let timer = 0;
-  let frame = 0;
   let elapsed = 0;
-  let previous = performance.now();
   let lost = false;
   let disposed = false;
 
@@ -73,27 +71,6 @@ export function createWaveSurface(canvas: HTMLCanvasElement) {
     if (disposed || lost) return;
     material.uniforms.time.value = reducedMotion.matches ? 0 : elapsed;
     renderer.render(scene, camera);
-  }
-
-  function stop() {
-    clearTimeout(timer);
-    cancelAnimationFrame(frame);
-  }
-
-  function tick(now: number) {
-    if (disposed || lost || document.hidden || reducedMotion.matches) return;
-    elapsed += Math.min((now - previous) / 1000, 0.1);
-    previous = now;
-    render();
-    timer = window.setTimeout(() => { frame = requestAnimationFrame(tick); }, 1000 / 20);
-  }
-
-  function syncMotion() {
-    stop();
-    if (disposed || lost || document.hidden) return;
-    previous = performance.now();
-    render();
-    if (!reducedMotion.matches) timer = window.setTimeout(() => { frame = requestAnimationFrame(tick); }, 1000 / 20);
   }
 
   function resize() {
@@ -106,21 +83,18 @@ export function createWaveSurface(canvas: HTMLCanvasElement) {
     render();
   }
 
-  function contextLost(event: Event) { event.preventDefault(); lost = true; stop(); }
-  function contextRestored() { lost = false; resize(); syncMotion(); }
+  function contextLost(event: Event) { event.preventDefault(); lost = true; onAvailable(false); animation.setPlaying(false); }
+  function contextRestored() { lost = false; resize(); onAvailable(true); animation.setPlaying(true); }
   resize();
-  syncMotion();
+  onAvailable(true);
+  const animation = animationLoop(canvas, delta => { elapsed += delta; render(); });
   window.addEventListener("resize", resize);
-  document.addEventListener("visibilitychange", syncMotion);
-  reducedMotion.addEventListener("change", syncMotion);
   canvas.addEventListener("webglcontextlost", contextLost);
   canvas.addEventListener("webglcontextrestored", contextRestored);
   return () => {
     disposed = true;
-    stop();
+    animation.dispose();
     window.removeEventListener("resize", resize);
-    document.removeEventListener("visibilitychange", syncMotion);
-    reducedMotion.removeEventListener("change", syncMotion);
     canvas.removeEventListener("webglcontextlost", contextLost);
     canvas.removeEventListener("webglcontextrestored", contextRestored);
     geometry.dispose();

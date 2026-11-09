@@ -8,11 +8,11 @@ const renderLab = () => render(<WaveSpectrumLab language="en" onBack={back} onBa
 
 it("changes only the selected component and keeps amplitude lines fixed for a phase change", () => {
   const view = renderLab();
-  const before = screen.getByTestId("wave-spectrum-sum").getAttribute("d");
-  const component = screen.getByTestId("wave-spectrum-component-0").getAttribute("d");
+  expect(screen.queryByRole("heading", { name: "Time: components and sum" })).not.toBeInTheDocument();
+  expect(screen.getByRole("img", { name: "Ideal amplitude line spectrum" })).toBeInTheDocument();
+  const rms = screen.getByTestId("wave-spectrum-rms").textContent;
   fireEvent.change(screen.getByRole("slider", { name: "750 Hz phase" }), { target: { value: "90" } });
-  expect(screen.getByTestId("wave-spectrum-sum").getAttribute("d")).not.toBe(before);
-  expect(screen.getByTestId("wave-spectrum-component-0")).toHaveAttribute("d", component);
+  expect(screen.getByTestId("wave-spectrum-rms")).toHaveTextContent(rms!);
   expect(screen.getByTestId("spectrum-line-2")).toHaveAttribute("data-amplitude", "0.1");
   fireEvent.change(screen.getByRole("slider", { name: "500 Hz" }), { target: { value: "0.3" } });
   expect(screen.getByTestId("spectrum-line-1")).toHaveAttribute("data-amplitude", "0.3");

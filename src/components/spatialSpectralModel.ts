@@ -1,6 +1,9 @@
 export const demoRate = 8000;
 const size = 128;
 const hop = 64;
+// The fixed teaching transform reuses the same basis in analysis and synthesis.
+const cosine = Array.from({ length: size }, (_, k) => Float64Array.from({ length: size }, (_, n) => Math.cos(2 * Math.PI * k * n / size)));
+const sine = Array.from({ length: size }, (_, k) => Float64Array.from({ length: size }, (_, n) => Math.sin(2 * Math.PI * k * n / size)));
 
 export function arrayExample(count: number, steering: number) {
   const delay = (mic: number, angle: number) => mic * 0.04 * Math.sin(angle * Math.PI / 180) / 343;
@@ -23,8 +26,7 @@ function transform(input: number[]) {
   return Array.from({ length: size }, (_, k) => {
     let re = 0, im = 0;
     for (let n = 0; n < size; n++) {
-      const a = 2 * Math.PI * k * n / size;
-      re += input[n] * Math.cos(a); im -= input[n] * Math.sin(a);
+      re += input[n] * cosine[k][n]; im -= input[n] * sine[k][n];
     }
     return { re, im };
   });
@@ -66,8 +68,7 @@ export function spectralExample(strength: number) {
       if (index < 0 || index >= length) continue;
       let sample = 0;
       for (let k = 0; k < size; k++) {
-        const a = 2 * Math.PI * k * n / size;
-        sample += gains[k] * (bins[k].re * Math.cos(a) - bins[k].im * Math.sin(a));
+        sample += gains[k] * (bins[k].re * cosine[k][n] - bins[k].im * sine[k][n]);
       }
       output[index] += sample / size * window[n]; weights[index] += window[n] ** 2;
     }

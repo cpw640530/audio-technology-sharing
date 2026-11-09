@@ -1,29 +1,13 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Play, RotateCcw, Square } from "lucide-react";
 import type { Language } from "../content/knowledge";
 import { text } from "../content/language";
 import { waveSpectrumTopic } from "../content/waveSpectrum";
 import { SoundCompositionExperiment } from "./SoundCompositionExperiment";
-import { componentFrequencies, componentSample, initialAmplitudes, mixtureSample, periodicCoefficients } from "./waveSpectrumModel";
+import { componentFrequencies, initialAmplitudes, periodicCoefficients } from "./waveSpectrumModel";
 
 const colors = ["#7ee7d8", "#f0c470", "#f29a9a"];
 const WaveSpectrum3D = lazy(() => import("./WaveSpectrum3D"));
-const pathFor = (sample: (seconds: number) => number) => Array.from({ length: 257 }, (_, index) => {
-  const t = index / 256;
-  return `${index ? "L" : "M"}${(44 + 356 * t).toFixed(2)},${(80 - 60 * sample(t * 0.008)).toFixed(2)}`;
-}).join(" ");
-
-function TimePlot({ title, paths, labels }: { title: string; paths: string[]; labels: string[] }) {
-  return <figure className="wave-spectrum-plot">
-    <figcaption>{title}</figcaption>
-    <svg role="img" aria-label={title} viewBox="0 0 420 180">
-      {[-1, 0, 1].map(value => <g key={value}><line x1="44" x2="400" y1={80 - value * 60} y2={80 - value * 60} /><text x="34" y={85 - value * 60} textAnchor="end">{value}</text></g>)}
-      {[0, 2, 4, 6, 8].map(ms => <g key={ms}><line x1={44 + ms * 44.5} x2={44 + ms * 44.5} y1="20" y2="140" /><text x={44 + ms * 44.5} y="165" textAnchor="middle">{ms}</text></g>)}
-      {paths.map((path, index) => <path data-testid={paths.length === 1 ? "wave-spectrum-sum" : `wave-spectrum-component-${index}`} key={index} d={path} stroke={paths.length === 1 ? "#edf7f4" : colors[index]} />)}
-    </svg>
-    <div className="wave-spectrum-legend">{labels.map((label, index) => <span key={label}><i style={{ background: paths.length === 1 ? "#edf7f4" : colors[index] }} />{label}</span>)}</div>
-  </figure>;
-}
 
 type Playback = { context: AudioContext; oscillator: OscillatorNode; gain: GainNode; started: boolean };
 
@@ -36,8 +20,6 @@ export function WaveSpectrumLab({ language, onBack, onBackToDetails }: {
   const [error, setError] = useState(false);
   const audio = useRef<Playback | null>(null);
   const t = (zh: string, en: string, ja: string, ko: string) => text(language, zh, en, ja, ko);
-  const paths = useMemo(() => amplitudes.map((amplitude, index) => pathFor(time => componentSample(time, index, amplitude, index === 2 ? phase : 0))), [amplitudes, phase]);
-  const sum = useMemo(() => pathFor(time => mixtureSample(time, amplitudes, phase)), [amplitudes, phase]);
   const rms = Math.sqrt(amplitudes.reduce((power, a) => power + a * a / 2, 0));
 
   function stop(updateState = true) {
@@ -102,16 +84,10 @@ export function WaveSpectrumLab({ language, onBack, onBackToDetails }: {
         <button className="sound-lab-back" onClick={onBackToDetails}><ArrowLeft size={18} aria-hidden="true" />{t("返回详细内容", "Back to detailed guide", "詳しい解説に戻る", "상세 설명으로 돌아가기")}</button>
       </div>
       <h1>{waveSpectrumTopic.detail.lab!.title[language]}</h1>
-      <p>{t("各分量在同一时刻相加；三个图共用同一组振幅和相位参数。", "Components add at each instant; all plots share the same amplitudes and phases.", "各成分を同じ時刻で加算し、全図で同じ振幅と位相を使います。", "각 시점에서 성분을 더하며 모든 그래프가 같은 진폭과 위상을 사용합니다.")}</p>
+      <p>{t("各分量在同一时刻相加；所有图示共用同一组振幅和相位参数。", "Components add at each instant; all plots share the same amplitudes and phases.", "各成分を同じ時刻で加算し、全図で同じ振幅と位相を使います。", "각 시점에서 성분을 더하며 모든 그래프가 같은 진폭과 위상을 사용합니다.")}</p>
     </section>
     <div className="wave-spectrum-workbench">
       <div className="wave-spectrum-three-slot"><Suspense fallback={null}><WaveSpectrum3D language={language} amplitudes={amplitudes} phase={phase} /></Suspense></div>
-      <section className="sound-lab-visual">
-        <h2>{t("时域：分量与合成", "Time: components and sum", "時間：成分と合成", "시간: 성분과 합성")}</h2>
-        <TimePlot title={t("三个分量", "Three components", "三つの成分", "세 성분")} paths={paths} labels={componentFrequencies.map(f => `${f} Hz`)} />
-        <TimePlot title={t("逐点相加后的波形", "Point-by-point sum", "各時刻で足した波形", "시점별 합성 파형")} paths={[sum]} labels={["x(t)"]} />
-        <p className="wave-spectrum-caption">{t("横轴：时间 ms，固定 0–8；纵轴：归一化幅度，固定 ±1。零振幅保持水平线，不自动放大。", "X: time in ms, fixed 0–8. Y: normalized amplitude, fixed ±1. Zero amplitude stays flat; no auto-scaling.", "横軸：時間 ms、0–8 固定。縦軸：正規化振幅、±1 固定。振幅ゼロは水平線のままで自動拡大しません。", "가로축: 시간 ms, 0–8 고정. 세로축: 정규화 진폭, ±1 고정. 진폭 0은 자동 확대 없이 수평선입니다.")}</p>
-      </section>
       <section className="sound-lab-visual">
         <h2>{t("频域：幅度线谱", "Frequency: amplitude lines", "周波数：振幅線スペクトル", "주파수: 진폭 선 스펙트럼")}</h2>
         <figure className="wave-spectrum-plot">
