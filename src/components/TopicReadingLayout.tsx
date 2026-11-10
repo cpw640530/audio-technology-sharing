@@ -1,8 +1,10 @@
 import { traditional } from "../content/traditional";
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { KnowledgeExplorer, KnowledgeNavigationContext, LocalKnowledgeMap } from "./KnowledgeNavigation";
 import type { Language } from "../content/knowledge";
 
 export function TopicReadingLayout({ language, children }: { language: Language; children: ReactNode }) {
+  const navigation = useContext(KnowledgeNavigationContext);
   const content = useRef<HTMLDivElement>(null);
   const [chapters, setChapters] = useState<{ id: string; title: string; element: HTMLHeadingElement }[]>([]);
   const [active, setActive] = useState("");
@@ -67,8 +69,10 @@ export function TopicReadingLayout({ language, children }: { language: Language;
   }, [chapters]);
 
   return (
-    <div className="topic-reading-layout">
+    <div className={`topic-reading-layout${navigation ? " quartz-reading" : ""}`}>
+    {navigation && <KnowledgeExplorer language={language} current={navigation.current} onOpen={navigation.onOpen}/>}
     <aside className="topic-contents">
+      {navigation?.current && <LocalKnowledgeMap language={language} current={navigation.current} onOpen={navigation.onOpen}/>}
       <details open={open} onToggle={event => setOpen(event.currentTarget.open)}>
         <summary>{{ zh: "本页目录", "zh-Hant": traditional("本页目录"), en: "On this page", ja: "このページの目次", ko: "이 페이지의 목차" }[language]}</summary>
         <nav aria-label={{ zh: "章节目录", "zh-Hant": traditional("章节目录"), en: "Page contents", ja: "目次", ko: "목차" }[language]}>

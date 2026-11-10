@@ -6,6 +6,8 @@ import { ArrowLeft, BookOpen, Calculator, FileAudio } from "lucide-react";
 import { categories, type Language } from "../content/knowledge";
 import { codecPrinciples } from "./DigitalAudioLab";
 import { TopicPager } from "./TopicPager";
+import { NyquistExplorer } from "./NyquistExplorer";
+import { FourierExplorer } from "./FourierExplorer";
 
 type DigitalAudioPageProps = {
   relatedTopics?: ReactNode;
@@ -23,42 +25,6 @@ const digitalAudioTopic = categories
 if (!digitalAudioTopic) {
   throw new Error("The digital audio topic is required for the professional guide.");
 }
-
-function sinePath({ cycles, amplitude, center = 78, phase = 0 }: { cycles: number; amplitude: number; center?: number; phase?: number }) {
-  return Array.from({ length: 161 }, (_, index) => {
-    const x = 20 + (index / 160) * 480;
-    const y = center - Math.sin((index / 160) * Math.PI * 2 * cycles + phase) * amplitude;
-    return `${index === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
-  }).join(" ");
-}
-
-function sumPath({ center = 78 }: { center?: number }) {
-  return Array.from({ length: 161 }, (_, index) => {
-    const x = 20 + (index / 160) * 480;
-    const phase = (index / 160) * Math.PI * 2;
-    const y = center - (Math.sin(phase) * 30 + Math.sin(phase * 2 + 0.3) * 13);
-    return `${index === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
-  }).join(" ");
-}
-
-function samplePoints({ count, cycles, center }: { count: number; cycles: number; center: number }) {
-  return Array.from({ length: count }, (_, index) => {
-    const time = index / (count - 1);
-    return {
-      x: 20 + time * 480,
-      y: center - Math.sin(time * Math.PI * 2 * cycles) * 30
-    };
-  });
-}
-
-const fundamentalWave = sinePath({ cycles: 1, amplitude: 30 });
-const harmonicWave = sinePath({ cycles: 2, amplitude: 13, phase: 0.3 });
-const compositeWave = sumPath({ center: 78 });
-const lowRateWave = sinePath({ cycles: 2, amplitude: 30, center: 70 });
-const lowRateAlias = sinePath({ cycles: 1, amplitude: 30, center: 70, phase: Math.PI });
-const adequateRateWave = sinePath({ cycles: 2, amplitude: 30, center: 210 });
-const lowRateSamples = samplePoints({ count: 4, cycles: 2, center: 70 });
-const adequateRateSamples = samplePoints({ count: 9, cycles: 2, center: 210 });
 
 export function DigitalAudioPage({ relatedTopics, language, onBack, onOpenLab, onOpenPrevious, onOpenNext }: DigitalAudioPageProps) {
   const detail = digitalAudioTopic.detail;
@@ -154,26 +120,7 @@ export function DigitalAudioPage({ relatedTopics, language, onBack, onOpenLab, o
               <p>{text(language, "48 kHz 系统的奈奎斯特频率是 24 kHz，实际还要留出抗混叠滤波器的过渡带。", "A 48 kHz system has a 24 kHz Nyquist frequency, with practical room needed for the anti-alias filter transition band.", "48 kHz 系のナイキスト周波数は 24 kHz です。実際にはアンチエイリアスフィルターの遷移帯域も確保します。", "48 kHz 시스템의 나이퀴스트 주파수는 24 kHz이며 실제로는 안티에일리어싱 필터의 전이 대역도 확보해야 합니다.")}</p>
             </article>
           </div>
-          <figure className="digital-topic-diagram digital-topic-sampling-figure">
-            <figcaption>{text(language, "为什么采样率要高于最高频率的 2 倍", "Why the sample rate must exceed twice the highest frequency", "なぜ最高周波数の 2 倍を超える標本化周波数が必要か", "왜 최고 주파수의 두 배보다 높게 샘플링해야 하는가")}</figcaption>
-            <p>{text(language, "上图：2 Hz 信号以 3 Hz 采样，圆点同时落在原波形与 1 Hz 混叠波形上。下图：同一信号以 8 Hz 采样，每周期 4 个采样点。", "Top: a 2 Hz signal sampled at 3 Hz; dots fit both the source and a 1 Hz alias. Bottom: the same signal sampled at 8 Hz, with four samples per cycle.", "上：2 Hz 信号を 3 Hz で標本化すると、点は元の波形にも 1 Hz の折り返し波形にも一致します。下：同じ信号を 8 Hz で標本化し、1 周期に 4 点を得ます。", "위: 2 Hz 신호를 3 Hz로 샘플링하면 점들이 원래 파형과 1 Hz 에일리어스 모두에 일치합니다. 아래: 같은 신호를 8 Hz로 샘플링하여 주기당 4점을 얻습니다.")}</p>
-            <ul className="digital-topic-legend">
-              <li className="source">{text(language, "绿色虚线：原始 2 Hz", "Green dashed: source, 2 Hz", "緑の破線：元信号 2 Hz", "녹색 점선: 원본 2 Hz")}</li>
-              <li className="alias">{text(language, "橙色实线：混叠 1 Hz", "Orange solid: alias, 1 Hz", "橙の実線：折り返し 1 Hz", "주황 실선: 에일리어스 1 Hz")}</li>
-              <li>{text(language, "圆点：采样值", "Dots: samples", "点：サンプル値", "점: 샘플값")}</li>
-            </ul>
-            <svg viewBox="0 0 520 280" role="img" aria-label={text(language, "不足采样产生混叠与足够采样的对比", "Undersampling aliasing compared with adequate sampling", "標本化不足の折り返しと十分な標本化の比較", "불충분한 샘플링의 에일리어싱과 충분한 샘플링 비교")}>
-              <line className="digital-axis" x1="20" y1="70" x2="500" y2="70" />
-              <line className="digital-axis" x1="20" y1="210" x2="500" y2="210" />
-              <path className="digital-wave source" d={lowRateWave} />
-              <path className="digital-wave alias" d={lowRateAlias} />
-              {lowRateSamples.map((point) => <circle key={`low-${point.x}`} className="digital-sample low" cx={point.x} cy={point.y} r="4" />)}
-              <path className="digital-wave adequate" d={adequateRateWave} />
-              {adequateRateSamples.map((point) => <circle key={`adequate-${point.x}`} className="digital-sample adequate" cx={point.x} cy={point.y} r="3.5" />)}
-            </svg>
-            <p>{text(language, "横轴：时间 0–1 s；纵轴：相对幅度，两行尺度相同，水平线为零。", "Horizontal: time, 0–1 s. Vertical: relative amplitude, same scale in both rows; horizontal lines mark zero.", "横軸：時間 0–1 s。縦軸：相対振幅。上下は同じ尺度で、水平線はゼロです。", "가로축: 시간 0–1 s. 세로축: 상대 진폭. 두 행의 척도는 같으며 수평선은 0입니다.")}</p>
-            <p>{text(language, "对于最高频率受限的基带信号，理想重建要求采样率高于 2fₘₐₓ；仅凭几个离散点不能唯一确定任意波形。工程上还要给抗混叠滤波器留过渡带。", "For a band-limited baseband signal, ideal reconstruction requires a sample rate above 2fₘₐₓ. A few isolated samples cannot uniquely determine an arbitrary waveform. Practical anti-alias filters also need a transition band.", "帯域制限されたベースバンド信号の理想再構成には 2fₘₐₓ を超える標本化周波数が必要です。少数の点だけでは任意の波形を一意に決められません。実際のフィルターには遷移帯域も必要です。", "대역 제한된 기저대역 신호의 이상적인 복원에는 2fₘₐₓ보다 높은 샘플링 주파수가 필요합니다. 몇 개의 점만으로 임의의 파형을 유일하게 정할 수는 없습니다. 실제 필터에는 전이 대역도 필요합니다.")}</p>
-          </figure>
+          <NyquistExplorer language={language} />
         </section>
 
         <section className="sound-topic-section">
@@ -201,24 +148,7 @@ export function DigitalAudioPage({ relatedTopics, language, onBack, onOpenLab, o
               <p>{text(language, "波形告诉我们信号随时间如何变化，频谱告诉我们它由哪些频率组成。两种表示描述的是同一段信号。", "A waveform shows how a signal changes over time; a spectrum shows which frequencies compose it. Both describe the same signal.", "波形は時間変化を、スペクトルは構成する周波数を示します。どちらも同じ信号の表現です。", "파형은 시간 변화를, 스펙트럼은 구성 주파수를 보여 줍니다. 둘 다 같은 신호의 표현입니다.")}</p>
             </div>
           </div>
-          <div className="digital-topic-diagram-grid">
-            <figure className="digital-topic-diagram">
-              <figcaption>{text(language, "复杂波形 = 基频 + 谐波（示意）", "Complex waveform = fundamental + harmonics (schematic)", "複雑な波形 = 基本波 + 高調波（模式図）", "복잡한 파형 = 기본파 + 고조파 (모식도)")}</figcaption>
-              <ul className="digital-topic-legend">
-                <li className="source">{text(language, "绿色：基频 f", "Green: fundamental f", "緑：基本波 f", "녹색: 기본파 f")}</li>
-                <li className="alias">{text(language, "橙色：二次谐波 2f", "Orange: second harmonic 2f", "橙：第 2 高調波 2f", "주황: 2차 고조파 2f")}</li>
-                <li>{text(language, "深色：逐点相加", "Dark: pointwise sum", "濃色：各点の和", "진한 색: 점별 합")}</li>
-              </ul>
-              <svg viewBox="0 0 520 170" role="img" aria-label={text(language, "基频、二次谐波与叠加后的复杂波形", "Fundamental, second harmonic, and composite waveform", "基本波、第 2 高調波と合成波形", "기본파, 2차 고조파 및 합성 파형")}>
-                <line className="digital-axis" x1="20" y1="78" x2="500" y2="78" />
-                <path className="digital-wave fundamental" d={fundamentalWave} />
-                <path className="digital-wave harmonic" d={harmonicWave} />
-                <path className="digital-wave composite" d={compositeWave} />
-              </svg>
-              <p>{text(language, "横轴：一个基频周期的时间；纵轴：相对幅度，水平线为零。", "Horizontal: time over one fundamental period. Vertical: relative amplitude; the horizontal line marks zero.", "横軸：基本波の 1 周期の時間。縦軸：相対振幅。水平線はゼロです。", "가로축: 기본파 한 주기의 시간. 세로축: 상대 진폭. 수평선은 0입니다.")}</p>
-              <p>{text(language, "真实声音通常不是一个纯正弦波。基频决定主要音高，谐波和其他成分叠加后形成音色与波形细节。", "Real sounds are usually not a single sine wave. The fundamental provides the main pitch, while harmonics and other components shape timbre and waveform detail.", "実際の音は通常、単一の正弦波ではありません。基本波が主な音高に関わり、高調波などの成分が音色と波形の細部を形作ります。", "실제 소리는 보통 단일 정현파가 아닙니다. 기본파는 주된 음높이에 관여하고 고조파와 다른 성분은 음색과 파형의 세부를 형성합니다.")}</p>
-            </figure>
-          </div>
+          <FourierExplorer language={language} />
           <div className="digital-topic-equation-grid">
             <article className="digital-topic-equation-card">
               <span>{text(language, "傅里叶变换", "Fourier transform", "フーリエ変換", "푸리에 변환")}</span>

@@ -1,4 +1,7 @@
 import { RelatedTopics } from "./components/RelatedTopics";
+import { KnowledgeGraph } from "./components/KnowledgeGraph";
+import { KnowledgeNavigationContext } from "./components/KnowledgeNavigation";
+import { LayoutGrid, Network } from "lucide-react";
 import { WaveSpectrumPage } from "./components/WaveSpectrumPage";
 import { WaveSpectrumLab } from "./components/WaveSpectrumLab";
 import { LanguageContext, languageNames, text } from "./content/language";
@@ -7,7 +10,7 @@ import { WelcomePage } from "./components/WelcomePage";
 import { WelcomeMusic } from "./components/WelcomeMusic";
 import { ReferenceSites } from "./components/ReferenceSites";
 import { getTopicKey, type TopicKey } from "./content/relatedTopics";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AiAudioLab } from "./components/AiAudioLab";
 import { AiAudioTopicPage } from "./components/AiAudioTopicPage";
 import { ApplicationTopicPage } from "./components/ApplicationTopicPage";
@@ -48,7 +51,7 @@ import { SpatialAudioLab } from "./components/SpatialAudioLab";
 import { SpatialAudioPage } from "./components/SpatialAudioPage";
 import { SystemAudioPage } from "./components/SystemAudioPage";
 import { TopicDetails } from "./components/TopicDetails";
-import { getTopicElementId, TopicGrid } from "./components/TopicGrid";
+import { TopicGrid } from "./components/TopicGrid";
 import {
   categories,
   interfaceCopy,
@@ -141,6 +144,7 @@ function AppContent({ language }: { language: Language }) {
     return () => window.removeEventListener("hashchange", syncNotes);
   }, []);
   const [activeCategory, setActiveCategory] = useState("all");
+  const [browseMode, setBrowseMode] = useState<"cards" | "graph">("cards");
   const [activeView, setActiveView] = useState<
     | "knowledge"
     | "hardwareTopicPage"
@@ -181,7 +185,6 @@ function AppContent({ language }: { language: Language }) {
   >("knowledge");
   const [aiAudioLabId, setAiAudioLabId] = useState<Exclude<AiAudioLabId, "overview">>("event");
   const [query, setQuery] = useState("");
-  const [outlineTargetId, setOutlineTargetId] = useState<string | null>(null);
 
   const [selectedTopic, setSelectedTopic] = useState<DisplayTopic | null>(null);
   const [activeHardwareTopic, setActiveHardwareTopic] = useState<DisplayTopic | null>(null);
@@ -441,33 +444,36 @@ function AppContent({ language }: { language: Language }) {
     };
   }, [selectedTopic]);
 
-  useEffect(() => {
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+  const fixedTopicKeys: Record<string, TopicKey> = {
+    soundTopicPage: "sound-wave", waveSpectrumPage: "wave-spectrum", digitalTopicPage: "sampling-quantization",
+    audioUnitsPage: "audio-units", listeningTopicPage: "listening-metrics", coreSignalProcessingPage: "core-signal-processing",
+    speechEnhancementPage: "speech-enhancement", spatialAudioPage: "spatial-audio"
+  };
+  const currentArticle = activeView === "hardwareTopicPage" ? activeHardwareTopic
+    : activeView === "aiAudioPage" ? activeAiTopic
+    : activeView === "applicationTopicPage" ? activeApplicationTopic
+    : ["systemAudioPage", "alsaPage", "audioCodecPage", "realtimeAudioPage"].includes(activeView) ? activeSoftwareTopic : null;
+  const currentTopicKey = fixedTopicKeys[activeView] ?? (currentArticle ? getTopicKey(currentArticle) : undefined);
+  const previousView = useRef(activeView);
+  const readingPosition = useRef<{ key: TopicKey; top: number } | null>(null);
 
+  useLayoutEffect(() => {
+    const saved = readingPosition.current;
+    const top = previousView.current.endsWith("Lab") && currentTopicKey && saved?.key === currentTopicKey ? saved.top : 0;
+    previousView.current = activeView;
+    document.documentElement.scrollTop = top;
+    document.body.scrollTop = top;
     if (!window.navigator.userAgent.toLowerCase().includes("jsdom")) {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      window.scrollTo({ top, left: 0, behavior: "instant" });
     }
-  }, [activeView, activeHardwareTopic, activeSoftwareTopic, activeAiTopic, activeApplicationTopic]);
+    if (!currentTopicKey) return;
+    readingPosition.current = { key: currentTopicKey, top };
+    const savePosition = () => { readingPosition.current = { key: currentTopicKey, top: window.scrollY }; };
+    window.addEventListener("scroll", savePosition, { passive: true });
+    return () => window.removeEventListener("scroll", savePosition);
+  }, [activeView, currentTopicKey]);
 
-  useEffect(() => {
-    if (!outlineTargetId) {
-      return;
-    }
-
-    const target = document.getElementById(outlineTargetId);
-
-    if (!target) {
-      return;
-    }
-
-    if (!window.navigator.userAgent.toLowerCase().includes("jsdom")) {
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-    target.focus({ preventScroll: true });
-    setOutlineTargetId(null);
-  }, [outlineTargetId]);
-
+  function renderView() {
   if (showWelcome) {
     return <WelcomePage language={language} />;
   }
@@ -1035,32 +1041,38 @@ function AppContent({ language }: { language: Language }) {
       <Header
         language={language}
       />
-      <main>
-        <Hero language={language} totalTopics={allTopics.length} />
-        <LearningPaths language={language} onOpen={openTopic} />
-        <div className="content-layout" id="knowledge-content">
+      <main className={`quartz-home${browseMode === "graph" ? " quartz-home-graph" : ""}`}>
+        <aside className="quartz-home-sidebar">
+          <SearchBar language={language} value={query} onChange={setQuery} />
           <KnowledgeOutline
             categories={categories}
             language={language}
             onSelectTopic={(category, topic) => {
               setActiveCategory(category.id);
               setQuery("");
-              setOutlineTargetId(getTopicElementId(category.id, topic.title.en));
+              openTopic({ ...topic, category });
             }}
           />
-          <SearchBar language={language} value={query} onChange={setQuery} />
+        </aside>
+        <div className="quartz-home-main">
+        <Hero language={language} totalTopics={allTopics.length} />
+        <div className="knowledge-browse-bar" role="group" aria-label={text(language, "浏览方式", "Browse view", "表示方式", "탐색 방식")}>
+          <button type="button" aria-pressed={browseMode === "cards"} onClick={() => setBrowseMode("cards")}><LayoutGrid size={17}/>{text(language, "卡片", "Cards", "カード", "카드")}</button>
+          <button type="button" aria-pressed={browseMode === "graph"} onClick={() => setBrowseMode("graph")}><Network size={17}/>{text(language, "关系图", "Graph", "グラフ", "그래프")}</button>
+        </div>
+        <div className={`content-layout${browseMode === "graph" ? " graph-layout" : ""}`} id="knowledge-content">
           <CategoryTabs
             activeCategory={activeCategory}
             categories={categories}
             language={language}
             onSelectCategory={setActiveCategory}
           />
-          <TopicGrid
+          {browseMode === "graph" ? <KnowledgeGraph topics={visibleTopics} language={language} onOpen={openTopic} onSelectCategory={setActiveCategory}/> : <TopicGrid
             language={language}
             onSelectTopic={openTopic}
             selectedTopicKey={selectedTopicKey}
             topics={visibleTopics}
-          />
+          />}
           {selectedTopic ? (
             <TopicDetails
               language={language}
@@ -1164,6 +1176,8 @@ function AppContent({ language }: { language: Language }) {
             />
           ) : null}
         </div>
+        </div>
+        <aside className="quartz-home-right"><LearningPaths language={language} onOpen={openTopic}/></aside>
         <ReferenceSites language={language} />
       </main>
       <footer className="site-footer">
@@ -1171,4 +1185,6 @@ function AppContent({ language }: { language: Language }) {
       </footer>
     </div>
   );
+  }
+  return <KnowledgeNavigationContext.Provider value={{ current: currentTopicKey, onOpen: openTopic }}>{renderView()}</KnowledgeNavigationContext.Provider>;
 }

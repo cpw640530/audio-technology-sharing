@@ -34,7 +34,7 @@ export function KnowledgeOutline({ categories, language, onSelectTopic }: Knowle
                   <li key={topic.title.en}>
                     <a
                       href={`#topic-${category.id}-${encodeURIComponent(topic.title.en)}`}
-                      onClick={() => onSelectTopic(category, topic)}
+                      onClick={event => { event.preventDefault(); onSelectTopic(category, topic); }}
                     >
                       {topic.title[language]}
                     </a>

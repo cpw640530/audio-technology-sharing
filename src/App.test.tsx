@@ -13,6 +13,64 @@ describe("Audio knowledge app", () => {
     window.localStorage.setItem("audio-technology-language", "zh");
   });
 
+  it("switches to a searchable graph and opens a topic through the existing article route", async () => {
+    const user = userEvent.setup();
+    render(<App/>);
+    await user.click(screen.getByRole("button", { name: "关系图" }));
+    expect(screen.queryByTestId("topic-grid")).not.toBeInTheDocument();
+    const graph = screen.getByRole("group", { name: "音频知识连接图" });
+    expect(within(graph).getAllByRole("button")).toHaveLength(categories.length + categories.flatMap(category => category.topics).length);
+    await user.type(screen.getByRole("searchbox"), "ALSA");
+    expect(within(screen.getByRole("group", { name: "音频知识连接图" })).getByRole("button", { name: "ALSA 框架" })).toBeInTheDocument();
+    await user.clear(screen.getByRole("searchbox"));
+    fireEvent.click(within(screen.getByRole("group", { name: "音频知识连接图" })).getByRole("button", { name: "什么是声音" }));
+    expect(screen.getByRole("heading", { level: 1, name: "什么是声音" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "返回知识库" }));
+    expect(screen.getByRole("heading", { name: "知识关系图" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "卡片" }));
+    expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
+  }, 15000);
+
+  it("restores article position only when returning directly from its lab", () => {
+    const original = Object.getOwnPropertyDescriptor(window, "scrollY");
+    render(<App/>);
+    try {
+      fireEvent.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /什么是声音/ }));
+      Object.defineProperty(window, "scrollY", { configurable: true, value: 840 });
+      fireEvent.scroll(window);
+      fireEvent.click(screen.getByRole("button", { name: "打开声音波形实验室" }));
+      expect(document.documentElement.scrollTop).toBe(0);
+      fireEvent.click(screen.getByRole("button", { name: "返回详细内容" }));
+      expect(document.documentElement.scrollTop).toBe(840);
+      const explorer = screen.getByRole("complementary", { name: "知识导航" });
+      fireEvent.click(within(explorer).getByRole("link", { name: "麦克风" }));
+      expect(document.documentElement.scrollTop).toBe(0);
+    } finally {
+      if (original) Object.defineProperty(window, "scrollY", original);
+      document.documentElement.scrollTop = 0;
+    }
+  });
+
+  it.each(["zh", "en"] as const)("connects Quartz explorer, local graph and article routes (%s)", async language => {
+    window.localStorage.setItem("audio-technology-language", language);
+    const user = userEvent.setup();
+    render(<App/>);
+    const home = document.querySelector(".quartz-home");
+    expect(home?.querySelector(".quartz-home-sidebar input[type=search]")).toBeInTheDocument();
+    expect(home?.querySelector(".quartz-home-right .learning-paths")).toBeInTheDocument();
+    await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: language === "zh" ? /什么是声音/ : /What Sound Is/ }));
+    const explorer = screen.getByRole("complementary", { name: language === "zh" ? "知识导航" : "Knowledge navigation" });
+    expect(within(explorer).getByRole("link", { name: language === "zh" ? "什么是声音" : "What Sound Is" })).toHaveAttribute("aria-current", "page");
+    const map = screen.getByRole("group", { name: language === "zh" ? "当前主题与关联知识" : "Current topic and related knowledge" });
+    fireEvent.click(within(map).getByRole("link", { name: language === "zh" ? "麦克风" : "Microphones" }));
+    expect(screen.getByRole("heading", { level: 1, name: language === "zh" ? "麦克风" : "Microphones" })).toBeInTheDocument();
+    const search = screen.getByRole("searchbox", { name: language === "zh" ? "搜索导航主题" : "Search navigation topics" });
+    await user.type(search, "ALSA");
+    await user.click(within(screen.getByRole("navigation", { name: language === "zh" ? "全部主题" : "All topics" })).getByRole("link", { name: language === "zh" ? "ALSA 框架" : "ALSA Framework" }));
+    expect(screen.getByRole("heading", { level: 1, name: language === "zh" ? "ALSA 框架" : "ALSA Framework" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: language === "zh" ? "章节目录" : "Page contents" })).toBeInTheDocument();
+  });
+
   it.each(["ja", "ko"] as const)("searches translated content and switches an open article in place (%s)", async language => {
     const user = userEvent.setup();
     render(<App />);
@@ -159,7 +217,7 @@ describe("Audio knowledge app", () => {
       if (topic.title.en === "Digital Audio Basics") {
         const image = screen.getByRole("img", { name: language === "zh" ? "不足采样产生混叠与足够采样的对比" : "Undersampling aliasing compared with adequate sampling" });
         expect(image.closest("section")?.querySelector("h2")).toHaveTextContent(language === "zh" ? "采样与奈奎斯特频率" : "Sampling and the Nyquist frequency");
-        expect(image.querySelectorAll("text")).toHaveLength(0);
+        expect(image.querySelectorAll("text")).toHaveLength(8);
         expect(screen.getByText("SQNR ≈ 6.02n + 1.76 dB")).toBeInTheDocument();
         expect(screen.getByText(language === "zh" ? /不是任意信号或设备的实测动态范围/ : /not the measured dynamic range/)).toBeInTheDocument();
       }
@@ -527,7 +585,7 @@ describe("Audio knowledge app", () => {
     expect(within(topicGrid).queryByText("麦克风")).not.toBeInTheDocument();
   });
 
-  it("jumps from the knowledge outline to the corresponding topic card", async () => {
+  it("opens an article directly from the knowledge outline and clears the previous search", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -536,11 +594,14 @@ describe("Audio knowledge app", () => {
     const outline = screen.getByRole("complementary", { name: "知识分类大纲" });
     await user.click(within(outline).getByRole("link", { name: "麦克风" }));
 
-    expect(search).toHaveValue("");
+    expect(screen.getByRole("heading", { level: 1, name: "麦克风" })).toBeInTheDocument();
+    const navigation = screen.getByRole("complementary", { name: "知识导航" });
+    expect(within(navigation).getByRole("link", { name: "麦克风" })).toHaveAttribute("aria-current", "page");
+    await user.click(screen.getByRole("button", { name: "返回知识库" }));
+    expect(screen.getByRole("searchbox", { name: "搜索知识点" })).toHaveValue("");
     const topicGrid = screen.getByTestId("topic-grid");
     const microphoneCard = document.getElementById("topic-hardware-Microphones");
     expect(microphoneCard).toBeInTheDocument();
-    expect(microphoneCard).toHaveFocus();
     expect(within(topicGrid).queryByText("什么是声音")).not.toBeInTheDocument();
   });
 
@@ -1926,9 +1987,9 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("heading", { name: "基本原理一：采样与奈奎斯特频率" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "基本原理二：傅里叶变换把波形拆成频率" })).toBeInTheDocument();
     expect(screen.getByText(/FFT 是更快地计算 DFT 的算法/)).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "基频、二次谐波与叠加后的复杂波形" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "三个分量及其合成波形" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "不足采样产生混叠与足够采样的对比" })).toBeInTheDocument();
-    expect(screen.getByText(/对于最高频率受限的基带信号/)).toBeInTheDocument();
+    expect(screen.getByText(/定理针对严格带限信号的完整样本序列/)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "位深决定幅度能分多细" })).toBeInTheDocument();
     expect(screen.getByText("SQNR ≈ 6.02n + 1.76 dB")).toBeInTheDocument();
   });
