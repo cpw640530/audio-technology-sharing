@@ -3,6 +3,7 @@ import { ArrowUpRight, Waves, Ruler, AudioLines, Ear, Mic, Cable, Speaker, Layer
 import type { LucideIcon } from "lucide-react";
 import type { Category, Language, Topic, TopicLab } from "../content/knowledge";
 import { interfaceCopy } from "../content/knowledge";
+import { getTopicKey } from "../content/relatedTopics";
 
 const topicIcons: Record<TopicLab["type"], LucideIcon> = {
   "sound-wave": Waves,
@@ -15,7 +16,6 @@ const topicIcons: Record<TopicLab["type"], LucideIcon> = {
   "amplifier-speaker": Speaker,
   "system-audio": Layers,
   alsa: Terminal,
-  "audio-codec": FileAudio,
   "realtime-audio": Timer,
   "core-signal-processing": SlidersHorizontal,
   "speech-enhancement": MicVocal,
@@ -58,7 +58,7 @@ export function TopicGrid({ language, topics, selectedTopicKey, onSelectTopic }:
       ) : (
         <div className="topic-grid" data-testid="topic-grid">
           {topics.map((topic) => {
-            const Icon = topic.detail.lab ? topicIcons[topic.detail.lab.type] : topic.category.icon;
+            const Icon = topic.detail.lab ? topicIcons[topic.detail.lab.type] : getTopicKey(topic) === "audio-codec" ? FileAudio : topic.category.icon;
             return (
             <button
               aria-pressed={selectedTopicKey === `${topic.category.id}-${topic.title.en}`}

@@ -244,7 +244,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("region", { name: language === "zh" ? "距离声压衰减计算器" : "Distance SPL loss calculator" })).toBeInTheDocument();
   });
 
-  it.each(["zh", "en"] as const)("keeps codec reference tables in the guide and scenario switching in the lab (%s)", async language => {
+  it.each(["zh", "en"] as const)("keeps codec comparisons in the article without a separate lab (%s)", async language => {
     window.localStorage.setItem("audio-technology-language", language);
     const user = userEvent.setup();
     render(<App />);
@@ -270,14 +270,9 @@ describe("Audio knowledge app", () => {
     expect(example).toBeVisible();
     await user.click(codecDetails);
     expect(disclosure).not.toHaveAttribute("open");
-    await user.click(screen.getByRole("button", { name: topic.detail.lab!.buttonLabel[language] }));
-    expect(screen.queryByRole("region", { name: tableName })).not.toBeInTheDocument();
-    const scenarios = screen.getByRole("group", { name: language === "zh" ? "应用场景" : "Use cases" });
-    const buttons = within(scenarios).getAllByRole("button");
-    await user.click(buttons[1]);
-    expect(buttons[1]).toHaveAttribute("aria-pressed", "true");
-    await user.click(screen.getByRole("button", { name: language === "zh" ? "返回详细内容" : "Back to detailed content" }));
-    expect(screen.getByRole("region", { name: tableName })).toBeInTheDocument();
+    expect(topic.detail.lab).toBeUndefined();
+    expect(screen.queryByRole("button", { name: /打开音频编解码实验室|Open audio codec lab/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("table", { name: language === "zh" ? "场景选型" : "Use-case selection" })).toBeInTheDocument();
   });
 
   it.each(categories.flatMap(category => category.topics)
@@ -2354,7 +2349,35 @@ describe("Audio knowledge app", () => {
     expect(within(overview).getByText(/Linux 只是具体映射/)).toBeInTheDocument();
   });
 
-  it("expands audio codec knowledge with a dedicated compression lab", async () => {
+  it.each(["zh", "zh-Hant", "en", "ja", "ko"] as const)("separates sample, codec and container layers with optional technical reference (%s)", async language => {
+    window.localStorage.setItem("audio-technology-language", language);
+    const user = userEvent.setup();
+    render(<App />);
+    const topic = categories.flatMap(category => category.topics).find(topic => topic.title.en === "Audio Codecs")!;
+    const card = within(screen.getByTestId("topic-grid")).getAllByRole("button")
+      .find(button => button.querySelector("h3")?.textContent === topic.title[language]);
+    await user.click(card!);
+    const main = screen.getByRole("main", { name: topic.title[language] });
+    expect(topic.detail.lab).toBeUndefined();
+    expect(main.querySelector(".sound-topic-cta")).not.toBeInTheDocument();
+    const rateFamilies = main.querySelector(".audio-codec-rate-grid")!;
+    expect(within(rateFamilies as HTMLElement).getAllByRole("heading").map(heading => heading.textContent))
+      .toEqual(["PCM", "IMA ADPCM", "FLAC", "MP3 / AAC / Opus"]);
+    expect(rateFamilies.textContent).toContain("48,000 × 16 × 2 = 1,536,000 bit/s");
+    expect(rateFamilies.textContent).toContain("16,000 × 4 × 1 ≈ 64,000 bit/s");
+    expect(rateFamilies.textContent).toContain("1,536 kbps ÷ 128 kbps = 12:1");
+    const layers = main.querySelector(".audio-codec-layer-path")!;
+    expect(within(layers as HTMLElement).getAllByRole("heading").map(heading => heading.textContent)).toEqual(["PCM", "AAC", "M4A / MP4"]);
+    expect(layers.textContent).toContain("1536 kbps");
+    expect(layers.textContent).toContain("128 kbps");
+    const internalFlow = main.querySelector(".audio-codec-topic-path-grid")!.closest("details")!;
+    expect(internalFlow).not.toHaveAttribute("open");
+    await user.click(internalFlow.querySelector("summary")!);
+    expect(internalFlow).toHaveAttribute("open");
+    expect(internalFlow.querySelectorAll(".audio-codec-topic-path")).toHaveLength(2);
+  });
+
+  it("keeps audio codec principles and references in a standalone article", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -2368,7 +2391,7 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("heading", { name: "编码和解码是两个方向" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "帧长与算法延迟" })).toBeInTheDocument();
     expect(within(details).getByRole("heading", { name: "蓝牙 Codec" })).toBeInTheDocument();
-    expect(within(details).getByRole("button", { name: "打开音频编解码实验室" })).toBeInTheDocument();
+    expect(within(details).queryByRole("button", { name: "打开音频编解码实验室" })).not.toBeInTheDocument();
 
     expect(screen.getByRole("heading", { name: "格式对比" })).toBeInTheDocument();
     expect(screen.getAllByText("FLAC").length).toBeGreaterThan(0);
@@ -2377,50 +2400,28 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText(/通俗理解：像把原始录音直接逐点记下来/)).toBeInTheDocument();
     expect(screen.getByText(/16 kHz 采样率的 PCM 最高只到 8 kHz/)).toBeInTheDocument();
     expect(screen.getByText(/MP3 不会固定砍掉某个频率/)).toBeInTheDocument();
-    expect(screen.getByText(/例子：FLAC 像把重复规律写成公式/)).toBeInTheDocument();
-    expect(screen.getByText(/例子：Opus 在网络变差时可以降低码率/)).toBeInTheDocument();
+    expect(screen.getByText(/100、102、104、106/)).toBeInTheDocument();
+    expect(screen.getByText(/Opus 本身不监测网络/)).toBeInTheDocument();
     expect(screen.getByText(/例子：LDAC 990 kbps 更像走更宽的无线通道/)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "编码压缩率对比" })).toBeInTheDocument();
     expect(screen.getByText("PCM / PCM WAV")).toBeInTheDocument();
     expect(screen.getByText("约 1:1")).toBeInTheDocument();
     expect(screen.getByText("MP3 / AAC")).toBeInTheDocument();
     expect(screen.getByText("约 4.8:1 到 16:1")).toBeInTheDocument();
+    const sampleRateReference = screen.getByText("补充参考：采样率与音质边界");
+    expect(sampleRateReference.closest("details")).not.toHaveAttribute("open");
+    await user.click(sampleRateReference);
     expect(screen.getByRole("heading", { name: "采样率音质差异对比" })).toBeInTheDocument();
-    expect(screen.getByText("8 kHz")).toBeInTheDocument();
-    expect(screen.getByText("最高约 4 kHz")).toBeInTheDocument();
-    expect(screen.getByText("48 kHz")).toBeInTheDocument();
-    expect(screen.getByText("最高约 24 kHz")).toBeInTheDocument();
+    const sampleRateTable = details.querySelector(".audio-codec-reference-table.sample-rate") as HTMLElement;
+    expect(within(sampleRateTable).getByText("8 kHz")).toBeInTheDocument();
+    expect(within(sampleRateTable).getByText("最高约 4 kHz")).toBeInTheDocument();
+    expect(within(sampleRateTable).getByText("48 kHz")).toBeInTheDocument();
+    expect(within(sampleRateTable).getByText("最高约 24 kHz")).toBeInTheDocument();
 
-    await user.click(within(details).getByRole("button", { name: "打开音频编解码实验室" }));
-
-    expect(screen.getByRole("heading", { name: "音频编解码实验室" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
-    const flowSection = screen.getByRole("region", { name: "音频编码和解码流程图" });
-    expect(flowSection.querySelector(".audio-codec-flow-grid")).toHaveClass("stacked");
-    const encodeFlow = within(flowSection).getByRole("img", { name: "音频编码流程图" });
-    const decodeFlow = within(flowSection).getByRole("img", { name: "音频解码流程图" });
-    expect(within(encodeFlow).getByText("PCM 输入")).toBeInTheDocument();
-    expect(within(encodeFlow).getByText("分帧")).toBeInTheDocument();
-    expect(within(encodeFlow).getByText("分析 / 建模")).toBeInTheDocument();
-    expect(within(encodeFlow).getByText("量化 / 码率控制")).toBeInTheDocument();
-    expect(within(encodeFlow).getByText("码流 / 封装")).toBeInTheDocument();
-    expect(within(decodeFlow).getByText("码流 / 文件 / 网络包")).toBeInTheDocument();
-    expect(within(decodeFlow).getByText("解包 / 解析")).toBeInTheDocument();
-    expect(within(decodeFlow).getByText("反量化 / 合成")).toBeInTheDocument();
-    expect(within(decodeFlow).getByText("PCM 输出")).toBeInTheDocument();
-    expect(within(decodeFlow).getByText("播放 / 后处理")).toBeInTheDocument();
-    const scenarioSection = screen.getByRole("region", { name: "音频编解码应用场景" });
-    expect(flowSection.compareDocumentPosition(scenarioSection) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.queryByRole("heading", { name: "格式对比" })).not.toBeInTheDocument();
-    expect(screen.getByText("音乐存储")).toBeInTheDocument();
-    expect(screen.getByText("蓝牙耳机")).toBeInTheDocument();
-    expect(screen.getByText("低延迟互动")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "语音通话" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "语音通话" }));
-
-    expect(screen.getByText("语音通话：清晰度、抗丢包和低码率更关键。")).toBeInTheDocument();
-    expect(screen.getByText("推荐：Opus / AMR / LC3")).toBeInTheDocument();
+    const scenarios = screen.getByRole("table", { name: "场景选型" });
+    expect(within(scenarios).getByText("音乐存储")).toBeInTheDocument();
+    expect(within(scenarios).getByText("蓝牙耳机")).toBeInTheDocument();
+    expect(within(scenarios).getByText("低延迟互动")).toBeInTheDocument();
   });
 
   it("switches system audio architecture lab flows", async () => {

@@ -1,9 +1,12 @@
 import { traditional } from "../content/traditional";
 import type { ReactNode } from "react";
 import { TopicReadingLayout } from "./TopicReadingLayout";
-import { ArrowLeft, BookOpen, CircuitBoard } from "lucide-react";
+import { ArrowLeft, BookOpen } from "lucide-react";
 import type { Category, Language, LocalizedText, Topic } from "../content/knowledge";
 import { TopicPager } from "./TopicPager";
+import { FlacPredictionVisual, PcmStorageVisual } from "./CodecVisuals";
+import { AdpcmVisual } from "./AdpcmVisual";
+import { LossyCodingVisual } from "./LossyCodingVisual";
 
 type DisplayTopic = Topic & { category: Category };
 
@@ -12,7 +15,6 @@ type AudioCodecPageProps = {
   language: Language;
   topic: DisplayTopic;
   onBack: () => void;
-  onOpenLab: () => void;
   onOpenPrevious?: () => void;
   onOpenNext?: () => void;
 };
@@ -42,8 +44,8 @@ const codecRows = [
     family: { zh: "无损压缩", "zh-Hant": traditional("无损压缩"), en: "Lossless compression", ja: "可逆圧縮", ko: "무손실 압축" },
     bitrate: { zh: "约为 PCM 的 40%-70%", "zh-Hant": traditional("约为 PCM 的 40%-70%"), en: "about 40%-70% of PCM", ja: "PCM の約 40%-70%", ko: "PCM의 약 40%-70%" },
     latency: { zh: "低到中", "zh-Hant": traditional("低到中"), en: "Low to medium", ja: "低〜中", ko: "낮음~중간" },
-    principle: { zh: "通俗理解：先找波形里的重复规律，再把规律写短；解码后每个采样点还能还原回来。", "zh-Hant": traditional("通俗理解：先找波形里的重复规律，再把规律写短；解码后每个采样点还能还原回来。"), en: "Plainly: it finds repeated patterns in the waveform and writes them shorter; every sample can be restored exactly.", ja: "平たく言えば、波形の繰り返しを見つけて短く記録し、デコード後はすべてのサンプルを完全に復元できる。", ko: "쉽게 말해 파형의 반복 패턴을 찾아 짧게 기록하고, 디코딩 후 모든 샘플을 정확히 복원한다." },
-    example: { zh: "例子：FLAC 像把重复规律写成公式，连续安静、稳定音符和相似片段会比 PCM 小很多。", "zh-Hant": traditional("例子：FLAC 像把重复规律写成公式，连续安静、稳定音符和相似片段会比 PCM 小很多。"), en: "Example: FLAC is like writing repeated patterns as formulas, so silence, steady notes, and similar passages become much smaller than PCM.", ja: "例：FLAC は繰り返しのパターンを式のように記録するため、無音や安定した音、似た区間は PCM より大幅に小さくなる。", ko: "예: FLAC은 반복 패턴을 공식처럼 기록하므로 무음, 일정한 음, 유사한 구간이 PCM보다 훨씬 작아진다." },
+    principle: { zh: "通俗理解：用前面的样本预测后面的样本，再无损保存预测误差（残差）。预测值加残差即可精确恢复原样本。", "zh-Hant": traditional("通俗理解：用前面的样本预测后面的样本，再无损保存预测误差（残差）。预测值加残差即可精确恢复原样本。"), en: "Predict samples from preceding samples, then losslessly encode the prediction errors (residuals). Prediction plus residual restores each original sample exactly.", ja: "過去のサンプルから次を予測し、予測誤差（残差）を可逆に保存する。予測値と残差を足せば元のサンプルが完全に戻る。", ko: "앞선 샘플로 다음 샘플을 예측하고 예측 오차(잔차)를 무손실 저장한다. 예측값과 잔차를 더하면 원본 샘플이 정확히 복원된다." },
+    example: { zh: "例子：相邻样本为 100、102、104、106 时，预测器可用每次加 2 来预测后续样本，只需记录起始值、预测参数和残差。真实 FLAC 按块选择预测器，并常用 Rice 编码保存残差，不是查找整段重复音频。", "zh-Hant": traditional("例子：相邻样本为 100、102、104、106 时，预测器可用每次加 2 来预测后续样本，只需记录起始值、预测参数和残差。真实 FLAC 按块选择预测器，并常用 Rice 编码保存残差，不是查找整段重复音频。"), en: "Example: for samples 100, 102, 104, 106, a predictor can add 2 and store starting values, prediction parameters, and residuals. FLAC selects predictors per block and commonly Rice-codes residuals, rather than finding repeated passages.", ja: "例：100、102、104、106 なら、2 ずつ増えると予測し、初期値・予測パラメータ・残差を保存できる。FLAC はブロックごとに予測器を選び、通常 Rice 符号で残差を記録する。曲の繰り返しを探す仕組みではない。", ko: "예: 100, 102, 104, 106은 2씩 더한다고 예측해 초기값, 예측 파라미터, 잔차를 저장할 수 있다. FLAC은 블록별로 예측기를 선택하고 보통 Rice 코딩으로 잔차를 저장하며 반복 구간을 찾는 방식이 아니다." },
     scenario: { zh: "音乐归档、母带备份", "zh-Hant": traditional("音乐归档、母带备份"), en: "music archive, master backup", ja: "音楽アーカイブ、マスターのバックアップ", ko: "음악 보관, 마스터 백업" }
   },
   {
@@ -70,7 +72,7 @@ const codecRows = [
     bitrate: { zh: "约 16-256 kbps", "zh-Hant": traditional("约 16-256 kbps"), en: "about 16-256 kbps", ja: "約 16-256 kbps", ko: "약 16-256 kbps" },
     latency: { zh: "低", "zh-Hant": traditional("低"), en: "Low", ja: "低い", ko: "낮음" },
     principle: { zh: "通俗理解：会判断当前更像语音还是音乐，并尽量用很短的等待时间完成压缩。", "zh-Hant": traditional("通俗理解：会判断当前更像语音还是音乐，并尽量用很短的等待时间完成压缩。"), en: "Plainly: it can treat content more like speech or music while keeping the wait time short.", ja: "平たく言えば、現在の内容が音声寄りか音楽寄りかを判断し、待ち時間をできるだけ短くして圧縮する。", ko: "쉽게 말해 현재 콘텐츠가 음성에 가까운지 음악에 가까운지 판단하면서 대기 시간을 짧게 유지한다." },
-    example: { zh: "例子：Opus 在网络变差时可以降低码率，先保证人声不断，再牺牲一点音乐细节。", "zh-Hant": traditional("例子：Opus 在网络变差时可以降低码率，先保证人声不断，再牺牲一点音乐细节。"), en: "Example: Opus can lower bitrate when the network gets worse, keeping speech continuous before preserving music detail.", ja: "例：Opus はネットワーク状態が悪化するとビットレートを下げ、音楽の細部を少し犠牲にしても音声の連続性を優先できる。", ko: "예: Opus는 네트워크가 나빠지면 비트레이트를 낮춰 음악의 세부 정보보다 음성이 끊기지 않는 것을 우선할 수 있다." },
+    example: { zh: "例子：网络拥塞时，应用可根据拥塞控制结果降低 Opus 的目标码率，以减少发送数据量；Opus 本身不监测网络，也不能保证播放永不断音。", "zh-Hant": traditional("例子：网络拥塞时，应用可根据拥塞控制结果降低 Opus 的目标码率，以减少发送数据量；Opus 本身不监测网络，也不能保证播放永不断音。"), en: "Example: under congestion, the application can lower the Opus target bitrate using congestion-control feedback. Opus itself does not monitor the network or guarantee uninterrupted playback.", ja: "例：混雑時はアプリが輻輳制御の結果に基づき Opus の目標レートを下げられる。Opus 自体がネットワークを監視したり無停止再生を保証したりするわけではない。", ko: "예: 혼잡 시 앱이 혼잡 제어 결과에 따라 Opus 목표 비트레이트를 낮출 수 있다. Opus 자체가 네트워크를 감시하거나 끊김 없는 재생을 보장하지는 않는다." },
     scenario: { zh: "语音会议、直播互动、游戏语音", "zh-Hant": traditional("语音会议、直播互动、游戏语音"), en: "meetings, interactive streaming, game chat", ja: "音声会議、ライブ配信の対話、ゲームボイスチャット", ko: "음성 회의, 양방향 라이브 스트리밍, 게임 음성 채팅" }
   },
   {
@@ -208,6 +210,39 @@ const sampleRateComparisonRows = [
   use: LocalizedText;
 }>;
 
+const readingGuide = {
+  heading: { zh: "跟着一段录音：样本、压缩、装进文件", "zh-Hant": traditional("跟着一段录音：样本、压缩、装进文件"), en: "Follow a recording: samples, compression, then a file", ja: "録音をたどる：サンプル、圧縮、ファイル化", ko: "녹음을 따라가기: 샘플, 압축, 파일 저장" },
+  steps: [
+    { title: "PCM", body: { zh: "样本表示：48 kHz、16 bit、双声道，原始码率为 1536 kbps。", "zh-Hant": traditional("样本表示：48 kHz、16 bit、双声道，原始码率为 1536 kbps。"), en: "Sample representation: 48 kHz, 16-bit stereo has a raw bitrate of 1536 kbps.", ja: "サンプル表現：48 kHz・16 bit・ステレオの元データは 1536 kbps。", ko: "샘플 표현: 48 kHz, 16 bit, 스테레오의 원본 비트레이트는 1536 kbps." } },
+    { title: "AAC", body: { zh: "压缩编码：例如目标 128 kbps；改变数据表示，不是再做一次 ADC。", "zh-Hant": traditional("压缩编码：例如目标 128 kbps；改变数据表示，不是再做一次 ADC。"), en: "Compression: for example, target 128 kbps. This changes the representation, not another ADC conversion.", ja: "圧縮符号化：例えば目標 128 kbps。表現を変える処理であり、ADC のやり直しではない。", ko: "압축 인코딩: 예를 들어 목표 128 kbps. 표현을 바꾸는 것이며 ADC 변환을 다시 하는 것이 아니다." } },
+    { title: "M4A / MP4", body: { zh: "文件封装：装入 AAC 码流和时间等信息；封装本身不负责降低音质。", "zh-Hant": traditional("文件封装：装入 AAC 码流和时间等信息；封装本身不负责降低音质。"), en: "Container: holds the AAC stream and timing metadata. Packaging itself does not reduce audio quality.", ja: "コンテナ：AAC と時間情報などを格納する。格納自体で音質が下がるわけではない。", ko: "컨테이너: AAC 스트림과 시간 정보 등을 담는다. 포장 자체가 음질을 낮추지는 않는다." } },
+  ],
+  returnPath: { zh: "播放时反过来：解封装 → AAC 解码 → PCM → 播放链路。有损编码解码后仍是 PCM，但不再与原样本逐点相同；WAV 内装 PCM 时则不必经过 AAC 压缩。", "zh-Hant": traditional("播放时反过来：解封装 → AAC 解码 → PCM → 播放链路。有损编码解码后仍是 PCM，但不再与原样本逐点相同；WAV 内装 PCM 时则不必经过 AAC 压缩。"), en: "Playback reverses this: demux → AAC decode → PCM → playback path. Lossy decoding produces PCM, not the exact original samples. PCM in WAV does not need AAC compression.", ja: "再生は逆方向：分離 → AAC 復号 → PCM → 再生経路。非可逆圧縮の復号結果も PCM だが元サンプルとは一致しない。PCM を WAV に格納する場合、AAC 圧縮は不要。", ko: "재생은 반대 방향: 컨테이너 분리 → AAC 디코딩 → PCM → 재생 경로. 손실 복호화 결과도 PCM이지만 원본 샘플과 같지는 않다. WAV에 PCM을 담을 때 AAC 압축은 필요 없다." },
+  flow: { zh: "展开编码与解码的内部步骤", "zh-Hant": traditional("展开编码与解码的内部步骤"), en: "Explore the internal encoding and decoding steps", ja: "符号化・復号の内部手順を開く", ko: "인코딩 및 디코딩 내부 단계 펼치기" },
+  rates: { zh: "补充参考：采样率与音质边界", "zh-Hant": traditional("补充参考：采样率与音质边界"), en: "Reference: sample rates and quality limits", ja: "補足：サンプルレートと音質の限界", ko: "추가 참고: 샘플레이트와 음질의 한계" },
+  scope: { zh: "表中的压缩比必须结合各行的 PCM 基准理解，不能视为格式的固定属性。CBR 按目标码率估算，VBR 的实际文件大小还取决于内容；更高码率也不保证跨格式音质更好。", "zh-Hant": traditional("表中的压缩比必须结合各行的 PCM 基准理解，不能视为格式的固定属性。CBR 按目标码率估算，VBR 的实际文件大小还取决于内容；更高码率也不保证跨格式音质更好。"), en: "Read each ratio against its stated PCM baseline, not as a fixed property of a format. CBR follows its target rate; VBR size also depends on the content. Higher bitrate does not guarantee better quality across codecs.", ja: "圧縮率は各行の PCM 基準に対する値で、形式の固定値ではない。CBR は目標レート、VBR の容量は内容にも依存する。形式が異なれば高ビットレートが高音質とは限らない。", ko: "압축비는 각 행의 PCM 기준에 대한 값이며 형식의 고정 속성이 아니다. CBR은 목표 비트레이트, VBR 용량은 콘텐츠에도 영향을 받는다. 다른 코덱 간에는 높은 비트레이트가 더 좋은 음질을 보장하지 않는다." },
+} satisfies { heading: LocalizedText; steps: Array<{ title: string; body: LocalizedText }>; returnPath: LocalizedText; flow: LocalizedText; rates: LocalizedText; scope: LocalizedText };
+
+const rateClassification = {
+  heading: { zh: "编码分类：码率究竟由什么决定？", "zh-Hant": traditional("编码分类：码率究竟由什么决定？"), en: "Coding families: what determines bitrate?", ja: "符号化の分類：ビットレートは何で決まる？", ko: "코딩 분류: 비트레이트는 무엇으로 결정될까?" },
+  intro: { zh: "先按是否保留原样本分为未压缩、无损和有损；再看码率如何形成。采样率、位深、声道数描述 PCM 输入，目标码率或质量等级描述编码器的控制方式，两者不是互斥分类。", "zh-Hant": traditional("先按是否保留原样本分为未压缩、无损和有损；再看码率如何形成。采样率、位深、声道数描述 PCM 输入，目标码率或质量等级描述编码器的控制方式，两者不是互斥分类。"), en: "First distinguish uncompressed, lossless, and lossy audio, then ask how the bitrate is determined. Sample rate, bit depth, and channels describe PCM input; target bitrate or quality describes encoder control. These are not mutually exclusive categories.", ja: "まず非圧縮・可逆・非可逆を区別し、次にビットレートの決まり方を見る。サンプルレート・ビット深度・チャンネル数は PCM 入力の仕様、目標レート・品質は符号化の制御で、排他的な分類ではない。", ko: "먼저 비압축·무손실·손실을 구분하고 비트레이트 결정 방식을 본다. 샘플레이트·비트 깊이·채널은 PCM 입력 사양이고 목표 비트레이트·품질은 인코더 제어 방식이므로 서로 배타적인 분류가 아니다." },
+  rows: [
+    { name: "PCM", formula: "48,000 × 16 × 2 = 1,536,000 bit/s", body: { zh: "未压缩：码率 = 采样率（Hz）× 位深 × 声道数。48 kHz / 16 bit / 双声道就是 1536 kbps，不需要再选择一个压缩目标码率。", "zh-Hant": traditional("未压缩：码率 = 采样率（Hz）× 位深 × 声道数。48 kHz / 16 bit / 双声道就是 1536 kbps，不需要再选择一个压缩目标码率。"), en: "Uncompressed: bitrate = sample rate in Hz × bit depth × channels. 48 kHz / 16-bit stereo is 1536 kbps, without a separate compression target.", ja: "非圧縮：Hz 単位のサンプルレート × ビット深度 × チャンネル数。48 kHz・16 bit・ステレオなら 1536 kbps。圧縮目標レートは別に選ばない。", ko: "비압축: Hz 단위 샘플레이트 × 비트 깊이 × 채널 수. 48 kHz / 16 bit / 스테레오는 별도 압축 목표 없이 1536 kbps다." } },
+    { name: "IMA ADPCM", formula: "16,000 × 4 × 1 ≈ 64,000 bit/s", body: { zh: "有损、按样本编码位数计算：常见 4-bit IMA ADPCM 用 4 bit 表示每个样本的预测差分信息，而非原始振幅。16 kHz 单声道的数据部分约 64 kbps，相比同规格 16-bit PCM 约 4:1；块头会增加开销。", "zh-Hant": traditional("有损、按样本编码位数计算：常见 4-bit IMA ADPCM 用 4 bit 表示每个样本的预测差分信息，而非原始振幅。16 kHz 单声道的数据部分约 64 kbps，相比同规格 16-bit PCM 约 4:1；块头会增加开销。"), en: "Lossy, with a coded bit count per sample: common 4-bit IMA ADPCM codes predictive differences, not raw amplitude. At 16 kHz mono, the payload is about 64 kbps, roughly 4:1 against matching 16-bit PCM, plus block-header overhead.", ja: "非可逆・サンプル当たりの符号ビット数で決定。一般的な 4-bit IMA ADPCM は振幅自体でなく予測差分を記録する。16 kHz モノラルでデータ部は約 64 kbps。同条件の 16-bit PCM に対し約 4:1 だがブロックヘッダが加わる。", ko: "손실·샘플당 코딩 비트 수로 결정된다. 일반적인 4-bit IMA ADPCM은 원래 진폭 대신 예측 차분을 기록한다. 16 kHz 모노의 데이터는 약 64 kbps로 같은 조건의 16-bit PCM 대비 약 4:1이며 블록 헤더가 추가된다." } },
+    { name: "FLAC", formula: "PCM → prediction + residual → lossless coding", body: { zh: "无损、由内容决定输出码率：相同采样率、位深、声道数下，安静或容易预测的信号通常更小，随机噪声更难压缩。压缩等级主要调整计算量与压缩效率，不是指定一个有损目标码率。", "zh-Hant": traditional("无损、由内容决定输出码率：相同采样率、位深、声道数下，安静或容易预测的信号通常更小，随机噪声更难压缩。压缩等级主要调整计算量与压缩效率，不是指定一个有损目标码率。"), en: "Lossless, content-dependent rate: at the same PCM settings, silence and predictable signals usually compress better than random noise. Compression level trades computation for size; it is not a lossy bitrate target.", ja: "可逆・内容によりレートが決まる。同じ PCM 仕様でも無音や予測しやすい信号は小さくなりやすく、ランダムノイズは圧縮しにくい。圧縮レベルは計算量と容量の調整であり、非可逆の目標レートではない。", ko: "무손실·콘텐츠에 따라 비트레이트가 결정된다. PCM 사양이 같아도 무음이나 예측 가능한 신호는 더 잘 압축되고 무작위 잡음은 어렵다. 압축 단계는 계산량과 크기를 조정하며 손실 목표 비트레이트가 아니다." } },
+    { name: "MP3 / AAC / Opus", formula: "1,536 kbps ÷ 128 kbps = 12:1", body: { zh: "有损、按目标码率或质量分配比特：同一份 1536 kbps PCM，若编码后的平均码率为 128 kbps，则约为 12:1（不计封装）。CBR 尽量保持固定码率，VBR 随内容复杂度变化；支持的模式取决于编码器。采样率和声道数仍会影响可选码率及音质。", "zh-Hant": traditional("有损、按目标码率或质量分配比特：同一份 1536 kbps PCM，若编码后的平均码率为 128 kbps，则约为 12:1（不计封装）。CBR 尽量保持固定码率，VBR 随内容复杂度变化；支持的模式取决于编码器。采样率和声道数仍会影响可选码率及音质。"), en: "Lossy, allocating bits to a rate or quality target: 1536 kbps PCM encoded at an average 128 kbps gives about 12:1, excluding packaging. CBR aims for a constant rate; VBR varies with complexity, depending on encoder support. Sample rate and channels still affect available rates and quality.", ja: "非可逆・目標レートや品質に応じてビットを配分。1536 kbps の PCM を平均 128 kbps にすると封装を除き約 12:1。CBR は一定レートを目指し、VBR は複雑さに応じて変わる。対応モードは実装次第で、サンプルレートやチャンネル数もレートの選択肢と音質に影響する。", ko: "손실·목표 비트레이트나 품질에 맞춰 비트를 배분한다. 1536 kbps PCM을 평균 128 kbps로 만들면 포장 제외 약 12:1이다. CBR은 일정한 비트레이트를 목표로 하고 VBR은 복잡도에 따라 달라지며 지원 모드는 인코더에 의존한다. 샘플레이트와 채널 수도 가능한 비트레이트와 음질에 영향을 준다." } },
+  ],
+  boundary: { zh: "另一个操作是降低输入规格：48 kHz → 16 kHz，在位深、声道数不变时 PCM 数据量变为 1/3，但会失去约 8 kHz 以上的带宽；双声道 → 单声道会减半数据量，但失去独立左右声道。它们是重采样或混音，不是新的压缩编码类型，也不能替代编码器的压缩比。", "zh-Hant": traditional("另一个操作是降低输入规格：48 kHz → 16 kHz，在位深、声道数不变时 PCM 数据量变为 1/3，但会失去约 8 kHz 以上的带宽；双声道 → 单声道会减半数据量，但失去独立左右声道。它们是重采样或混音，不是新的压缩编码类型，也不能替代编码器的压缩比。"), en: "Reducing input specifications is separate: 48 → 16 kHz cuts PCM size to one third at unchanged bit depth and channels, but removes bandwidth above about 8 kHz. Stereo → mono halves PCM size but loses independent channels. These are resampling and downmixing, not codec families or codec-only compression ratios.", ja: "入力仕様を下げる操作は別。48 → 16 kHz はビット深度・チャンネル数一定なら PCM 量を 1/3 にするが約 8 kHz 以上の帯域を失う。ステレオ → モノラルは半分になるが独立した左右を失う。リサンプリングやダウンミックスであって符号化方式の分類ではない。", ko: "입력 사양을 낮추는 것은 별개다. 비트 깊이와 채널이 같을 때 48 → 16 kHz는 PCM 크기를 1/3로 줄이지만 약 8 kHz 이상의 대역을 잃는다. 스테레오 → 모노는 크기가 절반이 되지만 독립 좌우 채널을 잃는다. 이는 리샘플링과 다운믹싱이며 코덱 분류나 코덱 자체의 압축비가 아니다." },
+} satisfies { heading: LocalizedText; intro: LocalizedText; rows: Array<{ name: string; formula: string; body: LocalizedText }>; boundary: LocalizedText };
+
+const codecUseCases = [
+  { label: { zh: "音乐存储", "zh-Hant": traditional("音乐存储"), en: "Music storage", ja: "音楽保存", ko: "음악 저장" }, codecs: "FLAC / MP3 / AAC", note: { zh: "归档保留原样本选无损；分发兼顾容量与兼容性。", "zh-Hant": traditional("归档保留原样本选无损；分发兼顾容量与兼容性。"), en: "Use lossless for exact archives; balance size and compatibility for distribution.", ja: "原本保存は可逆、配布は容量と互換性を両立する。", ko: "원본 보관에는 무손실, 배포에는 크기와 호환성을 고려한다." } },
+  { label: { zh: "视频 / 直播", "zh-Hant": traditional("视频 / 直播"), en: "Video / streaming", ja: "動画・配信", ko: "영상 / 스트리밍" }, codecs: "AAC / Opus", note: { zh: "取决于平台与协议支持；直播还需控制缓冲和音画同步。", "zh-Hant": traditional("取决于平台与协议支持；直播还需控制缓冲和音画同步。"), en: "Depends on platform and protocol support; live paths also need buffering and A/V sync control.", ja: "対応プラットフォーム・プロトコル次第。ライブはバッファと映像同期も管理する。", ko: "플랫폼·프로토콜 지원에 따라 선택하며 라이브는 버퍼와 영상 동기도 관리한다." } },
+  { label: { zh: "语音通话 / 会议", "zh-Hant": traditional("语音通话 / 会议"), en: "Calls / meetings", ja: "通話・会議", ko: "통화 / 회의" }, codecs: "Opus / AMR / LC3", note: { zh: "互联网语音常用 Opus；蜂窝语音可用 AMR；LC3 用于 LE Audio 耳机段，三者不能随意互换。", "zh-Hant": traditional("互联网语音常用 Opus；蜂窝语音可用 AMR；LC3 用于 LE Audio 耳机段，三者不能随意互换。"), en: "Opus for Internet voice, AMR for cellular voice, LC3 for the LE Audio headset segment; not interchangeable across links.", ja: "インターネット音声は Opus、携帯音声は AMR、LE Audio イヤホン区間は LC3。区間間で自由に交換できない。", ko: "인터넷 음성은 Opus, 이동통신 음성은 AMR, LE Audio 헤드셋 구간은 LC3이며 임의로 대체할 수 없다." } },
+  { label: { zh: "蓝牙耳机", "zh-Hant": traditional("蓝牙耳机"), en: "Bluetooth headset", ja: "Bluetooth イヤホン", ko: "블루투스 헤드셋" }, codecs: "SBC / AAC / aptX / LDAC / LC3", note: { zh: "经典蓝牙与 LE Audio 分开看，先确认两端支持，再权衡稳定性、功耗与码率。", "zh-Hant": traditional("经典蓝牙与 LE Audio 分开看，先确认两端支持，再权衡稳定性、功耗与码率。"), en: "Distinguish Classic Bluetooth from LE Audio; confirm both endpoints, then balance stability, power, and bitrate.", ja: "Classic Bluetooth と LE Audio を区別し、両端の対応を確認して安定性・電力・レートを調整する。", ko: "클래식 Bluetooth와 LE Audio를 구분하고 양쪽 지원을 확인한 뒤 안정성·전력·비트레이트를 조정한다." } },
+  { label: { zh: "低延迟互动", "zh-Hant": traditional("低延迟互动"), en: "Low-latency interaction", ja: "低遅延対話", ko: "저지연 상호작용" }, codecs: "Opus / LC3 / PCM", note: { zh: "按链路选择，并计算帧长、缓冲和网络的总延迟；本地监听与远程通话不能共用一个延迟目标。", "zh-Hant": traditional("按链路选择，并计算帧长、缓冲和网络的总延迟；本地监听与远程通话不能共用一个延迟目标。"), en: "Choose by link and budget framing, buffering, and network delay together. Local monitoring and remote calls need different targets.", ja: "区間に応じて選び、フレーム・バッファ・ネットワークの総遅延を考える。ローカルモニタと遠隔通話では目標が異なる。", ko: "링크별로 선택하고 프레임·버퍼·네트워크 지연을 합산한다. 로컬 모니터링과 원격 통화의 목표는 다르다." } },
+] satisfies Array<{ label: LocalizedText; codecs: string; note: LocalizedText }>;
+
 const encodePath = [
   { title: { zh: "PCM 输入", "zh-Hant": traditional("PCM 输入"), en: "PCM input", ja: "PCM 入力", ko: "PCM 입력" }, detail: { zh: "已经采样量化后的多声道样本。", "zh-Hant": traditional("已经采样量化后的多声道样本。"), en: "Already-sampled and quantized audio samples.", ja: "サンプリングと量子化が済んだマルチチャンネルのサンプル。", ko: "이미 샘플링 및 양자화된 다채널 샘플." } },
   { title: { zh: "分帧", "zh-Hant": traditional("分帧"), en: "Framing", ja: "フレーム化", ko: "프레이밍" }, detail: { zh: "切成固定时长，建立时间边界。", "zh-Hant": traditional("切成固定时长，建立时间边界。"), en: "Split into fixed-duration frames.", ja: "固定長に分割して時間境界を作る。", ko: "고정된 길이로 나누어 시간 경계를 만든다." } },
@@ -228,16 +263,13 @@ const pageCopy = {
   kicker: { zh: "音频软件 · 编解码专题", "zh-Hant": traditional("音频软件 · 编解码专题"), en: "Audio software · Codec deep dive", ja: "オーディオソフトウェア · コーデック詳説", ko: "오디오 소프트웨어 · 코덱 심층 해설" },
   metaPcm: { zh: "PCM 与码流", "zh-Hant": traditional("PCM 与码流"), en: "PCM and bitstreams", ja: "PCM とビットストリーム", ko: "PCM 및 비트스트림" },
   metaQuality: { zh: "质量与延迟", "zh-Hant": traditional("质量与延迟"), en: "Quality and latency", ja: "品質と遅延", ko: "품질 및 지연" },
-  metaLab: { zh: "实验验证", "zh-Hant": traditional("实验验证"), en: "Hands-on lab", ja: "実験で検証", ko: "실험으로 검증" },
+  metaSelection: { zh: "场景选型", "zh-Hant": traditional("场景选型"), en: "Use-case selection", ja: "用途に応じた選定", ko: "용도별 선택" },
   introHeading: { zh: "先区分 PCM、码流和硬件 Codec", "zh-Hant": traditional("先区分 PCM、码流和硬件 Codec"), en: "Separate PCM, bitstreams, and hardware codecs", ja: "まず PCM、ビットストリーム、ハードウェア Codec を区別する", ko: "먼저 PCM, 비트스트림, 하드웨어 Codec 구분하기" },
   directionHeading: { zh: "编码和解码是两个方向", "zh-Hant": traditional("编码和解码是两个方向"), en: "Encoding and decoding are two directions", ja: "符号化と復号は反対方向の処理", ko: "인코딩과 디코딩은 서로 반대 방향이다" },
   directionDescription: { zh: "编码把样本变成更适合存储或传输的表示，解码再把它交回播放链路。", "zh-Hant": traditional("编码把样本变成更适合存储或传输的表示，解码再把它交回播放链路。"), en: "Encoding turns samples into a representation suited to storage or transport; decoding returns it to the playback path.", ja: "符号化はサンプルを保存や伝送に適した表現へ変え、復号はそれを再生経路へ戻す。", ko: "인코딩은 샘플을 저장이나 전송에 맞는 표현으로 바꾸고, 디코딩은 이를 재생 경로로 돌려보낸다." },
   encodeTitle: { zh: "编码：PCM → 码流", "zh-Hant": traditional("编码：PCM → 码流"), en: "Encode: PCM → bitstream", ja: "符号化：PCM → ビットストリーム", ko: "인코딩: PCM → 비트스트림" },
   decodeTitle: { zh: "解码：码流 → PCM", "zh-Hant": traditional("解码：码流 → PCM"), en: "Decode: bitstream → PCM", ja: "復号：ビットストリーム → PCM", ko: "디코딩: 비트스트림 → PCM" },
   lossyNote: { zh: "以上是有损编码路径：量化会引入不可逆误差。FLAC 等无损编码以预测残差和熵编码等方式保留全部样本精度；解码可逐样本还原，不经过丢精度的量化。", "zh-Hant": traditional("以上是有损编码路径：量化会引入不可逆误差。FLAC 等无损编码以预测残差和熵编码等方式保留全部样本精度；解码可逐样本还原，不经过丢精度的量化。"), en: "The paths above describe lossy coding: quantization introduces irreversible error. Lossless codecs such as FLAC use prediction residuals and entropy coding to preserve sample precision and restore samples exactly.", ja: "上記は非可逆符号化の経路で、量子化によって不可逆な誤差が生じる。FLAC などの可逆コーデックは予測残差やエントロピー符号化によってサンプル精度を保ち、精度を失う量子化なしにサンプル単位で復元できる。", ko: "위 경로는 손실 인코딩의 흐름으로, 양자화가 되돌릴 수 없는 오차를 만든다. FLAC 같은 무손실 코덱은 예측 잔차와 엔트로피 코딩 등으로 샘플 정밀도를 보존하며, 정밀도를 버리는 양자화 없이 샘플 단위로 복원한다." },
-  labAria: { zh: "音频编解码实验室入口", "zh-Hant": traditional("音频编解码实验室入口"), en: "Audio codec lab entry", ja: "オーディオコーデック実験室への入口", ko: "오디오 코덱 실험실 입구" },
-  labHeading: { zh: "进入音频编解码实验室", "zh-Hant": traditional("进入音频编解码实验室"), en: "Open the audio codec lab", ja: "オーディオコーデック実験室を開く", ko: "오디오 코덱 실험실 열기" },
-  labDescription: { zh: "对照编码与解码流程，切换音乐、会议和蓝牙等场景，比较选型取舍。", "zh-Hant": traditional("对照编码与解码流程，切换音乐、会议和蓝牙等场景，比较选型取舍。"), en: "Follow the encode/decode flows and switch music, meeting, and Bluetooth scenarios to compare trade-offs.", ja: "符号化と復号の流れを追い、音楽、会議、Bluetooth などのシナリオを切り替えて選択のトレードオフを比較する。", ko: "인코딩과 디코딩 흐름을 따라가며 음악, 회의, Bluetooth 등의 시나리오를 전환해 선택의 트레이드오프를 비교한다." },
   coreHeading: { zh: "核心判断", "zh-Hant": traditional("核心判断"), en: "Core decisions", ja: "中核となる判断", ko: "핵심 판단" },
   coreDescription: { zh: "选 Codec 时同时看质量、码率、延迟、抗丢包和设备兼容性。", "zh-Hant": traditional("选 Codec 时同时看质量、码率、延迟、抗丢包和设备兼容性。"), en: "Choose a codec by quality, bitrate, latency, packet-loss resilience, and device compatibility.", ja: "コーデックは品質、ビットレート、遅延、パケット損失への耐性、機器互換性を合わせて選ぶ。", ko: "코덱은 품질, 비트레이트, 지연, 패킷 손실 내성, 기기 호환성을 함께 보고 선택한다." },
   referenceAria: { zh: "编码和采样率对比表", "zh-Hant": traditional("编码和采样率对比表"), en: "Codec and sample-rate comparison tables", ja: "コーデックとサンプルレートの比較表", ko: "코덱 및 샘플링 레이트 비교표" },
@@ -298,7 +330,7 @@ function CodecPath({ language, title, steps, tone }: { language: Language; title
   );
 }
 
-export function AudioCodecPage({ relatedTopics, language, topic, onBack, onOpenLab, onOpenPrevious, onOpenNext }: AudioCodecPageProps) {
+export function AudioCodecPage({ relatedTopics, language, topic, onBack, onOpenPrevious, onOpenNext }: AudioCodecPageProps) {
   const detail = topic.detail;
   const terms = detail.termExplanations ?? [];
 
@@ -318,7 +350,7 @@ export function AudioCodecPage({ relatedTopics, language, topic, onBack, onOpenL
         <div className="sound-topic-meta">
           <span>{pageCopy.metaPcm[language]}</span>
           <span>{pageCopy.metaQuality[language]}</span>
-          <span>{pageCopy.metaLab[language]}</span>
+          <span>{pageCopy.metaSelection[language]}</span>
         </div>
       </header>
 
@@ -330,6 +362,35 @@ export function AudioCodecPage({ relatedTopics, language, topic, onBack, onOpenL
           </div>
         </section>
 
+        <section className="sound-topic-section" aria-label={rateClassification.heading[language]}>
+          <h2>{rateClassification.heading[language]}</h2>
+          <p>{rateClassification.intro[language]}</p>
+          <div className="audio-codec-rate-grid">
+            {rateClassification.rows.map(row => <article key={row.name}>
+              <h3>{row.name}</h3>
+              <p>{row.body[language]}</p>
+              <code>{row.formula}</code>
+            </article>)}
+          </div>
+          <p className="sound-topic-note">{rateClassification.boundary[language]}</p>
+        </section>
+
+        <PcmStorageVisual language={language} />
+        <FlacPredictionVisual language={language} />
+        <AdpcmVisual language={language} />
+        <LossyCodingVisual language={language} />
+
+        <section className="sound-topic-section" aria-label={readingGuide.heading[language]}>
+          <h2>{readingGuide.heading[language]}</h2>
+          <ol className="audio-codec-layer-path">
+            {readingGuide.steps.map((step, index) => <li key={step.title}>
+              <span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+              <h3>{step.title}</h3><p>{step.body[language]}</p>
+            </li>)}
+          </ol>
+          <p className="sound-topic-note">{readingGuide.returnPath[language]}</p>
+        </section>
+
         <section className="sound-topic-section">
           <div className="sound-topic-section-heading">
             <div>
@@ -337,6 +398,8 @@ export function AudioCodecPage({ relatedTopics, language, topic, onBack, onOpenL
               <p>{pageCopy.directionDescription[language]}</p>
             </div>
           </div>
+          <details className="codec-reading-details">
+          <summary>{readingGuide.flow[language]}</summary>
           <div className="audio-codec-topic-path-grid">
             <CodecPath language={language} title={pageCopy.encodeTitle[language]} steps={encodePath} tone="encode" />
             <CodecPath language={language} title={pageCopy.decodeTitle[language]} steps={decodePath} tone="decode" />
@@ -344,17 +407,7 @@ export function AudioCodecPage({ relatedTopics, language, topic, onBack, onOpenL
           <p className="sound-topic-note">
             {pageCopy.lossyNote[language]}
           </p>
-        </section>
-
-        <section className="sound-topic-section audio-codec-topic-lab-entry" aria-label={pageCopy.labAria[language]}>
-          <div className="sound-topic-cta">
-            <CircuitBoard size={22} aria-hidden="true" />
-            <h2>{pageCopy.labHeading[language]}</h2>
-            <p>{pageCopy.labDescription[language]}</p>
-            <button className="diagram-open-button" type="button" onClick={onOpenLab}>
-              {detail.lab?.buttonLabel[language]}
-            </button>
-          </div>
+          </details>
         </section>
 
         <section className="sound-topic-section">
@@ -391,6 +444,7 @@ export function AudioCodecPage({ relatedTopics, language, topic, onBack, onOpenL
               </div>
             ))}
           </div>
+          <p className="sound-topic-note">{readingGuide.scope[language]}</p>
         </article>
 
         <article className="audio-codec-reference-card">
@@ -398,6 +452,8 @@ export function AudioCodecPage({ relatedTopics, language, topic, onBack, onOpenL
             <h2>{pageCopy.sampleHeading[language]}</h2>
             <span>{pageCopy.nyquist[language]}</span>
           </div>
+          <details className="codec-reading-details">
+          <summary>{readingGuide.rates[language]}</summary>
           <div className="audio-codec-reference-table sample-rate">
             <div className="audio-codec-reference-row header">
               <span>{pageCopy.sampleRate[language]}</span>
@@ -414,6 +470,7 @@ export function AudioCodecPage({ relatedTopics, language, topic, onBack, onOpenL
               </div>
             ))}
           </div>
+          </details>
         </article>
       </section>
 
@@ -474,8 +531,21 @@ export function AudioCodecPage({ relatedTopics, language, topic, onBack, onOpenL
           </div>
         </section>
 
+        <section className="sound-topic-section" aria-label={pageCopy.metaSelection[language]}>
+          <h2>{pageCopy.metaSelection[language]}</h2>
+          <table className="audio-codec-use-cases" aria-label={pageCopy.metaSelection[language]}>
+            <thead><tr><th scope="col">{pageCopy.bestFit[language]}</th><th scope="col">{pageCopy.format[language]}</th><th scope="col">{pageCopy.note[language]}</th></tr></thead>
+            <tbody>{codecUseCases.map(row => <tr key={row.label.en}>
+              <th scope="row">{row.label[language]}</th><td>{row.codecs}</td><td>{row.note[language]}</td>
+            </tr>)}</tbody>
+          </table>
+        </section>
+
         <section className="sound-topic-section">
-          <div><h2>{pageCopy.engineeringBoundary[language]}</h2><p>{detail.misconception[language]}</p></div>
+          <div><h2>{pageCopy.engineeringBoundary[language]}</h2><p>{detail.misconception[language]}</p>
+            <a href="https://www.rfc-editor.org/rfc/rfc9639" target="_blank" rel="noreferrer">FLAC · RFC 9639</a>
+            {" · "}<a href="https://learn.microsoft.com/en-us/windows/win32/xaudio2/adpcm-overview" target="_blank" rel="noreferrer">Microsoft · ADPCM</a>
+          </div>
         </section>
       </TopicReadingLayout>
       {relatedTopics}

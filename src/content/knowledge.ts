@@ -40,7 +40,6 @@ export type TopicLab = {
     | "amplifier-speaker"
     | "system-audio"
     | "alsa"
-    | "audio-codec"
     | "realtime-audio"
     | "core-signal-processing"
     | "speech-enhancement"
@@ -1487,17 +1486,6 @@ export const categories: Category[] = [
               }
             }
           ],
-          lab: {
-            type: "audio-codec",
-            title: { zh: "音频编解码实验室", "zh-Hant": traditional("音频编解码实验室"), en: "Audio Codec Lab", ja: "音声 Codec ラボ", ko: "오디오 코덱 실험실" },
-            description: {
-              zh: "进入独立界面查看 PCM 如何经过分帧、压缩、码流传输和解码，并按音乐、语音、会议、蓝牙和低延迟场景比较常见 Codec。", "zh-Hant": traditional("进入独立界面查看 PCM 如何经过分帧、压缩、码流传输和解码，并按音乐、语音、会议、蓝牙和低延迟场景比较常见 Codec。"),
-              en: "Open an independent lab to see how PCM is framed, compressed, transmitted as a bitstream, and decoded, then compare common codecs for music, speech, conferencing, Bluetooth, and low-latency use.",
-              ja: "独立したラボで PCM がフレーム化、圧縮、ビットストリーム伝送、デコードされる流れを確認し、音楽、音声、会議、Bluetooth、低遅延用途に向く代表的な Codec を比較します。",
-              ko: "독립 실험실에서 PCM이 프레임화, 압축, 비트스트림 전송과 디코딩을 거치는 과정을 보고 음악, 음성, 회의, Bluetooth와 저지연 용도의 대표 코덱을 비교합니다."
-            },
-            buttonLabel: { zh: "打开音频编解码实验室", "zh-Hant": traditional("打开音频编解码实验室"), en: "Open audio codec lab", ja: "音声 Codec ラボを開く", ko: "오디오 코덱 실험실 열기" }
-          },
           misconception: {
             zh: "相同码率不代表相同音质或相同延迟；编码器实现、内容类型和传输环境都会改变结果。", "zh-Hant": traditional("相同码率不代表相同音质或相同延迟；编码器实现、内容类型和传输环境都会改变结果。"),
             en: "The same bitrate does not mean the same quality or latency; encoder implementation, content type, and network conditions change the result.",

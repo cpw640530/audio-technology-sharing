@@ -29,7 +29,12 @@ it.each(cases)("opens the translated guide and its lab: $title ($language)", ({ 
     fireEvent.click(entry!);
   } else {
     expect(entry).toBeNull();
-    expect(view.container.querySelector(topic.title.en === "AI Audio Overall Flow" ? ".ai-overview" : ".system-audio-inline")).toBeInTheDocument();
+    if (topic.title.en === "Audio Codecs") {
+      expect(view.container.querySelector(".audio-codec-topic-page")).toBeInTheDocument();
+      expect(view.container.querySelectorAll(".codec-inline-visual")).toHaveLength(4);
+    } else {
+      expect(view.container.querySelector(topic.title.en === "AI Audio Overall Flow" ? ".ai-overview" : ".system-audio-inline")).toBeInTheDocument();
+    }
   }
   expect(screen.getByRole("heading", { level: 1 }).textContent?.trim()).toBeTruthy();
   expect(screen.getByRole("combobox", { name: /Language/ })).toHaveValue(language);

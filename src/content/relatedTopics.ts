@@ -1,11 +1,12 @@
 import { traditional } from "./traditional";
 import type { AiAudioLabId, LocalizedText, Topic, TopicLab } from "./knowledge";
 
-export type TopicKey = Exclude<TopicLab["type"], "ai-audio"> | `ai-${AiAudioLabId}`;
+export type TopicKey = Exclude<TopicLab["type"], "ai-audio"> | "audio-codec" | `ai-${AiAudioLabId}`;
 
 export function getTopicKey(topic: Topic): TopicKey | undefined {
   if (topic.title.en === "AI Audio Overall Flow") return "ai-overview";
   if (topic.title.en === "System Audio Architecture") return "system-audio";
+  if (topic.title.en === "Audio Codecs") return "audio-codec";
   const lab = topic.detail.lab;
   if (!lab) return undefined;
   if (lab.type !== "ai-audio") return lab.type;

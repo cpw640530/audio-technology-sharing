@@ -17,7 +17,6 @@ import { ApplicationTopicPage } from "./components/ApplicationTopicPage";
 import { AlsaLab } from "./components/AlsaLab";
 import { AlsaPage } from "./components/AlsaPage";
 import { AmplifierSpeakerLab } from "./components/AmplifierSpeakerLab";
-import { AudioCodecLab } from "./components/AudioCodecLab";
 import { AudioCodecPage } from "./components/AudioCodecPage";
 import { AudioUnitsLab } from "./components/AudioUnitsLab";
 import { AudioUnitsPage } from "./components/AudioUnitsPage";
@@ -169,7 +168,6 @@ function AppContent({ language }: { language: Language }) {
     | "systemAudioPage"
     | "alsaPage"
     | "alsaLab"
-    | "audioCodecLab"
     | "realtimeAudioPage"
     | "realtimeAudioLab"
     | "audioCodecPage"
@@ -802,20 +800,6 @@ function AppContent({ language }: { language: Language }) {
     );
   }
 
-  if (activeView === "audioCodecLab") {
-    return (
-      <div className="app-shell">
-        <Header
-          language={language}
-        />
-        <AudioCodecLab language={language} onBack={returnToSoftware} onBackToDetails={() => setActiveView("audioCodecPage")} />
-        <footer className="site-footer">
-          <span>{interfaceCopy.footer[language]}</span>
-        </footer>
-      </div>
-    );
-  }
-
   if (activeView === "realtimeAudioPage" && activeSoftwareTopic) {
     return (
       <div className="app-shell">
@@ -859,7 +843,6 @@ function AppContent({ language }: { language: Language }) {
           language={language}
           topic={activeSoftwareTopic}
           onBack={returnToSoftware}
-          onOpenLab={() => setActiveView("audioCodecLab")}
           onOpenPrevious={activeSoftwareTopicIndex > 0 ? () => openAdjacentSoftwareTopic(-1) : undefined}
           onOpenNext={activeSoftwareTopicIndex < softwareTopics.length - 1 ? () => openAdjacentSoftwareTopic(1) : undefined}
         />
@@ -1085,10 +1068,6 @@ function AppContent({ language }: { language: Language }) {
               onOpenAlsaLab={() => {
                 setSelectedTopic(null);
                 setActiveView("alsaLab");
-              }}
-              onOpenAudioCodecLab={() => {
-                setSelectedTopic(null);
-                setActiveView("audioCodecLab");
               }}
               onOpenAudioUnitsLab={() => {
                 setSelectedTopic(null);

@@ -14,7 +14,6 @@ type TopicDetailsProps = {
   onOpenAmplifierSpeakerLab: () => void;
   onOpenAlsaLab: () => void;
   onOpenAiAudioLab: (initialMode?: AiAudioLabId) => void;
-  onOpenAudioCodecLab: () => void;
   onOpenAudioUnitsLab: () => void;
   onOpenAudioUnitsPage: () => void;
   onOpenAutomotiveAudioLab: () => void;
@@ -123,7 +122,6 @@ export function TopicDetails({
   onOpenAmplifierSpeakerLab,
   onOpenAlsaLab,
   onOpenAiAudioLab,
-  onOpenAudioCodecLab,
   onOpenAudioUnitsLab,
   onOpenAudioUnitsPage,
   onOpenAutomotiveAudioLab,
@@ -192,11 +190,6 @@ export function TopicDetails({
 
     if (topic.detail.lab?.type === "alsa") {
       onOpenAlsaLab();
-      return;
-    }
-
-    if (topic.detail.lab?.type === "audio-codec") {
-      onOpenAudioCodecLab();
       return;
     }
 

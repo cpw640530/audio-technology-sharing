@@ -8767,9 +8767,60 @@ body:has(.home-intro) {
 
 .audio-codec-topic-page .audio-codec-topic-path-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   margin-top: 24px;
+}
+
+.audio-codec-layer-path {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  margin: 20px 0;
+  padding: 0;
+  border-block: 1px solid rgba(34, 109, 96, 0.2);
+}
+
+.audio-codec-layer-path li {
+  min-width: 0;
+  padding: 18px 16px;
+  border-inline-start: 2px solid var(--accent);
+}
+
+.audio-codec-layer-path li > span {
+  color: var(--accent);
+  font: 600 0.8rem ui-monospace, monospace;
+}
+
+.audio-codec-layer-path h3 {
+  margin: 8px 0;
+  font-size: 1rem;
+}
+
+.audio-codec-layer-path p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.audio-codec-rate-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 24px;
+  margin-block: 20px;
+}
+
+.audio-codec-rate-grid article {
+  min-width: 0;
+  border-top: 2px solid var(--accent);
+  padding-top: 12px;
+}
+
+.audio-codec-rate-grid h3 { margin: 0; font-size: 1rem; }
+.audio-codec-rate-grid code { display: block; overflow-wrap: anywhere; font-size: 0.85rem; }
+
+@media (max-width: 700px) {
+  .audio-codec-rate-grid { grid-template-columns: minmax(0, 1fr); }
+  .audio-codec-layer-path { grid-template-columns: minmax(0, 1fr); }
 }
 
 .audio-codec-topic-page .sound-topic-intro > div {
@@ -8829,7 +8880,84 @@ body:has(.home-intro) {
 
 .audio-codec-topic-page .audio-codec-topic-path.encode { border-top: 3px solid #226d60; }
 .audio-codec-topic-page .audio-codec-topic-path.decode { border-top: 3px solid #a35e25; }
-.audio-codec-topic-page .audio-codec-topic-lab-entry { padding-top: 8px; }
+.audio-codec-use-cases {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.audio-codec-use-cases th,
+.audio-codec-use-cases td {
+  padding: 12px 8px;
+  border-bottom: 1px solid rgba(34, 109, 96, 0.2);
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.audio-codec-use-cases th:first-child { width: 23%; }
+.audio-codec-use-cases th:nth-child(2) { width: 28%; }
+
+.codec-inline-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-block: 18px;
+}
+.codec-inline-controls label { display: grid; gap: 6px; min-width: 0; font-size: 0.9rem; }
+.codec-inline-controls select {
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #a9c3bc;
+  border-radius: 4px;
+  background: #f6faf8;
+  color: #17211f;
+  font: inherit;
+}
+.codec-inline-controls select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.codec-bit-cells { display: grid; grid-template-columns: repeat(8, 22px); gap: 4px; }
+.codec-bit-cells span { height: 15px; background: #226d60; }
+.codec-sample-cells, .codec-prediction-chart { display: block; width: 100%; height: auto; }
+.codec-sample-cells rect { fill: #226d60; }
+.codec-sample-cells text, .codec-prediction-chart text { fill: #34443f; font-size: 16px; }
+.codec-sample-cells g:nth-child(2) rect { fill: #a35e25; }
+.codec-inline-result { display: grid; gap: 4px; margin-block: 16px; font-variant-numeric: tabular-nums; }
+.codec-inline-equation { overflow-wrap: anywhere; font-family: ui-monospace, monospace; font-size: 0.9rem; }
+.codec-trace-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 0.85rem; }
+.codec-trace-legend span { border-bottom: 3px solid currentColor; }
+.codec-trace-legend .original { color: #226d60; }
+.codec-trace-legend .predicted { color: #9b541c; border-bottom-style: dashed; }
+.codec-trace-legend .residual { color: #2864a0; }
+.codec-chart-grid { stroke: #b4c9c3; stroke-width: 1; }
+.codec-prediction-chart polyline { fill: none; stroke: currentColor; stroke-width: 2; }
+.codec-prediction-chart circle { fill: currentColor; }
+.codec-prediction-chart .original { color: #226d60; }
+.codec-prediction-chart .predicted { color: #9b541c; stroke-dasharray: 6 4; }
+.codec-prediction-chart .residual { color: #2864a0; }
+.codec-axis-note { font-size: 0.85rem; }
+.codec-sample-table-scroll { overflow-x: auto; }
+.codec-sample-table { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.codec-sample-table th, .codec-sample-table td { padding: 8px; text-align: center; border-bottom: 1px solid #b4c9c3; }
+.codec-sample-table th:first-child { text-align: start; }
+.codec-inline-controls input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--accent); }
+.codec-flac-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; list-style: none; margin: 20px 0; padding: 0; }
+.codec-flac-steps li { min-width: 0; display: flex; flex-direction: column; border-top: 2px solid var(--accent); padding-top: 10px; }
+.codec-flac-steps h3 { margin: 0; font-size: 1rem; }
+.codec-flac-steps p { margin: 8px 0 12px; }
+.codec-flac-steps strong { margin-top: auto; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.codec-flac-storage { padding: 12px 0; border-block: 1px solid #b4c9c3; overflow-wrap: anywhere; }
+.codec-flac-selected { fill: var(--accent); opacity: 0.12; }
+.codec-sample-table .codec-flac-current { background: rgba(34, 109, 96, 0.12); font-weight: 700; }
+@media (max-width: 700px) {
+  .codec-flac-steps { grid-template-columns: 1fr; }
+}
+.codec-adpcm-selection { stroke: #596a65; stroke-width: 1; stroke-dasharray: 3 4; }
+.codec-adpcm-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; list-style: none; margin: 16px 0; padding: 0; }
+.codec-adpcm-steps li { min-width: 0; border-top: 2px solid var(--accent); padding-top: 10px; font-size: 0.85rem; }
+.codec-adpcm-steps code { display: block; margin-top: 8px; overflow-wrap: anywhere; }
+@media (max-width: 700px) {
+  .codec-adpcm-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .codec-sample-cells text, .codec-prediction-chart text { font-size: 21px; }
+}
 .audio-codec-topic-page .audio-codec-topic-key-points { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .audio-codec-topic-page .audio-codec-topic-key-points article { min-height: 108px; }
 
