@@ -14,17 +14,17 @@ it.each(["zh", "en"] as const)("distinguishes TTS waveform reconstruction routes
   fireEvent.click(screen.getByRole("button", { name: language === "zh" ? "3. 模型生成" : "3. Model generation" }));
   expect(screen.getByText("Mel decoder")).toBeInTheDocument();
   expect(screen.getByText("Vocoder → PCM")).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "CosyVoice 2" }));
-  expect(screen.getByText("LLM → speech tokens")).toBeInTheDocument();
-  expect(screen.getByText("Flow matching → Mel")).toBeInTheDocument();
-  expect(screen.getByText("HiFT → PCM")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "CosyVoice 3" }));
+  expect(screen.getByText("CosyVoice3LM → speech tokens")).toBeInTheDocument();
+  expect(screen.getByText("Chunked Causal DiT flow matching → Mel")).toBeInTheDocument();
+  expect(screen.getByText("Causal HiFT → PCM")).toBeInTheDocument();
   expect(screen.getByText(language === "zh" ? /并非所有 TTS 都有独立时长预测器/ : /Not every TTS uses a separate duration predictor/)).toBeInTheDocument();
 });
 
 it.each(["zh", "en"] as const)("orders the reading path and keeps model details expandable (%s)", language => {
   const { container } = render(<AiAudioLab labId="tts" language={language} onBack={() => {}} />);
   const sections = Array.from(container.querySelectorAll(".ai-reading-section")).map(el => el.id);
-  expect(sections).toEqual(["ai-demo", "ai-engineering", "ai-models", "ai-reading"]);
+  expect(sections).toEqual(["ai-current-model", "ai-demo", "ai-engineering", "ai-models", "ai-reading"]);
   const nav = screen.getByRole("navigation", { name: language === "zh" ? "AI 实验室章节" : "AI lab chapters" });
   expect(Array.from(nav.querySelectorAll("a")).map(a => a.getAttribute("href"))).toEqual(sections.map(id => `#${id}`));
   const model = screen.getByText("FastSpeech 2").closest("details")!;

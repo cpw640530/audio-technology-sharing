@@ -1,5 +1,6 @@
 import { traditional } from "../content/traditional";
 import { ArrowLeft } from "lucide-react";
+import { RealtimeTimeline } from "./RealtimeTimeline";
 
 import type { Language, LocalizedText } from "../content/knowledge";
 
@@ -23,12 +24,9 @@ const bytesPerSample = 2;
 const channels = 1;
 const sampleRate = 16000;
 const bufferFrames = 512;
-const dspMs = 1.4;
-const jitterMs = 0.4;
 const periodMs = (bufferFrames / sampleRate) * 1000;
 const samples = bufferFrames * channels;
 const bytes = samples * bytesPerSample;
-const worstProcessingMs = dspMs + jitterMs;
 const codecFrameSamples = 576;
 const firstFrameReadyMs = Math.ceil(codecFrameSamples / bufferFrames) * periodMs;
 
@@ -585,8 +583,6 @@ function SocAecDiagram({ language }: { language: Language }) {
 }
 
 export function RealtimeAudioLab({ language, onBack, onBackToDetails }: RealtimeAudioLabProps) {
-  const statusLabel = localized(language, { zh: "状态：稳定", "zh-Hant": traditional("状态：稳定"), en: "Status: stable", ja: "状態：安定", ko: "상태: 안정" });
-
   return (
     <main className="codec-lab-page realtime-audio-lab-page">
       <section className="sound-lab-hero" aria-labelledby="realtime-audio-lab-title">
@@ -617,6 +613,7 @@ export function RealtimeAudioLab({ language, onBack, onBackToDetails }: Realtime
         className="realtime-audio-workbench"
         aria-label={localized(language, { zh: "实时音频处理实验台", "zh-Hant": traditional("实时音频处理实验台"), en: "Real-time audio processing workbench", ja: "リアルタイムオーディオ処理ワークベンチ", ko: "실시간 오디오 처리 작업대" })}
       >
+        <RealtimeTimeline language={language} />
         <section className="realtime-audio-visual" aria-label={localized(language, { zh: "实时音频调度图", "zh-Hant": traditional("实时音频调度图"), en: "Real-time audio scheduling diagram", ja: "リアルタイムオーディオスケジューリング図", ko: "실시간 오디오 스케줄링 다이어그램" })}>
           <div className="digital-lab-status">
             <strong>{localized(language, { zh: "从 PCM 采集到解码播放", "zh-Hant": traditional("从 PCM 采集到解码播放"), en: "From PCM capture to decoded playback", ja: "PCM収音からデコード再生まで", ko: "PCM 캡처에서 디코드 재생까지" })}</strong>
@@ -642,13 +639,10 @@ export function RealtimeAudioLab({ language, onBack, onBackToDetails }: Realtime
             </strong>
             <strong>{localized(language, { zh: `采集 period：${formatMs(periodMs)}`, "zh-Hant": traditional(`采集 period：${formatMs(periodMs)}`), en: `Capture period: ${formatMs(periodMs)}`, ja: `収音period：${formatMs(periodMs)}`, ko: `캡처 period: ${formatMs(periodMs)}` })}</strong>
             <strong>{localized(language, { zh: `每块处理预算：${formatMs(periodMs)}`, "zh-Hant": traditional(`每块处理预算：${formatMs(periodMs)}`), en: `Per-block budget: ${formatMs(periodMs)}`, ja: `ブロックごとの予算：${formatMs(periodMs)}`, ko: `블록당 예산: ${formatMs(periodMs)}` })}</strong>
-            <strong>{localized(language, { zh: `假设处理耗时上限：${formatMs(worstProcessingMs)}`, "zh-Hant": traditional(`假设处理耗时上限：${formatMs(worstProcessingMs)}`), en: `Assumed processing bound: ${formatMs(worstProcessingMs)}`, ja: `想定処理時間上限：${formatMs(worstProcessingMs)}`, ko: `가정한 처리 시간 한계: ${formatMs(worstProcessingMs)}` })}</strong>
             <strong>{localized(language, { zh: `首帧样本攒齐时间：${formatMs(firstFrameReadyMs)}`, "zh-Hant": traditional(`首帧样本攒齐时间：${formatMs(firstFrameReadyMs)}`), en: `First-frame samples available: ${formatMs(firstFrameReadyMs)}`, ja: `最初のフレームが揃う時間：${formatMs(firstFrameReadyMs)}`, ko: `첫 프레임 샘플 준비 시간: ${formatMs(firstFrameReadyMs)}` })}</strong>
-            <strong className="realtime-status stable">{statusLabel}</strong>
           </div>
 
           <div className="lab-live-note realtime-lab-headroom-note">
-            <strong>{localized(language, { zh: `DSP 耗时：${formatMs(dspMs)}`, "zh-Hant": traditional(`DSP 耗时：${formatMs(dspMs)}`), en: `DSP time: ${formatMs(dspMs)}`, ja: `DSP時間：${formatMs(dspMs)}`, ko: `DSP 시간: ${formatMs(dspMs)}` })}</strong>
             <span>
               {localized(language, {
                 zh: "这是固定参数教学例子，不是实测：每 32 ms 交付 512 点，首帧需 576 点，64 ms 时样本才攒齐；尚未计入处理、编码器前视和传输延迟。实际 XRUN 还取决于队列水位与调度。", "zh-Hant": traditional("这是固定参数教学例子，不是实测：每 32 ms 交付 512 点，首帧需 576 点，64 ms 时样本才攒齐；尚未计入处理、编码器前视和传输延迟。实际 XRUN 还取决于队列水位与调度。"),

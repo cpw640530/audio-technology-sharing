@@ -44,10 +44,8 @@ export type TopicLab = {
     | "core-signal-processing"
     | "speech-enhancement"
     | "spatial-audio"
-    | "meeting-communication"
     | "automotive-audio"
     | "robot-audio"
-    | "iot-content"
     | "bluetooth-audio"
     | "ai-audio";
   initialMode?: AiAudioLabId;
@@ -2058,10 +2056,10 @@ export const categories: Category[] = [
             initialMode: "asr",
             title: { zh: "语音识别 ASR 实验室", "zh-Hant": traditional("语音识别 ASR 实验室"), en: "Speech Recognition ASR Lab", ja: "音声認識 ASR ラボ", ko: "음성 인식 ASR 실험실" },
             description: {
-              zh: "用人工教学示例检查 token 概率、CTC 折叠、RNN-T 推进与注意力解码；不是上传录音后的真实识别。", "zh-Hant": traditional("用人工教学示例检查 token 概率、CTC 折叠、RNN-T 推进与注意力解码；不是上传录音后的真实识别。"),
-              en: "Inspect token probabilities, CTC collapse, RNN-T transitions, and attention decoding using hand-built teaching examples, not live recognition of uploaded recordings.",
-              ja: "手作りの教材例で token 確率、CTC 折りたたみ、RNN-T の遷移、Attention デコードを確認します。録音を認識する実モデルではありません。",
-              ko: "수작업 교육 예시로 token 확률, CTC 병합, RNN-T 전이와 Attention 디코딩을 확인합니다. 업로드 녹음을 인식하는 실제 모델은 아닙니다."
+              zh: "先查看 Qwen3-ASR 模型路线，再用教学示例比较 CTC、RNN-T 与注意力解码；不在浏览器执行真实识别。", "zh-Hant": traditional("先查看 Qwen3-ASR 模型路线，再用教学示例比较 CTC、RNN-T 与注意力解码；不在浏览器执行真实识别。"),
+              en: "Inspect the Qwen3-ASR model route, then compare CTC, RNN-T and attention decoding through teaching examples, not browser inference.",
+              ja: "Qwen3-ASR の経路を確認し、教材例で CTC・RNN-T・Attention デコードを比較します。ブラウザで実推論はしません。",
+              ko: "Qwen3-ASR 경로를 확인하고 교육 예시로 CTC·RNN-T·Attention 디코딩을 비교합니다. 브라우저에서 실제 추론은 하지 않습니다."
             },
             buttonLabel: { zh: "打开语音识别 ASR 实验室", "zh-Hant": traditional("打开语音识别 ASR 实验室"), en: "Open speech recognition ASR lab", ja: "音声認識 ASR ラボを開く", ko: "음성 인식 ASR 실험실 열기" }
           },
@@ -2139,10 +2137,10 @@ export const categories: Category[] = [
             initialMode: "tts",
             title: { zh: "语音合成 TTS 实验室", "zh-Hant": traditional("语音合成 TTS 实验室"), en: "Text-to-Speech TTS Lab", ja: "音声合成 TTS ラボ", ko: "음성 합성 TTS 실험실" },
             description: {
-              zh: "进入独立文章界面，理解文本规范化、韵律预测、声学模型和神经声码器如何生成语音。", "zh-Hant": traditional("进入独立文章界面，理解文本规范化、韵律预测、声学模型和神经声码器如何生成语音。"),
-              en: "Open an independent article page explaining how text normalization, prosody prediction, acoustic models, and neural vocoders generate speech.",
-              ja: "独立した記事ページで、テキスト正規化、韻律予測、音響モデル、ニューラルボコーダーが音声を生成する仕組みを理解します。",
-              ko: "독립 문서 페이지에서 텍스트 정규화, 운율 예측, 음향 모델과 신경망 보코더가 음성을 생성하는 방식을 이해합니다."
+              zh: "对照 Qwen3-TTS 与 CosyVoice 3 的语音生成路线，再检查经典时长展开与 flow matching 的不同；不生成真实语音。", "zh-Hant": traditional("对照 Qwen3-TTS 与 CosyVoice 3 的语音生成路线，再检查经典时长展开与 flow matching 的不同；不生成真实语音。"),
+              en: "Compare Qwen3-TTS and CosyVoice 3, then inspect explicit duration expansion versus flow matching; no speech is generated.",
+              ja: "Qwen3-TTS と CosyVoice 3 を比較し、明示的な長さ展開と flow matching の違いを確認します。音声は生成しません。",
+              ko: "Qwen3-TTS와 CosyVoice 3를 비교하고 명시적 길이 확장과 flow matching의 차이를 확인합니다. 실제 음성은 생성하지 않습니다."
             },
             buttonLabel: { zh: "打开语音合成 TTS 实验室", "zh-Hant": traditional("打开语音合成 TTS 实验室"), en: "Open text-to-speech TTS lab", ja: "音声合成 TTS ラボを開く", ko: "음성 합성 TTS 실험실 열기" }
           },
@@ -2256,10 +2254,10 @@ export const categories: Category[] = [
         ],
         detail: {
           explanation: {
-            zh: "AI 音频事件识别关注“发生了什么声音”，而不是“说了什么话”。\n\n系统通常把 PCM 变成梅尔谱、log-mel 特征或 learned embedding，再用分类模型判断哭声、玻璃破碎、狗叫声、烟雾报警器、门铃、枪声、碰撞声等事件，并输出时间范围和置信度。", "zh-Hant": traditional("AI 音频事件识别关注“发生了什么声音”，而不是“说了什么话”。\n\n系统通常把 PCM 变成梅尔谱、log-mel 特征或 learned embedding，再用分类模型判断哭声、玻璃破碎、狗叫声、烟雾报警器、门铃、枪声、碰撞声等事件，并输出时间范围和置信度。"),
-            en: "AI audio event detection asks what sound happened, not what words were spoken.\n\nA system usually converts PCM into mel spectrograms, log-mel features, or learned embeddings, then uses a classifier to detect events such as baby cries, glass breaks, dog barks, smoke alarms, doorbells, gunshots, or impacts with timestamps and confidence.",
-            ja: "AI 音響イベント認識は「何を話したか」ではなく「どんな音が起きたか」に注目します。\n\nシステムは通常、PCM を Mel スペクトル、log-mel 特徴、学習型 embedding に変換し、分類モデルで泣き声、ガラスの破損、犬の鳴き声、煙警報器、ドアベル、銃声、衝撃などを判定し、時間範囲と信頼度を出力します。",
-            ko: "AI 오디오 이벤트 인식은 ‘무슨 말을 했는가’가 아니라 ‘어떤 소리가 발생했는가’를 묻습니다.\n\n시스템은 보통 PCM을 Mel 스펙트럼, log-mel 특징 또는 학습형 embedding으로 변환한 뒤 분류 모델로 울음소리, 유리 파손, 개 짖음, 연기 경보기, 초인종, 총성이나 충격 같은 이벤트를 타임스탬프와 신뢰도로 감지합니다."
+            zh: "AI 音频事件识别关注“发生了什么声音”，而不是“说了什么话”。\n\n例如，同一段录音中既有哭声，又有玻璃破碎声。模型从 PCM 的时频特征或学习型表示中估计各类分数；整段分类只能判断是否出现，精确定位还需要时序输出与后处理。", "zh-Hant": traditional("AI 音频事件识别关注“发生了什么声音”，而不是“说了什么话”。\n\n例如，同一段录音中既有哭声，又有玻璃破碎声。模型从 PCM 的时频特征或学习型表示中估计各类分数；整段分类只能判断是否出现，精确定位还需要时序输出与后处理。"),
+            en: "AI audio event detection asks what sound happened, not what words were spoken.\n\nA recording may contain both crying and breaking glass. A model estimates class scores from time-frequency features or learned PCM representations. Clip classification indicates presence; locating boundaries needs temporal outputs and post-processing.",
+            ja: "AI 音響イベント認識は「何を話したか」ではなく「どんな音が起きたか」に注目します。\n\n同じ録音に泣き声とガラス破損が共存し得ます。モデルは PCM の時間周波数特徴や学習表現からクラススコアを推定します。クリップ分類は存在を示すだけで、境界には時系列出力と後処理が必要です。",
+            ko: "AI 오디오 이벤트 인식은 ‘무슨 말을 했는가’가 아니라 ‘어떤 소리가 발생했는가’를 묻습니다.\n\n같은 녹음에 울음과 유리 파손이 함께 있을 수 있습니다. 모델은 PCM의 시간-주파수 특징이나 학습 표현에서 클래스 점수를 추정합니다. 클립 분류는 존재 여부만 나타내며 경계 검출에는 시계열 출력과 후처리가 필요합니다."
           },
           termExplanations: [
             {
@@ -2301,10 +2299,10 @@ export const categories: Category[] = [
             initialMode: "event",
             title: { zh: "AI 音频事件识别实验室", "zh-Hant": traditional("AI 音频事件识别实验室"), en: "AI Audio Event Detection Lab", ja: "AI 音響イベント認識ラボ", ko: "AI 오디오 이벤트 인식 실험실" },
             description: {
-              zh: "进入独立文章界面，理解哭声、玻璃破碎、狗叫声等事件如何由频谱图和分类模型识别。", "zh-Hant": traditional("进入独立文章界面，理解哭声、玻璃破碎、狗叫声等事件如何由频谱图和分类模型识别。"),
-              en: "Open an independent article page explaining how baby cries, glass breaks, dog barks, and related events are detected from spectrograms and classifiers.",
-              ja: "独立した記事ページで、泣き声、ガラス破損、犬の鳴き声などをスペクトログラムと分類モデルから認識する仕組みを理解します。",
-              ko: "독립 문서 페이지에서 울음소리, 유리 파손, 개 짖음 등의 이벤트를 스펙트로그램과 분류 모델로 감지하는 방식을 이해합니다."
+              zh: "调节阈值和最短时长，对比预设类别分数、参考标注与检测区间，观察误报和漏检如何变化。", "zh-Hant": traditional("调节阈值和最短时长，对比预设类别分数、参考标注与检测区间，观察误报和漏检如何变化。"),
+              en: "Adjust the threshold and minimum duration; compare preset class scores, reference labels and detected intervals to explore false detections and misses.",
+              ja: "閾値と最短時間を調整し、教材スコア、正解ラベル、検出区間を比較して誤検出と見逃しの変化を確認します。",
+              ko: "임계값과 최소 시간을 조절하고 교육용 점수·참조 주석·검출 구간을 비교하여 오탐과 미탐의 변화를 확인합니다."
             },
             buttonLabel: { zh: "打开 AI 音频事件识别实验室", "zh-Hant": traditional("打开 AI 音频事件识别实验室"), en: "Open AI audio event detection lab", ja: "AI 音響イベント認識ラボを開く", ko: "AI 오디오 이벤트 인식 실험실 열기" }
           },
@@ -2382,10 +2380,10 @@ export const categories: Category[] = [
             initialMode: "enhancement",
             title: { zh: "AI 音频增强实验室", "zh-Hant": traditional("AI 音频增强实验室"), en: "AI Audio Enhancement Lab", ja: "AI 音声強調ラボ", ko: "AI 오디오 향상 실험실" },
             description: {
-              zh: "对比同一合成片段的带噪输入、模型输出和干净参考，再检查卷积、掩码与 PCM 重建的真实计算结果。", "zh-Hant": traditional("对比同一合成片段的带噪输入、模型输出和干净参考，再检查卷积、掩码与 PCM 重建的真实计算结果。"),
-              en: "Compare noisy input, model output, and clean reference for one synthetic clip, then inspect actual convolution, mask, and PCM reconstruction results.",
-              ja: "同じ合成区間のノイズ入力、モデル出力、クリーン参照を比較し、畳み込み、マスク、PCM 復元の実際の計算結果を調べます。",
-              ko: "동일한 합성 구간의 잡음 입력·모델 출력·깨끗한 참조를 비교하고 합성곱·마스크·PCM 복원의 실제 계산 결과를 확인합니다."
+              zh: "了解 DPDFNet 的因果增强路线，再检查教学小模型的卷积、掩码和 PCM 重建；试听不是 DPDFNet 的推理输出。", "zh-Hant": traditional("了解 DPDFNet 的因果增强路线，再检查教学小模型的卷积、掩码和 PCM 重建；试听不是 DPDFNet 的推理输出。"),
+              en: "Explore DPDFNet's causal route, then inspect a teaching model's convolution, mask and PCM reconstruction; audio is not DPDFNet inference output.",
+              ja: "DPDFNet の因果経路と教材モデルの畳み込み・マスク・PCM 復元を調べます。試聴音は DPDFNet の推論出力ではありません。",
+              ko: "DPDFNet의 인과적 경로와 교육 모델의 합성곱·마스크·PCM 복원을 확인합니다. 재생 음원은 DPDFNet 추론 출력이 아닙니다."
             },
             buttonLabel: { zh: "打开 AI 音频增强实验室", "zh-Hant": traditional("打开 AI 音频增强实验室"), en: "Open AI audio enhancement lab", ja: "AI 音声強調ラボを開く", ko: "AI 오디오 향상 실험실 열기" }
           },
@@ -2463,10 +2461,10 @@ export const categories: Category[] = [
             initialMode: "codec",
             title: { zh: "AI 音频编码实验室", "zh-Hant": traditional("AI 音频编码实验室"), en: "AI Audio Coding Lab", ja: "AI 音声符号化ラボ", ko: "AI 오디오 코딩 실험실" },
             description: {
-              zh: "进入独立文章界面，理解 PCM、神经编码器、token/latent、低码率码流和神经解码器之间的关系。", "zh-Hant": traditional("进入独立文章界面，理解 PCM、神经编码器、token/latent、低码率码流和神经解码器之间的关系。"),
-              en: "Open an independent article page explaining PCM, neural encoders, tokens/latents, low-bitrate streams, and neural decoders.",
-              ja: "独立した記事ページで、PCM、ニューラルエンコーダー、token/latent、低ビットレートのビットストリーム、ニューラルデコーダーの関係を理解します。",
-              ko: "독립 문서 페이지에서 PCM, 신경망 인코더, token/latent, 저비트레이트 스트림과 신경망 디코더의 관계를 이해합니다."
+              zh: "对照 WavTokenizer 与流式 Mimi，区分 token 帧率、码率、量化与传输封装，并查看经典编码基础。", "zh-Hant": traditional("对照 WavTokenizer 与流式 Mimi，区分 token 帧率、码率、量化与传输封装，并查看经典编码基础。"),
+              en: "Compare WavTokenizer with streaming Mimi; distinguish token frame rate, bitrate, quantization and packetization, alongside classic coding foundations.",
+              ja: "WavTokenizer と流式 Mimi を比較し、token フレーム率・ビットレート・量子化・パケット化と従来符号化の基礎を区別します。",
+              ko: "WavTokenizer와 스트리밍 Mimi를 비교하고 token 프레임률·비트율·양자화·패킷화와 기존 코딩 기초를 구분합니다."
             },
             buttonLabel: { zh: "打开 AI 音频编码实验室", "zh-Hant": traditional("打开 AI 音频编码实验室"), en: "Open AI audio coding lab", ja: "AI 音声符号化ラボを開く", ko: "AI 오디오 코딩 실험실 열기" }
           },
@@ -2544,19 +2542,8 @@ export const categories: Category[] = [
             ja: "会議のトラブルシューティングでは、環境、信号経路、症状、観測可能な指標を結び付けます。個人端末ではスピーカーからマイクへ戻る音響ループを確認し、会議室では距離、方向、残響も見ます。AEC は再生リファレンスでエコーを抑えます。弱いネットワークの音切れと遅延は伝送・再生の問題で、Jitter Buffer が到着のばらつくパケットを並べ替えて保持し、PLC が損失後の短い音声欠落を補います。ライブ字幕は強調後音声から ASR のサイドパスへ分岐し、エンドポイント検出、推論、翻訳、テキスト安定化が首字と最終結果の遅延に影響します。字幕が遅いことを主音声が遅いことと同一視してはいけません。",
             ko: "회의 문제 해결에서는 환경, 신호 경로, 증상과 관찰 가능한 지표를 연결해야 합니다. 개인 단말에서는 스피커에서 마이크로 돌아오는 음향 루프를 보고 회의실에서는 거리, 방향과 잔향도 확인합니다. AEC는 재생 참조로 에코를 억제합니다. 불안정한 네트워크의 끊김과 지연은 전송·재생 문제이며 Jitter Buffer가 도착이 고르지 않은 패킷을 재정렬하고 보관하고 PLC가 손실 뒤 짧은 오디오 공백을 은닉합니다. 실시간 자막은 향상된 음성에서 ASR 사이드 경로로 분기되며 엔드포인트 검출, 추론, 번역과 텍스트 안정화가 첫 토큰과 최종 결과 지연에 영향을 줍니다. 자막이 느리다고 주 오디오가 느린 것은 아닙니다."
           },
-          lab: {
-            type: "meeting-communication",
-            title: { zh: "会议与通信实验室", "zh-Hant": traditional("会议与通信实验室"), en: "Conferencing and Communication Lab", ja: "会議と通信ラボ", ko: "회의와 통신 실험실" },
-            description: {
-              zh: "切换四个实际场景，对照环境、信号链、体验症状、可观察指标和排查顺序。", "zh-Hant": traditional("切换四个实际场景，对照环境、信号链、体验症状、可观察指标和排查顺序。"),
-              en: "Switch among four practical scenes and compare environment, signal chain, user symptom, observable metric, and troubleshooting order.",
-              ja: "4つの実際のシーンを切り替え、環境、信号経路、体験上の症状、観測指標、調査の順序を比較します。",
-              ko: "네 가지 실제 장면을 전환하며 환경, 신호 경로, 사용자 증상, 관찰 지표와 문제 해결 순서를 비교합니다."
-            },
-            buttonLabel: { zh: "打开会议与通信实验室", "zh-Hant": traditional("打开会议与通信实验室"), en: "Open conferencing and communication lab", ja: "会議と通信ラボを開く", ko: "회의와 통신 실험실 열기" }
-          },
           keyConcepts: [
-            { zh: "个人终端出现回声时，先核对声学环境、播放参考和 AEC 指标；多人会议室听不清时，再看拾音距离、阵列方向与混响。", "zh-Hant": traditional("个人终端出现回声时，先核对声学环境、播放参考和 AEC 指标；多人会议室听不清时，再看拾音距离、阵列方向与混响。"), en: "For echo on a personal device, check the acoustic environment, render reference, and AEC metrics first. For poor intelligibility in a meeting room, also inspect pickup distance, array direction, and reverberation.", ja: "個人端末のエコーでは、まず音響環境、再生リファレンス、AEC 指標を確認します。会議室で聞き取りにくい場合は、収音距離、アレイ方向、残響も調べます。", ko: "개인 단말에서 에코가 나면 먼저 음향 환경, 재생 참조와 AEC 지표를 확인합니다. 회의실에서 잘 들리지 않으면 수음 거리, 어레이 방향과 잔향도 살펴봅니다." },
+            { zh: "个人终端出现回声时，先核对声学环境、播放参考和 AEC 指标；ERLE 主要反映回声抑制，不代表近端语音保真，双讲还要做定性听查。多人会议室听不清时，再看拾音距离、阵列方向与混响。", "zh-Hant": traditional("个人终端出现回声时，先核对声学环境、播放参考和 AEC 指标；ERLE 主要反映回声抑制，不代表近端语音保真，双讲还要做定性听查。多人会议室听不清时，再看拾音距离、阵列方向与混响。"), en: "For echo on a personal device, check the acoustic environment, render reference, and AEC metrics first. ERLE mainly reflects echo suppression, not near-end speech fidelity, so double-talk also needs qualitative listening. For poor intelligibility in a meeting room, inspect pickup distance, array direction, and reverberation.", ja: "個人端末のエコーでは、まず音響環境、再生リファレンス、AEC 指標を確認します。ERLE は主にエコー抑圧を示し、近端音声の忠実度は示さないため、ダブルトークでは定性的な聴感確認も必要です。会議室で聞き取りにくい場合は、収音距離、アレイ方向、残響も調べます。", ko: "개인 단말에서 에코가 나면 먼저 음향 환경, 재생 참조와 AEC 지표를 확인합니다. ERLE는 주로 에코 억제를 나타내며 근단 음성 충실도를 뜻하지 않으므로 더블 토크에서는 정성적 청취도 필요합니다. 회의실에서 잘 들리지 않으면 수음 거리, 어레이 방향과 잔향도 살펴봅니다." },
             { zh: "弱网卡顿要沿 RTP 到达、Jitter Buffer、PLC 和播放链路定位，并观察丢包率、抖动、RTT 与缓冲深度。", "zh-Hant": traditional("弱网卡顿要沿 RTP 到达、Jitter Buffer、PLC 和播放链路定位，并观察丢包率、抖动、RTT 与缓冲深度。"), en: "Trace poor-network stalls through RTP arrival, the jitter buffer, PLC, and playout while observing packet loss, jitter, RTT, and buffer depth.", ja: "弱いネットワークの音切れは、RTP 到着、Jitter Buffer、PLC、再生経路に沿って調べ、パケット損失率、ジッター、RTT、バッファー深度を観測します。", ko: "불안정한 네트워크의 끊김은 RTP 도착, Jitter Buffer, PLC와 재생 경로를 따라 추적하고 패킷 손실률, 지터, RTT와 버퍼 깊이를 관찰합니다." },
             { zh: "实时字幕是 ASR 识别旁路；应分别观察首字延迟、最终结果延迟和修订次数，不要用字幕延迟代替主音频延迟。", "zh-Hant": traditional("实时字幕是 ASR 识别旁路；应分别观察首字延迟、最终结果延迟和修订次数，不要用字幕延迟代替主音频延迟。"), en: "Live captions use an ASR recognition side path. Observe first-token latency, final-result latency, and revisions separately instead of treating caption delay as main-audio delay.", ja: "ライブ字幕は ASR の認識サイドパスです。首字遅延、最終結果遅延、修正回数を分けて観測し、字幕遅延を主音声の遅延の代わりにしてはいけません。", ko: "실시간 자막은 ASR 인식 사이드 경로입니다. 첫 토큰 지연, 최종 결과 지연과 수정 횟수를 따로 관찰하고 자막 지연을 주 오디오 지연으로 간주하지 않아야 합니다." },
             { zh: "同一症状可能来自不同位置：先按场景确认环境，再沿信号链复现症状，用对应指标缩小范围，最后调整模块。", "zh-Hant": traditional("同一症状可能来自不同位置：先按场景确认环境，再沿信号链复现症状，用对应指标缩小范围，最后调整模块。"), en: "The same symptom can originate at different points: establish the environment, follow the signal chain to reproduce it, narrow the scope with matching metrics, and only then tune a module.", ja: "同じ症状でも原因箇所は異なります。まずシーンの環境を確認し、信号経路に沿って症状を再現し、対応する指標で範囲を絞ってからモジュールを調整します。", ko: "같은 증상도 다른 위치에서 생길 수 있습니다. 먼저 장면의 환경을 확인하고 신호 경로를 따라 증상을 재현한 뒤 해당 지표로 범위를 좁히고 마지막에 모듈을 조정합니다." }
@@ -2666,17 +2653,6 @@ export const categories: Category[] = [
             en: "IoT audio is more like an always-on edge sensing system whose goals are low power, low cost, privacy, safety, and fast response. A typical chain keeps a microphone listening for a low-power wake word, then sends short speech to local command recognition or cloud ASR/LLM to control lights, locks, appliances, cameras, or robots. Content-creation audio is more like an editable production pipeline whose goals are intelligibility, consistency, editability, and platform-ready loudness. A typical chain records or imports material, then applies denoising, editing, EQ, compression, loudness normalization, AI dubbing, automatic mastering, and multi-platform export. Both may use AI, but IoT cares more about latency and resource budget, while content creation cares more about quality, control, and delivery.",
             ja: "IoT 音声は、低消費電力、低コスト、プライバシー、安全、素早い応答を目標とする常時稼働のエッジセンシングシステムに近いものです。典型的な経路では、マイクが低消費電力のウェイクワードを待ち受け、起動後に短い音声をローカルのコマンド認識またはクラウドの ASR/LLM へ送り、照明、鍵、家電、カメラ、ロボットを制御します。コンテンツ制作音声は、聞きやすさ、一貫性、編集可能性、プラットフォーム向けの音量を目標とする編集可能な制作パイプラインです。録音または素材を取り込み、ノイズ低減、編集、EQ、圧縮、ラウドネス正規化、AI 吹き替え、自動マスタリング、複数プラットフォームへの書き出しを行います。両者とも AI を使えますが、IoT はリアルタイム性とリソース予算、コンテンツ制作は品質、制御性、最終納品をより重視します。",
             ko: "IoT 오디오는 저전력, 저비용, 개인정보, 안전과 빠른 응답을 목표로 하는 상시 동작 엣지 감지 시스템에 가깝습니다. 일반적인 경로에서는 마이크가 저전력 웨이크 워드를 계속 듣고, 깨어난 뒤 짧은 음성을 로컬 명령 인식이나 클라우드 ASR/LLM으로 보내 조명, 잠금장치, 가전, 카메라 또는 로봇을 제어합니다. 콘텐츠 제작 오디오는 듣기 쉬움, 일관성, 편집 가능성, 플랫폼에 맞는 음량을 목표로 반복 편집과 납품이 가능한 제작 파이프라인에 가깝습니다. 녹음하거나 소재를 가져온 뒤 잡음 제거, 편집, EQ, 압축, 라우드니스 정규화, AI 더빙, 자동 마스터링과 여러 플랫폼 내보내기를 적용합니다. 둘 다 AI를 사용할 수 있지만 IoT는 실시간성과 자원 예산을, 콘텐츠 제작은 품질, 제어 가능성과 최종 납품을 더 중시합니다."
-          },
-          lab: {
-            type: "iot-content",
-            title: { zh: "IoT 与内容创作实验室", "zh-Hant": traditional("IoT 与内容创作实验室"), en: "IoT and Content Creation Lab", ja: "IoT とコンテンツ制作ラボ", ko: "IoT와 콘텐츠 제작 실험실" },
-            description: {
-              zh: "用双路径流程图对比 IoT 语音控制和内容创作工具链，理解实时控制与内容生产的目标差异。", "zh-Hant": traditional("用双路径流程图对比 IoT 语音控制和内容创作工具链，理解实时控制与内容生产的目标差异。"),
-              en: "Use a dual-path flow diagram to compare IoT voice control with creator audio workflows and understand the different goals of real-time control and production.",
-              ja: "2本の経路図で IoT 音声制御とクリエイター向け音声ワークフローを比較し、リアルタイム制御と制作の目標の違いを理解します。",
-              ko: "이중 경로 흐름도로 IoT 음성 제어와 크리에이터 오디오 워크플로를 비교하고 실시간 제어와 제작의 목표 차이를 이해합니다."
-            },
-            buttonLabel: { zh: "打开 IoT 与内容创作实验室", "zh-Hant": traditional("打开 IoT 与内容创作实验室"), en: "Open IoT and content creation lab", ja: "IoT とコンテンツ制作ラボを開く", ko: "IoT와 콘텐츠 제작 실험실 열기" }
           },
           keyConcepts: [
             { zh: "边缘语音唤醒需要在功耗、误唤醒、漏唤醒、模型大小、唤醒词体验和隐私之间取舍。", "zh-Hant": traditional("边缘语音唤醒需要在功耗、误唤醒、漏唤醒、模型大小、唤醒词体验和隐私之间取舍。"), en: "Edge wake-word detection trades power, false accepts, false rejects, model size, wake-word UX, and privacy.", ja: "エッジのウェイクワード検出では、消費電力、誤起動、起動漏れ、モデルサイズ、ウェイクワード体験、プライバシーを調整します。", ko: "엣지 웨이크 워드 검출은 전력, 오탐 기동, 미탐 기동, 모델 크기, 웨이크 워드 경험과 개인정보 사이의 절충이 필요합니다." },

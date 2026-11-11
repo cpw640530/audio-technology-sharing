@@ -33,11 +33,9 @@ import { Header } from "./components/Header";
 import { HardwareTopicPage } from "./components/HardwareTopicPage";
 import { Hero } from "./components/Hero";
 import { TechnicalNotesPage } from "./components/TechnicalNotesPage";
-import { IotContentLab } from "./components/IotContentLab";
 import { KnowledgeOutline } from "./components/KnowledgeOutline";
 import { ListeningMetricsLab } from "./components/ListeningMetricsLab";
 import { ListeningMetricsPage } from "./components/ListeningMetricsPage";
-import { MeetingCommunicationLab } from "./components/MeetingCommunicationLab";
 import { MicrophoneLab } from "./components/MicrophoneLab";
 import { RealtimeAudioLab } from "./components/RealtimeAudioLab";
 import { RealtimeAudioPage } from "./components/RealtimeAudioPage";
@@ -157,11 +155,9 @@ function AppContent({ language }: { language: Language }) {
     | "audioUnitsLab"
     | "digitalLab"
     | "listeningLab"
-    | "meetingCommunicationLab"
     | "automotiveAudioLab"
     | "robotAudioLab"
     | "bluetoothAudioLab"
-    | "iotContentLab"
     | "microphoneLab"
     | "digitalInterfaceLab"
     | "amplifierSpeakerLab"
@@ -397,11 +393,9 @@ function AppContent({ language }: { language: Language }) {
 
   function openApplicationLab() {
     switch (activeApplicationTopic?.detail.lab?.type) {
-      case "meeting-communication": setActiveView("meetingCommunicationLab"); break;
       case "automotive-audio": setActiveView("automotiveAudioLab"); break;
       case "robot-audio": setActiveView("robotAudioLab"); break;
       case "bluetooth-audio": setActiveView("bluetoothAudioLab"); break;
-      case "iot-content": setActiveView("iotContentLab"); break;
       default: returnToApplications();
     }
   }
@@ -680,20 +674,6 @@ function AppContent({ language }: { language: Language }) {
     );
   }
 
-  if (activeView === "meetingCommunicationLab") {
-    return (
-      <div className="app-shell">
-        <Header
-          language={language}
-        />
-        <MeetingCommunicationLab language={language} onBack={returnToApplications} onBackToDetails={backFromApplicationLab} />
-        <footer className="site-footer">
-          <span>{interfaceCopy.footer[language]}</span>
-        </footer>
-      </div>
-    );
-  }
-
   if (activeView === "automotiveAudioLab") {
     return (
       <div className="app-shell">
@@ -722,20 +702,6 @@ function AppContent({ language }: { language: Language }) {
       <BluetoothAudioLab language={language} onBack={returnToApplications} onBackToDetails={backFromApplicationLab} />
       <footer className="site-footer"><span>{interfaceCopy.footer[language]}</span></footer>
     </div>;
-  }
-
-  if (activeView === "iotContentLab") {
-    return (
-      <div className="app-shell">
-        <Header
-          language={language}
-        />
-        <IotContentLab language={language} onBack={returnToApplications} onBackToDetails={backFromApplicationLab} />
-        <footer className="site-footer">
-          <span>{interfaceCopy.footer[language]}</span>
-        </footer>
-      </div>
-    );
   }
 
   if (activeView === "digitalInterfaceLab") {
@@ -1089,10 +1055,6 @@ function AppContent({ language }: { language: Language }) {
                 setSelectedTopic(null);
                 setActiveView("bluetoothAudioLab");
               }}
-              onOpenIotContentLab={() => {
-                setSelectedTopic(null);
-                setActiveView("iotContentLab");
-              }}
               onOpenAiAudioLab={(initialMode) => {
                 if (initialMode === "overview") return;
                 setSelectedTopic(null);
@@ -1126,10 +1088,6 @@ function AppContent({ language }: { language: Language }) {
               onOpenListeningMetricsPage={() => {
                 setSelectedTopic(null);
                 setActiveView("listeningTopicPage");
-              }}
-              onOpenMeetingCommunicationLab={() => {
-                setSelectedTopic(null);
-                setActiveView("meetingCommunicationLab");
               }}
               onOpenMicrophoneLab={() => {
                 setSelectedTopic(null);

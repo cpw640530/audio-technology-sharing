@@ -44,8 +44,8 @@ export function BluetoothAudioLab({ language, onBack, onBackToDetails }: { langu
     "负载 = kbps × ms ÷ 8；未计协议头、重传和射频开销。10 ms 只是统计时间窗，不是所有 Codec 的帧长，也不是空口包大小。": "ペイロード = kbps × ms ÷ 8。ヘッダー、再送、無線オーバーヘッドは含みません。10 ms は統計窓であり、すべての Codec のフレーム長や無線パケット長ではありません。",
     "100 个传输单元的示意": "100 伝送単位の例",
     "增大缓冲可减少本模型的迟到单元，但永久丢包不会消失。PLC 估计缺失片段，不能恢复原始内容；连续丢包通常比同数量分散丢包更难掩盖。": "バッファを増やすとこのモデルの遅延単位は減りますが、恒久損失は消えません。PLC は欠落区間を推定するだけで元データを復元できず、連続損失は同数の分散損失より隠しにくい傾向があります。",
-    "延迟预算示例": "遅延予算の例",
-    "20 + 10 + 10 ms 是固定教学假设，总延迟再加接收缓冲，不是 Codec 的实测延迟。视频可延后显示以同步，但游戏操作反馈无法靠延迟画面解决。": "固定の 20 + 10 + 10 ms は教材上の仮定で、合計遅延には受信バッファを加えます。Codec の実測遅延ではありません。映像を遅らせて同期はできますが、ゲームの操作遅延は映像を遅らせても解決しません。",
+    "固定教学延迟预算（非设备实测）": "固定の教材用遅延予算（デバイスの実測値ではありません）",
+    "20 + 10 + 10 ms 分别是帧积累与处理、发送与调度、解码与播放的固定教学假设；总延迟再加接收缓冲。切换 Codec 只改变本页的示例码率与传输路径标签，不改变这个教学预算；它不是 Codec 的算法延迟，也不是 HFP 或 LE Audio 设备的实测端到端延迟。视频可延后显示以同步，但游戏操作反馈无法靠延迟画面解决。": "20 + 10 + 10 ms はフレーム蓄積/処理、送信/スケジューリング、デコード/再生についての固定教材上の仮定で、受信バッファは別に加算します。Codec を切り替えても、このページの例示ビットレートと伝送経路ラベルだけが変わり、この教材上の予算は変わりません。Codec のアルゴリズム遅延でも、HFP/LE Audio デバイスの実測エンドツーエンド遅延でもありません。映像を遅らせて同期はできますが、ゲームの操作遅延は映像を遅らせても解決しません。",
     "协议与编码": "プロファイルと符号化",
     "路径": "経路",
     "用途": "用途",
@@ -106,8 +106,8 @@ export function BluetoothAudioLab({ language, onBack, onBackToDetails }: { langu
     "负载 = kbps × ms ÷ 8；未计协议头、重传和射频开销。10 ms 只是统计时间窗，不是所有 Codec 的帧长，也不是空口包大小。": "페이로드 = kbps × ms ÷ 8이며 헤더·재전송·무선 오버헤드는 제외합니다. 10 ms는 통계 창일 뿐 모든 Codec의 프레임 길이나 무선 패킷 크기가 아닙니다.",
     "100 个传输单元的示意": "전송 단위 100개의 예시",
     "增大缓冲可减少本模型的迟到单元，但永久丢包不会消失。PLC 估计缺失片段，不能恢复原始内容；连续丢包通常比同数量分散丢包更难掩盖。": "버퍼를 늘리면 이 모델의 지연 단위를 줄일 수 있지만 영구 손실은 사라지지 않습니다. PLC는 누락 구간을 추정할 뿐 원본을 복원할 수 없고 연속 손실은 같은 수의 분산 손실보다 보통 숨기기 어렵습니다.",
-    "延迟预算示例": "지연 예산 예시",
-    "20 + 10 + 10 ms 是固定教学假设，总延迟再加接收缓冲，不是 Codec 的实测延迟。视频可延后显示以同步，但游戏操作反馈无法靠延迟画面解决。": "고정된 20 + 10 + 10 ms는 교육용 가정이며 총 지연에는 수신 버퍼가 더해집니다. Codec 실측 지연이 아닙니다. 영상은 늦춰 동기화할 수 있지만 게임 조작 지연은 화면을 늦추는 것으로 해결되지 않습니다.",
+    "固定教学延迟预算（非设备实测）": "고정된 교육용 지연 예산(기기 실측값 아님)",
+    "20 + 10 + 10 ms 分别是帧积累与处理、发送与调度、解码与播放的固定教学假设；总延迟再加接收缓冲。切换 Codec 只改变本页的示例码率与传输路径标签，不改变这个教学预算；它不是 Codec 的算法延迟，也不是 HFP 或 LE Audio 设备的实测端到端延迟。视频可延后显示以同步，但游戏操作反馈无法靠延迟画面解决。": "20 + 10 + 10ms는 프레임 누적/처리, 송신/스케줄링, 디코딩/재생에 대한 고정 교육 가정이며, 수신 버퍼는 별도로 더합니다. Codec을 바꿔도 이 페이지의 예시 비트레이트와 전송 경로 라벨만 바뀌고 이 교육용 예산은 바뀌지 않습니다. Codec의 알고리즘 지연도 HFP 또는 LE Audio 기기의 실측 엔드투엔드 지연도 아닙니다. 영상은 늦춰 동기화할 수 있지만 게임 조작 지연은 화면을 늦추는 것으로 해결되지 않습니다.",
     "协议与编码": "프로파일과 코딩",
     "路径": "경로",
     "用途": "용도",
@@ -204,10 +204,10 @@ export function BluetoothAudioLab({ language, onBack, onBackToDetails }: { langu
       <div className="bluetooth-packets" role="img" aria-label={text(`按时 ${100 - lostCount - lateCount}，迟到 ${lateCount}，丢失 ${lostCount}`, `On time ${100 - lostCount - lateCount}, late ${lateCount}, lost ${lostCount}`, `定刻 ${100 - lostCount - lateCount}、遅延 ${lateCount}、損失 ${lostCount}`, `정시 ${100 - lostCount - lateCount}, 지연 ${lateCount}, 손실 ${lostCount}`)}>{packets.map((state, i) => <span key={i} className={state} aria-hidden="true">{state === "lost" ? "×" : state === "late" ? "!" : "·"}</span>)}</div>
       <p data-testid="bluetooth-packet-summary">{text(`绿色：按时 ${100 - lostCount - lateCount}；黄色 !：迟到 ${lateCount}；红色 ×：永久丢失 ${lostCount}。`, `Green: on time ${100 - lostCount - lateCount}; yellow !: late ${lateCount}; red ×: permanently lost ${lostCount}.`, `緑：定刻 ${100 - lostCount - lateCount}。黄 !：遅延 ${lateCount}。赤 ×：恒久損失 ${lostCount}。`, `초록: 정시 ${100 - lostCount - lateCount}; 노랑 !: 지연 ${lateCount}; 빨강 ×: 영구 손실 ${lostCount}.`)}</p>
       <p>{text("增大缓冲可减少本模型的迟到单元，但永久丢包不会消失。PLC 估计缺失片段，不能恢复原始内容；连续丢包通常比同数量分散丢包更难掩盖。", "Larger buffers reduce late units in this model but cannot remove permanent losses. PLC estimates missing segments without recovering the original content; bursts are usually harder to conceal than scattered losses.")}</p>
-      <h3>{text("延迟预算示例", "Example latency budget")} <output data-testid="bluetooth-latency">{40 + buffer} ms</output></h3>
+      <h3>{text("固定教学延迟预算（非设备实测）", "Fixed teaching latency budget (not a device measurement)")} <output data-testid="bluetooth-latency">{40 + buffer} ms</output></h3>
       <div className="bluetooth-delay" aria-hidden="true">{delays.map((part, i) => <span key={part.label} className={`part-${i}`} style={{ flex: part.ms }} />)}</div>
       <ul className="bluetooth-delay-labels">{delays.map((part) => <li key={part.label}>{part.label}: {part.ms} ms</li>)}</ul>
-      <p>{text("20 + 10 + 10 ms 是固定教学假设，总延迟再加接收缓冲，不是 Codec 的实测延迟。视频可延后显示以同步，但游戏操作反馈无法靠延迟画面解决。", "The fixed 20 + 10 + 10 ms components are teaching assumptions, not measured codec delays; RX buffering is added directly. Delaying video can synchronize playback but does not solve gaming input lag.")}</p>
+      <p>{text("20 + 10 + 10 ms 分别是帧积累与处理、发送与调度、解码与播放的固定教学假设；总延迟再加接收缓冲。切换 Codec 只改变本页的示例码率与传输路径标签，不改变这个教学预算；它不是 Codec 的算法延迟，也不是 HFP 或 LE Audio 设备的实测端到端延迟。视频可延后显示以同步，但游戏操作反馈无法靠延迟画面解决。", "The 20 + 10 + 10 ms components are fixed teaching assumptions for framing/processing, TX/scheduling, and decode/playout; RX buffering is added separately. Switching codecs changes only this page's example bitrate and transport label, not this teaching budget; it is neither a codec's algorithmic delay nor a measured end-to-end latency for an HFP or LE Audio device. Delaying video can synchronize playback but does not solve gaming input lag.")}</p>
     </section>
     <section className="bluetooth-section"><h2>{text("协议与编码", "Profiles and coding")}</h2><div className="bluetooth-table-wrap"><table><thead><tr><th>{text("路径", "Path")}</th><th>{text("用途", "Use")}</th><th>{text("需要区分", "Key distinction")}</th></tr></thead><tbody>
       <tr><th>A2DP</th><td>{text("经典蓝牙音乐：SBC、AAC、LDAC、aptX 系列", "Classic music: SBC, AAC, LDAC, aptX family")}</td><td>{text("SBC 为基础支持；其他格式需双方共同支持。", "SBC is the baseline; optional codecs require support at both ends.")}</td></tr>

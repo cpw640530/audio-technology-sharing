@@ -31,7 +31,7 @@ export function TtsPrinciple({ language }: { language: Language }) {
     <div className="sound-topic-section-heading">
       <div>
         <h2>{t("文字怎样变成可播放的声音", "How text becomes playable speech", "文字が再生可能な音声になるまで", "텍스트가 재생 가능한 음성이 되기까지")}</h2>
-        <p>{t("同一个例子贯穿四步：Hello, AI! → Hello, A I! → 声学表示 → PCM。", "One example runs through all four steps: Hello, AI! → Hello, A I! → acoustic representation → PCM.", "一つの例を四段階で追います：Hello, AI! → Hello, A I! → 音響表現 → PCM。", "하나의 예시를 네 단계로 따라갑니다: Hello, AI! → Hello, A I! → 음향 표현 → PCM.")}</p>
+        <p>{t("同一个例子贯穿四步：Hello, AI! → Hello, A I! → 声学表示 → PCM。以下是概念教学流程，不是模型推理轨迹。", "One example runs through all four steps: Hello, AI! → Hello, A I! → acoustic representation → PCM. These are conceptual teaching stages, not an inference trace.", "一つの例を四段階で追います：Hello, AI! → Hello, A I! → 音響表現 → PCM。これは概念的な教材フローで、推論トレースではありません。", "하나의 예시를 네 단계로 따라갑니다: Hello, AI! → Hello, A I! → 음향 표현 → PCM. 이는 개념을 설명하는 교육 흐름이며 추론 트레이스가 아닙니다.")}</p>
       </div>
     </div>
     <ol className="ai-topic-flow tts-journey-strip" aria-label={t("TTS 处理流程", "TTS processing flow", "TTS 処理フロー", "TTS 처리 흐름")}>

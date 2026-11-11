@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { categories } from "../content/knowledge";
 import { AiAudioTopicPage } from "./AiAudioTopicPage";
+import { aiModelReferences } from "../content/aiModelReferences";
 
 const topics = categories.flatMap(category => category.topics
   .filter(topic => category.id === "ai")
@@ -16,7 +17,9 @@ it.each(topics)("keeps the reading structure and lab entry for $title.en", topic
     />);
     const headings = Array.from(container.querySelectorAll(".sound-topic-content h2"));
     const overview = !topic.detail.lab;
-    expect(headings).toHaveLength(overview || ["enhancement", "asr"].includes(topic.detail.lab?.initialMode ?? "") ? 7 : 6);
+    expect(headings).toHaveLength(overview || ["enhancement", "asr", "event"].includes(topic.detail.lab?.initialMode ?? "") ? 8 : 7);
+    const mode = topic.detail.lab?.initialMode ?? "overview";
+    expect(screen.getByRole("heading", { name: aiModelReferences[mode].name })).toBeInTheDocument();
     expect(headings.slice(-3).map(heading => heading.textContent)).toEqual(language === "zh"
       ? ["核心知识点", "工程边界", "相关术语"]
       : ["Core concepts", "Engineering boundary", "Related terms"]);

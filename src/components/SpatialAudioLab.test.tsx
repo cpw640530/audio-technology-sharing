@@ -1,6 +1,8 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
 import { SpatialAudioLab } from "./SpatialAudioLab";
+
+afterEach(cleanup);
 
 it.each(["zh", "en"] as const)("keeps spatial diagrams consistent (%s)", language => {
   const { container } = render(<SpatialAudioLab language={language} onBack={() => {}} />);
@@ -36,5 +38,62 @@ it.each(["zh", "en"] as const)("keeps spatial diagrams consistent (%s)", languag
       if (reflection === 0) expect(y).toBe(214);
     }
     expect(container.innerHTML).not.toMatch(/NaN|Infinity/);
+  }
+});
+
+it("switches diagrams and only exposes relevant controls", () => {
+  render(<SpatialAudioLab language="en" onBack={vi.fn()} />);
+  expect(screen.getByRole("img", { name: "Room reflection time response" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Binaural rendering" }));
+  expect(screen.getByTestId("spatial-binaural-flow")).toHaveTextContent("yL[n] = g · Σ x[n−k] hL[k]");
+  expect(screen.queryByRole("slider", { name: "Room reflections" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("img", { name: "Room reflection time response" })).not.toBeInTheDocument();
+  fireEvent.change(screen.getByRole("slider", { name: "Source angle" }), { target: { value: "60" } });
+  fireEvent.change(screen.getByRole("slider", { name: "Head yaw" }), { target: { value: "30" } });
+  expect(screen.getByTestId("spatial-binaural-flow")).toHaveTextContent("+30°");
+  fireEvent.change(screen.getByRole("slider", { name: "Distance" }), { target: { value: "2" } });
+  expect(screen.getByTestId("spatial-binaural-flow")).toHaveTextContent("g = 1 / d = 0.500");
+
+  fireEvent.click(screen.getByRole("button", { name: "Object / channel" }));
+  expect(screen.queryByTestId("spatial-binaural-flow")).not.toBeInTheDocument();
+  expect(screen.queryByRole("slider", { name: "Head yaw" })).not.toBeInTheDocument();
+  expect(screen.queryByTestId("spatial-ear-L")).not.toBeInTheDocument();
+  expect(screen.getByTestId("spatial-object-mapping")).toHaveTextContent("PCM + +60° · 2.0 m");
+  expect(screen.getByTestId("spatial-output-channels").children).toHaveLength(6);
+  fireEvent.click(screen.getByRole("button", { name: "Headphones" }));
+  expect(screen.getByTestId("spatial-output-channels").children).toHaveLength(2);
+  expect(screen.getByTestId("spatial-output-channels")).not.toHaveTextContent("LFE");
+  fireEvent.click(screen.getByRole("button", { name: "Localization cues" }));
+  expect(screen.getByRole("slider", { name: "Head yaw" })).toHaveValue("30");
+  expect(screen.getByRole("slider", { name: "Room reflections" })).toHaveValue("42");
+});
+
+it("keeps the world source fixed while the head-relative source turns and wraps", () => {
+  render(<SpatialAudioLab language="en" onBack={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", { name: "Head tracking" }));
+  const world = screen.getByTestId("spatial-world-source");
+  const head = screen.getByTestId("spatial-head-source");
+  const worldX = world.getAttribute("cx");
+  const headX = head.getAttribute("cx");
+  fireEvent.change(screen.getByRole("slider", { name: "Head yaw" }), { target: { value: "90" } });
+  expect(world).toHaveAttribute("cx", worldX);
+  expect(head.getAttribute("cx")).not.toBe(headX);
+  expect(screen.getByTestId("spatial-head-coordinates")).toHaveTextContent("= -125°");
+  fireEvent.change(screen.getByRole("slider", { name: "Source angle" }), { target: { value: "-150" } });
+  expect(screen.getByTestId("spatial-head-coordinates")).toHaveTextContent("= +120°");
+});
+
+it.each(["zh", "zh-Hant", "en", "ja", "ko"] as const)("renders all mode diagrams in %s", language => {
+  const { container } = render(<SpatialAudioLab language={language} onBack={vi.fn()} />);
+  const tabs = container.querySelectorAll('.spatial-audio-tabs button');
+  for (let index = 0; index < tabs.length; index++) {
+    fireEvent.click(tabs[index]);
+    expect(tabs[index]).toHaveAttribute("aria-pressed", "true");
+    expect(container.innerHTML).not.toMatch(/NaN|undefined|Infinity/);
+    expect(container.querySelector('.spatial-mode-description')).not.toBeEmptyDOMElement();
+    if (index === 2) {
+      const group = container.querySelector('.spatial-object-mapping .waveform-tabs') as HTMLElement;
+      expect(within(group).getAllByRole('button')).toHaveLength(2);
+    }
   }
 });

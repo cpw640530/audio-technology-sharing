@@ -42,14 +42,23 @@ it("connects pronunciation, duration, frame selection and illustrative sample bu
 it("distinguishes duration, generative flow and hybrid speech-token routes",()=>{
   const {container}=render(<TtsWalkthrough language="en"/>);
   fireEvent.click(screen.getByRole("button",{name:"3. Model generation"}));
+  expect(screen.getByRole("button",{name:"FastSpeech 2"})).toBeInTheDocument();
+  expect(screen.getByRole("button",{name:"F5-TTS"})).toBeInTheDocument();
+  expect(screen.getByRole("button",{name:"CosyVoice 3"})).toBeInTheDocument();
   expect(container.querySelector('.tts-route-equation')).toHaveTextContent("LengthRegulator");
   fireEvent.click(screen.getByRole("button",{name:"F5-TTS"}));
   expect(container.querySelector('.tts-route-equation')).toHaveTextContent("dxτ / dτ");
   expect(screen.getByText(/not removing environmental noise/)).toBeInTheDocument();
   expect(screen.getByRole("link")).toHaveAttribute("href","https://github.com/SWivid/F5-TTS");
-  fireEvent.click(screen.getByRole("button",{name:"CosyVoice 2"}));
-  expect(container.querySelector('.tts-route-chain')).toHaveTextContent("Flow matching → Mel");
-  expect(container.querySelector('.tts-route-equation')).toHaveTextContent("HiFT");
+  fireEvent.click(screen.getByRole("button",{name:"CosyVoice 3"}));
+  expect(container.querySelector('.tts-route-chain')).toHaveTextContent("CosyVoice3LM → speech tokens");
+  expect(container.querySelector('.tts-route-chain')).toHaveTextContent("Chunked Causal DiT flow matching → Mel");
+  expect(container.querySelector('.tts-route-chain')).toHaveTextContent("Causal HiFT → PCM");
+  expect(container.querySelector('.tts-route-equation')).toHaveTextContent("speech tokens (25 Hz) → chunked Causal DiT flow matching → Mel → Causal HiFT → PCM");
+  expect(container.querySelector('.tts-route-sources')).toHaveTextContent("CosyVoice 3 paper");
+  expect(container.querySelector('a[href="https://github.com/QwenAudio/CosyVoice"]')).toBeTruthy();
+  expect(container.querySelector('a[href="https://arxiv.org/abs/2505.17589"]')).toBeTruthy();
+  expect(container.querySelector('.tts-stage-content')).not.toHaveTextContent(/CosyVoice 2/);
   fireEvent.click(screen.getByRole("button",{name:"Next step"}));
   expect(screen.queryByTestId("tts-sample-budget")).not.toBeInTheDocument();
   expect(screen.getByText(/not every model configuration/)).toBeInTheDocument();

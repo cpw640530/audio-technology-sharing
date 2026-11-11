@@ -20,10 +20,8 @@ const topicIcons: Record<TopicLab["type"], LucideIcon> = {
   "core-signal-processing": SlidersHorizontal,
   "speech-enhancement": MicVocal,
   "spatial-audio": Orbit,
-  "meeting-communication": Users,
   "automotive-audio": Car,
   "robot-audio": Bot,
-  "iot-content": Radio,
   "bluetooth-audio": Bluetooth,
   "ai-audio": BrainCircuit
 };
@@ -58,7 +56,8 @@ export function TopicGrid({ language, topics, selectedTopicKey, onSelectTopic }:
       ) : (
         <div className="topic-grid" data-testid="topic-grid">
           {topics.map((topic) => {
-            const Icon = topic.detail.lab ? topicIcons[topic.detail.lab.type] : getTopicKey(topic) === "audio-codec" ? FileAudio : topic.category.icon;
+            const key = getTopicKey(topic);
+            const Icon = topic.detail.lab ? topicIcons[topic.detail.lab.type] : key === "audio-codec" ? FileAudio : key === "meeting-communication" ? Users : key === "iot-content" ? Radio : topic.category.icon;
             return (
             <button
               aria-pressed={selectedTopicKey === `${topic.category.id}-${topic.title.en}`}

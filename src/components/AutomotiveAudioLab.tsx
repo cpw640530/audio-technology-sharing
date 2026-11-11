@@ -1,7 +1,10 @@
 import { traditional } from "../content/traditional";
-import { useId, useState } from "react";
+import { lazy, Suspense, useId, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Language } from "../content/knowledge";
+import type { CarAcousticMode } from "../content/carAcoustics";
+
+const CarSpeakerLayout = lazy(() => import("./CarSpeakerLayout"));
 
 type AutomotiveAudioLabProps = {
   language: Language;
@@ -13,7 +16,7 @@ type LocalizedText = Record<Language, string>;
 
 const l = (zh: string, en: string, ja: string, ko: string): LocalizedText => ({ zh, "zh-Hant": traditional(zh), en, ja, ko });
 
-type AutomotiveModule = "layout" | "voice" | "localization" | "spatial" | "anc";
+type AutomotiveModule = CarAcousticMode;
 
 type ModuleContent = {
   label: LocalizedText;
@@ -43,10 +46,10 @@ const automotiveModules: Record<AutomotiveModule, ModuleContent> = {
   },
   localization: {
     label: l("声源定位", "Source localization", "音源測位", "음원 위치 추정"),
-    heading: l("用到达时间差判断说话座位", "Use time differences to identify the speaking seat", "到来時間差から発話席を判定", "도착 시간 차로 발화 좌석 판단"),
-    goal: l("利用同步多麦估计声源方向和座位，为唤醒、分区识别与车辆控制提供归属信息。", "Use synchronized microphones to estimate source direction and seat ownership for wake-up, zoned recognition, and vehicle control.", "同期した複数マイクで音源方向と座席を推定し、ウェイク、ゾーン認識、車両制御に所属情報を提供します。", "동기화된 여러 마이크로 음원 방향과 좌석을 추정해 웨이크, 구역 인식, 차량 제어에 소속 정보를 제공합니다。"),
+    heading: l("用通道时间差估计说话座位分区", "Estimate the speaking seat zone from channel time differences", "チャンネル間時間差から発話座席ゾーンを推定", "채널 간 시간 차로 발화 좌석 구역 추정"),
+    goal: l("利用同步多麦估计声源方向和座位分区，为唤醒、分区识别与车辆控制提供座位区域信息。", "Use synchronized microphones to estimate source direction and seat zone for wake-up, zoned recognition, and vehicle control.", "同期した複数マイクで音源方向と座席ゾーンを推定し、ウェイク、ゾーン認識、車両制御に座席区域の情報を提供します。", "동기화된 여러 마이크로 음원 방향과 좌석 구역을 추정해 웨이크, 구역 인식, 차량 제어에 좌석 영역 정보를 제공합니다。"),
     chain: l("Δt = d sin(θ) / c", "Δt = d sin(θ) / c", "Δt = d sin(θ) / c", "Δt = d sin(θ) / c"),
-    limit: l("定位负责判断方向，波束形成负责增强目标方向；强反射、通道延迟和多人重叠会降低稳定性。", "Localization estimates direction, while beamforming enhances the target direction; strong reflections, channel delay, and overlapping talkers reduce stability.", "測位は方向を推定し、ビームフォーミングは対象方向を強調します。強い反射、チャンネル遅延、発話の重なりは安定性を下げます。", "위치 추정은 방향을 판단하고 빔포밍은 대상 방향을 강화합니다. 강한 반사, 채널 지연, 여러 화자의 중첩은 안정성을 낮춥니다。"),
+    limit: l("定位负责判断方向或座位分区，不能单凭阵列方向得到精确距离或说话人身份；波束形成负责增强目标方向。强反射、通道延迟和多人重叠会降低稳定性。", "Localization estimates direction or seat zone; array direction alone does not provide exact range or speaker identity. Beamforming enhances the target direction; strong reflections, channel delay, and overlapping talkers reduce stability.", "測位は方向または座席ゾーンを推定しますが、アレイ方向だけで正確な距離や話者の身元は分かりません。ビームフォーミングは対象方向を強調します。強い反射、チャンネル遅延、発話の重なりは安定性を下げます。", "위치 추정은 방향이나 좌석 구역을 판단하지만 배열 방향만으로 정확한 거리나 화자 신원을 알 수는 없습니다. 빔포밍은 대상 방향을 강화하며 강한 반사, 채널 지연, 여러 화자의 중첩은 안정성을 낮춥니다。"),
     example: l("同一句“调高温度”来自主驾或副驾时，系统只调整对应温区。", "The same “raise the temperature” request adjusts the corresponding climate zone depending on whether it came from the driver or passenger.", "同じ「温度を上げて」という要求でも、運転席か助手席かに応じて対応する空調ゾーンだけを調整します。", "같은 ‘온도를 올려’라는 요청도 운전석인지 조수석인지에 따라 해당 공조 구역만 조절합니다。")
   },
   spatial: {
@@ -60,10 +63,10 @@ const automotiveModules: Record<AutomotiveModule, ModuleContent> = {
   anc: {
     label: l("ANC / RNC", "ANC / RNC", "ANC / RNC", "ANC / RNC"),
     heading: l("用闭环控制削弱稳定低频噪声", "Reduce steady low-frequency noise with closed-loop control", "閉ループ制御で定常的な低周波雑音を低減", "폐루프 제어로 지속적인 저주파 잡음 줄이기"),
-    goal: l("利用路面或动力系统参考信号预测稳定低频噪声，并在乘员耳位附近减小残余声压。", "Use road or powertrain reference signals to predict steady low-frequency noise and reduce residual pressure near occupant ears.", "路面やパワートレインの参照信号から定常低周波雑音を予測し、乗員の耳元で残留音圧を下げます。", "노면 또는 파워트레인 참조 신호로 지속적인 저주파 잡음을 예측하고 탑승자 귀 주변의 잔류 음압을 줄입니다。"),
+    goal: l("ANC / RNC 是独立于语音助手链路的噪声控制闭环：利用路面或动力系统参考信号预测稳定低频噪声，并在乘员耳位附近减小残余声压。", "ANC/RNC is a noise-control loop separate from the voice-assistant path: use road or powertrain reference signals to predict steady low-frequency noise and reduce residual pressure near occupant ears.", "ANC / RNC は音声アシスタント経路とは独立した騒音制御の閉ループです。路面やパワートレインの参照信号から定常低周波雑音を予測し、乗員の耳元で残留音圧を下げます。", "ANC / RNC는 음성 어시스턴트 경로와 분리된 잡음 제어 폐루프입니다. 노면 또는 파워트레인 참조 신호로 지속적인 저주파 잡음을 예측하고 탑승자 귀 주변의 잔류 음압을 줄입니다。"),
     chain: l("参考信号 -> ANC 控制器 -> 扬声器反相信号 -> 座舱残余噪声 -> 误差麦反馈", "Reference signal -> ANC controller -> anti-noise from speakers -> residual cabin noise -> error-microphone feedback", "参照信号 -> ANC コントローラー -> スピーカーの逆相信号 -> 車室残留雑音 -> エラーマイクのフィードバック", "참조 신호 -> ANC 컨트롤러 -> 스피커 역위상 신호 -> 실내 잔류 잡음 -> 오차 마이크 피드백"),
     limit: l("适用于稳定、可预测的低频噪声，不应以人声、安全告警或高频瞬态声为消除目标；相位或延迟错误可能放大噪声。", "It suits stable, predictable low-frequency noise and must not target speech, safety alerts, or high-frequency transients; phase or delay errors can amplify noise.", "安定して予測可能な低周波雑音に適し、音声、安全警告、高周波過渡音を対象にしてはいけません。位相や遅延の誤りは雑音を増幅することがあります。", "안정적이고 예측 가능한 저주파 잡음에 적합하며 음성, 안전 경고, 고주파 과도음을 제거 대상으로 삼으면 안 됩니다. 위상이나 지연 오류는 잡음을 증폭할 수 있습니다。"),
-    example: l("轮速或悬架传感器提供路噪参考，门板扬声器输出反相信号，误差麦持续修正控制器。", "Wheel-speed or suspension sensors provide a road-noise reference, door speakers emit anti-noise, and error microphones continuously adapt the controller.", "車輪速またはサスペンションセンサーが走行雑音の参照を提供し、ドアスピーカーが逆相信号を出力し、エラーマイクが制御器を継続的に補正します。", "휠 속도 또는 서스펜션 센서가 주행 잡음 참조를 제공하고 도어 스피커가 역위상 신호를 출력하며 오차 마이크가 컨트롤러를 계속 보정합니다。")
+    example: l("悬架或车身加速度传感器提供与路噪相关的振动参考；扬声器输出控制声，误差麦测量叠加后的残余噪声，供控制器更新滤波器。", "Suspension or body accelerometers provide vibration references correlated with road noise. Speakers emit the control sound; error microphones measure residual noise after superposition so the controller can update its filter.", "サスペンションや車体の加速度センサーが走行騒音と相関する振動参照を提供します。スピーカーが制御音を出し、誤差マイクが重畳後の残留騒音を測定して制御器のフィルタ更新に使います。", "서스펜션이나 차체 가속도 센서가 도로 소음과 상관된 진동 참조를 제공합니다. 스피커는 제어음을 출력하고 오차 마이크는 중첩 후 잔류 소음을 측정해 제어기가 필터를 갱신하도록 합니다.")
   }
 };
 
@@ -143,7 +146,7 @@ function AutomotiveCabinDiagram({ activeModule, language }: { activeModule: Auto
     "导航：右前方": "ナビ：右前方",
     "告警：最高优先级": "警告：最優先",
     "轮胎 / 路面参考": "タイヤ / 路面参照",
-    "轮速 · 悬架传感器": "車輪速 · サスペンションセンサー",
+    "加速度传感器": "加速度センサー",
     "ANC 控制器": "ANC コントローラー",
     "闭环反馈": "閉ループフィードバック",
     "残余噪声 -> 误差麦": "残留雑音 -> エラーマイク",
@@ -188,7 +191,7 @@ function AutomotiveCabinDiagram({ activeModule, language }: { activeModule: Auto
     "导航：右前方": "내비게이션: 오른쪽 앞",
     "告警：最高优先级": "경고: 최고 우선순위",
     "轮胎 / 路面参考": "타이어 / 노면 참조",
-    "轮速 · 悬架传感器": "휠 속도 · 서스펜션 센서",
+    "加速度传感器": "가속도 센서",
     "ANC 控制器": "ANC 컨트롤러",
     "闭环反馈": "폐루프 피드백",
     "残余噪声 -> 误差麦": "잔류 잡음 -> 오차 마이크",
@@ -262,7 +265,7 @@ function AutomotiveCabinDiagram({ activeModule, language }: { activeModule: Auto
           <circle className="auto-speaker pillar" cx="326" cy="176" r="10" />
           <circle className="auto-speaker pillar" cx="654" cy="176" r="10" />
           <circle className="auto-speaker dash" cx="490" cy="156" r="12" />
-          <text className="auto-component-text" x="490" y="145" textAnchor="middle">{t("中置扬声器", "Center speaker")}</text>
+          <text className="auto-component-text" x="490" y="132" textAnchor="middle">{t("中置扬声器", "Center speaker")}</text>
           {[242, 420].flatMap((y) => [318, 662].map((x) => <circle className="auto-speaker door" cx={x} cy={y} key={`${x}-${y}`} r="12" />))}
           <text className="auto-component-text" x="735" y="248">{t("门板扬声器", "Door speakers")}</text>
           <path className="auto-component-line speaker-line" d="M724 244 L674 242" />
@@ -341,17 +344,17 @@ function AutomotiveCabinDiagram({ activeModule, language }: { activeModule: Auto
           <g data-module="anc">
           <rect className="auto-noise-chip" height="52" rx="12" width="184" x="22" y="442" />
           <text className="auto-panel-title" x="114" y="464" textAnchor="middle">{t("轮胎 / 路面参考", "Tire / road reference")}</text>
-          <text className="auto-panel-copy" x="114" y="484" textAnchor="middle">{t("轮速 · 悬架传感器", "wheel · suspension sensors")}</text>
+          <text className="auto-panel-copy" x="114" y="484" textAnchor="middle">{t("加速度传感器", "Accelerometers")}</text>
           <rect className="auto-anc-panel" height="58" rx="12" width="182" x="24" y="512" />
           <text className="auto-panel-title" x="115" y="547" textAnchor="middle">{t("ANC 控制器", "ANC controller")}</text>
-          <path className="auto-anc-wave" d="M206 468 Q250 452 270 432" markerEnd={`url(#${arrowMarkerId})`} />
+          <path className="auto-anc-wave" d="M114 494 V512" markerEnd={`url(#${arrowMarkerId})`} />
           <path className="auto-anc-wave inverse" d="M206 540 Q282 548 318 420" markerEnd={`url(#${arrowMarkerId})`} />
           <path className="auto-anc-wave inverse" d="M206 540 Q566 584 662 420" markerEnd={`url(#${arrowMarkerId})`} />
           <rect className="auto-anc-panel" height="82" rx="12" width="220" x="736" y="476" />
           <text className="auto-panel-title" x="846" y="506" textAnchor="middle">{t("闭环反馈", "Closed-loop feedback")}</text>
           <text className="auto-panel-copy" x="846" y="532" textAnchor="middle">{t("残余噪声 -> 误差麦", "Residual noise -> error mics")}</text>
-          <path className="auto-anc-wave" d="M736 518 Q628 392 566 330" markerEnd={`url(#${arrowMarkerId})`} />
-          <path className="auto-anc-wave" d="M566 330 Q660 410 736 540" markerEnd={`url(#${arrowMarkerId})`} />
+          <path className="auto-anc-wave" d="M414 330 Q320 410 206 540" markerEnd={`url(#${arrowMarkerId})`} />
+          <path className="auto-anc-wave" d="M566 330 Q440 410 206 540" markerEnd={`url(#${arrowMarkerId})`} />
           </g>
         )}
         </svg>
@@ -418,7 +421,7 @@ export function AutomotiveAudioLab({ language, onBack, onBackToDetails }: Automo
           <span className="details-category">{t("应用场景", "Applications", "応用シナリオ", "응용 시나리오")}</span>
           <h1>{t("车载声学实验室", "In-Car Acoustics Lab", "車載音響ラボ", "차량 음향 랩")}</h1>
           <p>
-            {t("用一张俯视整车图理解麦克风与扬声器布局，以及语音、定位、空间音频和主动降噪之间的协作。", "Use one top-down vehicle diagram to understand microphone and speaker placement and how voice, localization, spatial audio, and active noise control work together.", "車両全体の俯瞰図で、マイクとスピーカーの配置、音声、測位、空間音響、アクティブノイズコントロールの協調を理解します。", "차량 평면도 하나로 마이크와 스피커 배치, 음성, 위치 추정, 공간 오디오, 능동 잡음 제어의 협력을 이해합니다。")}
+            {t("在同一座舱中区分语音采集、空间播放与 ANC / RNC：声学传播连接乘员和换能器，电信号连接麦克风、控制器与扬声器。", "Distinguish voice capture, spatial playback, and ANC/RNC in one cabin: acoustic paths connect occupants and transducers; electrical signals connect microphones, controllers, and speakers.", "同じ車室で音声収音、空間再生、ANC / RNC を区別します。音の伝搬は乗員と変換器を、電気信号はマイク・制御器・スピーカーを結びます。", "하나의 실내에서 음성 수음, 공간 재생, ANC / RNC를 구분합니다. 음향 경로는 탑승자와 변환기를, 전기 신호는 마이크, 제어기, 스피커를 연결합니다.")}
           </p>
         </div>
       </section>
@@ -437,7 +440,17 @@ export function AutomotiveAudioLab({ language, onBack, onBackToDetails }: Automo
           ))}
         </div>
 
-        <AutomotiveCabinDiagram activeModule={activeModule} language={language} />
+        <section className="automotive-view" aria-labelledby="automotive-3d-heading">
+          <h2 id="automotive-3d-heading">{t("三维座舱布局", "3D cabin layout", "3D車室レイアウト", "3D 실내 배치")}</h2>
+          <Suspense fallback={<p role="status">{t("正在加载三维座舱…", "Loading the 3D cabin…", "3D車室を読み込み中…", "3D 실내 불러오는 중…")}</p>}>
+            <CarSpeakerLayout language={language} module={activeModule} fallback={<p role="status">{t("当前设备无法显示 3D，下方平面图仍可使用。", "3D is unavailable on this device. The planar diagram below remains available.", "この端末では3Dを表示できません。下の平面図は利用できます。", "이 기기에서는 3D를 표시할 수 없습니다. 아래 평면도는 사용할 수 있습니다.")}</p>} />
+          </Suspense>
+        </section>
+
+        <section className="automotive-view" aria-labelledby="automotive-plan-heading">
+          <h2 id="automotive-plan-heading">{t("平面布局与处理流程", "Planar layout and processing flow", "平面配置と処理フロー", "평면 배치와 처리 흐름")}</h2>
+          <AutomotiveCabinDiagram activeModule={activeModule} language={language} />
+        </section>
 
         <article className="automotive-module-panel" aria-live="polite">
           <h2>{activeContent.heading[language]}</h2>

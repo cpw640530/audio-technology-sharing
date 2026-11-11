@@ -1,5 +1,6 @@
 import { traditional } from "../content/traditional";
-import { ArrowLeft } from "lucide-react";
+import { ArrowDown, ArrowLeft, Headphones, Speaker } from "lucide-react";
+import { text } from "../content/language";
 import { useMemo, useState } from "react";
 import type { Language } from "../content/knowledge";
 
@@ -33,10 +34,10 @@ const modeDescriptions: Record<SpatialMode, Localized> = {
     ko: "헤드폰 공간 오디오는 보통 각 가상 음원을 방향별 HRIR과 컨볼루션하여 왼쪽 귀와 오른쪽 귀 PCM을 생성함."
   },
   object: {
-    zh: "对象音频保存声音和空间元数据，播放端根据耳机、5.1/7.1、Atmos 或车载扬声器重新渲染。", "zh-Hant": traditional("对象音频保存声音和空间元数据，播放端根据耳机、5.1/7.1、Atmos 或车载扬声器重新渲染。"),
-    en: "Object audio stores sound plus spatial metadata, then the playback renderer maps it to headphones, 5.1/7.1, Atmos, or in-car speakers.",
-    ja: "オブジェクト音声は音と空間メタデータを保存し、再生側のレンダラーがヘッドホン、5.1/7.1、Atmos、車載スピーカーへ再マッピングする。",
-    ko: "오브젝트 오디오는 소리와 공간 메타데이터를 저장하고 재생 렌더러가 헤드폰, 5.1/7.1, Atmos 또는 차량 스피커에 맞게 다시 렌더링함."
+    zh: "对象音频保存声音和位置元数据，播放端按耳机或实际扬声器布局渲染；固定声道则已有约定位置。", "zh-Hant": traditional("对象音频保存声音和位置元数据，播放端按耳机或实际扬声器布局渲染；固定声道则已有约定位置。"),
+    en: "Object audio stores sound and position metadata for rendering to headphones or the actual speaker layout; fixed channels already have assigned positions.",
+    ja: "オブジェクト音声は音と位置メタデータを保存し、ヘッドホンや実際のスピーカー配置に合わせて描画する。固定チャンネルには所定の位置がある。",
+    ko: "오브젝트 오디오는 소리와 위치 메타데이터를 저장해 헤드폰이나 실제 스피커 배치에 맞게 렌더링함. 고정 채널에는 지정된 위치가 있음."
   },
   headTracking: {
     zh: "头部追踪让声源固定在外部世界；转头时渲染器要低延迟更新相对耳朵的方向。", "zh-Hant": traditional("头部追踪让声源固定在外部世界；转头时渲染器要低延迟更新相对耳朵的方向。"),
@@ -46,7 +47,7 @@ const modeDescriptions: Record<SpatialMode, Localized> = {
   }
 };
 
-const pipelineSteps: Record<SpatialMode, Array<{ title: Localized; detail: Localized }>> = {
+const pipelineSteps: Record<Exclude<SpatialMode, "object">, Array<{ title: Localized; detail: Localized }>> = {
   cues: [
     { title: { zh: "声源位置", "zh-Hant": traditional("声源位置"), en: "Source position", ja: "音源位置", ko: "음원 위치" }, detail: { zh: "角度、距离、移动", "zh-Hant": traditional("角度、距离、移动"), en: "angle, distance, motion", ja: "角度、距離、移動", ko: "각도, 거리, 이동" } },
     { title: { zh: "双耳线索", "zh-Hant": traditional("双耳线索"), en: "Binaural cues", ja: "両耳の手がかり", ko: "양이 단서" }, detail: { zh: "ITD / ILD", "zh-Hant": traditional("ITD / ILD"), en: "ITD / ILD", ja: "ITD / ILD", ko: "ITD / ILD" } },
@@ -58,12 +59,6 @@ const pipelineSteps: Record<SpatialMode, Array<{ title: Localized; detail: Local
     { title: { zh: "方位参数", "zh-Hant": traditional("方位参数"), en: "Spatial parameters", ja: "空間パラメータ", ko: "공간 파라미터" }, detail: { zh: "方位角、距离、仰角", "zh-Hant": traditional("方位角、距离、仰角"), en: "azimuth, distance, elevation", ja: "方位角、距離、仰角", ko: "방위각, 거리, 고도각" } },
     { title: { zh: "HRIR 卷积", "zh-Hant": traditional("HRIR 卷积"), en: "HRIR convolution", ja: "HRIR 畳み込み", ko: "HRIR 컨볼루션" }, detail: { zh: "生成左右耳信号", "zh-Hant": traditional("生成左右耳信号"), en: "left/right ear signals", ja: "左右耳信号を生成", ko: "왼쪽/오른쪽 귀 신호 생성" } },
     { title: { zh: "双耳 PCM", "zh-Hant": traditional("双耳 PCM"), en: "Binaural PCM", ja: "バイノーラル PCM", ko: "바이노럴 PCM" }, detail: { zh: "适合耳机播放", "zh-Hant": traditional("适合耳机播放"), en: "for headphone playback", ja: "ヘッドホン再生用", ko: "헤드폰 재생용" } }
-  ],
-  object: [
-    { title: { zh: "声道床", "zh-Hant": traditional("声道床"), en: "Channel bed", ja: "チャンネルベッド", ko: "채널 베드" }, detail: { zh: "5.1 / 7.1 基础混音", "zh-Hant": traditional("5.1 / 7.1 基础混音"), en: "5.1 / 7.1 base mix", ja: "5.1 / 7.1 の基本ミックス", ko: "5.1 / 7.1 기본 믹스" } },
-    { title: { zh: "音频对象", "zh-Hant": traditional("音频对象"), en: "Audio objects", ja: "オーディオオブジェクト", ko: "오디오 오브젝트" }, detail: { zh: "声音 + 空间元数据", "zh-Hant": traditional("声音 + 空间元数据"), en: "audio + spatial metadata", ja: "音声 + 空間メタデータ", ko: "오디오 + 공간 메타데이터" } },
-    { title: { zh: "渲染器", "zh-Hant": traditional("渲染器"), en: "Renderer", ja: "レンダラー", ko: "렌더러" }, detail: { zh: "适配播放设备", "zh-Hant": traditional("适配播放设备"), en: "adapt to playback device", ja: "再生デバイスに適応", ko: "재생 장치에 맞춤" } },
-    { title: { zh: "耳机 / 扬声器", "zh-Hant": traditional("耳机 / 扬声器"), en: "Headphones / speakers", ja: "ヘッドホン / スピーカー", ko: "헤드폰 / 스피커" }, detail: { zh: "双耳或多扬声器输出", "zh-Hant": traditional("双耳或多扬声器输出"), en: "binaural or speaker output", ja: "バイノーラルまたはスピーカー出力", ko: "바이노럴 또는 스피커 출력" } }
   ],
   headTracking: [
     { title: { zh: "IMU 姿态", "zh-Hant": traditional("IMU 姿态"), en: "IMU pose", ja: "IMU 姿勢", ko: "IMU 자세" }, detail: { zh: "头部 yaw / pitch / roll", "zh-Hant": traditional("头部 yaw / pitch / roll"), en: "head yaw / pitch / roll", ja: "頭部 yaw / pitch / roll", ko: "머리 yaw / pitch / roll" } },
@@ -240,7 +235,7 @@ function SpatialScene({
       <text className="spatial-axis-label" x="186" y="242">{spatialCopy.left[language]}</text>
       <text className="spatial-axis-label" x="508" y="242">{spatialCopy.right[language]}</text>
 
-      {reflectionPaths.map((path, index) => {
+      {mode === "cues" && reflectionPaths.map((path, index) => {
         const pathStrength = clamp((reflectionAmount - path.threshold) / 0.28, 0, 1);
 
         if (pathStrength <= 0) {
@@ -322,7 +317,7 @@ function BinauralCues({ language, relativeAngle, itdMs, ildDb, distance }: {
       const far = ear === "L" ? rightFirst : !rightFirst;
       const delay = far ? itdMs : 0;
       const gain = 10 ** (-(far ? ildDb : 0) / 20) / distance;
-      const x = 20 + delay * 360;
+      const x = 36 + delay * 344;
       const earName = {
         zh: ear === "L" ? "左耳" : "右耳", "zh-Hant": traditional(ear === "L" ? "左耳" : "右耳"),
         en: ear,
@@ -343,8 +338,12 @@ function BinauralCues({ language, relativeAngle, itdMs, ildDb, distance }: {
       }[language];
       return <div key={ear}>
         <p>{earDescription}</p>
-        <svg role="img" aria-label={earAria} viewBox="0 0 400 100" preserveAspectRatio="none">
-          {[10, 50, 90].map(y => <line key={y} x1="20" x2="380" y1={y} y2={y} stroke="#536c64" />)}
+        <svg role="img" aria-label={earAria} viewBox="0 0 400 120">
+          {[10, 50, 90].map((y, index) => <g key={y}>
+            <line x1="36" x2="380" y1={y} y2={y} stroke="#536c64" />
+            <text x="30" y={y + 4} textAnchor="end" className="spatial-cue-tick">{1 - index * 0.5}</text>
+          </g>)}
+          {[0, 0.5, 1].map(t => <text key={t} x={36 + t * 344} y="112" textAnchor="middle" className="spatial-cue-tick">{t}</text>)}
           <path data-testid={`spatial-ear-${ear}`} data-delay={delay} data-gain={gain} d={`M ${x} 90 V ${90 - gain * 80}`} stroke={ear === "L" ? "#7ee7d8" : "#f1bb72"} strokeWidth="3" />
         </svg>
       </div>;
@@ -439,7 +438,80 @@ function RoomReflectionResponse({
   );
 }
 
-function SpatialPipeline({ language, mode }: { language: Language; mode: SpatialMode }) {
+function BinauralFlow({ language, angle, distance }: { language: Language; angle: number; distance: number }) {
+  return <section className="spatial-mode-diagram" data-testid="spatial-binaural-flow">
+    <h2 className="spatial-plot-heading">{text(language, "同一声源，两个耳朵的滤波器", "One source, two ear filters", "1 つの音源、左右の耳のフィルター", "하나의 음원, 양쪽 귀 필터")}</h2>
+    <div className="spatial-flow-node"><strong>PCM · x[n]</strong><span>{text(language, "单个干声输入", "One dry source", "単一のドライ音源", "단일 드라이 음원")}</span></div>
+    <div className="spatial-flow-junction"><ArrowDown aria-hidden="true" /><span>{text(language, "按相对方位选取左右 HRIR", "Select both HRIRs by relative direction", "相対方向から左右 HRIR を選択", "상대 방향에 따라 양쪽 HRIR 선택")} · {formatSignedDegrees(angle)}</span></div>
+    <div className="spatial-flow-pair spatial-filter-pair">
+      {(["L", "R"] as const).map(ear => <div className="spatial-filter-branch" key={ear}>
+        <div className="spatial-flow-node"><strong>HRIR · h{ear}[k]</strong><span>{spatialCopy[ear === "L" ? "leftEar" : "rightEar"][language]}</span></div>
+        <ArrowDown aria-hidden="true" />
+        <code>y{ear}[n] = g · Σ x[n−k] h{ear}[k]</code>
+        <ArrowDown aria-hidden="true" />
+        <div className="spatial-flow-node"><Headphones size={20} aria-hidden="true" /><strong>PCM · y{ear}[n]</strong></div>
+      </div>)}
+    </div>
+    <p>g = 1 / d = {(1 / distance).toFixed(3)} · d = {distance.toFixed(1)} m</p>
+    <p className="spatial-mode-note">{text(language, "结构示意：HRIR 是滤波器系数；Σ 表示对 k 求和。本页未载入实测 HRIR、未执行卷积。g 仅演示以 1 m 为参考的自由场幅度衰减，不含房间反射。", "Structure only: HRIR contains filter coefficients; Σ sums over k. No measured HRIR or convolution runs here. g illustrates free-field amplitude loss referenced to 1 m, without room reflections.", "構造図：HRIR はフィルター係数、Σ は k に関する和。実測 HRIR の読込や畳み込み演算は行わない。g は 1 m 基準の自由音場の振幅減衰で、室内反射を含まない。", "구조 설명: HRIR은 필터 계수이며 Σ는 k에 대한 합. 실측 HRIR을 불러오거나 컨볼루션을 실행하지 않음. g는 1 m 기준 자유음장 진폭 감쇠이며 공간 반사는 포함하지 않음.")}</p>
+  </section>;
+}
+
+function ObjectMapping({ language, angle, distance }: { language: Language; angle: number; distance: number }) {
+  const [output, setOutput] = useState<"headphones" | "speakers">("speakers");
+  const title = text(language, "内容与播放布局分开", "Content is separate from playback layout", "コンテンツと再生配置を分離", "콘텐츠와 재생 배치 분리");
+  const headphoneLabel = text(language, "耳机", "Headphones", "ヘッドホン", "헤드폰");
+  const speakerLabel = text(language, "5.1 扬声器", "5.1 speakers", "5.1 スピーカー", "5.1 스피커");
+  return <section className="spatial-mode-diagram spatial-object-mapping" data-testid="spatial-object-mapping">
+    <h2 className="spatial-plot-heading">{title}</h2>
+    <div className="spatial-flow-pair">
+      <div className="spatial-flow-node"><strong>{text(language, "音频对象", "Audio object", "音声オブジェクト", "오디오 객체")}</strong><span>PCM + {formatSignedDegrees(angle)} · {distance.toFixed(1)} m</span><small>{text(language, "声音 + 位置元数据", "Sound + position metadata", "音 + 位置メタデータ", "소리 + 위치 메타데이터")}</small></div>
+      <div className="spatial-flow-node"><strong>{text(language, "声道床（可选）", "Channel bed (optional)", "チャンネルベッド（任意）", "채널 베드(선택)")}</strong><span>L · R · C · LFE · Ls · Rs</span><small>{text(language, "各声道已有约定位置", "Each channel has an assigned position", "各チャンネルに所定の位置", "각 채널에 지정된 위치")}</small></div>
+    </div>
+    <div className="spatial-flow-junction"><ArrowDown aria-hidden="true" /><span>{text(language, "并列输入，不是先声道床再变成对象", "Parallel inputs, not bed converted to objects", "並列入力。ベッドをオブジェクトへ変換する順序ではない", "병렬 입력이며 베드를 객체로 변환하는 순서가 아님")}</span></div>
+    <div className="spatial-flow-node"><strong>{text(language, "渲染器：内容 + 目标布局", "Renderer: content + target layout", "レンダラー：コンテンツ + 出力配置", "렌더러: 콘텐츠 + 출력 배치")}</strong></div>
+    <div className="spatial-flow-junction"><ArrowDown aria-hidden="true" /></div>
+    <div className="waveform-tabs" role="group" aria-label={text(language, "播放设备", "Playback device", "再生デバイス", "재생 장치")}>
+      <button type="button" aria-pressed={output === "headphones"} className={output === "headphones" ? "active" : ""} onClick={() => setOutput("headphones")}><Headphones size={18} aria-hidden="true" />{headphoneLabel}</button>
+      <button type="button" aria-pressed={output === "speakers"} className={output === "speakers" ? "active" : ""} onClick={() => setOutput("speakers")}><Speaker size={18} aria-hidden="true" />{speakerLabel}</button>
+    </div>
+    <div className="spatial-output-channels" data-testid="spatial-output-channels">
+      {(output === "headphones" ? ["L", "R"] : ["L", "R", "C", "LFE", "Ls", "Rs"]).map(channel => <span key={channel}>{output === "headphones" ? <Headphones size={20} aria-hidden="true" /> : <Speaker size={20} aria-hidden="true" />}<strong>{channel}</strong></span>)}
+    </div>
+    <p>{output === "headphones"
+      ? text(language, "输出：经过双耳渲染的两路 PCM，不是直接复制到左右耳。", "Output: two binaurally rendered PCM channels, not copies to both ears.", "出力：両耳レンダリング済み PCM 2 チャンネル。左右への単純コピーではない。", "출력: 양이 렌더링된 PCM 2채널이며 양쪽 귀에 단순 복사하지 않음.")
+      : text(language, "输出：按扬声器布局分配的 PCM。LFE 是独立低频效果声道，不是第六个全频方位；此处不模拟声像增益或低音管理。", "Output: PCM mapped to the speaker layout. LFE is a low-frequency effects channel, not a sixth full-range direction. Panning gains and bass management are not simulated.", "出力：スピーカー配置へ割り当てた PCM。LFE は低域効果チャンネルで、6 番目の全帯域方向ではない。パンのゲインや低音管理は模擬しない。", "출력: 스피커 배치에 매핑된 PCM. LFE는 저주파 효과 채널이며 여섯 번째 전대역 방향이 아님. 패닝 게인과 저음 관리는 시뮬레이션하지 않음.")}</p>
+  </section>;
+}
+
+function HeadCoordinates({ language, sourceAngle, headYaw }: { language: Language; sourceAngle: number; headYaw: number }) {
+  const relative = normalizeAngle(sourceAngle - headYaw);
+  return <section className="spatial-mode-diagram" data-testid="spatial-head-coordinates">
+    <h2 className="spatial-plot-heading">{text(language, "声源不动，耳朵的坐标在转", "Fixed source, rotating ear coordinates", "音源は固定、耳の座標が回転", "고정 음원, 회전하는 귀 좌표")}</h2>
+    <div className="spatial-flow-pair">
+      {[sourceAngle, relative].map((angle, index) => {
+        const point = polarPoint(100, 100, 64, angle);
+        const label = index === 0 ? text(language, "世界坐标", "World frame", "世界座標", "세계 좌표") : text(language, "头部坐标", "Head frame", "頭部座標", "머리 좌표");
+        return <figure key={index} className="spatial-coordinate-dial">
+          <figcaption>{label} · {formatSignedDegrees(angle)}</figcaption>
+          <svg viewBox="0 0 200 200" role="img" aria-label={label}>
+            <circle cx="100" cy="100" r="64" fill="none" stroke="#536c64" />
+            <path d="M100 24V176 M24 100H176" stroke="#536c64" />
+            <text x="100" y="18" textAnchor="middle" className="spatial-cue-tick">0°</text>
+            <line x1="100" y1="100" x2={point.x} y2={point.y} stroke="#f1bb72" strokeWidth="3" />
+            <circle data-testid={index === 0 ? "spatial-world-source" : "spatial-head-source"} cx={point.x} cy={point.y} r="7" fill="#f1bb72" />
+          </svg>
+        </figure>;
+      })}
+    </div>
+    <div className="spatial-flow-node"><strong>θ = wrap({formatSignedDegrees(sourceAngle)} − ({formatSignedDegrees(headYaw)})) = {formatSignedDegrees(relative)}</strong><span>{text(language, "世界声源角度 − 头部朝向 → 相对方位", "World source angle − head yaw → relative direction", "世界音源角度 − 頭部角度 → 相対方向", "세계 음원 각도 − 머리 방향 → 상대 방향")}</span></div>
+    <div className="spatial-flow-junction"><ArrowDown aria-hidden="true" /></div>
+    <div className="spatial-flow-node"><strong>{text(language, "更新左右 HRIR → 更新双耳 PCM", "Update both HRIRs → update binaural PCM", "左右 HRIR 更新 → 両耳 PCM 更新", "양쪽 HRIR 갱신 → 양이 PCM 갱신")}</strong></div>
+    <p>{text(language, "仅演示水平转头的坐标变换；wrap 将角度归入 (−180°, 180°]。没有模拟 IMU 误差、渲染延迟或真实 HRIR。", "Horizontal coordinate transform only; wrap maps angles to (−180°, 180°]. IMU errors, rendering latency and real HRIRs are not simulated.", "水平回転の座標変換のみ。wrap は角度を (−180°, 180°] に正規化する。IMU 誤差、遅延、実際の HRIR は模擬しない。", "수평 회전 좌표 변환만 표시. wrap은 각도를 (−180°, 180°]로 정규화함. IMU 오류, 렌더링 지연, 실제 HRIR은 시뮬레이션하지 않음.")}</p>
+  </section>;
+}
+
+function SpatialPipeline({ language, mode }: { language: Language; mode: Exclude<SpatialMode, "object"> }) {
   const steps = pipelineSteps[mode];
 
   return (
@@ -543,18 +615,21 @@ export function SpatialAudioLab({ language, onBack, onBackToDetails }: SpatialAu
           ))}
         </div>
 
+        <p className="spatial-mode-description">{modeDescriptions[mode][language]}</p>
         <div className="spatial-audio-layout">
-          <div className="spatial-audio-visuals">
-            <SpatialScene
+          <div className="spatial-audio-visuals" data-mode={mode}>
+            {mode === "object" ? <ObjectMapping language={language} angle={sourceAngle} distance={distance} /> : <SpatialScene
               distance={distance}
               headYaw={headYaw}
               language={language}
               mode={mode}
               reflection={reflection}
               sourceAngle={sourceAngle}
-            />
-            <BinauralCues language={language} relativeAngle={metrics.relativeAngle} itdMs={metrics.itdMs} ildDb={metrics.ildDb} distance={distance} />
-            <RoomReflectionResponse distance={distance} language={language} reflection={reflection} />
+            />}
+            {mode === "binaural" && <BinauralFlow language={language} angle={metrics.relativeAngle} distance={distance} />}
+            {mode === "headTracking" && <HeadCoordinates language={language} sourceAngle={sourceAngle} headYaw={headYaw} />}
+            {mode === "cues" && <BinauralCues language={language} relativeAngle={metrics.relativeAngle} itdMs={metrics.itdMs} ildDb={metrics.ildDb} distance={distance} />}
+            {mode === "cues" && <RoomReflectionResponse distance={distance} language={language} reflection={reflection} />}
           </div>
 
           <aside className="spatial-audio-panel">
@@ -569,28 +644,28 @@ export function SpatialAudioLab({ language, onBack, onBackToDetails }: SpatialAu
               <span>{distanceLabel}</span>
               <input aria-label={spatialCopy.distance[language]} max="8" min="1" step="0.5" type="range" value={distance} onChange={(event) => setDistance(Number(event.target.value))} />
             </label>
-            <label className="sound-lab-control">
+            {mode === "cues" && <label className="sound-lab-control">
               <span>{reflectionLabel}</span>
               <input aria-label={spatialCopy.reflections[language]} max="100" min="0" step="5" type="range" value={reflection} onChange={(event) => setReflection(Number(event.target.value))} />
-            </label>
-            <label className="sound-lab-control">
+            </label>}
+            {mode !== "object" && <label className="sound-lab-control">
               <span>{headDirectionLabel}</span>
               <input aria-label={spatialCopy.headDirection[language]} max="90" min="-90" step="5" type="range" value={headYaw} onChange={(event) => setHeadYaw(Number(event.target.value))} />
-            </label>
-            <div className="spatial-audio-metrics">
+            </label>}
+            {mode !== "object" && <div className="spatial-audio-metrics">
               <strong>{relativeAngleLabel}</strong>
               <strong>{itdLabel}</strong>
               <strong>{ildLabel}</strong>
               <strong>{distanceLossLabel}</strong>
-            </div>
-            <details className="spatial-explanation"><summary>{spatialCopy.modelLimits[language]}</summary><p className="traditional-model-note">{spatialCopy.modelBoundary[language]}</p></details>
+            </div>}
+            {mode !== "object" && <details className="spatial-explanation"><summary>{spatialCopy.modelLimits[language]}</summary><p className="traditional-model-note">{spatialCopy.modelBoundary[language]}</p></details>}
+            {mode === "cues" && <p className="spatial-mode-note">{text(language, "俯视曲线仅示意反射，不与能量图的假想延时逐条对应。", "Top-view curves are conceptual, not matched to the energy plot's hypothetical delays.", "上面図の曲線は概念図で、エネルギー図の仮想遅延とは対応しない。", "평면도 곡선은 개념도이며 에너지 그래프의 가상 지연과 일대일로 대응하지 않음.")}</p>}
           </aside>
         </div>
-        <details className="spatial-explanation spatial-flow-details">
+        {mode !== "object" && <details className="spatial-explanation spatial-flow-details">
           <summary>{spatialCopy.principles[language]}</summary>
-          <p>{modeDescriptions[mode][language]}</p>
           <SpatialPipeline language={language} mode={mode} />
-        </details>
+        </details>}
       </section>
     </main>
   );

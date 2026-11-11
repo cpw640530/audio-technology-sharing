@@ -23,14 +23,14 @@ export function RobotAudioLab({ language, onBack, onBackToDetails }: { language:
     "降噪": "ノイズ抑圧",
     "运动状态增加电机和结构噪声，可能掩盖人声。先改善机械隔离，再调降噪，过强会损伤语音。": "動作中はモーター音と構造雑音が増え、音声を覆うことがあります。まず機械的な隔離を改善してから抑圧を調整し、過剰処理による音声劣化を避けます。",
     "静止仍可能有风扇和环境干扰，降噪目标是改善可懂度，不保证完全静音。": "停止中でもファンや環境雑音は残り得ます。抑圧の目標は明瞭度の改善であり、完全な無音を保証するものではありません。",
-    "定位 / 定向拾音": "測位 / 指向性収音",
+    "DOA 方向估计 / 波束形成": "DOA 方向推定 / ビームフォーミング",
     "单麦语音": "単一マイク音声",
-    "通过通道时间差估计方向，波束形成增强目标方向。下图角度由拖动位置计算，不是真实估计算法输出；波束形状也是示意。": "チャンネル間の時間差から方向を推定し、ビームフォーミングで対象方向を強調します。下図の角度はドラッグ位置から計算した幾何値で、実際の推定アルゴリズムの出力ではありません。ビーム形状も模式図です。",
-    "单麦模式跳过阵列定位和波束形成，不显示方向估计。": "単一マイクモードではアレイ測位とビームフォーミングを省略し、方向推定を表示しません。",
+    "用通道时间差做 DOA 方向估计，再用波束形成增强目标方向；这不是测距或身份识别。下图角度由拖动位置计算，不是真实估计算法输出；波束形状也是示意。": "チャンネル間の時間差から DOA（到来方向）を推定し、ビームフォーミングで対象方向を強調します。これは測距や話者識別ではありません。下図の角度はドラッグ位置から計算した幾何値で、実際の推定アルゴリズムの出力ではありません。ビーム形状も模式図です。",
+    "单麦模式跳过 DOA 方向估计和波束形成，不显示方向估计。": "単一マイクモードでは DOA 方向推定とビームフォーミングを省略し、方向推定を表示しません。",
     "唤醒 / ASR": "ウェイク / ASR",
     "唤醒触发会话，ASR 将增强语音转为文字；噪声、口音与重叠说话都可能造成错误。": "ウェイクワードがセッションを開始し、ASR が強調音声を文字に変換します。雑音、訛り、発話の重なりはいずれも誤りの原因になります。",
     "意图 / 任务": "意図 / タスク",
-    "结合视觉和上下文确定对象与动作，再交给控制系统检查权限、障碍和安全约束。语音“停止”不能替代硬件急停。": "視覚とコンテキストを組み合わせて対象と動作を決め、制御系で権限、障害物、安全制約を確認します。音声の「停止」はハードウェア非常停止の代わりにはなりません。",
+    "意图理解只生成候选动作，再交给控制系统检查权限、障碍和安全约束；语音“停止”不能替代硬件急停。": "意図理解は候補動作を生成するだけで、制御系が権限、障害物、安全制約を確認します。音声の「停止」はハードウェア非常停止の代わりにはなりません。",
     "TTS / 播放": "TTS / 再生",
     "合成确认语音，经 DAC、功放和扬声器输出。打断交互还需检测用户插话、取消播报队列并处理回声拖尾。": "確認音声を合成し、DAC、アンプ、スピーカーから出力します。割り込み対話にはユーザーの発話検出、再生キューのキャンセル、エコーテール処理も必要です。",
     "机器人音频实验室": "ロボット音響ラボ",
@@ -93,14 +93,14 @@ export function RobotAudioLab({ language, onBack, onBackToDetails }: { language:
     "降噪": "잡음 억제",
     "运动状态增加电机和结构噪声，可能掩盖人声。先改善机械隔离，再调降噪，过强会损伤语音。": "동작 중에는 모터와 구조 잡음이 늘어 음성을 가릴 수 있습니다. 먼저 기계적 격리를 개선한 뒤 억제를 조정하고, 과도한 처리가 음성을 손상하지 않게 해야 합니다.",
     "静止仍可能有风扇和环境干扰，降噪目标是改善可懂度，不保证完全静音。": "정지 상태에도 팬과 환경 간섭은 남을 수 있습니다. 억제의 목표는 명료도 향상이지 완전한 무음 보장이 아닙니다.",
-    "定位 / 定向拾音": "위치 추정 / 지향성 수음",
+    "DOA 方向估计 / 波束形成": "DOA 방향 추정 / 빔포밍",
     "单麦语音": "단일 마이크 음성",
-    "通过通道时间差估计方向，波束形成增强目标方向。下图角度由拖动位置计算，不是真实估计算法输出；波束形状也是示意。": "채널 간 시간 차로 방향을 추정하고 빔포밍으로 대상 방향을 강화합니다. 아래 각도는 드래그한 위치의 기하값이며 실제 추정 알고리즘 출력이 아닙니다. 빔 형태도 예시입니다.",
-    "单麦模式跳过阵列定位和波束形成，不显示方向估计。": "단일 마이크 모드에서는 배열 위치 추정과 빔포밍을 건너뛰며 방향 추정을 표시하지 않습니다.",
+    "用通道时间差做 DOA 方向估计，再用波束形成增强目标方向；这不是测距或身份识别。下图角度由拖动位置计算，不是真实估计算法输出；波束形状也是示意。": "채널 간 시간 차로 DOA(도착 방향)를 추정한 뒤 빔포밍으로 대상 방향을 강화합니다. 이는 거리 측정이나 화자 식별이 아닙니다. 아래 각도는 드래그한 위치의 기하값이며 실제 추정 알고리즘 출력이 아닙니다. 빔 형태도 예시입니다.",
+    "单麦模式跳过 DOA 方向估计和波束形成，不显示方向估计。": "단일 마이크 모드에서는 DOA 방향 추정과 빔포밍을 건너뛰며 방향 추정을 표시하지 않습니다.",
     "唤醒 / ASR": "웨이크 / ASR",
     "唤醒触发会话，ASR 将增强语音转为文字；噪声、口音与重叠说话都可能造成错误。": "웨이크가 세션을 시작하고 ASR이 향상된 음성을 텍스트로 변환합니다. 잡음, 억양, 겹쳐 말하기는 모두 오류를 일으킬 수 있습니다.",
     "意图 / 任务": "의도 / 작업",
-    "结合视觉和上下文确定对象与动作，再交给控制系统检查权限、障碍和安全约束。语音“停止”不能替代硬件急停。": "시각과 맥락으로 대상과 동작을 결정한 뒤 제어 시스템에서 권한, 장애물, 안전 제약을 확인합니다. 음성으로 말한 ‘정지’는 하드웨어 비상 정지를 대신할 수 없습니다.",
+    "意图理解只生成候选动作，再交给控制系统检查权限、障碍和安全约束；语音“停止”不能替代硬件急停。": "의도 이해는 후보 동작을 생성할 뿐이며 제어 시스템이 권한, 장애물과 안전 제약을 확인합니다. 음성으로 말한 ‘정지’는 하드웨어 비상 정지를 대신할 수 없습니다.",
     "TTS / 播放": "TTS / 재생",
     "合成确认语音，经 DAC、功放和扬声器输出。打断交互还需检测用户插话、取消播报队列并处理回声拖尾。": "확인 음성을 합성해 DAC, 앰프, 스피커로 출력합니다. 끼어들기 상호작용에는 사용자 발화 감지, 재생 큐 취소, 에코 꼬리 처리도 필요합니다.",
     "机器人音频实验室": "로봇 오디오 랩",
@@ -155,9 +155,13 @@ export function RobotAudioLab({ language, onBack, onBackToDetails }: { language:
   const [person, setPerson] = useState({ x: 190, y: 115 });
   const [noise, setNoise] = useState({ x: 555, y: 165 });
   const [dragging, setDragging] = useState<"person" | "noise" | null>(null);
+  const sourceOverlapsRobot = person.x === 360 && person.y === 285;
   const bearing = Math.atan2(person.x - 360, 285 - person.y) * 180 / Math.PI;
   const relative = ((bearing - heading + 540) % 360) - 180;
   const reflectionY = person.y + (285 - person.y) * (person.x - 30) / (person.x + 300);
+  const directionLabel = sourceOverlapsRobot
+    ? t("相对方向（几何真值）：未定义（声源与机器人中心重合）", "Relative direction (geometric ground truth): undefined (source overlaps robot center)", "相対方向（幾何学的真値）：未定義（音源がロボット中心と重なっています）", "상대 방향(기하학적 실제값): 정의되지 않음(음원이 로봇 중심과 겹침)")
+    : t(`相对方向（几何真值）：${relative.toFixed(0)}°`, `Relative direction (geometric ground truth): ${relative.toFixed(0)}°`, `相対方向（幾何学的真値）：${relative.toFixed(0)}°`, `상대 방향(기하학적 실제값): ${relative.toFixed(0)}°`);
   const parts = [
     [t("头部麦克风", "Head microphones"), t("麦克风将声压变为信号，经 ADC 或数字麦接口得到 PCM。多麦必须同步采集，阵列几何也要标定。", "Microphones convert pressure to signals, then ADCs or digital microphone interfaces produce PCM. Arrays require synchronized channels and calibrated geometry.")],
     [t("视觉与姿态", "Vision and pose"), t("摄像头确认人物，姿态信息把机器人坐标下的声音方向转换到场景坐标；声音本身不能确认身份。", "Vision confirms a person; pose transforms acoustic directions from robot to world coordinates. Sound direction alone does not establish identity.")],
@@ -169,9 +173,9 @@ export function RobotAudioLab({ language, onBack, onBackToDetails }: { language:
     [t("采集 PCM", "Capture PCM"), array ? t("同步多通道采集，同时保留通道空间信息。", "Capture synchronized channels while preserving spatial information.") : t("单通道仍可识别语音，但没有阵列到达时间差。", "One channel can support ASR, but supplies no array arrival-time differences.")],
     ["AEC", playing ? t("播报已开启：用播放参考估计回声路径并减去回声；双讲时应保护用户语音。", "Playback is active: estimate the echo path from the render reference and subtract echo; preserve user speech during double-talk.") : t("当前未播报，无新增自身播放回声；实际系统仍需处理停止后的回声拖尾。", "No playback is active. Real systems must still handle the echo tail after playback stops.")],
     [t("降噪", "Noise suppression"), moving ? t("运动状态增加电机和结构噪声，可能掩盖人声。先改善机械隔离，再调降噪，过强会损伤语音。", "Motion adds motor and structural noise that can mask speech. Improve mechanical isolation before tuning suppression; aggressive processing can damage speech.") : t("静止仍可能有风扇和环境干扰，降噪目标是改善可懂度，不保证完全静音。", "Fans and ambient interference may remain when stationary. Suppression aims to improve intelligibility, not guarantee silence.")],
-    [array ? t("定位 / 定向拾音", "Locate / beamform") : t("单麦语音", "Single-mic speech"), array ? t("通过通道时间差估计方向，波束形成增强目标方向。下图角度由拖动位置计算，不是真实估计算法输出；波束形状也是示意。", "Estimate direction from channel delays and beamform toward the target. The angle below is geometric ground truth from dragged positions, not algorithm output; the beam is illustrative.") : t("单麦模式跳过阵列定位和波束形成，不显示方向估计。", "Single-mic mode bypasses array localization and beamforming; no direction estimate is shown.")],
+    [array ? t("DOA 方向估计 / 波束形成", "DOA estimation / beamforming") : t("单麦语音", "Single-mic speech"), array ? t("用通道时间差做 DOA 方向估计，再用波束形成增强目标方向；这不是测距或身份识别。下图角度由拖动位置计算，不是真实估计算法输出；波束形状也是示意。", "Estimate direction of arrival (DOA) from channel delays, then use beamforming to enhance that direction; this is not ranging or speaker identification. The angle below is geometric ground truth from dragged positions, not algorithm output; the beam is illustrative.") : t("单麦模式跳过 DOA 方向估计和波束形成，不显示方向估计。", "Single-mic mode bypasses DOA estimation and beamforming; no direction estimate is shown.")],
     [t("唤醒 / ASR", "Wake / ASR"), t("唤醒触发会话，ASR 将增强语音转为文字；噪声、口音与重叠说话都可能造成错误。", "Wake detection starts a session; ASR converts enhanced speech into text. Noise, accents, and overlapping speakers can cause errors.")],
-    [t("意图 / 任务", "Intent / task"), t("结合视觉和上下文确定对象与动作，再交给控制系统检查权限、障碍和安全约束。语音“停止”不能替代硬件急停。", "Use vision and context to resolve the object and action, then check permissions, obstacles, and safety constraints in the controller. Spoken stop is not a substitute for a hardware emergency stop.")],
+    [t("意图 / 任务", "Intent / task"), t("意图理解只生成候选动作，再交给控制系统检查权限、障碍和安全约束；语音“停止”不能替代硬件急停。", "Intent understanding only produces a candidate action; the controller must still check permissions, obstacles, and safety constraints. Spoken stop is not a substitute for a hardware emergency stop.")],
     [t("TTS / 播放", "TTS / playback"), t("合成确认语音，经 DAC、功放和扬声器输出。打断交互还需检测用户插话、取消播报队列并处理回声拖尾。", "Synthesize a response and play it through DAC, amplifier, and speaker. Barge-in also requires detecting user speech, cancelling queued playback, and handling echo tails.")]
   ];
   function move(event: PointerEvent<SVGSVGElement>) {
@@ -218,16 +222,16 @@ export function RobotAudioLab({ language, onBack, onBackToDetails }: { language:
       </svg> : <svg viewBox="0 0 720 450" role="img" aria-label={t("机器人俯视工作场景", "Robot top-down working scene")} onPointerMove={move} onPointerUp={() => setDragging(null)} onPointerCancel={() => setDragging(null)}>
         <rect x="25" y="30" width="670" height="385" rx="8" fill="#edf3f3" stroke="#97b1b9" strokeWidth="7" />
         <text x="45" y="56" fill="#506a70">{t("房间 / 俯视", "Room / top view")}</text>
-        {array && <g transform={`translate(360 285) rotate(${bearing})`}><path d="M0 0 L-75 -180 Q0 -214 75 -180 Z" fill="#148372" opacity="0.13" /><path d="M0 0 V-195" stroke="#148372" strokeWidth="2" strokeDasharray="6 5" /></g>}
+        {array && !sourceOverlapsRobot && <g transform={`translate(360 285) rotate(${bearing})`}><path d="M0 0 L-75 -180 Q0 -214 75 -180 Z" fill="#148372" opacity="0.13" /><path d="M0 0 V-195" stroke="#148372" strokeWidth="2" strokeDasharray="6 5" /></g>}
         <path d={`M${noise.x} ${noise.y} L360 285`} stroke="#ce874f" strokeDasharray="5 6" />
         <path d={`M${person.x} ${person.y} L360 285`} stroke="#168777" strokeWidth="2" />
-        <path d={`M${person.x} ${person.y} L30 ${reflectionY} L360 285`} stroke="#899cad" fill="none" strokeDasharray="3 7" />
+        {!sourceOverlapsRobot && <path d={`M${person.x} ${person.y} L30 ${reflectionY} L360 285`} stroke="#899cad" fill="none" strokeDasharray="3 7" />}
         <g transform={`translate(360 285) rotate(${heading})`}><ellipse rx="39" ry="47" fill="#bdd6db" stroke="#385c67" strokeWidth="3" /><path d="M-13 -22 L0 -39 L13 -22" fill="#285d68" />{(array ? [-24,-8,8,24] : [0]).map(x => <circle key={x} cx={x} cy="-10" r="4" fill="#138474" />)}<rect x="-14" y="18" width="28" height="10" rx="3" fill="#395865" /></g>
         {playing && <path d="M377 306 Q429 270 380 273" stroke="#bf6633" strokeWidth="3" fill="none" />}
         {moving && <path d="M308 310 l-12 10 12 10 M412 310 l12 10 -12 10" stroke="#bf6633" strokeWidth="4" fill="none" />}
         {(["person", "noise"] as const).map(id => { const p = id === "person" ? person : noise; const label = id === "person" ? t("用户", "Person") : t("噪声源", "Noise source"); return <g key={id} role="button" tabIndex={0} aria-label={label} transform={`translate(${p.x} ${p.y})`} className="robot-drag" onPointerDown={e => { e.currentTarget.ownerSVGElement?.setPointerCapture(e.pointerId); setDragging(id); }} onKeyDown={e => { const delta = { ArrowLeft: [-10,0], ArrowRight: [10,0], ArrowUp: [0,-10], ArrowDown: [0,10] }[e.key]; if (delta) { e.preventDefault(); (id === "person" ? setPerson : setNoise)({x: Math.max(65, Math.min(655,p.x+delta[0])), y: Math.max(75, Math.min(385,p.y+delta[1]))}); } }}><circle r="24" fill={id === "person" ? "#287966" : "#a96735"} /><text textAnchor="middle" y="5" fill="white">{id === "person" ? "P" : "N"}</text><text textAnchor="middle" y="43" fill="#284c50">{label}</text></g>; })}
       </svg>}
-      <figcaption>{view === "body" ? parts[part][1] : <><strong data-testid="robot-bearing">{array ? t(`相对方向（几何真值）：${relative.toFixed(0)}°`, `Relative direction (geometric ground truth): ${relative.toFixed(0)}°`, `相対方向（幾何学的真値）：${relative.toFixed(0)}°`, `상대 방향(기하학적 실제값): ${relative.toFixed(0)}°`) : t("单麦：不提供阵列定位", "Single mic: array localization unavailable")}</strong><span>{t("绿色：直达声 / 示意波束；灰色虚线：可能的反射路径；橙色：噪声与自身播放回声。图中没有运行声学求解或真实定位。", "Green: direct sound / illustrative beam; gray dots: a possible reflection path; orange: noise and self-playback echo. No acoustic solver or real localization runs here.")}</span></>}</figcaption>
+      <figcaption>{view === "body" ? parts[part][1] : <><strong data-testid="robot-bearing">{array ? directionLabel : t("单麦：不提供阵列定位", "Single mic: array localization unavailable")}</strong><span>{t("绿色：直达声 / 示意波束；灰色虚线：可能的反射路径；橙色：噪声与自身播放回声。图中没有运行声学求解或真实定位。", "Green: direct sound / illustrative beam; gray dots: a possible reflection path; orange: noise and self-playback echo. No acoustic solver or real localization runs here.")}</span></>}</figcaption>
     </figure>
     <section className="robot-processing" aria-label={t("处理链路", "Processing chain")}><h2>{t("当前场景的处理链路", "Processing chain for this scene")}</h2><div className="robot-flow">{stages.map(([name], i) => <button key={i} onClick={() => setStage(i)} aria-pressed={stage === i}><small>{i + 1}</small>{name}{i < stages.length - 1 && <span aria-hidden="true"> →</span>}</button>)}</div><p className="robot-reference">{t("实际播放 PCM → AEC 参考输入；环境声音检测可从采集侧并行分支。", "Actual render PCM → AEC reference input; environmental sound detection can branch from capture.")}</p><h3>{stages[stage][0]}</h3><p>{stages[stage][1]}</p><p>{t("此处为示例串联链路。定位、降噪与波束形成也可并行或联合实现；运动状态仅显示干扰来源，不模拟识别率。", "This is an illustrative serial chain. Localization, denoising, and beamforming can also run in parallel or jointly. Motion state highlights interference sources without simulating recognition accuracy.")}</p></section>
     <section><h2>{t("应用与工程检查", "Applications and engineering checks")}</h2><div className="robot-table"><table><thead><tr>{[t("场景", "Scene"),t("音频的作用", "Audio role"),t("检查重点", "What to check")].map(s => <th key={s}>{s}</th>)}</tr></thead><tbody>

@@ -10,6 +10,8 @@ import { AsrSignalJourney } from "./AsrVisuals";
 import { AsrPrinciple } from "./AsrPrinciple";
 import { TtsPrinciple } from "./TtsPrinciple";
 import { AudioGenerationPrinciple } from "./AudioGenerationPrinciple";
+import { AudioEventPrinciple } from "./AudioEventPrinciple";
+import { AiModelReference } from "./AiModelReference";
 
 type DisplayTopic = Topic & { category: Category };
 type Locale = "zh" | "en" | "ja" | "ko" | "zh-Hant";
@@ -93,12 +95,13 @@ export function AiAudioTopicPage({ relatedTopics, language, topic, mode, onBack,
       <TopicReadingLayout language={language}>
         {mode === "overview" ? <AiAudioOverview language={language} onOpen={onOpenTopic} /> : <>
         <section className="sound-topic-section sound-topic-intro"><div><h2>{t("先明确任务，再选择模型", "Define the task before choosing the model", "まずタスクを定義してからモデルを選ぶ", "먼저 작업을 정의한 뒤 모델을 선택하세요")}</h2>{mode === "asr" ? <><p>{detail.explanation[language].split("\n\n")[0]}</p><details className="asr-reading-more"><summary>{t("展开输入与输出说明", "Input and output details", "入力と出力の説明", "입력과 출력 설명")}</summary>{detail.explanation[language].split("\n\n").slice(1).map((paragraph,index)=><p key={index}>{paragraph}</p>)}</details></> : detail.explanation[language].split("\n\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></section>
-        {mode === "asr" ? <AsrSignalJourney language={language} /> : mode === "tts" ? <TtsPrinciple language={language} /> : mode === "generation" ? <AudioGenerationPrinciple language={language} /> : <>
+        {mode === "asr" ? <AsrSignalJourney language={language} /> : mode === "tts" ? <TtsPrinciple language={language} /> : mode === "generation" ? <AudioGenerationPrinciple language={language} /> : mode === "event" ? <AudioEventPrinciple language={language} /> : <>
         <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{t("这张卡片的 AI 音频链路", "The AI audio path for this topic", "このテーマの AI オーディオ経路", "이 주제의 AI 오디오 경로")}</h2><p>{t("输入表示、模型输出和工程后处理会随任务变化，不能把所有 AI 音频都当成频谱图像分类。", "Input representations, model outputs, and engineering post-processing vary by task; not all AI audio is spectrogram classification.", "入力表現、モデル出力、実装上の後処理はタスクごとに異なり、すべての AI オーディオをスペクトログラム分類とみなすことはできません。", "입력 표현·모델 출력·엔지니어링 후처리는 작업마다 다르며 모든 AI 오디오를 스펙트로그램 분류로 볼 수 없습니다.")}</p></div></div><ol className="ai-topic-flow" aria-label={t("AI 音频处理流程", "AI audio processing flow", "AI オーディオ処理フロー", "AI 오디오 처리 흐름")}>{steps.map((step, index) => <li key={step.title.en}><span>{String(index + 1).padStart(2, "0")}</span><h3>{step.title[language]}</h3><p>{step.detail[language]}</p></li>)}</ol></section>
         </>}
         {mode === "enhancement" && <section className="sound-topic-section"><AiEnhancementPrinciple language={language} /></section>}
         {mode === "asr" && <AsrPrinciple language={language} />}
         </>}
+        <div className="sound-topic-section"><AiModelReference mode={mode} language={language} compact={mode !== "overview"} /></div>
         {detail.lab &&
         <section className="sound-topic-section ai-topic-lab-entry" aria-label={t("当前主题实验室入口", "Current topic lab entry", "現在のテーマのラボ入口", "현재 주제 실험실 입구")}><div className="sound-topic-cta"><CircuitBoard size={22} aria-hidden="true" /><h2>{detail.lab?.title[language]}</h2><p>{detail.lab?.description[language]}</p><button className="diagram-open-button" type="button" onClick={onOpenLab}>{detail.lab?.buttonLabel[language]}</button></div></section>
         }

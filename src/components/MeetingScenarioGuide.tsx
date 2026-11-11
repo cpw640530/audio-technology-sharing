@@ -1,12 +1,9 @@
 import { traditional } from "../content/traditional";
 import { useId, useState } from "react";
-import { ArrowLeft } from "lucide-react";
 import type { Language } from "../content/knowledge";
 
-type MeetingCommunicationLabProps = {
+type MeetingScenarioGuideProps = {
   language: Language;
-  onBack: () => void;
-  onBackToDetails?: () => void;
 };
 
 type ScenarioId = "personal" | "room" | "network" | "captions";
@@ -38,10 +35,10 @@ const ja: Record<string, string> = {
   "耳机模式": "ヘッドセットモード",
   "端到端延迟": "エンドツーエンド遅延",
   "输入峰值": "入力ピーク",
-  "双讲保留率": "ダブルトーク保持率",
+  "双讲保真（定性）": "ダブルトーク音声の忠実度（定性）",
   "确认扬声器回采参考进入 AEC。": "スピーカーの再生参照が AEC に入力されることを確認します。",
   "检查参考与麦克风信号是否对齐。": "参照信号とマイク信号が整列しているか確認します。",
-  "检查双讲保留，再核对扬声器音量和处理强度。": "ダブルトークの保持を確認し、スピーカー音量と処理強度を再確認します。",
+  "双讲时定性听查近端语音保真；ERLE 只反映回声抑制，不代表近端语音保真。": "ダブルトーク中の近端音声の忠実度を定性的に聴感確認します。ERLE はエコー抑圧だけを示し、近端音声の忠実度は示しません。",
   "内置麦克风": "内蔵マイク",
   "AEC / 双讲 / NS / ANR / AGC": "AEC / ダブルトーク / NS / ANR / AGC",
   "实时传输": "リアルタイム伝送",
@@ -141,8 +138,6 @@ const ja: Record<string, string> = {
   "字幕旁路": "字幕サイドパス",
   "未翻译直达": "未翻訳で直接表示",
   "可绕过": "迂回可能",
-  "会议与通信实验室": "会議・通信ラボ",
-  "选择真实会议场景，观察用户体验、音频链路和工程排查重点如何同步变化。": "実際の会議シーンを選び、ユーザー体験、音声経路、エンジニアリング上の確認点がどう連動して変わるかを確認します。",
   "会议场景选择": "会議シーンの選択",
   "当前场景": "現在のシーン",
   "用户视角": "ユーザー視点",
@@ -157,9 +152,6 @@ const ja: Record<string, string> = {
   "关键模块": "主要モジュール",
   "可观察指标": "観測可能な指標",
   "排查顺序": "トラブルシュート順序",
-  "返回知识库": "知識ベースに戻る",
-  "返回详细内容": "詳細ページに戻る",
-  "应用场景": "応用シナリオ"
 };
 
 const ko: Record<string, string> = {
@@ -173,10 +165,10 @@ const ko: Record<string, string> = {
   "耳机模式": "헤드셋 모드",
   "端到端延迟": "종단 간 지연",
   "输入峰值": "입력 피크",
-  "双讲保留率": "더블 토크 보존율",
+  "双讲保真（定性）": "더블 토크 음성 충실도(정성)",
   "确认扬声器回采参考进入 AEC。": "스피커 재생 참조가 AEC에 입력되는지 확인합니다.",
   "检查参考与麦克风信号是否对齐。": "참조 신호와 마이크 신호가 정렬되는지 확인합니다.",
-  "检查双讲保留，再核对扬声器音量和处理强度。": "더블 토크 보존을 확인한 뒤 스피커 볼륨과 처리 강도를 다시 확인합니다.",
+  "双讲时定性听查近端语音保真；ERLE 只反映回声抑制，不代表近端语音保真。": "더블 토크 중 근단 음성 충실도를 정성적으로 듣습니다. ERLE는 에코 억제만 나타내며 근단 음성 충실도를 뜻하지 않습니다.",
   "内置麦克风": "내장 마이크",
   "AEC / 双讲 / NS / ANR / AGC": "AEC / 더블 토크 / NS / ANR / AGC",
   "实时传输": "실시간 전송",
@@ -276,8 +268,6 @@ const ko: Record<string, string> = {
   "字幕旁路": "자막 사이드 패스",
   "未翻译直达": "미번역 직접 표시",
   "可绕过": "우회 가능",
-  "会议与通信实验室": "회의 및 통신 랩",
-  "选择真实会议场景，观察用户体验、音频链路和工程排查重点如何同步变化。": "실제 회의 장면을 선택해 사용자 경험, 오디오 경로, 엔지니어링 점검 항목이 어떻게 함께 변하는지 확인합니다.",
   "会议场景选择": "회의 장면 선택",
   "当前场景": "현재 장면",
   "用户视角": "사용자 관점",
@@ -292,9 +282,6 @@ const ko: Record<string, string> = {
   "关键模块": "핵심 모듈",
   "可观察指标": "관찰 가능한 지표",
   "排查顺序": "문제 해결 순서",
-  "返回知识库": "지식 베이스로 돌아가기",
-  "返回详细内容": "상세 내용으로 돌아가기",
-  "应用场景": "응용 시나리오"
 };
 
 const t = (zh: string, en: string): LocalizedText => ({ zh, "zh-Hant": traditional(zh), en, ja: ja[zh], ko: ko[zh] });
@@ -308,8 +295,8 @@ const scenarios: Record<ScenarioId, Scenario> = {
     risk: t("扬声器声音经桌面和墙面反射回到麦克风；音量变化和双讲会让回声更难消除。", "Speaker audio can reflect from the desk and walls into the microphone; level changes and double-talk make cancellation harder."),
     sceneDescription: t("笔记本或手机的扬声器播放远端声音，播放参考信号进入 AEC；同时声学回声从扬声器绕回内置麦克风。", "A laptop or phone plays remote audio through its speaker. The render reference enters AEC while acoustic echo travels from speaker back to the built-in microphone."),
     modules: [t("AEC", "AEC"), t("双讲检测", "Double-talk detection"), t("NS / ANR", "NS / ANR"), t("AGC", "AGC"), t("耳机模式", "Headset mode")],
-    metrics: [t("ERLE", "ERLE"), t("端到端延迟", "End-to-end latency"), t("输入峰值", "Input peak"), t("双讲保留率", "Double-talk retention")],
-    checks: [t("确认扬声器回采参考进入 AEC。", "Confirm the speaker render reference reaches AEC."), t("检查参考与麦克风信号是否对齐。", "Check alignment between reference and microphone audio."), t("检查双讲保留，再核对扬声器音量和处理强度。", "Check double-talk retention, then verify speaker volume and processing strength.")],
+    metrics: [t("ERLE", "ERLE"), t("端到端延迟", "End-to-end latency"), t("输入峰值", "Input peak"), t("双讲保真（定性）", "Qualitative double-talk fidelity")],
+    checks: [t("确认扬声器回采参考进入 AEC。", "Confirm the speaker render reference reaches AEC."), t("检查参考与麦克风信号是否对齐。", "Check alignment between reference and microphone audio."), t("双讲时定性听查近端语音保真；ERLE 只反映回声抑制，不代表近端语音保真。", "During double-talk, listen qualitatively for near-end speech fidelity; ERLE reflects echo suppression, not near-end speech fidelity.")],
     chain: [
       { kind: "capture", label: t("内置麦克风", "Built-in mic") },
       { kind: "process", label: t("AEC / 双讲 / NS / ANR / AGC", "AEC / double-talk / NS / ANR / AGC") },
@@ -448,8 +435,8 @@ function ScenarioScene({ id, language }: { id: ScenarioId; language: Language })
   if (id === "network") return (
     <SceneFrame {...frameProps} name={text("弱网会议场景图", "Poor network meeting scene diagram")}>
       <text className="meeting-diagram-title" x="44" y="48">{text("包到达间隔不均，其中一个包缺失", "Packets arrive unevenly and one packet is missing")}</text>
-      {[80, 150, 235, 340].map((x, i) => <g key={x}><rect className="meeting-box network" x={x} y={i % 2 ? 130 : 105} width="54" height="42" rx="6" /><text className="meeting-box-sub" x={x + 27} y={i % 2 ? 156 : 131} textAnchor="middle">#{i + 1}</text></g>)}
-      <rect x="270" y="130" width="54" height="42" rx="6" fill="none" stroke="#b44c6d" strokeDasharray="7 6" /><text className="meeting-reference-text" x="297" y="156" textAnchor="middle">{text("缺失", "Lost")}</text>
+      {[80, 150, 235, 340].map((x, i) => <g key={x}><rect className="meeting-box network" x={x} y={i % 2 ? 130 : 105} width="54" height="42" rx="6" /><text className="meeting-box-sub" x={x + 27} y={i % 2 ? 156 : 131} textAnchor="middle">#{i === 3 ? 5 : i + 1}</text></g>)}
+      <rect x="290" y="130" width="40" height="42" rx="6" fill="none" stroke="#b44c6d" strokeDasharray="7 6" /><text className="meeting-reference-text" x="310" y="156" textAnchor="middle">{text("缺失", "Lost")}</text><text className="meeting-box-sub" x="310" y="188" textAnchor="middle">#4</text>
       <text className="meeting-lane-title" x="80" y="205">{text("间隔不均的 RTP 包", "Uneven RTP packets")}</text>
       {[{ x: 80, w: 190, a: text("RTP 包到达", "RTP packet arrival"), b: text("乱序 / 晚到", "Reordered / late") }, { x: 310, w: 210, a: text("自适应抖动缓冲", "Adaptive jitter buffer"), b: text("重排 / 调度 / 缓冲延迟", "Reorder / schedule / delay") }, { x: 560, w: 190, a: text("FEC / PLC 解码决策", "FEC / PLC decode decision"), b: text("恢复或补偿", "Recover or conceal") }, { x: 790, w: 130, a: text("连续播放", "Playout"), b: text("扬声器输出", "Speaker output") }].map(({ x, w, a, b }) => <g key={x}><rect className="meeting-box process" x={x} y="245" width={w} height="76" rx="10" /><text className="meeting-box-title" x={x + w / 2} y="276" textAnchor="middle">{a}</text><text className="meeting-box-sub" x={x + w / 2} y="300" textAnchor="middle">{b}</text></g>)}
       <path className="meeting-arrow" d="M270 283 H300" markerEnd={`url(#${arrowId})`} /><path className="meeting-arrow" d="M520 283 H550" markerEnd={`url(#${arrowId})`} /><path className="meeting-arrow" d="M750 283 H780" markerEnd={`url(#${arrowId})`} />
@@ -471,26 +458,15 @@ function ScenarioScene({ id, language }: { id: ScenarioId; language: Language })
   );
 }
 
-export function MeetingCommunicationLab({ language, onBack, onBackToDetails }: MeetingCommunicationLabProps) {
+export function MeetingScenarioGuide({ language }: MeetingScenarioGuideProps) {
   const [activeScenario, setActiveScenario] = useState<ScenarioId>("personal");
   const scenario = scenarios[activeScenario];
   const text = (zhText: string, enText: string, jaText = ja[zhText], koText = ko[zhText]) => language === "zh-Hant" ? traditional(zhText) : language === "zh" ? zhText : language === "en" ? enText : language === "ja" ? jaText : koText;
+  const sectionTitle = text("会议场景对比", "Meeting scenario comparison", "会議シーン比較", "회의 장면 비교");
 
   return (
-    <main className="meeting-lab-page" aria-label={text("会议与通信实验室", "Conferencing and Communication Lab")}>
-      <section className="sound-lab-hero meeting-lab-hero">
-        <div className="sound-lab-back-actions">
-          <button className="sound-lab-back sound-lab-back-secondary" type="button" onClick={onBack}>
-            {text("返回知识库", "Back to knowledge base")}
-          </button>
-          {onBackToDetails && <button className="sound-lab-back" type="button" onClick={onBackToDetails}>
-            <ArrowLeft size={18} aria-hidden="true" />
-            {text("返回详细内容", "Back to detailed content")}
-          </button>}
-        </div>
-        <div><span className="details-category">{text("应用场景", "Applications")}</span><h1>{text("会议与通信实验室", "Conferencing and Communication Lab")}</h1><p>{text("选择真实会议场景，观察用户体验、音频链路和工程排查重点如何同步变化。", "Choose a real meeting scenario and see the user experience, audio chain, and engineering checks change together.")}</p></div>
-      </section>
-
+    <section className="sound-topic-section meeting-scenario-guide" aria-label={sectionTitle}>
+      <h2>{sectionTitle}</h2>
       <section className="meeting-scenario-tabs-section" aria-label={text("会议场景选择", "Meeting scenario selection")}>
         <div className="meeting-scenario-tabs">
           {scenarioIds.map((id) => <button className="meeting-scenario-tab" type="button" key={id} aria-pressed={activeScenario === id} onClick={() => setActiveScenario(id)}>{scenarios[id].label[language]}</button>)}
@@ -498,33 +474,32 @@ export function MeetingCommunicationLab({ language, onBack, onBackToDetails }: M
       </section>
 
       <section className="meeting-scene-section" aria-label={scenario.title[language]}>
-        <div className="meeting-section-heading"><span>{text("当前场景", "Current scenario")}</span><h2>{scenario.title[language]}</h2></div>
+        <div className="meeting-section-heading"><span>{text("当前场景", "Current scenario")}</span><h3>{scenario.title[language]}</h3></div>
         <ScenarioScene id={activeScenario} language={language} />
       </section>
 
       <section className="meeting-experience-section" aria-label={text("当前体验", "Current experience")}>
-        <div className="meeting-section-heading"><span>{text("用户视角", "User view")}</span><h2>{text("当前体验", "Current experience")}</h2></div>
+        <div className="meeting-section-heading"><span>{text("用户视角", "User view")}</span><h3>{text("当前体验", "Current experience")}</h3></div>
         <div className="meeting-experience-grid">
-          <article className="meeting-experience-item"><h3>{text("用户正在做什么", "What the user is doing")}</h3><p>{scenario.action[language]}</p></article>
-          <article className="meeting-experience-item"><h3>{text("正常体验", "Expected experience")}</h3><p>{scenario.expected[language]}</p></article>
-          <article className="meeting-experience-item"><h3>{text("主要风险", "Main risk")}</h3><p>{scenario.risk[language]}</p></article>
+          <article className="meeting-experience-item"><h4>{text("用户体验", "User experience", "ユーザー体験", "사용자 경험")}</h4><p>{scenario.action[language]} {scenario.expected[language]}</p></article>
+          <article className="meeting-experience-item"><h4>{text("主要风险", "Main risk")}</h4><p>{scenario.risk[language]}</p></article>
         </div>
       </section>
 
       <section className="meeting-chain-section" aria-label={text("场景链路", "Scenario chain")}>
-        <div className="meeting-section-heading"><span>{text("信号流", "Signal flow")}</span><h2>{text("场景链路", "Scenario chain")}</h2></div>
-        <div className="meeting-chain-list">{scenario.chain.map((node, index) => <article className={`meeting-chain-node ${node.kind}`} key={`${node.kind}-${node.label.en}`}><span className="meeting-chain-index">{index + 1}</span><h3>{node.label[language]}</h3>{index < scenario.chain.length - 1 && <span className="meeting-chain-arrow" aria-hidden="true">→</span>}</article>)}</div>
+        <div className="meeting-section-heading"><span>{text("信号流", "Signal flow")}</span><h3>{text("场景链路", "Scenario chain")}</h3></div>
+        <div className="meeting-chain-list">{scenario.chain.map((node, index) => <article className={`meeting-chain-node ${node.kind}`} key={`${node.kind}-${node.label.en}`}><span className="meeting-chain-index">{index + 1}</span><h4>{node.label[language]}</h4>{index < scenario.chain.length - 1 && <span className="meeting-chain-arrow" aria-hidden="true">→</span>}</article>)}</div>
         {scenario.optionalBranch && <div aria-label={scenario.optionalBranch.label[language]} className="meeting-optional-branch" role="group"><span>{scenario.optionalBranch.label[language]}</span><strong>{scenario.optionalBranch.nodeLabel[language]}</strong><p>{scenario.optionalBranch.note[language]}</p></div>}
       </section>
 
       <section className="meeting-engineering-section" aria-label={text("工程信息", "Engineering information")}>
-        <div className="meeting-section-heading"><span>{text("工程视角", "Engineering view")}</span><h2>{text("工程信息", "Engineering information")}</h2></div>
+        <div className="meeting-section-heading"><span>{text("工程视角", "Engineering view")}</span><h3>{text("工程信息", "Engineering information")}</h3></div>
         <div className="meeting-engineering-grid">
-          <article className="meeting-engineering-card"><h3>{text("关键模块", "Key modules")}</h3><ul className="meeting-engineering-list">{scenario.modules.map((item) => <li key={item.en}>{item[language]}</li>)}</ul></article>
-          <article className="meeting-engineering-card"><h3>{text("可观察指标", "Observable metrics")}</h3><ul className="meeting-engineering-list">{scenario.metrics.map((item) => <li key={item.en}>{item[language]}</li>)}</ul></article>
-          <article className="meeting-engineering-card"><h3>{text("排查顺序", "Troubleshooting order")}</h3><ol className="meeting-check-list">{scenario.checks.map((item) => <li key={item.en}>{item[language]}</li>)}</ol></article>
+          <article className="meeting-engineering-card"><h4>{text("关键模块", "Key modules")}</h4><ul className="meeting-engineering-list">{scenario.modules.map((item) => <li key={item.en}>{item[language]}</li>)}</ul></article>
+          <article className="meeting-engineering-card"><h4>{text("可观察指标", "Observable metrics")}</h4><ul className="meeting-engineering-list">{scenario.metrics.map((item) => <li key={item.en}>{item[language]}</li>)}</ul></article>
+          <article className="meeting-engineering-card"><h4>{text("排查顺序", "Troubleshooting order")}</h4><ol className="meeting-check-list">{scenario.checks.map((item) => <li key={item.en}>{item[language]}</li>)}</ol></article>
         </div>
       </section>
-    </main>
+    </section>
   );
 }

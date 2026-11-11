@@ -32,6 +32,9 @@ it.each(cases)("opens the translated guide and its lab: $title ($language)", ({ 
     if (topic.title.en === "Audio Codecs") {
       expect(view.container.querySelector(".audio-codec-topic-page")).toBeInTheDocument();
       expect(view.container.querySelectorAll(".codec-inline-visual")).toHaveLength(4);
+    } else if (topic.title.en === "Conferencing and Communication" || topic.title.en === "IoT and Content Creation") {
+      expect(view.container.querySelector(".application-topic-page")).toBeInTheDocument();
+      expect(view.container.querySelector(topic.title.en === "Conferencing and Communication" ? ".meeting-scenario-guide" : ".iot-troubleshooting")).toBeInTheDocument();
     } else {
       expect(view.container.querySelector(topic.title.en === "AI Audio Overall Flow" ? ".ai-overview" : ".system-audio-inline")).toBeInTheDocument();
     }

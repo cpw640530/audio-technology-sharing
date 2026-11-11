@@ -4,6 +4,8 @@ import { AiDenoiseWalkthrough } from "./AiDenoiseWalkthrough";
 import { AsrWalkthrough } from "./AsrWalkthrough";
 import { TtsWalkthrough } from "./TtsWalkthrough";
 import { AudioGenerationWalkthrough } from "./AudioGenerationWalkthrough";
+import { AudioEventWalkthrough } from "./AudioEventWalkthrough";
+import { AiModelReference } from "./AiModelReference";
 import type { AiAudioLabId, Language } from "../content/knowledge";
 
 type AiAudioLabProps = {
@@ -2309,8 +2311,9 @@ function AiModelCards({
     <section className="ai-model-section" aria-labelledby={headingId}>
       <div className="ai-article-section-heading ai-model-heading">
         <span>{aiUiText(language, "模型参考", "Model references", "モデルの参考", "모델 참고")}</span>
-        <h2 id={headingId}>{aiUiText(language, "代表模型与工程定位", "Representative Models and Engineering Roles", "代表モデルとエンジニアリング上の役割", "대표 모델과 엔지니어링 역할")}</h2>
+        <h2 id={headingId}>{aiUiText(language, "经典与补充方案", "Classic and complementary approaches", "従来方式と補足モデル", "고전 방식과 보완 모델")}</h2>
       </div>
+      <p>{aiUiText(language, "以下按机制与应用作对照，不是最新模型榜单；主线模型与核查日期见本页开头。", "These are mechanism and application comparisons, not a latest-model ranking. The primary model and review date are at the top of this page.", "以下は仕組み・用途の比較で、最新モデルのランキングではありません。主モデルと確認日はページ冒頭に記載しています。", "아래는 원리·용도 비교이며 최신 모델 순위가 아닙니다. 주 모델과 확인 날짜는 페이지 상단에 있습니다.")}</p>
       <div className="ai-model-grid">
         {article.models.map((model) => (
           <details className="ai-model-card" key={model.name}>
@@ -2409,8 +2412,9 @@ function AiArticleSections({
 export function AiAudioLab({ labId = "event", language, onBack, onBackToDetails }: AiAudioLabProps) {
   const article = aiArticles[labId] ?? aiArticles.event;
   const principle = article.sections.find(section => section.title.en === "Principles");
-  const interactive = labId === "asr" || labId === "enhancement" || labId === "tts" || labId === "generation";
+  const interactive = labId === "asr" || labId === "enhancement" || labId === "tts" || labId === "generation" || labId === "event";
   const chapters = [
+    ["ai-current-model", aiUiText(language, "模型实例", "Model example", "モデルの実例", "모델 사례")],
     ...(interactive ? [] : [
       ["ai-principle", aiUiText(language, "基本原理", "Principle", "基本原理", "기본 원리")],
       ["ai-flow", aiUiText(language, "处理流程", "Flow", "処理フロー", "처리 흐름")]
@@ -2441,6 +2445,7 @@ export function AiAudioLab({ labId = "event", language, onBack, onBackToDetails 
         <nav className="ai-reading-nav" aria-label={aiUiText(language, "AI 实验室章节", "AI lab chapters", "AIラボの章", "AI 랩 장")}>
           {chapters.map(([id, label], index) => <a key={id} href={`#${id}`}>{String(index + 1).padStart(2, "0")} · {label}</a>)}
         </nav>
+        <div className="ai-reading-section" id="ai-current-model"><AiModelReference mode={labId} language={language} /></div>
         {!interactive && <><section className="ai-principle-intro ai-reading-section" id="ai-principle" aria-labelledby="ai-principle-title">
           <h2 id="ai-principle-title">{aiUiText(language, "基本原理", "Basic principle", "基本原理", "기본 원리")}</h2>
           <p>{principle?.body[language]}</p>
@@ -2448,7 +2453,7 @@ export function AiAudioLab({ labId = "event", language, onBack, onBackToDetails 
         </section>
         <div className="ai-reading-section" id="ai-flow"><AiArticleFlow article={article} language={language} /></div></>}
         {interactive && <div className="ai-reading-section" id="ai-demo">
-          {labId === "enhancement" ? <AiDenoiseWalkthrough language={language} /> : labId === "tts" ? <TtsWalkthrough language={language} /> : labId === "generation" ? <AudioGenerationWalkthrough language={language} /> : <AsrWalkthrough language={language} />}
+          {labId === "enhancement" ? <AiDenoiseWalkthrough language={language} /> : labId === "tts" ? <TtsWalkthrough language={language} /> : labId === "generation" ? <AudioGenerationWalkthrough language={language} /> : labId === "event" ? <AudioEventWalkthrough language={language} /> : <AsrWalkthrough language={language} />}
         </div>}
         <div className="ai-reading-section" id="ai-engineering"><AiTechnicalSection article={article} language={language} /></div>
         <div className="ai-reading-section" id="ai-models"><AiModelCards article={article} language={language} /></div>

@@ -1,6 +1,8 @@
 import { traditional } from "../content/traditional";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRightToLine, ArrowRightFromLine, StepForward } from "lucide-react";
 import { useState } from "react";
+import { text } from "../content/language";
+import { repositionRing, transferRing } from "./alsaRing";
 
 import type { Language, LocalizedText } from "../content/knowledge";
 
@@ -309,8 +311,8 @@ function AlsaBufferDiagram({
             const cursor = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
             const angle = (Math.atan2(cursor.y - 210, cursor.x - center) * 180) / Math.PI + 90;
             const frame = Math.round((((angle + 360) % 360) / 360) * bufferFrames) % bufferFrames;
-            if (dragPointer === "read") onChange(frame, (writeFrame - frame + bufferFrames) % bufferFrames);
-            else onChange(readFrame, (frame - readFrame + bufferFrames) % bufferFrames);
+            const next = repositionRing({ read: readFrame, used: usedFrames }, bufferFrames, dragPointer, frame);
+            onChange(next.read, next.used);
           }}
           onPointerUp={() => setDragPointer(null)}
           onPointerCancel={() => setDragPointer(null)}
@@ -350,7 +352,8 @@ function AlsaBufferDiagram({
           <span>{localized(language, { zh: "读指针位置", "zh-Hant": traditional("读指针位置"), en: "Read pointer position", ja: "読み取りポインター位置", ko: "읽기 포인터 위치" })}: {readFrame}</span>
           <input aria-label={localized(language, { zh: "读指针位置", "zh-Hant": traditional("读指针位置"), en: "Read pointer position", ja: "読み取りポインター位置", ko: "읽기 포인터 위치" })} type="range" min="0" max={bufferFrames - 1} value={readFrame} onChange={(event) => {
             const frame = Number(event.target.value);
-            onChange(frame, (writeFrame - frame + bufferFrames) % bufferFrames);
+            const next = repositionRing({ read: readFrame, used: usedFrames }, bufferFrames, "read", frame);
+            onChange(next.read, next.used);
           }} />
         </label>
         <label className="alsa-control">
@@ -373,10 +376,12 @@ function AlsaBufferDiagram({
 }
 
 function AlsaLab({ language, onBack, onBackToDetails }: AlsaLabProps) {
+  const t = (zh: string, en: string, ja: string, ko: string) => text(language, zh, en, ja, ko);
   const [config, setConfig] = useState<AlsaConfig>(defaultConfig);
   const [mode, setMode] = useState<AlsaMode>("playback");
   const [streamDirection, setStreamDirection] = useState<StreamDirection>("playback");
   const [ring, setRing] = useState({ read: 0, used: 320 });
+  const [lastTransfer, setLastTransfer] = useState<{ actor: "app" | "hardware"; operation: "read" | "write"; transferred: number; missing: number } | null>(null);
   const periodMs = (config.periodFrames / config.sampleRate) * 1000;
   const bufferFrames = config.periodFrames * config.periodCount;
   const bufferMs = (bufferFrames / config.sampleRate) * 1000;
@@ -391,6 +396,7 @@ function AlsaLab({ language, onBack, onBackToDetails }: AlsaLabProps) {
     : `arecord -D plughw:0,0 -t raw -f ${format} -r ${config.sampleRate} -c ${config.channels} capture.raw`;
 
   function updateConfig(key: keyof AlsaConfig, value: number) {
+    setLastTransfer(null);
     setConfig((current) => ({ ...current, [key]: value } as AlsaConfig));
     if (key === "periodFrames" || key === "periodCount") {
       const capacity = key === "periodFrames" ? value * config.periodCount : config.periodFrames * value;
@@ -399,10 +405,18 @@ function AlsaLab({ language, onBack, onBackToDetails }: AlsaLabProps) {
   }
 
   function selectMode(nextMode: AlsaMode) {
+    setLastTransfer(null);
     setMode(nextMode);
     if (nextMode === "playback" || nextMode === "capture") {
       setStreamDirection(nextMode);
     }
+  }
+
+  function advance(actor: "app" | "hardware") {
+    const operation = (streamDirection === "playback") === (actor === "app") ? "write" : "read";
+    const result = transferRing(ring, bufferFrames, config.periodFrames, operation);
+    setRing(result.ring);
+    setLastTransfer({ actor, operation, transferred: result.transferred, missing: result.missing });
   }
 
   const xrunSteps = [
@@ -541,7 +555,24 @@ function AlsaLab({ language, onBack, onBackToDetails }: AlsaLabProps) {
                 <h2>{localized(language, { zh: "环形 buffer 与指针", "zh-Hant": traditional("环形 buffer 与指针"), en: "Ring buffer and pointers", ja: "リングバッファとポインター", ko: "링 버퍼와 포인터" })}</h2>
                 <p>{localized(language, { zh: "每个分区代表一个 period；分区数量和总容量随参数实时变化。", "zh-Hant": traditional("每个分区代表一个 period；分区数量和总容量随参数实时变化。"), en: "Each partition represents one period; partition count and total capacity update with the parameters.", ja: "各区画は1つのperiodを表し、区画数と総容量はパラメータに合わせて更新されます。", ko: "각 구간은 하나의 period를 나타내며 구간 수와 전체 용량은 파라미터에 따라 실시간으로 바뀝니다." })}</p>
               </div>
-              <AlsaBufferDiagram config={config} direction={streamDirection} language={language} usedFrames={usedFrames} readFrame={ring.read} onChange={(read, used) => setRing({ read, used })} />
+              <div className="alsa-ring-actions" role="group" aria-label={t("环形缓冲方向", "Ring direction", "リングの方向", "링 방향")}>
+                {(["playback", "capture"] as const).map(direction => <button key={direction} type="button" className={`alsa-mode-tab${streamDirection === direction ? " active" : ""}`} aria-pressed={streamDirection === direction} onClick={() => { setStreamDirection(direction); setLastTransfer(null); }}>
+                  {direction === "playback" ? t("播放：应用写 / 硬件读", "Playback: app writes / hardware reads", "再生：アプリ書込 / ハード読出", "재생: 앱 쓰기 / 하드웨어 읽기") : t("采集：硬件写 / 应用读", "Capture: hardware writes / app reads", "収録：ハード書込 / アプリ読出", "캡처: 하드웨어 쓰기 / 앱 읽기")}
+                </button>)}
+              </div>
+              <div className="alsa-ring-actions">
+                <button className="alsa-mode-tab" type="button" onClick={() => advance("app")}>
+                  {streamDirection === "playback" ? <ArrowRightToLine size={18} aria-hidden="true" /> : <ArrowRightFromLine size={18} aria-hidden="true" />}
+                  {streamDirection === "playback" ? t("应用写入", "App writes", "アプリ書込", "앱 쓰기") : t("应用读取", "App reads", "アプリ読出", "앱 읽기")} {config.periodFrames} frames
+                </button>
+                <button className="alsa-mode-tab" type="button" onClick={() => advance("hardware")}><StepForward size={18} aria-hidden="true" />{t("硬件推进", "Advance hardware", "ハードを進める", "하드웨어 진행")} {config.periodFrames} frames</button>
+              </div>
+              <p className="alsa-buffer-caption">{t("单步模型：每次请求一个 period，只搬运现有数据或剩余空间允许的帧数；方向切换保留同一快照。拖动指针是编辑快照，不代表真实读写。", "Single-step model: request one period and transfer only the frames allowed by available data or space. Switching direction keeps the snapshot. Dragging edits a snapshot, not a real transfer.", "単ステップモデル：1 period を要求し、データや空き容量の範囲で転送。方向切替は同じ状態を保持。ドラッグは状態編集で実際の転送ではない。", "단계별 모델: 한 period를 요청하고 데이터나 여유 공간이 허용하는 프레임만 옮긴다. 방향 전환은 같은 상태를 유지한다. 드래그는 실제 전송이 아닌 상태 편집이다.")}</p>
+              {lastTransfer && <output className="alsa-transfer-result" aria-live="polite">
+                <strong>{lastTransfer.actor === "app" ? "APP" : "DMA"} · {lastTransfer.operation === "read" ? t("读取", "Read", "読出", "읽기") : t("写入", "Write", "書込", "쓰기")}: {lastTransfer.transferred} / {config.periodFrames} frames</strong>
+                {lastTransfer.missing > 0 && <span>{lastTransfer.operation === "read" ? t("数据不足", "Insufficient data", "データ不足", "데이터 부족") : t("空间不足", "Insufficient space", "空き容量不足", "공간 부족")}: {lastTransfer.missing} frames. {lastTransfer.actor === "hardware" ? t("运行中的硬件不会等待应用；此处表示欠载/溢出条件，不模拟 ALSA 停流与恢复。", "Running hardware does not wait for the app. This indicates underflow/overflow conditions, without simulating ALSA stopping or recovery.", "動作中のハードはアプリを待たない。欠落・溢れの条件を示すが、ALSA の停止・復旧は模擬しない。", "실행 중인 하드웨어는 앱을 기다리지 않는다. 언더플로/오버플로 조건을 나타내며 ALSA 정지나 복구는 모사하지 않는다.") : t("实际 API 可能阻塞等待或返回部分帧；非阻塞且无帧可传时可能返回 -EAGAIN。", "A real API may block or return a partial count; nonblocking I/O may return -EAGAIN when no frames can be transferred.", "実 API は待機や部分転送があり、非ブロックで転送不可なら -EAGAIN を返す場合がある。", "실제 API는 대기하거나 일부 프레임을 반환할 수 있으며, 논블로킹에서 전송 불가 시 -EAGAIN을 반환할 수 있다.")}</span>}
+              </output>}
+              <AlsaBufferDiagram config={config} direction={streamDirection} language={language} usedFrames={usedFrames} readFrame={ring.read} onChange={(read, used) => { setRing({ read, used }); setLastTransfer(null); }} />
               <dl className="alsa-buffer-stats">
                 <div>
                   <dt>{streamDirection === "playback" ? localized(language, { zh: "排队待播放", "zh-Hant": traditional("排队待播放"), en: "Queued for playback", ja: "再生待ちキュー", ko: "재생 대기" }) : localized(language, { zh: "可读采集帧", "zh-Hant": traditional("可读采集帧"), en: "Captured frames ready", ja: "読み取り可能な収音フレーム", ko: "읽을 수 있는 캡처 프레임" })}</dt>
