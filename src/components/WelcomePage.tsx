@@ -1,11 +1,10 @@
 import { ArrowRight, Headphones } from "lucide-react";
-import type { Language } from "../content/knowledge";
+import { interfaceCopy, type Language } from "../content/knowledge";
 import { LanguageSelect, text } from "../content/language";
 
 export function WelcomePage({ language }: {
   language: Language;
 }) {
-  const zh = language === "zh";
   return (
     <div className="welcome-page" lang={language}>
       <header className="welcome-header">
@@ -19,9 +18,9 @@ export function WelcomePage({ language }: {
             width="1536" height="1024" loading="eager" />
           <div className="welcome-copy">
             <p className="welcome-greeting">{text(language, "欢迎来到我的", "Welcome to my", "ようこそ", "환영합니다")}</p>
-            <h1 id="welcome-title">{language === "zh-Hant" ? <>音頻知識<br />分享網站</> : language === "ja" ? <>オーディオ技術<br />共有サイト</> : language === "ko" ? <>오디오 기술<br />공유 사이트</> : zh ? <>音频知识<br />分享网站</> : <>Audio Knowledge<br />Sharing Website</>}</h1>
-            <p className="welcome-message">{text(language, "希望你能在这里学到音频相关知识，发现声音背后的原理。", "I hope you learn something about audio here and discover how sound works.", "オーディオの知識を学び、音の仕組みを一緒に探っていきましょう。", "오디오 지식을 배우고 소리 속에 숨은 원리를 발견해 보세요.")}</p>
-            <a className="welcome-enter" href="#top">{text(language, "进入音频知识库", "Explore audio knowledge", "オーディオ知識を探る", "오디오 지식 살펴보기")}<ArrowRight size={20} aria-hidden="true" /></a>
+            <h1 id="welcome-title">{interfaceCopy.title[language]}</h1>
+            <p className="welcome-message">{text(language, "从声音基础到音频硬件、信号处理与 AI，通过图解和交互实验理解声音背后的原理。", "Learn sound, hardware, signal processing and AI through diagrams and interactive experiments.", "音の基礎からオーディオ機器、信号処理、AI まで。図解と対話型の実験で、音の仕組みを学びます。", "소리의 기초부터 오디오 하드웨어, 신호 처리와 AI까지. 도해와 인터랙티브 실험으로 소리의 원리를 이해하세요.")}</p>
+            <a className="welcome-enter" href="#top">{text(language, "进入知识库", "Explore audio knowledge", "オーディオ知識を探る", "오디오 지식 살펴보기")}<ArrowRight size={20} aria-hidden="true" /></a>
           </div>
         </section>
         <footer className="welcome-footer">

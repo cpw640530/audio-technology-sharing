@@ -1,47 +1,19 @@
-import { traditional } from "../content/traditional";
-import { ArrowUpRight, Waves, Ruler, AudioLines, Ear, Mic, Cable, Speaker, Layers, Terminal, FileAudio, Timer, SlidersHorizontal, MicVocal, Orbit, Users, Car, Bot, Radio, Bluetooth, BrainCircuit } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import type { Category, Language, Topic, TopicLab } from "../content/knowledge";
+import { lazy, Suspense } from "react";
+import type { Category, Language, Topic } from "../content/knowledge";
 import { interfaceCopy } from "../content/knowledge";
-import { getTopicKey } from "../content/relatedTopics";
+import { text } from "../content/language";
 
-const topicIcons: Record<TopicLab["type"], LucideIcon> = {
-  "sound-wave": Waves,
-  "wave-spectrum": AudioLines,
-  "audio-units": Ruler,
-  "sampling-quantization": AudioLines,
-  "listening-metrics": Ear,
-  microphone: Mic,
-  "digital-interface": Cable,
-  "amplifier-speaker": Speaker,
-  "system-audio": Layers,
-  alsa: Terminal,
-  "realtime-audio": Timer,
-  "core-signal-processing": SlidersHorizontal,
-  "speech-enhancement": MicVocal,
-  "spatial-audio": Orbit,
-  "automotive-audio": Car,
-  "robot-audio": Bot,
-  "bluetooth-audio": Bluetooth,
-  "ai-audio": BrainCircuit
-};
+const TopicCarousel = lazy(() => import("./TopicCarousel"));
 
-type DisplayTopic = Topic & {
-  category: Category;
-};
+export type DisplayTopic = Topic & { category: Category };
 
 type TopicGridProps = {
   language: Language;
   topics: DisplayTopic[];
-  selectedTopicKey?: string;
   onSelectTopic: (topic: DisplayTopic) => void;
 };
 
-export function getTopicElementId(categoryId: string, title: string) {
-  return `topic-${categoryId}-${encodeURIComponent(title)}`;
-}
-
-export function TopicGrid({ language, topics, selectedTopicKey, onSelectTopic }: TopicGridProps) {
+export function TopicGrid({ language, topics, onSelectTopic }: TopicGridProps) {
   return (
     <section className="section-block" aria-labelledby="topics-heading">
       <div className="section-heading">
@@ -51,37 +23,15 @@ export function TopicGrid({ language, topics, selectedTopicKey, onSelectTopic }:
         </div>
         <span className="result-count">{topics.length}</span>
       </div>
-      {topics.length === 0 ? (
-        <div className="empty-state">{interfaceCopy.noResults[language]}</div>
-      ) : (
-        <div className="topic-grid" data-testid="topic-grid">
-          {topics.map((topic) => {
-            const key = getTopicKey(topic);
-            const Icon = topic.detail.lab ? topicIcons[topic.detail.lab.type] : key === "audio-codec" ? FileAudio : key === "meeting-communication" ? Users : key === "iot-content" ? Radio : topic.category.icon;
-            return (
-            <button
-              aria-pressed={selectedTopicKey === `${topic.category.id}-${topic.title.en}`}
-              className="topic-card"
-              data-guide={topic.category.id === "fundamentals" ? topic.detail.lab?.type : undefined}
-              id={getTopicElementId(topic.category.id, topic.title.en)}
-              key={`${topic.category.id}-${topic.title.en}`}
-              onClick={() => onSelectTopic(topic)}
-              style={{ "--accent": topic.category.accent } as React.CSSProperties}
-              type="button"
-            >
-              <div className="topic-card-topline">
-                <Icon className="topic-guide-icon" size={24} aria-hidden="true" />
-                <div className="topic-meta">{topic.category.title[language]}</div>
-                <ArrowUpRight size={18} aria-hidden="true" />
-              </div>
-              <h3>{topic.title[language]}</h3>
-              <p>{topic.summary[language]}</p>
-              <span className="topic-card-entry">{{ zh: "阅读与探索", "zh-Hant": traditional("阅读与探索"), en: "Read and explore", ja: "読んで探る", ko: "읽고 탐구하기" }[language]}<ArrowUpRight size={16} aria-hidden="true" /></span>
-            </button>
-            );
-          })}
-        </div>
-      )}
+      <div data-testid="topic-grid">
+        {topics.length === 0 ? (
+          <div className="empty-state">{interfaceCopy.noResults[language]}</div>
+        ) : (
+          <Suspense fallback={<p role="status">{text(language, "正在加载", "Loading", "読み込み中", "불러오는 중")}</p>}>
+            <TopicCarousel language={language} topics={topics} onSelectTopic={onSelectTopic} />
+          </Suspense>
+        )}
+      </div>
     </section>
   );
 }

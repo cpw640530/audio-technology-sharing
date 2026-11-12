@@ -6,6 +6,8 @@ import { categories, interfaceCopy } from "./content/knowledge";
 import { getTopicKey, relatedTopics } from "./content/relatedTopics";
 import { MeetingScenarioGuide } from "./components/MeetingScenarioGuide";
 
+vi.mock("./components/TopicGrid", () => import("./test/TopicBrowserStub"));
+
 describe("Audio knowledge app", () => {
   beforeEach(() => {
     window.history.replaceState(null, "", "#top");
@@ -13,21 +15,17 @@ describe("Audio knowledge app", () => {
     window.localStorage.setItem("audio-technology-language", "zh");
   });
 
-  it("switches to a searchable graph and opens a topic through the existing article route", async () => {
+  it("removes the homepage graph while preserving article-local related knowledge", async () => {
     const user = userEvent.setup();
     render(<App/>);
-    await user.click(screen.getByRole("button", { name: "关系图" }));
-    expect(screen.queryByTestId("topic-grid")).not.toBeInTheDocument();
-    const graph = screen.getByRole("group", { name: "音频知识连接图" });
-    expect(within(graph).getAllByRole("button")).toHaveLength(categories.length + categories.flatMap(category => category.topics).length);
-    await user.type(screen.getByRole("searchbox"), "ALSA");
-    expect(within(screen.getByRole("group", { name: "音频知识连接图" })).getByRole("button", { name: "ALSA 框架" })).toBeInTheDocument();
-    await user.clear(screen.getByRole("searchbox"));
-    fireEvent.click(within(screen.getByRole("group", { name: "音频知识连接图" })).getByRole("button", { name: "什么是声音" }));
+    expect(screen.queryByRole("button", { name: "关系图" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "知识关系图" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "浏览方式" })).not.toBeInTheDocument();
+    fireEvent.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /什么是声音/ }));
     expect(screen.getByRole("heading", { level: 1, name: "什么是声音" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "当前主题与关联知识" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "返回知识库" }));
-    expect(screen.getByRole("heading", { name: "知识关系图" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "卡片" }));
+    expect(screen.queryByRole("heading", { name: "知识关系图" })).not.toBeInTheDocument();
     expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
   }, 15000);
 
@@ -2688,7 +2686,6 @@ describe("Audio knowledge app", () => {
 
     const topicGrid = screen.getByTestId("topic-grid");
     expect(within(topicGrid).getByText("数字音频接口 / 传输协议")).toBeInTheDocument();
-    expect(within(topicGrid).getByRole("button", { name: /数字音频接口 \/ 传输协议/ })).toHaveTextContent("阅读与探索");
 
     await user.click(within(topicGrid).getByRole("button", { name: /数字音频接口 \/ 传输协议/ }));
 

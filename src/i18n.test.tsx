@@ -16,11 +16,8 @@ const cases = categories.flatMap(category => category.topics.flatMap(topic =>
 it.each(cases)("opens the translated guide and its lab: $title ($language)", ({ topic, language }) => {
   window.localStorage.setItem("audio-technology-language", language);
   const view = render(<App />);
-  const grid = within(screen.getByTestId("topic-grid"));
-  const title = grid.getByText(topic.title[language], { exact: true });
-  const card = title.closest("button");
-  expect(card).not.toBeNull();
-  fireEvent.click(card!);
+  const outline = view.container.querySelector<HTMLElement>(".knowledge-outline")!;
+  fireEvent.click(within(outline).getByRole("link", { name: topic.title[language] }));
   expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(topic.title[language]);
   const entry = view.container.querySelector<HTMLButtonElement>(".diagram-open-button");
   if (topic.detail.lab) {

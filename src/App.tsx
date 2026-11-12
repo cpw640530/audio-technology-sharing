@@ -1,7 +1,5 @@
 import { RelatedTopics } from "./components/RelatedTopics";
-import { KnowledgeGraph } from "./components/KnowledgeGraph";
 import { KnowledgeNavigationContext } from "./components/KnowledgeNavigation";
-import { LayoutGrid, Network } from "lucide-react";
 import { WaveSpectrumPage } from "./components/WaveSpectrumPage";
 import { WaveSpectrumLab } from "./components/WaveSpectrumLab";
 import { LanguageContext, languageNames, text } from "./content/language";
@@ -141,7 +139,6 @@ function AppContent({ language }: { language: Language }) {
     return () => window.removeEventListener("hashchange", syncNotes);
   }, []);
   const [activeCategory, setActiveCategory] = useState("all");
-  const [browseMode, setBrowseMode] = useState<"cards" | "graph">("cards");
   const [activeView, setActiveView] = useState<
     | "knowledge"
     | "hardwareTopicPage"
@@ -230,9 +227,6 @@ function AppContent({ language }: { language: Language }) {
     [allTopics]
   );
 
-  const selectedTopicKey = selectedTopic
-    ? `${selectedTopic.category.id}-${selectedTopic.title.en}`
-    : undefined;
   const activeSoftwareTopicIndex = activeSoftwareTopic
     ? softwareTopics.findIndex((topic) => topic.title.en === activeSoftwareTopic.title.en)
     : -1;
@@ -990,7 +984,7 @@ function AppContent({ language }: { language: Language }) {
       <Header
         language={language}
       />
-      <main className={`quartz-home${browseMode === "graph" ? " quartz-home-graph" : ""}`}>
+      <main className="quartz-home">
         <aside className="quartz-home-sidebar">
           <SearchBar language={language} value={query} onChange={setQuery} />
           <KnowledgeOutline
@@ -1005,23 +999,18 @@ function AppContent({ language }: { language: Language }) {
         </aside>
         <div className="quartz-home-main">
         <Hero language={language} totalTopics={allTopics.length} />
-        <div className="knowledge-browse-bar" role="group" aria-label={text(language, "浏览方式", "Browse view", "表示方式", "탐색 방식")}>
-          <button type="button" aria-pressed={browseMode === "cards"} onClick={() => setBrowseMode("cards")}><LayoutGrid size={17}/>{text(language, "卡片", "Cards", "カード", "카드")}</button>
-          <button type="button" aria-pressed={browseMode === "graph"} onClick={() => setBrowseMode("graph")}><Network size={17}/>{text(language, "关系图", "Graph", "グラフ", "그래프")}</button>
-        </div>
-        <div className={`content-layout${browseMode === "graph" ? " graph-layout" : ""}`} id="knowledge-content">
+        <div className="content-layout" id="knowledge-content">
           <CategoryTabs
             activeCategory={activeCategory}
             categories={categories}
             language={language}
             onSelectCategory={setActiveCategory}
           />
-          {browseMode === "graph" ? <KnowledgeGraph topics={visibleTopics} language={language} onOpen={openTopic} onSelectCategory={setActiveCategory}/> : <TopicGrid
+          <TopicGrid
             language={language}
             onSelectTopic={openTopic}
-            selectedTopicKey={selectedTopicKey}
             topics={visibleTopics}
-          />}
+          />
           {selectedTopic ? (
             <TopicDetails
               language={language}
