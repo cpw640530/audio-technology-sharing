@@ -1,9 +1,5 @@
-<p align="center">
-  <h1 align="center">Audio Technology Sharing</h1>
-  <p align="center">
-    Learn audio by changing parameters, inspecting waveforms, and connecting interactive experiments with multilingual engineering guides.
-  </p>
-</p>
+<h1 align="center">Audio Technology Sharing</h1>
+<p align="center">Follow the signal. Change a parameter. See why the result changes.</p>
 
 <p align="center">
   <a href="./README.md">English</a> ·
@@ -14,165 +10,111 @@
 </p>
 
 <p align="center">
-  <img alt="Docs" src="https://img.shields.io/badge/docs-Markdown-blue">
-  <img alt="App" src="https://img.shields.io/badge/app-React%20%2B%20Vite-1f9d8a">
-  <img alt="Languages" src="https://img.shields.io/badge/languages-English%20%7C%20Chinese%20%7C%20Japanese%20%7C%20Korean-brightgreen">
-  <img alt="Project Type" src="https://img.shields.io/badge/type-Audio%20Technology%20Sharing-purple">
-  <img alt="Status" src="https://img.shields.io/badge/status-active%20development-green">
+  <img alt="React and Vite" src="https://img.shields.io/badge/app-React%20%2B%20Vite-1f9d8a">
+  <img alt="5 languages" src="https://img.shields.io/badge/languages-5-blue">
+  <img alt="Active development" src="https://img.shields.io/badge/status-active%20development-green">
 </p>
 
----
+## Explore the Website
 
-## Overview
+**[Open the website](https://cpw640530.github.io/audio-technology-sharing/)** · **[Browse topics](https://cpw640530.github.io/audio-technology-sharing/#top)** · **[Try the sound wave lab](https://cpw640530.github.io/audio-technology-sharing/#/labs/sound-wave)**
 
-Audio Technology Sharing is a content-first repository and web app for organizing audio technology concepts into searchable cards, diagrams, articles, and interactive learning labs.
+Audio Technology Sharing is a visual knowledge base for students, engineers and audio enthusiasts. It connects sound, hardware, software, DSP, AI and applications through illustrated articles and interactive experiments, rather than a glossary of isolated terms.
 
-The website provides a simple way to browse audio fundamentals, hardware, software, signal processing, AI audio algorithms, and real-world applications. Topic cards can open detailed explanations and focused labs for visual or interactive learning.
+Currently: **6 knowledge areas, 27 topic articles and 22 standalone labs**, in English, Simplified Chinese, Traditional Chinese, Japanese and Korean. Some topics use inline diagrams and demonstrations instead of a separate lab.
 
-**[Explore the website](https://cpw640530.github.io/audio-technology-sharing/)** · English, Simplified Chinese, Traditional Chinese, Japanese, and Korean supported.
+<p align="center"><img alt="Current knowledge base with topic outline, learning paths, search and rotating topic cards" src="./public/images/audio_technology_sharing.png" width="1000"></p>
+
+All screenshots on this page were captured from the production build on **November 12, 2026**. They use the English interface and the reduced-motion setting; the website supports all five languages. Screenshots show the local build, not a verification of the latest online deployment.
 
 ## Interactive Labs: See What Changes
 
-Why does a higher bit depth reduce quantization error? How does a longer window change a spectrogram? What does an echo canceller actually subtract? Explore these questions through controlled comparisons, not just definitions.
+Why does a higher bit depth reduce quantization error? How does window length change a spectrogram? What does an echo canceller actually subtract? Change the conditions and compare the results.
 
 | Lab | Try it | What to look for |
 | --- | --- | --- |
-| Sound waves | Change frequency, amplitude and phase; play the signal | Connect a sine model with waveform shape and sound |
-| Waveforms and spectra | Adjust three harmonic components and their relative phase | Compare pointwise sums and ideal amplitude lines; hear the same coefficients without auto-normalization |
-| Sampling, quantization and PCM | Compare sparse/dense samples and 2-bit/8-bit quantization; inspect sample words | Separate time sampling from amplitude precision; trace quantized values to binary codes |
-| FFT / STFT | Compare single/nearby tones, short/long windows, hop sizes and impulses | Follow the selected PCM window into its spectrum; distinguish bin spacing from resolving nearby frequencies |
-| AEC echo cancellation | Compare 0%, 50% and 100% model strength across four signal tracks | Follow playback reference, capture, estimated echo and output; see why cancellation is not simply capture minus playback |
+| [Sound waves](https://cpw640530.github.io/audio-technology-sharing/#/labs/sound-wave) | Change frequency, amplitude and phase; play the signal | Period, amplitude and phase are different properties |
+| [Waveforms and spectra](https://cpw640530.github.io/audio-technology-sharing/#/labs/wave-spectrum) | Adjust harmonic components and relative phase | Connect time-domain sums with ideal amplitude spectra |
+| [Digital audio](https://cpw640530.github.io/audio-technology-sharing/#/labs/sampling-quantization) | Compare sampling and quantization; inspect PCM words and DAC reconstruction | Separate time sampling, amplitude precision and reconstruction |
+| [FFT / STFT](https://cpw640530.github.io/audio-technology-sharing/#/labs/core-signal-processing) | Compare nearby tones, window lengths, hop sizes and impulses | Follow a PCM window into its spectrum; distinguish bin spacing from resolving nearby frequencies |
+| [Speech enhancement](https://cpw640530.github.io/audio-technology-sharing/#/labs/speech-enhancement) | Switch AEC, noise suppression and AGC; vary processing strength | Compare each stage's input/output and follow the upstream effects |
 
-**Start here:** [enter the knowledge base](https://cpw640530.github.io/audio-technology-sharing/#top), open a topic's detailed article, then its lab. Return to the article whenever you need the theory. Hardware, ALSA, spatial audio and application topics also include visual or interactive explorations.
+<p align="center"><img alt="Sound Wave Lab with waveform, formula, parameter controls and playback" src="./public/images/Sound%20Wave%20Lab.png" width="1000"></p>
 
-<p align="center">
-  <img alt="Sound Wave Lab: adjust signal parameters and compare the waveform with playback" src="./public/images/Sound%20Wave%20Lab.png" width="900">
-</p>
+**Learning models, not measurement instruments.** Articles and labs label actual computation, teaching simulation and schematic animation, with reference sources, maintenance dates and assumptions. AI demonstrations do **not** run the cited production models or reproduce their benchmarks. AEC uses known synthetic components, not a production adaptive canceller. Not every lab has playback; pause background music before listening comparisons.
 
-**Learning models, not measurement instruments.** Labs distinguish conceptual illustrations, numerical simulations and audio demonstrations; not every lab has playback. The AEC example uses known synthetic components, not a production adaptive canceller. Its full-strength residual is a model setting, not a real-device performance limit. Pause background music before listening comparisons.
+## Read, Experiment, Continue
 
-The screenshot shows an earlier interface; recent comparison presets appear online only after deployment.
+1. **Find a topic:** browse the left-hand knowledge outline, search, or filter categories and rotate the topic cards. Smaller screens adapt the layout.
+2. **Read with a purpose:** each article states what to know first, the question it answers and a suggested next reading. Section navigation and a draggable local relationship graph help connect topics.
+3. **Test the idea:** use the lab where one exists, then return to the article. Guides explain the principles; labs focus on controls, observations and result interpretation.
+4. **Share a specific page:** articles and labs have their own hash-based URLs. For example, [What Sound Is](https://cpw640530.github.io/audio-technology-sharing/#/topics/sound-wave) opens directly and survives a refresh, without requiring a server route per article.
 
-## Interface and Reading Path
+<p align="center"><img alt="What Sound Is article: prerequisites, learning question, sources, section navigation and local graph" src="./public/images/topic-detail.png" width="1000"></p>
 
-- **Find a topic:** use the knowledge outline on the left, or search and filter the topic cards in the main area. Small screens use a single-column layout.
-- **Read the details:** open a topic page with a section outline, diagrams, engineering context, and links to adjacent topics.
-- **Try the lab:** follow the lab entry to explore the topic through interactive controls or guided visual explanations. Return to the detailed article or the knowledge base afterward.
-- **Explore further:** technical notes form a separate section for work-related learning; reference websites at the bottom of the homepage provide further reading.
-- **Choose your language:** the site starts in English and remembers your language choice. A slowly moving 3D waveform surface forms a non-interactive background, with a static reduced-motion mode and a plain-background fallback when WebGL is unavailable.
+The slowly moving 3D waveform surface is a non-interactive background. Reduced-motion mode keeps it still; where WebGL is unavailable, a Canvas 2D fallback draws the projected surface when supported. Technical notes remain a separate section, and reference websites at the bottom of the knowledge base provide further reading.
 
-The screenshots below were captured from the production build on October 28, 2026, with background motion paused for readability. Local changes appear on the published site only after deployment.
+## Pick Up Where You Left Off
 
-<p align="center">
-  <img alt="Audio Technology Sharing website overview" src="./public/images/audio_technology_sharing.png" width="900">
-</p>
+- **Recently viewed:** reopen up to eight recent topics, including the lab you visited.
+- **Bookmarks:** save or remove a topic from its article or lab; find it again from the homepage.
+- **Lab parameters:** supported controls are validated and restored on return. Reset the current lab to its defaults at any time. Playback, uploaded audio and transient animation states are not restored.
+- **Your browser only:** no account, upload or cross-device sync. Clearing local learning data removes reading history, bookmarks and saved lab parameters, but keeps the language setting. Clearing browser/site data also removes this history; unavailable storage is reported in the interface.
 
-## Detailed Articles
-
-Topic pages connect concepts, engineering boundaries, and practical experiments. The section outline on the left helps navigate the article, while the lab entry continues the learning path.
-
-<p align="center">
-  <img alt="What Sound Is article with section navigation and lab entry" src="./public/images/topic-detail.png" width="900">
-</p>
-
-## Why This Repository Exists
-
-Audio technology spans physics, electronics, embedded systems, operating systems, digital signal processing, machine learning, and product applications. This repository keeps those topics in one structured place so future website content can be planned and expanded consistently.
-
-It is designed for:
-
-- Preparing audio technology sharing website content.
-- Building article outlines and topic pages.
-- Planning diagrams for audio signal chains and algorithms.
-- Organizing traditional DSP and AI audio concepts together.
-- Creating a reusable content foundation for future audio technology projects.
+<p align="center"><img alt="Homepage bookmarks populated by visiting and saving example topics; data stays in this browser" src="./public/images/reading-memory.png" width="900"></p>
 
 ## Knowledge Areas
 
-<p align="center">
-  <img alt="Knowledge areas outline in the audio technology website" src="./public/images/Knowledge%20Areas.png" width="900">
-</p>
-
 | Area | Topics |
 | --- | --- |
-| Audio fundamentals | Sound, audio units, sampling, quantization, encoding, listening perception and metrics, reading waveforms and spectra |
+| Audio fundamentals | Sound, waveforms and spectra, sampling, quantization, encoding, audio units, listening perception and metrics |
 | Audio hardware | Microphones, digital audio interfaces, amplifiers and speakers |
 | Audio software | System audio architecture, ALSA, real-time processing, audio codecs |
-| Traditional algorithms | Core signal processing (FFT/STFT, filters, EQ, dynamics), speech enhancement, spatial audio |
+| Traditional DSP | FFT/STFT, filters, EQ, dynamics, speech enhancement, spatial audio |
 | AI audio | Overall processing flow, ASR, TTS, generation, event detection, enhancement, neural audio coding |
 | Applications | Bluetooth audio, conferencing, robots, in-car acoustics, IoT and content creation |
 
-## Quick Start
+<p align="center"><img alt="Knowledge area filters and rotating topic cards with neighboring cards visible" src="./public/images/Knowledge%20Areas.png" width="1000"></p>
 
-Visit the published website:
+## Run Locally
 
-- [https://cpw640530.github.io/audio-technology-sharing/](https://cpw640530.github.io/audio-technology-sharing/)
-
-Start from the main knowledge outline:
-
-- [Audio Technology Sharing Knowledge Outline](docs/audio_technology_knowledge_outline.md)
-
-The outline provides a content overview. Current topic metadata lives in `src/content/knowledge.ts`; detailed pages and labs are implemented under `src/components/`.
-
-To run the web app locally:
+With Node.js and npm installed, use the repository lockfile:
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Useful commands:
+Validation and production build:
 
 ```bash
 npm test
 npm run build
 ```
 
-## Content Structure
+Article and lab code is loaded on demand. Welcome images use responsive WebP assets with a PNG fallback. See the [loading measurements and remaining limits](docs/loading-performance-2026-11-12.md); this is not a claim of uniformly smooth performance on every device.
 
-```text
-.
-├── README.md
-├── READMEs/
-│   ├── README.zh-CN.md
-│   ├── README.ja.md
-│   └── README.ko.md
-├── index.html
-├── package.json
-├── src/
-│   ├── App.tsx
-│   ├── components/
-│   ├── content/
-│   └── styles.css
-└── docs/
-    └── audio_technology_knowledge_outline.md
-```
+## Content and Maintenance
 
-## Learning Examples
+| Location | Purpose |
+| --- | --- |
+| `README.md`, `READMEs/` | Project introductions in five languages, including `README.zh-TW.md` |
+| `src/content/knowledge.ts` | Categories, topic metadata and lab entries |
+| `src/content/topicRoutes.ts` | Article/lab URLs and route mapping |
+| `src/content/topicLearning.ts` | Prerequisites, learning questions and next-reading links |
+| `src/content/topicCredibility.ts` | Sources, update dates, demonstration methods and assumptions |
+| `src/components/` | Articles, diagrams, interactive labs and shared reading UI |
+| `src/hooks/useLabState.tsx` | Validated local persistence for lab parameters |
+| `src/styles.css` | Shared styling and responsive layout |
+| `public/images/` | Illustrations and the screenshots used here |
 
-The articles and labs connect concepts to practical questions:
+The [knowledge outline](docs/audio_technology_knowledge_outline.md) provides a content overview. [Local return-visit notes](docs/local-return-visits.md) describe storage, reset behavior and privacy limits. Topic source files are the reference for current implementation.
 
-- **Beginner guides**: sample rate, bit depth, frequency response, audio formats, Bluetooth latency.
-- **Hardware explainers**: microphones, ADC/DAC conversion, digital interfaces, amplifiers and speakers.
-- **Algorithm visualizations**: FFT, filtering, noise suppression, echo cancellation, beamforming.
-- **AI audio series**: speech recognition, speech synthesis, AI denoising, voice cloning, audio generation.
-- **Application case studies**: conferencing systems, smart speakers, in-car voice interaction, live streaming audio.
+## Languages
 
-## Language
+The README, interface, guides and labs support **English, Simplified Chinese, Traditional Chinese, Japanese and Korean**. The website starts in English and remembers the language you select. Model names, code, equations and text embedded in source images remain unchanged. GitHub language links open separate README files; no JavaScript is required.
 
-This repository provides separate README files for each language:
-
-- [English](./README.md)
-- [简体中文](./READMEs/README.zh-CN.md)
-- [繁體中文](./READMEs/README.zh-TW.md)
-- [日本語](./READMEs/README.ja.md)
-- [한국어](./READMEs/README.ko.md)
-
-The README, website interface, topic guides, and labs support English, Simplified Chinese, Traditional Chinese, Japanese, and Korean. Use the website's language selector to switch in place; your choice is remembered. Standard model names, code, equations, and original text embedded in reference images remain unchanged.
-
-The website also offers Traditional Chinese (`zh-Hant`), derived from the Simplified Chinese content using ICU character conversion. Regional terminology is not separately localized. Conversion data is bundled locally; no translation service is contacted. After changing Chinese copy, maintainers with ICU `uconv` installed can refresh phrase mappings with `node scripts/generate-traditional.cjs`.
-
-GitHub README files do not run JavaScript, so language switching is implemented with normal Markdown links.
+Traditional Chinese (`zh-Hant`) is derived from Simplified Chinese using locally bundled ICU character-conversion mappings, not an online translation service. Regional terminology is not separately localized. After changing Chinese content, maintainers with ICU `uconv` installed can refresh mappings with `node scripts/generate-traditional.cjs`.
 
 ## License
 

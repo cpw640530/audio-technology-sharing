@@ -66,6 +66,35 @@ it("keeps three-card side previews separated and loops without duplicating topic
   }
 });
 
+it.each([900, 390])("matches AI card spacing across categories at width %s", width => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(width);
+  vi.spyOn(window, "matchMedia").mockImplementation(media => ({
+    media, matches: true, onchange: null, addEventListener() {}, removeEventListener() {},
+    addListener() {}, removeListener() {}, dispatchEvent: () => true,
+  }));
+  const pose = (title: string) => {
+    const element = screen.getByRole("button", { name: title }).parentElement!;
+    return { transform: element.style.transform, opacity: element.style.opacity, visibility: element.style.visibility };
+  };
+  const ai = topics.filter(topic => topic.category.id === "ai");
+  const reference = render(<TopicCarousel topics={ai} language="en" onSelectTopic={vi.fn()} />);
+  const expected = [pose(ai[0].title.en), pose(ai[1].title.en), pose(ai[ai.length - 1].title.en)];
+  reference.unmount();
+  for (const category of categories) {
+    const cards = topics.filter(topic => topic.category.id === category.id);
+    const view = render(<TopicCarousel topics={cards} language="en" onSelectTopic={vi.fn()} />);
+    for (let index = 0; index < cards.length; index++) {
+      expect([
+        pose(cards[index].title.en),
+        pose(cards[(index + 1) % cards.length].title.en),
+        pose(cards[(index + cards.length - 1) % cards.length].title.en),
+      ]).toEqual(expected);
+      fireEvent.click(screen.getByRole("button", { name: "Rotate right" }));
+    }
+    view.unmount();
+  }
+});
+
 it("integrates the sole carousel view with search, filters and article returns", async () => {
   const { default: App } = await import("../App");
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);

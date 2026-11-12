@@ -49,20 +49,19 @@ function CardRing({ language, topics, onSelectTopic }: Props) {
     let current = 0, target = 0, frame = 0, last = 0, width = 1;
     const paint = () => {
       const mobile = width < 600;
-      const radius = Math.max(230, count * 62);
-      // Three cards on a circle otherwise hide behind the front card; use a shallow ellipse.
-      const horizontalRadius = count === 3 ? radius * 1.5 : radius;
-      const depthRadius = count === 3 ? radius * .65 : radius;
+      // Keep the original seven-card AI layout even when a category has fewer topics.
+      const radius = 7 * 62;
       const focalDistance = root.clientHeight / (2 * Math.tan(Math.PI / 8));
-      camera.position.z = mobile ? focalDistance : depthRadius + focalDistance;
+      camera.position.z = mobile ? focalDistance : radius + focalDistance;
       objects.forEach((object, i) => {
         const offset = ((i - current + count / 2) % count + count) % count - count / 2;
-        const angle = offset * Math.PI * 2 / count;
-        const facingAngle = count === 3 ? angle * .6 : angle;
-        object.position.set(mobile ? offset * 330 : Math.sin(angle) * horizontalRadius, 0, mobile ? 0 : Math.cos(angle) * depthRadius);
+        const angle = offset * Math.PI * 2 / 7;
+        object.position.set(mobile ? offset * 330 : Math.sin(angle) * radius, 0, mobile ? 0 : Math.cos(angle) * radius);
         // Turn side cards toward the reader instead of exposing their backs.
-        object.rotation.y = mobile ? 0 : facingAngle * .4;
-        object.element.style.opacity = String(mobile ? 1 : .25 + .75 * Math.max(0, Math.cos(facingAngle)));
+        object.rotation.y = mobile ? 0 : angle * .4;
+        // Fade the far card at the wrap point of a short arc instead of visibly teleporting it.
+        const wrapOpacity = count >= 3 && count < 7 ? Math.min(1, (count / 2 - Math.abs(offset)) * 2) : 1;
+        object.element.style.opacity = String(mobile ? 1 : (.25 + .75 * Math.max(0, Math.cos(angle))) * wrapOpacity);
         object.element.style.visibility = mobile && Math.abs(offset) > 1.2 ? "hidden" : "visible";
       });
       renderer.render(scene, camera);
