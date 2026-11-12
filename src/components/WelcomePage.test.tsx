@@ -44,7 +44,16 @@ it.each(["zh", "en"] as const)("opens the welcome page and preserves library nav
   expect(container.querySelector(".welcome-message")).toHaveTextContent(language === "zh" ? "图解和交互实验" : "diagrams and interactive experiments");
   expect(container.querySelectorAll(".welcome-enter")).toHaveLength(1);
   expect(screen.queryByTestId("topic-grid")).not.toBeInTheDocument();
-  expect(screen.getByRole("img")).toHaveAttribute("src", expect.stringContaining("images/welcome-listener-light.png"));
+  const listener = screen.getByRole("img");
+  expect(listener).toHaveAttribute("src", expect.stringContaining("images/welcome-listener-light.png"));
+  expect(listener).toHaveAttribute("alt", language === "zh" ? "戴着耳机，闭眼聆听的人物插画" : "An illustrated listener wearing headphones with eyes gently closed");
+  expect(listener).toHaveAttribute("width", "1536");
+  expect(listener).toHaveAttribute("height", "1024");
+  expect(listener).toHaveAttribute("loading", "eager");
+  expect(listener).toHaveAttribute("fetchpriority", "high");
+  expect(container.querySelector("source[type='image/webp']")).toHaveAttribute("srcset", expect.stringContaining("welcome-listener-mobile.webp 768w"));
+  expect(container.querySelector("source[type='image/webp']")).toHaveAttribute("srcset", expect.stringContaining("welcome-listener-light.webp 1536w"));
+  expect(container.querySelector("source[type='image/webp']")).toHaveAttribute("sizes", "100vw");
   expect(container.querySelectorAll(".welcome-motion button")).toHaveLength(1);
   const music = container.querySelector(".welcome-music");
   expect(screen.getByRole("button", { name: language === "zh" ? "播放背景音乐" : "Play background music" })).toBeInTheDocument();

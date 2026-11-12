@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLabState } from "../hooks/useLabState";
 import type { Language } from "../content/knowledge";
 import { text } from "../content/language";
 
@@ -20,9 +20,9 @@ export function simulateRealtime(processing: number, scheduling: number, capacit
 
 export function RealtimeTimeline({ language }: { language: Language }) {
   const t = (zh: string, en: string, ja: string, ko: string) => text(language, zh, en, ja, ko);
-  const [processing, setProcessing] = useState(12);
-  const [scheduling, setScheduling] = useState(4);
-  const [capacity, setCapacity] = useState(2);
+  const [processing, setProcessing] = useLabState("timeline.processing", 12, (v): v is number => typeof v === "number" && [4, 12, 24, 32, 40, 64].includes(v));
+  const [scheduling, setScheduling] = useLabState("timeline.scheduling", 4, (v): v is number => typeof v === "number" && [0, 4, 12, 24].includes(v));
+  const [capacity, setCapacity] = useLabState("timeline.capacity", 2, (v): v is number => typeof v === "number" && [1, 2, 4, 6].includes(v));
   const rows = simulateRealtime(processing, scheduling, capacity);
   const dropped = rows.filter(row => row.end === null).length;
   const maxDelay = Math.max(...rows.map(row => row.end === null ? 0 : row.end - row.arrival));

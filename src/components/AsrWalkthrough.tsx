@@ -1,5 +1,5 @@
 import { traditional } from "../content/traditional";
-import { useState } from "react";
+import { useLabState } from "../hooks/useLabState";
 import { RnntWalkthrough } from "./RnntWalkthrough";
 import { AttentionAsrWalkthrough } from "./AttentionAsrWalkthrough";
 import type { Language } from "../content/knowledge";
@@ -80,10 +80,10 @@ export function AsrWalkthrough({ language }: { language: Language }) {
     "Token": "토큰"
   };
   const t = (zh: string, en: string) => language === "zh-Hant" ? traditional(zh) : language === "zh" ? zh : language === "en" ? en : (language === "ja" ? ja[zh] : ko[zh]);
-  const [step, setStep] = useState(0);
-  const [example, setExample] = useState(0);
-  const [frame, setFrame] = useState(3);
-  const [blankLogit, setBlankLogit] = useState(3);
+  const [step, setStep] = useLabState<number>("asr.step", 0, (value): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0 && value < 5);
+  const [example, setExample] = useLabState<number>("asr.ctc.example", 0, (value): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0 && value < examples.length);
+  const [frame, setFrame] = useLabState<number>("asr.ctc.frame", 3, (value): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0 && value < examples[0].length);
+  const [blankLogit, setBlankLogit] = useLabState<number>("asr.ctc.blankLogit", 3, (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= -2 && value <= 4);
   const probabilities = examples[example].map((winner, i) => {
     const logits: number[] = tokens.map((_, token) => token === winner ? 3 : 0);
     if (i === 3) { logits[0] = blankLogit; logits[examples[example][2]] = 2; }

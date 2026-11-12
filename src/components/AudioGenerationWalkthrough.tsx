@@ -3,14 +3,15 @@ import { animate, createScope } from "animejs";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import type { Language } from "../content/knowledge";
 import { text } from "../content/language";
+import { useLabState } from "../hooks/useLabState";
 import { aceStepBudget } from "./audioGenerationModel";
 
 export function AudioGenerationWalkthrough({ language }: { language: Language }) {
   const t = (zh: string, en: string, ja: string, ko: string) => text(language, zh, en, ja, ko);
   const [stage, setStage] = useState(0);
-  const [route, setRoute] = useState(0);
-  const [tick, setTick] = useState(0);
-  const [seconds, setSeconds] = useState(10);
+  const [route, setRoute] = useLabState<number>("generation.route", 0, (value): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0 && value < 2);
+  const [tick, setTick] = useLabState<number>("generation.tick", 0, (value): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 8);
+  const [seconds, setSeconds] = useLabState<number>("generation.seconds", 10, (value): value is number => typeof value === "number" && Number.isInteger(value) && value >= 10 && value <= 60 && value % 10 === 0);
   const root = useRef<HTMLElement>(null);
   const budget = aceStepBudget(seconds);
   const stages = [t("描述与条件", "Prompt & conditions", "記述と条件", "설명과 조건"), t("声音的表示", "Audio representation", "音の表現", "소리 표현"), t("模型怎样生成", "How generation works", "生成の仕組み", "생성 원리"), t("解码与交付", "Decode & deliver", "復号と出力", "디코딩과 전달")];

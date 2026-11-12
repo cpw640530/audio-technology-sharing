@@ -2,6 +2,7 @@ import { traditional } from "../content/traditional";
 import { createDistortionCurve, distortionSample, getDistortionHarmonics } from "./listeningDistortionModel";
 import { text } from "../content/language";
 import { toneComponents, toneResponse, toneSample } from "./listeningToneModel";
+import { useLabState } from "../hooks/useLabState";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Pause, Play } from "lucide-react";
 import type { Language, LocalizedText } from "../content/knowledge";
@@ -886,8 +887,16 @@ function applyLiveIntensity(graph: ActiveAudioGraph, amount: number) {
 }
 
 export function ListeningMetricsLab({ language, onBack, onBackToDetails }: ListeningMetricsLabProps) {
-  const [activeEffect, setActiveEffect] = useState<ListeningEffect>("brightness");
-  const [intensity, setIntensity] = useState(55);
+  const [activeEffect, setActiveEffect] = useLabState<ListeningEffect>(
+    "ListeningMetricsLab.activeEffect",
+    "brightness",
+    (value): value is ListeningEffect => value === "brightness" || value === "muddy" || value === "noise" || value === "distortion" || value === "compression" || value === "stereo"
+  );
+  const [intensity, setIntensity] = useLabState(
+    "ListeningMetricsLab.intensity",
+    55,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 0 && value <= 100 && value % 5 === 0
+  );
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<ActiveAudioGraph | null>(null);
   const stopTimer = useRef<number>();

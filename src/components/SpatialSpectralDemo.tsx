@@ -1,6 +1,7 @@
 import { traditional } from "../content/traditional";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import type { Language } from "../content/knowledge";
+import { useLabState } from "../hooks/useLabState";
 import { arrayExample, spectralExample } from "./spatialSpectralModel";
 
 type Localized = Record<"zh" | "en" | "ja" | "ko" | "zh-Hant", string>;
@@ -52,9 +53,11 @@ function Plot({ title, traces, min = -1, max = 1, axis }: { title: string; trace
 }
 
 export function SpatialSpectralDemo({ language, mode, micCount, steering, strength }: { language: Language; mode: "beamforming" | "ns"; micCount: number; steering: number; strength: number }) {
-  const [frameIndex, setFrameIndex] = useState(7);
   const array = useMemo(() => mode === "beamforming" ? arrayExample(micCount, steering) : null, [mode, micCount, steering]);
   const spectral = useMemo(() => mode === "ns" ? spectralExample(strength) : null, [mode, strength]);
+  const [frameIndex, setFrameIndex] = useLabState<number>("spatial.frameIndex", 7, (value): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0 && (!spectral || value < spectral.frames.length));
+  const selectedFrameIndex = spectral ? Math.max(0, Math.min(frameIndex, spectral.frames.length - 1)) : 0;
+  useEffect(() => { if (spectral && frameIndex !== selectedFrameIndex) setFrameIndex(selectedFrameIndex); }, [spectral, frameIndex, selectedFrameIndex, setFrameIndex]);
   if (array) return <section className="enhancement-stage-focus" aria-label={copy.delayDemo[language]}>
     <h2>{copy.alignmentTitle[language]}</h2>
     <p>{copy.arraySetup[language]}</p>
@@ -68,14 +71,14 @@ export function SpatialSpectralDemo({ language, mode, micCount, steering, streng
     <a href="https://speechprocessingbook.aalto.fi/enhancement/multi-channel-speech-enhancement-and-beamforming/" target="_blank" rel="noreferrer">Aalto · Delay-and-sum</a>
   </section>;
   if (!spectral) return null;
-  const frame = spectral.frames[frameIndex];
+  const frame = spectral.frames[selectedFrameIndex];
   const db = (power: number) => Math.max(-80, 10 * Math.log10(Math.max(1e-12, power / 128 ** 2)));
   return <section className="enhancement-stage-focus" aria-label={copy.spectralDemo[language]}>
     <h2>{copy.spectralTitle[language]}</h2>
     <p>{copy.spectralSetup[language]}</p>
     <div className="algorithm-plot-grid">
     <Plot title={copy.fullPcm[language]} traces={[{ values: spectral.input, label: copy.input[language] }, { values: spectral.output, label: copy.output[language] }]} axis={copy.fullPcmAxis[language]} />
-    <label className="spectral-frame-select">{copy.inspect[language]}<select value={frameIndex} onChange={e => setFrameIndex(Number(e.target.value))}>{spectral.frames.map((f, i) => <option key={f.start} value={i}>{f.start / 8}–{(f.start + 128) / 8} ms</option>)}</select></label>
+    <label className="spectral-frame-select">{copy.inspect[language]}<select value={selectedFrameIndex} onChange={e => setFrameIndex(Number(e.target.value))}>{spectral.frames.map((f, i) => <option key={f.start} value={i}>{f.start / 8}–{(f.start + 128) / 8} ms</option>)}</select></label>
     <Plot title={copy.comparison[language]} min={-80} max={0} traces={[{ values: frame.inputPower.map(db), label: copy.inputSpectrum[language] }, { values: frame.outputPower.map(db), label: copy.outputSpectrum[language] }]} axis={copy.spectrumAxis[language]} />
     <Plot title={copy.gain[language]} min={0} max={1} traces={[{ values: frame.gains, label: copy.gainLabel[language] }]} axis={copy.gainAxis[language]} />
     </div>

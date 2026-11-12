@@ -1,3 +1,4 @@
+import { topicHref, isPlainNavigation } from "../content/topicRoutes";
 import { traditional } from "../content/traditional";
 import { categories, type Category, type Language, type Topic } from "../content/knowledge";
 import { getTopicKey, type TopicKey } from "../content/relatedTopics";
@@ -16,7 +17,7 @@ export function LearningPaths({ language, onOpen }: { language: Language; onOpen
       <h3>{path.title[language]}</h3>
       <ol>{path.topics.map(key => {
         const topic = topics.find(item => getTopicKey(item) === key);
-        return topic && <li key={key}><a href="#knowledge-content" onClick={event => { event.preventDefault(); onOpen(topic); }}>{topic.title[language]}</a></li>;
+        return topic && <li key={key}><a href={topicHref(topic)} onClick={event => { if (!isPlainNavigation(event)) return; event.preventDefault(); onOpen(topic); }}>{topic.title[language]}</a></li>;
       })}</ol>
     </div>)}
   </section>;

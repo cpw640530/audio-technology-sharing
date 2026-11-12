@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { TopicReadingLayout } from "./TopicReadingLayout";
 import { ArrowLeft, BookOpen, Calculator, FileAudio } from "lucide-react";
 import { categories, type Language } from "../content/knowledge";
-import { codecPrinciples } from "./DigitalAudioLab";
 import { TopicPager } from "./TopicPager";
 import { NyquistExplorer } from "./NyquistExplorer";
 import { FourierExplorer } from "./FourierExplorer";
@@ -203,15 +202,7 @@ export function DigitalAudioPage({ relatedTopics, language, onBack, onOpenLab, o
             <article><FileAudio size={18} aria-hidden="true" /><strong>WAV</strong><p>{text(language, "常见情况：文件头 + PCM 数据；也可容纳其他编码", "Commonly: header + PCM data; other encodings are also possible", "一般例：ヘッダー + PCM。ほかの符号化形式も格納可能", "일반적인 예: 헤더 + PCM. 다른 인코딩도 저장 가능")}</p></article>
             <article><Calculator size={18} aria-hidden="true" /><strong>{text(language, "感知编码", "Perceptual codecs", "知覚符号化", "지각 코덱")}</strong><p>{text(language, "用更少数据换取可接受听感", "Trade data size for acceptable perception", "許容できる聴感を保ちながらデータ量を削減", "허용 가능한 청감을 유지하며 데이터 축소")}</p></article>
           </div>
-          <div className="digital-topic-codec-grid">
-            {codecPrinciples.map((codec) => (
-              <article key={codec.format}>
-                <div><h3>{codec.format}</h3><strong>{codec.ratio[language]}</strong></div>
-                <p>{codec.principle[language]}</p>
-              </article>
-            ))}
-          </div>
-          <p className="sound-topic-note">{text(language, "压缩比是大致范围，会随原始 PCM 参数、目标码率、内容类型和编码器实现变化。", "Compression ratios are rough ranges and vary with PCM source settings, target bitrate, content type, and encoder implementation.", "圧縮率は目安であり、元の PCM 設定、目標ビットレート、内容、エンコーダー実装によって変わります。", "압축률은 대략적인 범위이며 PCM 원본 설정, 목표 비트레이트, 콘텐츠 및 인코더 구현에 따라 달라집니다.")}</p>
+          <p className="sound-topic-note">{text(language, "得到 PCM 后，才需要按存储和传输预算选择是否压缩；这不是再次采样。具体格式、码率与失真取舍见", "Once PCM exists, storage and transport budgets determine whether to compress it; this is not another sampling step. For formats, bitrate, and distortion trade-offs, read", "PCM を得た後、保存容量や伝送帯域に応じて圧縮を選びます。これは再度の標本化ではありません。形式・ビットレート・歪みの比較は次を参照：", "PCM을 얻은 뒤 저장 용량과 전송 대역폭에 따라 압축 여부를 선택합니다. 다시 샘플링하는 과정이 아닙니다. 형식, 비트레이트, 왜곡의 절충은 다음 글을 참고하세요:")} <a href="#/topics/audio-codec">{text(language, "音频编解码", "Audio codecs", "音声コーデック", "오디오 코덱")}</a>。</p>
         </section>
 
         <section className="sound-topic-section">

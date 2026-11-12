@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLabState } from "../hooks/useLabState";
 import type { Language } from "../content/knowledge";
 import { traditional } from "../content/traditional";
 
@@ -23,8 +23,8 @@ export function reconstructPcm(values: number[], tauUs: number) {
 }
 
 export function DacReconstruction({ values, codes, bitDepth, language }: { values: number[]; codes: number[]; bitDepth: number; language: Language }) {
-  const [tau, setTau] = useState(25);
-  const [stage, setStage] = useState(3);
+  const [tau, setTau] = useLabState("dac.tau", 25, (v): v is number => typeof v === "number" && Number.isFinite(v) && v >= 5 && v <= 100);
+  const [stage, setStage] = useLabState("dac.stage", 3, (v): v is number => typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= 4);
   const t = (zh: string, en: string, ja: string, ko: string) => ({ zh, en, ja, ko, "zh-Hant": traditional(zh) })[language];
   const filtered = reconstructPcm(values, tau);
   const hold = values.map((v, i) => `${i ? "H" : "M"} ${60 + i * 640 / (values.length - 1)}${i ? " V" : ""} ${100 - v * 48}`).join(" ");

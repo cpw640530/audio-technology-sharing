@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { animate, createScope, stagger } from "animejs";
 import type { Language } from "../content/knowledge";
 import { text } from "../content/language";
+import { useLabState } from "../hooks/useLabState";
 import { DenoiseFrameView, type DenoiseTrace } from "./DenoiseFrameView";
 import { DenoisePipelineAnimation } from "./DenoisePipelineAnimation";
 import { DenoiseSpectrumMap as Map } from "./DenoiseSpectrumMap";
@@ -174,10 +175,29 @@ export function AiDenoiseWalkthrough({ language }: { language: Language }) {
   const [data,setData] = useState<DenoiseDemo | null>(null);
   const [failed,setFailed] = useState(false);
   const [step,setStep] = useState(0);
-  const [channel,setChannel] = useState(0);
-  const [frame,setFrame] = useState(20);
-  const [bin,setBin] = useState(8);
+  const channelCount = data ? Math.min(data.activations.length, data.kernels.length, data.bias.length, data.head.length) : 0;
+  const binCount = data ? Math.min(data.input.length, data.mask.length, data.magnitude.length, data.activations[0]?.length ?? 0) : 0;
+  const frameCount = data ? Math.min(data.input[0]?.length ?? 0, data.mask[0]?.length ?? 0, data.magnitude[0]?.length ?? 0, data.activations[0]?.[0]?.length ?? 0, data.trace.contributions.length) : 0;
+  const channelMax = channelCount - 1;
+  const binMax = Math.min(62, binCount - 2);
+  const frameMax = Math.min(62, frameCount - 2);
+  const isIndex = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value);
+  const [channel,setChannel] = useLabState<number>("denoise.channel",0, (value): value is number => isIndex(value) && value >= 0 && value <= 3 && (!data || value <= channelMax));
+  const [frame,setFrame] = useLabState<number>("denoise.frame",20, (value): value is number => isIndex(value) && value >= 1 && value <= 62 && (!data || value <= frameMax));
+  const [bin,setBin] = useLabState<number>("denoise.bin",8, (value): value is number => isIndex(value) && value >= 1 && value <= 62 && (!data || value <= binMax));
+  const selectedChannel = data ? Math.max(0, Math.min(channel, channelMax)) : channel;
+  const selectedFrame = data ? Math.max(1, Math.min(frame, frameMax)) : frame;
+  const selectedBin = data ? Math.max(1, Math.min(bin, binMax)) : bin;
+  const updateChannel = (value: number) => setChannel(data ? Math.max(0, Math.min(value, channelMax)) : value);
+  const updateFrame = (value: number) => setFrame(data ? Math.max(1, Math.min(value, frameMax)) : value);
+  const updateBin = (value: number) => setBin(data ? Math.max(1, Math.min(value, binMax)) : value);
   const inspection = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!data) return;
+    if (channel !== selectedChannel) setChannel(selectedChannel);
+    if (frame !== selectedFrame) setFrame(selectedFrame);
+    if (bin !== selectedBin) setBin(selectedBin);
+  }, [data, channel, selectedChannel, frame, selectedFrame, bin, selectedBin, setChannel, setFrame, setBin]);
   useEffect(() => {
     if (!data) return;
     const scope = createScope({ root: inspection, mediaQueries: { reduceMotion: "(prefers-reduced-motion: reduce)" } }).add(self => {
@@ -185,7 +205,7 @@ export function AiDenoiseWalkthrough({ language }: { language: Language }) {
       if (step===1) animate(".denoise-products code", { opacity: [0.35,1], delay: stagger(12), duration: 120, ease: "linear" });
     });
     return () => scope.revert();
-  }, [data, step, frame, bin, channel]);
+  }, [data, step, selectedFrame, selectedBin, selectedChannel]);
   const root = `${import.meta.env.BASE_URL}ai-denoise/`;
   useEffect(()=>{
     const controller = new AbortController();
@@ -200,12 +220,12 @@ export function AiDenoiseWalkthrough({ language }: { language: Language }) {
     t("1×1 卷积合并四个激活通道，Sigmoid 产生 0–1 掩码。M=0.2 表示幅度乘 0.2，不是语音概率 20%。Ŝ=M×Y。", "A 1×1 convolution mixes four activation channels; sigmoid produces a 0–1 mask. M=0.2 multiplies amplitude by 0.2, not a 20% speech probability. Ŝ=M×Y."),
     t("掩码乘原始复数频谱，保留输入相位，经 iSTFT 与重叠相加恢复 PCM。未加入额外后滤波。三段音频统一缩放，避免分别归一化误导对比。", "Apply the mask to the original complex spectrum, retain input phase, and reconstruct PCM via iSTFT and overlap-add. No extra postfilter. All clips share one scale for a fair comparison.")
   ];
-  const products = data ? data.kernels[channel].flat().map((w,i)=>({w,x:data.input[bin+Math.floor(i/3)-1][frame+i%3-1]})) : [];
-  const sum = data ? products.reduce((s,p)=>s+p.x*p.w,data.bias[channel]) : 0;
-  const headProducts = data ? data.head.map((w,i)=>({w,x:data.activations[i][bin][frame]})) : [];
+  const products = data ? data.kernels[selectedChannel].flat().map((w,i)=>({w,x:data.input[selectedBin+Math.floor(i/3)-1][selectedFrame+i%3-1]})) : [];
+  const sum = data ? products.reduce((s,p)=>s+p.x*p.w,data.bias[selectedChannel]) : 0;
+  const headProducts = data ? data.head.map((w,i)=>({w,x:data.activations[i][selectedBin][selectedFrame]})) : [];
   const logit = data ? headProducts.reduce((s,p)=>s+p.x*p.w,data.headBias) : 0;
   const predictedMask = 1 / (1 + Math.exp(-Math.max(-30,Math.min(30,logit))));
-  const selected = [frame,bin];
+  const selected = [selectedFrame,selectedBin];
   const activationMax = data ? Math.max(1e-8,...data.activations.flat(2)) : 1;
   const explanations = [
     [t("输入：带噪 PCM", "Input: noisy PCM"), t("PCM 是按时间排列的振幅数值。这里是合成谐波加白噪声，不是真人说话。", "PCM stores amplitude samples over time. Here it contains synthetic harmonics plus white noise, not recorded speech."),
@@ -231,48 +251,48 @@ export function AiDenoiseWalkthrough({ language }: { language: Language }) {
     {failed ? <p role="alert">{t("数据加载失败，请刷新重试。","Data failed to load. Reload to retry.")}</p> : !data ? <p role="status">{t("加载计算结果…","Loading results…")}</p> : <>
       <div className="denoise-audio">{["input","output","target"].map((name,i)=><div key={name}><h4 id={`denoise-audio-${name}`}>{[t("带噪输入","Noisy input"),t("模型输出","Model output"),t("干净参考","Clean reference")][i]}</h4><audio aria-labelledby={`denoise-audio-${name}`} controls preload="none" src={`${root}${name}.wav`} onPlay={e=>{e.currentTarget.closest("section")?.querySelectorAll("audio").forEach(a=>{if(a!==e.currentTarget) a.pause();});}} /></div>)}</div>
       <p>SNR: {data.snr[0].toFixed(2)} dB → {data.snr[1].toFixed(2)} dB {t("（仅此合成测试片段）","(this synthetic clip only)")}</p>
-      <DenoisePipelineAnimation data={data} frame={frame} bin={bin} channel={channel} language={language} onFrameChange={setFrame} onBinChange={setBin} onChannelChange={setChannel}/>
+      <DenoisePipelineAnimation data={data} frame={selectedFrame} bin={selectedBin} channel={selectedChannel} language={language} onFrameChange={updateFrame} onBinChange={updateBin} onChannelChange={updateChannel}/>
       <details className="denoise-numeric-inspector">
       <summary>{text(language,"逐项检查数值与频谱","Inspect individual values and spectra","値とスペクトルを詳しく確認","개별 수치와 스펙트럼 확인")}</summary>
       <div className="robot-buttons">{names.map((s,i)=><button key={s} onClick={()=>setStep(i)} aria-pressed={step===i}>{i+1}. {s}</button>)}</div>
       <h3>{names[step]}</h3>
-      <DenoiseFrameView trace={data.trace} frame={frame} step={step} onFrameChange={setFrame} language={language}/>
-      <div className="robot-controls">{(step===1 || step===2) && <label>{t("输出通道","Output channel")}<select value={channel} onChange={e=>setChannel(+e.target.value)}>{[0,1,2,3].map(i=><option key={i} value={i}>{i+1}</option>)}</select></label>}<label>{t("频率 bin","Frequency bin")} {bin} ({bin*31.25} Hz)<input type="range" min="1" max="62" value={bin} onChange={e=>setBin(+e.target.value)} /></label></div>
+      <DenoiseFrameView trace={data.trace} frame={selectedFrame} step={step} onFrameChange={updateFrame} language={language}/>
+      <div className="robot-controls">{(step===1 || step===2) && <label>{t("输出通道","Output channel")}<select value={selectedChannel} onChange={e=>updateChannel(+e.target.value)}>{Array.from({ length: channelCount }, (_, i) => <option key={i} value={i}>{i+1}</option>)}</select></label>}<label>{t("频率 bin","Frequency bin")} {selectedBin} ({selectedBin*31.25} Hz)<input type="range" min="1" max={binMax} value={selectedBin} onChange={e=>updateBin(+e.target.value)} /></label></div>
       <div className="denoise-stage-inspection" data-stage={step} ref={inspection}>
       <div className="denoise-maps" data-stage={step}>
         {(step<=1 || step===4) && <figure><Map values={data.input} selection={selected} selectionSize={step===1 ? 3 : 1} label={t("输入频谱","Input spectrum")} scale={["−80 dB", "−40 dB", "0 dB"]}/><figcaption>{t("输入幅度：暗 -80 dB → 亮 0 dB","Input magnitude: dark -80 dB → bright 0 dB")}</figcaption></figure>}
-        {(step===2 || step===3) && <figure><Map values={data.activations[channel]} selection={selected} selectionSize={1} max={activationMax} label={`ReLU · ${channel+1}`} scale={["0", (activationMax/2).toFixed(2), activationMax.toFixed(2)]}/><figcaption>{t("ReLU 激活；四通道共用色标，非能量","ReLU activation; shared scale across channels, not energy")}</figcaption></figure>}
+        {(step===2 || step===3) && <figure><Map values={data.activations[selectedChannel]} selection={selected} selectionSize={1} max={activationMax} label={`ReLU · ${selectedChannel+1}`} scale={["0", (activationMax/2).toFixed(2), activationMax.toFixed(2)]}/><figcaption>{t("ReLU 激活；四通道共用色标，非能量","ReLU activation; shared scale across channels, not energy")}</figcaption></figure>}
         {step>=3 && <figure><Map values={data.mask} selection={selected} selectionSize={1} label={t("掩码", "Mask")} scale={["0", "0.5", "1"]}/><figcaption>{t("掩码：暗 0（抑制）→ 亮 1（保留）","Mask: dark 0 (suppress) → bright 1 (retain)")}</figcaption></figure>}
         {step===4 && <figure><Map values={data.output} selection={selected} selectionSize={1} label={t("输出频谱","Output spectrum")} scale={["−80 dB", "−40 dB", "0 dB"]}/><figcaption>{t("输出幅度：与输入相同色标","Output magnitude: same scale as input")}</figcaption></figure>}
       </div>
       {step===0 && <div className="denoise-local-calculation">
         <h4>{text(language,"选中这一格：从样本到模型输入","Selected cell: samples to model input","選択セル：サンプルからモデル入力へ","선택한 칸: 샘플에서 모델 입력으로")}</h4>
         <ol className="denoise-head-flow">
-          <li><strong>PCM × Hann → FFT</strong><code>{frame*16} ms · {bin*31.25} Hz</code></li>
-          <li><strong>|Y|</strong><code>{data.magnitude[bin][frame].toExponential(5)}</code></li>
-          <li><strong>clip((20 log₁₀(|Y| + 10⁻⁸) + 80) / 80, 0, 1)</strong><code>{data.input[bin][frame].toFixed(5)}</code></li>
+          <li><strong>PCM × Hann → FFT</strong><code>{selectedFrame*16} ms · {selectedBin*31.25} Hz</code></li>
+          <li><strong>|Y|</strong><code>{data.magnitude[selectedBin][selectedFrame].toExponential(5)}</code></li>
+          <li><strong>clip((20 log₁₀(|Y| + 10⁻⁸) + 80) / 80, 0, 1)</strong><code>{data.input[selectedBin][selectedFrame].toFixed(5)}</code></li>
         </ol>
         <p>{descriptions[0]}</p>
       </div>}
-      {step===1 && <div className="denoise-local-calculation"><p>{text(language,"白框内的九个位置与下方逐格对应：上方高频、下方低频；时间从左到右。","The nine cells match the outlined patch: high frequencies above, low frequencies below; time runs left to right.","9セルは白枠内に対応。上は高域、下は低域、時間は左から右です。","아홉 칸은 흰 테두리에 대응합니다. 위는 고주파, 아래는 저주파이며 시간은 왼쪽에서 오른쪽입니다.")}</p><div className="denoise-products">{[6,7,8,3,4,5,0,1,2].map(i=>{const p=products[i];return <code key={i} data-bin={bin+Math.floor(i/3)-1} data-frame={frame+i%3-1}><small>{(bin+Math.floor(i/3)-1)*31.25} Hz · {(frame+i%3-1)*16} ms</small>{p.x.toFixed(3)} × {p.w.toFixed(3)}<br />= {(p.x*p.w).toFixed(3)}</code>;})}</div><p data-testid="denoise-sum"><code>Σ(x×w) + b ({data.bias[channel].toFixed(4)}) = {sum.toFixed(4)} → ReLU = {Math.max(0,sum).toFixed(4)}</code></p></div>}
+      {step===1 && <div className="denoise-local-calculation"><p>{text(language,"白框内的九个位置与下方逐格对应：上方高频、下方低频；时间从左到右。","The nine cells match the outlined patch: high frequencies above, low frequencies below; time runs left to right.","9セルは白枠内に対応。上は高域、下は低域、時間は左から右です。","아홉 칸은 흰 테두리에 대응합니다. 위는 고주파, 아래는 저주파이며 시간은 왼쪽에서 오른쪽입니다.")}</p><div className="denoise-products">{[6,7,8,3,4,5,0,1,2].map(i=>{const p=products[i];return <code key={i} data-bin={selectedBin+Math.floor(i/3)-1} data-frame={selectedFrame+i%3-1}><small>{(selectedBin+Math.floor(i/3)-1)*31.25} Hz · {(selectedFrame+i%3-1)*16} ms</small>{p.x.toFixed(3)} × {p.w.toFixed(3)}<br />= {(p.x*p.w).toFixed(3)}</code>;})}</div><p data-testid="denoise-sum"><code>Σ(x×w) + b ({data.bias[selectedChannel].toFixed(4)}) = {sum.toFixed(4)} → ReLU = {Math.max(0,sum).toFixed(4)}</code></p></div>}
       {step===2 && <div className="denoise-local-calculation">
         <h4>{text(language,"选中这一格：非线性激活","Selected cell: nonlinear activation","選択セル：非線形活性化","선택한 칸: 비선형 활성화")}</h4>
         <ol className="denoise-head-flow">
           <li><strong>z = Σ(x × w) + b</strong><code>{sum.toFixed(5)}</code></li>
-          <li><strong>h = max(0, z)</strong><code>{data.activations[channel][bin][frame].toFixed(5)}</code></li>
+          <li><strong>h = max(0, z)</strong><code>{data.activations[selectedChannel][selectedBin][selectedFrame].toFixed(5)}</code></li>
         </ol>
         <p>{descriptions[2]}</p>
       </div>}
       </div>
       <p>{t("横轴：时间帧 0–63（0–1.008 s）；纵轴：下方 0 Hz，上方 1968.75 Hz（bin 0–63）。局部展示，模型实际处理完整 0–4 kHz 频谱和 2 秒音频。", "Horizontal: frames 0–63 (0–1.008 s). Vertical: 0 Hz at bottom, 1968.75 Hz at top (bins 0–63). Cropped display; inference covers the full 0–4 kHz spectrum and 2-second clip.")}</p>
-      {step===3 && <p data-testid="denoise-mask-value">{t("所选位置", "Selected position")}: M = {data.mask[bin][frame].toFixed(4)}; {t("幅度增益", "Magnitude gain")} = {(20*Math.log10(data.mask[bin][frame])).toFixed(2)} dB. {t("滑动仅检查固定推理结果，不会重新训练或改变音频。", "Sliders inspect fixed inference results; they do not retrain the model or change the audio.")}</p>}
+      {step===3 && <p data-testid="denoise-mask-value">{t("所选位置", "Selected position")}: M = {data.mask[selectedBin][selectedFrame].toFixed(4)}; {t("幅度增益", "Magnitude gain")} = {(20*Math.log10(data.mask[selectedBin][selectedFrame])).toFixed(2)} dB. {t("滑动仅检查固定推理结果，不会重新训练或改变音频。", "Sliders inspect fixed inference results; they do not retrain the model or change the audio.")}</p>}
       {step===3 && <section className="denoise-head" aria-label={t("掩码计算图解", "Mask calculation walkthrough")}>
         <h4>{t("四路特征如何变成一个掩码", "How four features become one mask")}</h4>
         <div className="denoise-head-products">{headProducts.map((p,i)=><div key={i}><strong>{t("特征通道", "Feature channel")} {i+1}</strong><code>{p.x.toFixed(5)} × ({p.w.toFixed(5)})<br />= {(p.x*p.w).toFixed(5)}</code></div>)}</div>
         <ol className="denoise-head-flow">
           <li><strong>{t("求和 + 偏置", "Sum + bias")}</strong><code>z = Σ(h × w) + ({data.headBias.toFixed(5)}) = {logit.toFixed(5)}</code></li>
           <li><strong>Sigmoid</strong><code data-testid="denoise-head-result">M = 1 / (1 + exp(−z)) ≈ {predictedMask.toFixed(5)}</code></li>
-          <li><strong>{t("缩放线性频谱幅度", "Scale linear spectral magnitude")}</strong><code data-testid="denoise-amplitude-product">|Ŝ| = |Y| × M ≈ {data.magnitude[bin][frame].toExponential(4)} × {data.mask[bin][frame].toFixed(5)} = {(data.magnitude[bin][frame]*data.mask[bin][frame]).toExponential(4)}</code></li>
+          <li><strong>{t("缩放线性频谱幅度", "Scale linear spectral magnitude")}</strong><code data-testid="denoise-amplitude-product">|Ŝ| = |Y| × M ≈ {data.magnitude[selectedBin][selectedFrame].toExponential(4)} × {data.mask[selectedBin][selectedFrame].toFixed(5)} = {(data.magnitude[selectedBin][selectedFrame]*data.mask[selectedBin][selectedFrame]).toExponential(4)}</code></li>
         </ol>
         <p>{t("h 是激活值，w 和偏置是训练得到的参数。显示数值经过舍入，因此复算与保存的掩码可能有微小差异。幅度取自原始 STFT 系数，既不是 0–1 着色特征，也不是 PCM 单点振幅。", "h denotes an activation; weights w and the bias are learned. Rounded values can cause small differences from the saved mask. Magnitudes come from the original STFT coefficients, not the 0–1 color features or individual PCM samples.")}</p>
         <p>{text(language,"白框对应同一时间帧和频率 bin；左侧是激活响应，右侧是四通道合并后的幅度增益，二者亮度不可直接比较。","White outlines mark the same frame and bin. Left: activation response; right: magnitude gain from all four channels. Their brightness values are not directly comparable.","白枠は同じフレームと bin。左は活性化、右は4チャネルを合成した振幅ゲインです。明るさは直接比較できません。","흰 테두리는 같은 프레임과 bin입니다. 왼쪽은 활성화, 오른쪽은 네 채널로 계산한 진폭 이득이며 밝기는 직접 비교할 수 없습니다。")}</p>

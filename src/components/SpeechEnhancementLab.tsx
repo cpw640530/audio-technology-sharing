@@ -1,6 +1,6 @@
 import { traditional } from "../content/traditional";
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useLabState } from "../hooks/useLabState";
 import type { Language } from "../content/knowledge";
 import { EnhancementStageFocus } from "./EnhancementStageFocus";
 import { SpatialSpectralDemo } from "./SpatialSpectralDemo";
@@ -477,10 +477,33 @@ function SocFlowDiagram({
 }
 
 export function SpeechEnhancementLab({ language, onBack, onBackToDetails }: SpeechEnhancementLabProps) {
-  const [page, setPage] = useState<EnhancementMode>("aec");
-  const [strengths, setStrengths] = useState<ProcessingStrengths>(() => ({ ...defaultProcessingStrengths }));
-  const [micCount, setMicCount] = useState(2);
-  const [steering, setSteering] = useState(30);
+  const [page, setPage] = useLabState<EnhancementMode>(
+    "SpeechEnhancementLab.page",
+    "aec",
+    (value): value is EnhancementMode => value === "aec" || value === "ns" || value === "agc" || value === "beamforming" || value === "dereverb"
+  );
+  const [strengths, setStrengths] = useLabState<ProcessingStrengths>(
+    "SpeechEnhancementLab.strengths",
+    () => ({ ...defaultProcessingStrengths }),
+    (value): value is ProcessingStrengths => {
+      if (typeof value !== "object" || value === null) return false;
+      const candidate = value as Record<string, unknown>;
+      return ["beamforming", "aec", "ns", "dereverb", "agc"].every(key => {
+        const strength = candidate[key];
+        return typeof strength === "number" && Number.isFinite(strength) && Number.isInteger(strength) && strength >= 0 && strength <= 100 && strength % 5 === 0;
+      });
+    }
+  );
+  const [micCount, setMicCount] = useLabState(
+    "SpeechEnhancementLab.micCount",
+    2,
+    (value): value is number => value === 1 || value === 2 || value === 4
+  );
+  const [steering, setSteering] = useLabState(
+    "SpeechEnhancementLab.steering",
+    30,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= -90 && value <= 90 && (value + 90) % 5 === 0
+  );
   const index = flowModes.indexOf(page);
   const guide = page === "aec" || page === "ns" || page === "agc" ? enhancementGuides[page] : null;
   const extraPrinciple = page === "beamforming"

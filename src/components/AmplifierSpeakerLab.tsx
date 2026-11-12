@@ -1,5 +1,5 @@
 import { traditional } from "../content/traditional";
-import { useState } from "react";
+import { useLabState } from "../hooks/useLabState";
 import { ArrowLeft } from "lucide-react";
 
 import type { Language } from "../content/knowledge";
@@ -908,8 +908,16 @@ function renderAmpPrinciple(language: Language, ampClass: AmpClass) {
 }
 
 export function AmplifierSpeakerLab({ language, onBack, onBackToDetails }: AmplifierSpeakerLabProps) {
-  const [diagramMode, setDiagramMode] = useState<DiagramMode>("amplifier");
-  const [ampClass, setAmpClass] = useState<AmpClass>("class-d");
+  const [diagramMode, setDiagramMode] = useLabState<DiagramMode>(
+    "AmplifierSpeakerLab.diagramMode",
+    "amplifier",
+    (value): value is DiagramMode => value === "amplifier" || value === "speaker" || value === "enclosure" || value === "ts" || value === "crossover" || value === "activePassive" || value === "lineArray" || value === "matching"
+  );
+  const [ampClass, setAmpClass] = useLabState<AmpClass>(
+    "AmplifierSpeakerLab.ampClass",
+    "class-d",
+    (value): value is AmpClass => value === "class-a" || value === "class-ab" || value === "class-d"
+  );
 
   return (
     <main className="codec-lab-page amp-lab">

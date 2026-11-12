@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Play, RotateCcw, Square } from "lucide-react";
+import { useLabState } from "../hooks/useLabState";
 import type { Language } from "../content/knowledge";
 import { text } from "../content/language";
 import { waveSpectrumTopic } from "../content/waveSpectrum";
@@ -14,8 +15,16 @@ type Playback = { context: AudioContext; oscillator: OscillatorNode; gain: GainN
 export function WaveSpectrumLab({ language, onBack, onBackToDetails }: {
   language: Language; onBack: () => void; onBackToDetails: () => void;
 }) {
-  const [amplitudes, setAmplitudes] = useState(initialAmplitudes);
-  const [phase, setPhase] = useState(0);
+  const [amplitudes, setAmplitudes] = useLabState<number[]>(
+    "WaveSpectrumLab.amplitudes",
+    initialAmplitudes,
+    (value): value is number[] => Array.isArray(value) && value.length === componentFrequencies.length && value.every(item => typeof item === "number" && Number.isFinite(item) && item >= 0 && item <= 0.3 && Math.abs(item * 100 - Math.round(item * 100)) < 1e-9)
+  );
+  const [phase, setPhase] = useLabState(
+    "WaveSpectrumLab.phase",
+    0,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 0 && value <= 360 && value % 15 === 0
+  );
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState(false);
   const audio = useRef<Playback | null>(null);

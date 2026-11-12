@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { expect, it, vi, beforeEach, afterEach } from "vitest";
 import { categories } from "../content/knowledge";
 import { TopicGrid } from "./TopicGrid";
@@ -18,7 +18,7 @@ it("opens the carousel directly without a grid toggle and handles empty searches
   await screen.findByRole("button", { name: "Rotate right" });
   expect(screen.queryByRole("button", { name: "Grid" })).not.toBeInTheDocument();
   expect(document.querySelector(".topic-grid")).not.toBeInTheDocument();
-  expect(document.querySelectorAll(".carousel-card")).toHaveLength(categories[0].topics.length);
+  await waitFor(() => expect(document.querySelectorAll(".carousel-card")).toHaveLength(categories[0].topics.length));
   expect(document.querySelector(".carousel-card .topic-card-entry")).toHaveTextContent("Read and explore");
   rerender(<TopicGrid topics={[]} language="en" onSelectTopic={open} />);
   expect(document.querySelector(".empty-state")).toBeInTheDocument();
@@ -81,7 +81,7 @@ it("integrates the sole carousel view with search, filters and article returns",
   const front = document.querySelector<HTMLButtonElement>(".carousel-card[aria-current=true]")!;
   const title = front.getAttribute("aria-label")!;
   fireEvent.click(front);
-  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(title);
+  expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent(title);
   fireEvent.click(screen.getByRole("button", { name: "Back to knowledge base" }));
   expect(await screen.findByRole("button", { name: "Rotate right" })).toBeInTheDocument();
   const categoryRegion = screen.getByRole("region", { name: "Knowledge Areas" });

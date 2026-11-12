@@ -5,6 +5,8 @@ import { LanguageSelect, text } from "../content/language";
 export function WelcomePage({ language }: {
   language: Language;
 }) {
+  const welcomeImageBase = `${import.meta.env.BASE_URL}images/`;
+
   return (
     <div className="welcome-page" lang={language}>
       <header className="welcome-header">
@@ -13,9 +15,14 @@ export function WelcomePage({ language }: {
       </header>
       <main>
         <section className="welcome-hero" aria-labelledby="welcome-title">
-          <img className="welcome-listener" src={`${import.meta.env.BASE_URL}images/welcome-listener-light.png`}
-            alt={text(language, "戴着耳机，闭眼聆听的人物插画", "An illustrated listener wearing headphones with eyes gently closed", "ヘッドホンを着け、目を閉じて聴く人物", "헤드폰을 쓰고 눈을 감은 인물")}
-            width="1536" height="1024" loading="eager" />
+          <picture>
+            <source type="image/webp"
+              srcSet={`${welcomeImageBase}welcome-listener-mobile.webp 768w, ${welcomeImageBase}welcome-listener-light.webp 1536w`}
+              sizes="100vw" />
+            <img className="welcome-listener" src={`${welcomeImageBase}welcome-listener-light.png`}
+              alt={text(language, "戴着耳机，闭眼聆听的人物插画", "An illustrated listener wearing headphones with eyes gently closed", "ヘッドホンを着け、目を閉じて聴く人物", "헤드폰을 쓰고 눈을 감은 인물")}
+              width="1536" height="1024" loading="eager" {...{ fetchpriority: "high" }} />
+          </picture>
           <div className="welcome-copy">
             <p className="welcome-greeting">{text(language, "欢迎来到我的", "Welcome to my", "ようこそ", "환영합니다")}</p>
             <h1 id="welcome-title">{interfaceCopy.title[language]}</h1>

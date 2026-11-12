@@ -3,6 +3,7 @@ import { expect, it, vi } from "vitest";
 import { categories } from "../content/knowledge";
 import { AiAudioTopicPage } from "./AiAudioTopicPage";
 import { aiModelReferences } from "../content/aiModelReferences";
+import { aiArticles } from "../content/aiArticles";
 
 const topics = categories.flatMap(category => category.topics
   .filter(topic => category.id === "ai")
@@ -17,7 +18,7 @@ it.each(topics)("keeps the reading structure and lab entry for $title.en", topic
     />);
     const headings = Array.from(container.querySelectorAll(".sound-topic-content h2"));
     const overview = !topic.detail.lab;
-    expect(headings).toHaveLength(overview || ["enhancement", "asr", "event"].includes(topic.detail.lab?.initialMode ?? "") ? 8 : 7);
+    expect(headings).toHaveLength((overview || ["enhancement", "asr", "event"].includes(topic.detail.lab?.initialMode ?? "") ? 8 : 7) + (overview ? 0 : 1));
     const mode = topic.detail.lab?.initialMode ?? "overview";
     expect(screen.getByRole("heading", { name: aiModelReferences[mode].name })).toBeInTheDocument();
     expect(headings.slice(-3).map(heading => heading.textContent)).toEqual(language === "zh"
@@ -43,4 +44,36 @@ it.each(topics)("keeps the reading structure and lab entry for $title.en", topic
     }
     unmount();
   }
+});
+
+it("keeps advanced AI article content folded and out of the page contents", () => {
+  const topic = topics.find(candidate => candidate.detail.lab?.initialMode === "event")!;
+  const { container } = render(<AiAudioTopicPage
+    topic={topic} mode="event" language="zh" onBack={() => {}} onOpenLab={() => {}}
+  />);
+  const advanced = container.querySelector(".ai-topic-advanced-reading") as HTMLElement;
+  const details = advanced.querySelector(".ai-topic-advanced-details") as HTMLElement;
+
+  expect(details).not.toHaveAttribute("open");
+  expect(details.querySelectorAll("h2")).toHaveLength(0);
+  expect(within(advanced).getByRole("heading", { name: "进阶阅读" })).toBeInTheDocument();
+  expect(within(advanced).getByText("进阶阅读", { selector: "summary" })).toBeInTheDocument();
+
+  fireEvent.click(within(advanced).getByText("进阶阅读", { selector: "summary" }));
+  expect(within(advanced).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
+  expect(within(advanced).getByRole("region", { name: "经典与补充方案" })).toBeInTheDocument();
+  expect(within(advanced).getByText(aiArticles.event.equations[0].expression)).toBeInTheDocument();
+  expect(within(advanced).getByText("全面概述", { selector: "summary" })).toBeInTheDocument();
+  expect(Array.from(container.querySelectorAll(".sound-topic-content h2")).map(heading => heading.textContent))
+    .not.toContain("工程技术剖面");
+});
+
+it("keeps codec equations in the lab instead of duplicating them in the article", () => {
+  const topic = topics.find(candidate => candidate.detail.lab?.initialMode === "codec")!;
+  const { container } = render(<AiAudioTopicPage
+    topic={topic} mode="codec" language="zh" onBack={() => {}} onOpenLab={() => {}}
+  />);
+  fireEvent.click(within(container).getByText("进阶阅读", { selector: "summary" }));
+  expect(container.querySelector(".ai-topic-advanced-details") as HTMLElement)
+    .not.toHaveTextContent(aiArticles.codec.equations[0].expression);
 });

@@ -1,5 +1,6 @@
 import { traditional } from "../content/traditional";
-import { useMemo, useState } from "react";
+import { useLabState } from "../hooks/useLabState";
+import { useMemo } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Language } from "../content/knowledge";
 import { bitStreamPath, getMicrophoneSignal, makePdmBits, pcmWavePath, pcmWordBits, type MicPrinciple } from "./microphoneSignalModel";
@@ -415,7 +416,11 @@ function PrincipleDiagram({
   const isDynamic = principle === "dynamicVocal";
   const numericModel = getPrincipleNumericModel(principle, inputSpl, language);
   const signal = getMicrophoneSignal(principle, inputSpl);
-  const [digitalOutput, setDigitalOutput] = useState<"pdm" | "i2s">("pdm");
+  const [digitalOutput, setDigitalOutput] = useLabState<"pdm" | "i2s">(
+    "MicrophoneLab.PrincipleDiagram.digitalOutput",
+    "pdm",
+    (value): value is "pdm" | "i2s" => value === "pdm" || value === "i2s"
+  );
   const bits = digitalOutput === "pdm" ? makePdmBits(signal.requestedPeak) : pcmWordBits(signal.outputPeak);
   const visualPressure = 0.15 + 0.85 * (inputSpl - 54) / 70;
   const diaphragmOffset = visualPressure * 12;
@@ -652,12 +657,36 @@ function PrincipleDiagram({
 }
 
 export function MicrophoneLab({ language, onBack, onBackToDetails }: MicrophoneLabProps) {
-  const [principle, setPrinciple] = useState<MicPrinciple>("electret");
-  const [principleSpl, setPrincipleSpl] = useState(94);
-  const [pattern, setPattern] = useState<PolarPattern>("cardioid");
-  const [angle, setAngle] = useState(0);
-  const [distance, setDistance] = useState(1.2);
-  const [gain, setGain] = useState(52);
+  const [principle, setPrinciple] = useLabState<MicPrinciple>(
+    "MicrophoneLab.principle",
+    "electret",
+    (value): value is MicPrinciple => value === "electret" || value === "digitalMems" || value === "dynamicVocal" || value === "array"
+  );
+  const [principleSpl, setPrincipleSpl] = useLabState(
+    "MicrophoneLab.principleSpl",
+    94,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 54 && value <= 124
+  );
+  const [pattern, setPattern] = useLabState<PolarPattern>(
+    "MicrophoneLab.pattern",
+    "cardioid",
+    (value): value is PolarPattern => value === "omni" || value === "cardioid" || value === "figure8"
+  );
+  const [angle, setAngle] = useLabState(
+    "MicrophoneLab.angle",
+    0,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= -180 && value <= 180 && (value + 180) % 5 === 0
+  );
+  const [distance, setDistance] = useLabState(
+    "MicrophoneLab.distance",
+    1.2,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0.2 && value <= 4 && Math.abs((value - 0.2) / 0.1 - Math.round((value - 0.2) / 0.1)) < 1e-9
+  );
+  const [gain, setGain] = useLabState(
+    "MicrophoneLab.gain",
+    52,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 10 && value <= 100 && (value - 10) % 2 === 0
+  );
   const polar = useMemo(() => createPolarPath(pattern, angle), [angle, pattern]);
   const analysis = useMemo(
     () => getPickupAnalysis({ angle, distance, gain, pattern }),

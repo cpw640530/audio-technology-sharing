@@ -1,5 +1,6 @@
 import { traditional } from "../content/traditional";
-import { useMemo, useState } from "react";
+import { useLabState } from "../hooks/useLabState";
+import { useMemo } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Language, LocalizedText } from "../content/knowledge";
 
@@ -411,10 +412,26 @@ function AudioUnitsDiagram({ language }: { language: Language }) {
 }
 
 export function AudioUnitsLab({ language, onBack, onBackToDetails }: AudioUnitsLabProps) {
-  const [conversionValue, setConversionValue] = useState("94");
-  const [conversionUnit, setConversionUnit] = useState<ConversionUnit>("dBSPL");
-  const [distanceSpl, setDistanceSpl] = useState("94");
-  const [distanceMeters, setDistanceMeters] = useState("1");
+  const [conversionValue, setConversionValue] = useLabState(
+    "AudioUnitsLab.conversionValue",
+    "94",
+    (value): value is string => typeof value === "string" && value.length <= 64 && value.trim() !== "" && Number.isFinite(Number(value))
+  );
+  const [conversionUnit, setConversionUnit] = useLabState<ConversionUnit>(
+    "AudioUnitsLab.conversionUnit",
+    "dBSPL",
+    (value): value is ConversionUnit => value === "dBSPL" || value === "Pa" || value === "uPa" || value === "dBu" || value === "dBV" || value === "Vrms" || value === "W" || value === "dBW" || value === "dBm" || value === "dBFS" || value === "dBAmplitude" || value === "dBPower"
+  );
+  const [distanceSpl, setDistanceSpl] = useLabState(
+    "AudioUnitsLab.distanceSpl",
+    "94",
+    (value): value is string => typeof value === "string" && value.length <= 64 && value.trim() !== "" && Number.isFinite(Number(value))
+  );
+  const [distanceMeters, setDistanceMeters] = useLabState(
+    "AudioUnitsLab.distanceMeters",
+    "1",
+    (value): value is string => typeof value === "string" && value.length <= 64 && value.trim() !== "" && Number.isFinite(Number(value)) && Number(value) > 0
+  );
 
   const conversion = useMemo(
     () => calculateConversion(conversionValue, conversionUnit),

@@ -1,5 +1,6 @@
 import { traditional } from "../content/traditional";
-import { useMemo, useState } from "react";
+import { useLabState } from "../hooks/useLabState";
+import { useMemo } from "react";
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import type { Language } from "../content/knowledge";
 import { combinedResponse, filterSignal, filterTones, type FilterType } from "./filterModel";
@@ -583,7 +584,11 @@ function DynamicsChart({
   ratio: number;
   threshold: number;
 }) {
-  const [timeMs, setTimeMs] = useState(250);
+  const [timeMs, setTimeMs] = useLabState(
+    "CoreSignalProcessingLab.DynamicsChart.timeMs",
+    250,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 0 && value <= 1000 && value % 10 === 0
+  );
   const frame = dynamicsFrame(timeMs, threshold, ratio);
   const curvePath = createDynamicsCurvePath(threshold, ratio, 430, 286, 136, 108);
   const envelopeBottomY = 286;
@@ -743,15 +748,51 @@ function DynamicsChart({
 }
 
 export function CoreSignalProcessingLab({ language, onBack, onBackToDetails }: CoreSignalProcessingLabProps) {
-  const [mode, setMode] = useState<SignalMode>("stft");
-  const [windowSize, setWindowSize] = useState(512);
-  const [hopSize, setHopSize] = useState(256);
-  const [filterType, setFilterType] = useState<FilterType>("lowpass");
-  const [cutoff, setCutoff] = useState(2400);
-  const [q, setQ] = useState(1.2);
-  const [eqGain, setEqGain] = useState(0);
-  const [threshold, setThreshold] = useState(-18);
-  const [ratio, setRatio] = useState(3);
+  const [mode, setMode] = useLabState<SignalMode>(
+    "CoreSignalProcessingLab.mode",
+    "stft",
+    (value): value is SignalMode => value === "stft" || value === "filter" || value === "dynamics"
+  );
+  const [windowSize, setWindowSize] = useLabState(
+    "CoreSignalProcessingLab.windowSize",
+    512,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 256 && value <= 1024 && (value - 256) % 256 === 0
+  );
+  const [hopSize, setHopSize] = useLabState(
+    "CoreSignalProcessingLab.hopSize",
+    256,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 128 && value <= 512 && (value - 128) % 128 === 0
+  );
+  const [filterType, setFilterType] = useLabState<FilterType>(
+    "CoreSignalProcessingLab.filterType",
+    "lowpass",
+    (value): value is FilterType => value === "lowpass" || value === "highpass" || value === "bandpass" || value === "notch"
+  );
+  const [cutoff, setCutoff] = useLabState(
+    "CoreSignalProcessingLab.cutoff",
+    2400,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 200 && value <= 7900 && (value - 200) % 100 === 0
+  );
+  const [q, setQ] = useLabState(
+    "CoreSignalProcessingLab.q",
+    1.2,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 20 && Math.abs(value * 10 - Math.round(value * 10)) < 1e-9
+  );
+  const [eqGain, setEqGain] = useLabState(
+    "CoreSignalProcessingLab.eqGain",
+    0,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= -12 && value <= 12
+  );
+  const [threshold, setThreshold] = useLabState(
+    "CoreSignalProcessingLab.threshold",
+    -18,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= -36 && value <= -6
+  );
+  const [ratio, setRatio] = useLabState(
+    "CoreSignalProcessingLab.ratio",
+    3,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 1 && value <= 12
+  );
 
   const stftMetrics = useMemo(() => {
     const frequencyResolution = sampleRate / (2 ** Math.ceil(Math.log2(windowSize)));

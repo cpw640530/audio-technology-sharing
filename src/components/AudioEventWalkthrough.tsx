@@ -1,6 +1,6 @@
-import { useState } from "react";
 import type { Language } from "../content/knowledge";
 import { text } from "../content/language";
+import { useLabState } from "../hooks/useLabState";
 
 // Synthetic frame-score presets for generic postprocessing only; no ATST-F inference runs here.
 const examples = [
@@ -28,9 +28,9 @@ export function detectEventRuns(scores: readonly number[], threshold: number, mi
 
 export function AudioEventWalkthrough({ language }: { language: Language }) {
   const t = (zh: string, en: string, ja: string, ko: string) => text(language, zh, en, ja, ko);
-  const [threshold, setThreshold] = useState(.5);
-  const [minimumBins, setMinimumBins] = useState(1);
-  const [display, setDisplay] = useState<"tagging" | "detection">("detection");
+  const [threshold, setThreshold] = useLabState<number>("event.threshold", .5, (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= .1 && value <= .95);
+  const [minimumBins, setMinimumBins] = useLabState<number>("event.minimumBins", 1, (value): value is number => typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 3);
+  const [display, setDisplay] = useLabState<"tagging" | "detection">("event.display", "detection", (value): value is "tagging" | "detection" => value === "tagging" || value === "detection");
   const active = (runs: readonly (readonly [number, number])[], i: number) => runs.some(([start, end]) => i >= start && i < end);
   return <section className="event-walkthrough" aria-labelledby="event-demo-title">
     <header><h2 id="event-demo-title">{t("从类别分数到事件时间轴", "From class scores to an event timeline", "クラススコアからイベント時間軸へ", "클래스 점수에서 이벤트 시간축으로")}</h2>

@@ -2,6 +2,7 @@ import { traditional } from "../content/traditional";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
 import type { Language } from "../content/knowledge";
+import { useLabState } from "../hooks/useLabState";
 
 // One illustrative alignment, not a trained model's decisions.
 const actions = ["blank", "token", "token", "blank", "blank", "blank"] as const;
@@ -63,7 +64,7 @@ export function RnntWalkthrough({ language }: { language: Language }) {
   };
   const t = (zh: string, en: string) => language === "zh-Hant" ? traditional(zh) : language === "zh" ? zh : language === "en" ? en : (language === "ja" ? ja[zh] : ko[zh]);
   const [position, setPosition] = useState(0);
-  const [phrase, setPhrase] = useState("你好");
+  const [phrase, setPhrase] = useLabState<"你好" | "妈妈">("asr.rnnt.phrase", "你好", (value): value is "你好" | "妈妈" => value === "你好" || value === "妈妈");
   const points = [{ time: 0, count: 0 }];
   for (const action of actions) {
     const last = points[points.length - 1];
@@ -77,7 +78,7 @@ export function RnntWalkthrough({ language }: { language: Language }) {
   return <section aria-label={t("RNN-T 流式路径", "RNN-T streaming path")}>
     <p>{t("RNN-T 也不是刚出现的技术（2012 年提出）。这里展示 Transducer 的输出机制；它可以配合不同 Encoder。Conformer 是编码器结构，不能与 CTC、RNN-T 当成同一层次的替代选项。", "RNN-T is not brand-new either: it was introduced in 2012. This shows the Transducer output mechanism, which can pair with different encoders. Conformer is an encoder architecture, not an alternative at the same level as CTC or RNN-T.")}</p>
     <p>{t("人工路径演示：4 个编码器时间步、2 个文字 token，没有运行真实识别模型。每次推进一条路径边，不代表固定毫秒数或实际字的时间戳。", "Hand-built alignment: four encoder time steps and two text tokens, with no real recognition model. Each action advances one edge, not a fixed duration or a measured word timestamp.")}</p>
-    <div className="robot-controls"><label>{t("RNN-T 文字示例", "RNN-T text example")}<select value={phrase} onChange={e => { setPhrase(e.target.value); setPosition(0); }}><option value="你好">{language === "ja" ? "你好 / こんにちは" : language === "ko" ? "你好 / 안녕하세요" : "你好 / hello"}</option><option value="妈妈">{language === "ja" ? "妈妈 / ママ" : language === "ko" ? "妈妈 / 엄마" : "妈妈 / mama"}</option></select></label></div>
+    <div className="robot-controls"><label>{t("RNN-T 文字示例", "RNN-T text example")}<select value={phrase} onChange={e => { setPhrase(e.target.value === "妈妈" ? "妈妈" : "你好"); setPosition(0); }}><option value="你好">{language === "ja" ? "你好 / こんにちは" : language === "ko" ? "你好 / 안녕하세요" : "你好 / hello"}</option><option value="妈妈">{language === "ja" ? "妈妈 / ママ" : language === "ko" ? "妈妈 / 엄마" : "妈妈 / mama"}</option></select></label></div>
     <div className="denoise-explanation">
       <div><strong>Encoder → hₜ</strong><p>{t("声音经特征提取和编码形成当前声学状态。", "Audio features are encoded into the current acoustic state.")}</p><code>{finished ? t("输入步已耗尽", "Input steps exhausted") : `t = ${current.time}`}</code></div>
       <div><strong>Prediction network → gᵤ</strong><p>{t("只根据已经输出的非 blank token 更新文字上下文。", "Updates label context from previously emitted nonblank tokens.")}</p><code>u = {current.count}; {text || t("起始状态", "Start state")}</code></div>

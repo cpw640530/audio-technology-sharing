@@ -1,5 +1,6 @@
 import { traditional } from "../content/traditional";
 import { text } from "../content/language";
+import { useLabState } from "../hooks/useLabState";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Pause, Play, RotateCcw } from "lucide-react";
 import type { Language } from "../content/knowledge";
@@ -57,11 +58,31 @@ function createLabWavePath(
 }
 
 export function SoundWaveLab({ language, onBack, onBackToDetails }: SoundWaveLabProps) {
-  const [waveform, setWaveform] = useState<WaveformType>("sine");
-  const [amplitude, setAmplitude] = useState(0.6);
-  const [frequency, setFrequency] = useState(440);
-  const [phase, setPhase] = useState(0);
-  const [compare, setCompare] = useState(true);
+  const [waveform, setWaveform] = useLabState<WaveformType>(
+    "SoundWaveLab.waveform",
+    "sine",
+    (value): value is WaveformType => value === "sine" || value === "square" || value === "triangle"
+  );
+  const [amplitude, setAmplitude] = useLabState(
+    "SoundWaveLab.amplitude",
+    0.6,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0.1 && value <= 1 && Math.abs((value - 0.1) / 0.05 - Math.round((value - 0.1) / 0.05)) < 1e-9
+  );
+  const [frequency, setFrequency] = useLabState(
+    "SoundWaveLab.frequency",
+    440,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 110 && value <= 880 && (value - 110) % 10 === 0
+  );
+  const [phase, setPhase] = useLabState(
+    "SoundWaveLab.phase",
+    0,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= -2 && value <= 2 && Math.abs((value + 2) / 0.05 - Math.round((value + 2) / 0.05)) < 1e-9
+  );
+  const [compare, setCompare] = useLabState(
+    "SoundWaveLab.compare",
+    true,
+    (value): value is boolean => typeof value === "boolean"
+  );
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<{
     context: AudioContext;

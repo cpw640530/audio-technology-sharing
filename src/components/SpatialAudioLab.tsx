@@ -1,7 +1,8 @@
 import { traditional } from "../content/traditional";
 import { ArrowDown, ArrowLeft, Headphones, Speaker } from "lucide-react";
 import { text } from "../content/language";
-import { useMemo, useState } from "react";
+import { useLabState } from "../hooks/useLabState";
+import { useMemo } from "react";
 import type { Language } from "../content/knowledge";
 
 type SpatialAudioLabProps = {
@@ -458,7 +459,11 @@ function BinauralFlow({ language, angle, distance }: { language: Language; angle
 }
 
 function ObjectMapping({ language, angle, distance }: { language: Language; angle: number; distance: number }) {
-  const [output, setOutput] = useState<"headphones" | "speakers">("speakers");
+  const [output, setOutput] = useLabState<"headphones" | "speakers">(
+    "SpatialAudioLab.ObjectMapping.output",
+    "speakers",
+    (value): value is "headphones" | "speakers" => value === "headphones" || value === "speakers"
+  );
   const title = text(language, "内容与播放布局分开", "Content is separate from playback layout", "コンテンツと再生配置を分離", "콘텐츠와 재생 배치 분리");
   const headphoneLabel = text(language, "耳机", "Headphones", "ヘッドホン", "헤드폰");
   const speakerLabel = text(language, "5.1 扬声器", "5.1 speakers", "5.1 スピーカー", "5.1 스피커");
@@ -528,11 +533,31 @@ function SpatialPipeline({ language, mode }: { language: Language; mode: Exclude
 }
 
 export function SpatialAudioLab({ language, onBack, onBackToDetails }: SpatialAudioLabProps) {
-  const [mode, setMode] = useState<SpatialMode>("cues");
-  const [sourceAngle, setSourceAngle] = useState(-35);
-  const [distance, setDistance] = useState(3);
-  const [reflection, setReflection] = useState(42);
-  const [headYaw, setHeadYaw] = useState(0);
+  const [mode, setMode] = useLabState<SpatialMode>(
+    "SpatialAudioLab.mode",
+    "cues",
+    (value): value is SpatialMode => value === "cues" || value === "binaural" || value === "object" || value === "headTracking"
+  );
+  const [sourceAngle, setSourceAngle] = useLabState(
+    "SpatialAudioLab.sourceAngle",
+    -35,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= -150 && value <= 150 && (value + 150) % 5 === 0
+  );
+  const [distance, setDistance] = useLabState(
+    "SpatialAudioLab.distance",
+    3,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 1 && value <= 8 && Math.abs((value - 1) / 0.5 - Math.round((value - 1) / 0.5)) < 1e-9
+  );
+  const [reflection, setReflection] = useLabState(
+    "SpatialAudioLab.reflection",
+    42,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100
+  );
+  const [headYaw, setHeadYaw] = useLabState(
+    "SpatialAudioLab.headYaw",
+    0,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= -90 && value <= 90 && (value + 90) % 5 === 0
+  );
 
   const metrics = useMemo(() => {
     const relativeAngle = normalizeAngle(sourceAngle - headYaw);

@@ -1,5 +1,6 @@
 import { traditional } from "../content/traditional";
-import { useMemo, useState } from "react";
+import { useLabState } from "../hooks/useLabState";
+import { useMemo } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Language } from "../content/knowledge";
 
@@ -500,12 +501,36 @@ function renderProtocolDiagram(protocol: InterfaceProtocol, language: Language, 
 }
 
 export function DigitalInterfaceLab({ language, onBack, onBackToDetails }: DigitalInterfaceLabProps) {
-  const [protocol, setProtocol] = useState<InterfaceProtocol>("i2s");
-  const [sampleRate, setSampleRate] = useState(48);
-  const [bitDepth, setBitDepth] = useState(24);
-  const [channels, setChannels] = useState(2);
-  const [slotWidth, setSlotWidth] = useState(32);
-  const [mclkMultiple, setMclkMultiple] = useState(256);
+  const [protocol, setProtocol] = useLabState<InterfaceProtocol>(
+    "DigitalInterfaceLab.protocol",
+    "i2s",
+    (value): value is InterfaceProtocol => value === "i2s" || value === "tdm" || value === "pdm" || value === "spdif" || value === "usb"
+  );
+  const [sampleRate, setSampleRate] = useLabState(
+    "DigitalInterfaceLab.sampleRate",
+    48,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 16 && value <= 96 && (value - 16) % 8 === 0
+  );
+  const [bitDepth, setBitDepth] = useLabState(
+    "DigitalInterfaceLab.bitDepth",
+    24,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && (value === 16 || value === 24 || value === 32)
+  );
+  const [channels, setChannels] = useLabState(
+    "DigitalInterfaceLab.channels",
+    2,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 2 && value <= 8 && value % 2 === 0
+  );
+  const [slotWidth, setSlotWidth] = useLabState(
+    "DigitalInterfaceLab.slotWidth",
+    32,
+    (value): value is number => (value === 16 || value === 24 || value === 32) && value >= bitDepth
+  );
+  const [mclkMultiple, setMclkMultiple] = useLabState(
+    "DigitalInterfaceLab.mclkMultiple",
+    256,
+    (value): value is number => value === 128 || value === 256 || value === 384 || value === 512
+  );
 
   const sampleRateHz = sampleRate * 1000;
   const bclkMhz = useMemo(() => formatMhz((sampleRateHz * (protocol === "tdm" ? channels * slotWidth : slotWidth * 2)) / 1_000_000), [bitDepth, channels, protocol, sampleRateHz, slotWidth]);

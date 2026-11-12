@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { waitFor, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -18,30 +18,38 @@ describe("Audio knowledge app", () => {
   it("removes the homepage graph while preserving article-local related knowledge", async () => {
     const user = userEvent.setup();
     render(<App/>);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.queryByRole("button", { name: "关系图" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "知识关系图" })).not.toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "浏览方式" })).not.toBeInTheDocument();
     fireEvent.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /什么是声音/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { level: 1, name: "什么是声音" })).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "当前主题与关联知识" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "返回知识库" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.queryByRole("heading", { name: "知识关系图" })).not.toBeInTheDocument();
     expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
   }, 15000);
 
-  it("restores article position only when returning directly from its lab", () => {
+  it("restores article position only when returning directly from its lab", async () => {
     const original = Object.getOwnPropertyDescriptor(window, "scrollY");
     render(<App/>);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     try {
       fireEvent.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /什么是声音/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       Object.defineProperty(window, "scrollY", { configurable: true, value: 840 });
       fireEvent.scroll(window);
       fireEvent.click(screen.getByRole("button", { name: "打开声音波形实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(document.documentElement.scrollTop).toBe(0);
       fireEvent.click(screen.getByRole("button", { name: "返回详细内容" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(document.documentElement.scrollTop).toBe(840);
       const explorer = screen.getByRole("complementary", { name: "知识导航" });
       fireEvent.click(within(explorer).getByRole("link", { name: "麦克风" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(document.documentElement.scrollTop).toBe(0);
     } finally {
       if (original) Object.defineProperty(window, "scrollY", original);
@@ -53,18 +61,22 @@ describe("Audio knowledge app", () => {
     window.localStorage.setItem("audio-technology-language", language);
     const user = userEvent.setup();
     render(<App/>);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const home = document.querySelector(".quartz-home");
     expect(home?.querySelector(".quartz-home-sidebar input[type=search]")).toBeInTheDocument();
     expect(home?.querySelector(".quartz-home-right .learning-paths")).toBeInTheDocument();
     await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: language === "zh" ? /什么是声音/ : /What Sound Is/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const explorer = screen.getByRole("complementary", { name: language === "zh" ? "知识导航" : "Knowledge navigation" });
     expect(within(explorer).getByRole("link", { name: language === "zh" ? "什么是声音" : "What Sound Is" })).toHaveAttribute("aria-current", "page");
     const map = screen.getByRole("group", { name: language === "zh" ? "当前主题与关联知识" : "Current topic and related knowledge" });
     fireEvent.click(within(map).getByRole("link", { name: language === "zh" ? "麦克风" : "Microphones" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { level: 1, name: language === "zh" ? "麦克风" : "Microphones" })).toBeInTheDocument();
     const search = screen.getByRole("searchbox", { name: language === "zh" ? "搜索导航主题" : "Search navigation topics" });
     await user.type(search, "ALSA");
     await user.click(within(screen.getByRole("navigation", { name: language === "zh" ? "全部主题" : "All topics" })).getByRole("link", { name: language === "zh" ? "ALSA 框架" : "ALSA Framework" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { level: 1, name: language === "zh" ? "ALSA 框架" : "ALSA Framework" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: language === "zh" ? "章节目录" : "Page contents" })).toBeInTheDocument();
   });
@@ -72,13 +84,17 @@ describe("Audio knowledge app", () => {
   it.each(["ja", "ko"] as const)("searches translated content and switches an open article in place (%s)", async language => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), language);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const topic = categories[0].topics[0];
     await user.type(screen.getByRole("searchbox"), topic.title[language]);
     const grid = within(screen.getByTestId("topic-grid"));
     await user.click(grid.getByRole("button", { name: new RegExp(topic.title[language]) }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { level: 1, name: topic.title[language] })).toBeInTheDocument();
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { level: 1, name: topic.title.en })).toBeInTheDocument();
     expect(screen.queryByRole("searchbox", { name: interfaceCopy.searchLabel.en })).not.toBeInTheDocument();
   });
@@ -86,6 +102,7 @@ describe("Audio knowledge app", () => {
   it("shows seven external references on the homepage and switches their language", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const references = screen.getByRole("region", { name: "参考与延伸阅读" });
     const links = within(references).getAllByRole("link");
     expect(links).toHaveLength(7);
@@ -104,9 +121,11 @@ describe("Audio knowledge app", () => {
     }
     expect(within(references).getByText(/通过交互图解理解空气振动/)).toBeInTheDocument();
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("region", { name: "References and Further Reading" })).toBeInTheDocument();
     expect(screen.getByText(/Interactive explanations of air vibration/)).toBeInTheDocument();
     await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /What Sound Is/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.queryByRole("region", { name: "References and Further Reading" })).not.toBeInTheDocument();
   });
 
@@ -135,6 +154,7 @@ describe("Audio knowledge app", () => {
     window.localStorage.setItem("audio-technology-language", language);
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const topics = categories.flatMap(category => category.topics);
     const source = topics.find(topic => getTopicKey(topic) === key)!;
     const sourceKey = getTopicKey(source)!;
@@ -142,30 +162,37 @@ describe("Audio knowledge app", () => {
       const card = within(screen.getByTestId("topic-grid")).getAllByRole("button")
         .find(button => button.querySelector("h3")?.textContent === source.title[language]);
       await user.click(card!);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       const region = screen.getByRole("region", { name: language === "zh" ? "相关知识" : "Related knowledge" });
       const pager = screen.getByRole("navigation", { name: language === "zh" ? "详细内容导航" : "Detailed topic navigation" });
       expect(region.compareDocumentPosition(pager) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       const target = topics.find(topic => getTopicKey(topic) === relation.target)!;
-      await user.click(within(region).getByRole("button", { name: target.title[language] }));
+      await user.click(within(region).getByRole("link", { name: target.title[language] }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(screen.getByRole("main").querySelector("h1")).toHaveTextContent(target.title[language]);
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       if (target.detail.lab) {
         await user.click(screen.getByRole("button", { name: target.detail.lab.buttonLabel[language] }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
         expect(screen.queryByRole("region", { name: language === "zh" ? "相关知识" : "Related knowledge" })).not.toBeInTheDocument();
         await user.click(screen.getByRole("button", { name: language === "zh" ? "返回详细内容" : /^Back to detailed (content|guide)$/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       } else {
         expect(document.querySelector(".system-audio-inline")).toBeInTheDocument();
       }
       expect(screen.getByRole("main").querySelector("h1")).toHaveTextContent(target.title[language]);
       await user.click(screen.getByRole("button", { name: language === "zh" ? "返回知识库" : "Back to knowledge base" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       await user.click(within(screen.getByRole("region", { name: language === "zh" ? "知识分类" : "Knowledge Areas" })).getByRole("button", { name: language === "zh" ? /全部/ : /All/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     }
   });
 
-  it("defaults to English when no language preference is stored", () => {
+  it("defaults to English when no language preference is stored", async () => {
     window.localStorage.removeItem("audio-technology-language");
 
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "Audio Technology Sharing" })).toBeInTheDocument();
     expect(screen.getByRole("complementary", { name: "Knowledge Outline" })).toBeInTheDocument();
@@ -174,23 +201,29 @@ describe("Audio knowledge app", () => {
     expect(screen.queryByRole("heading", { name: "音频技术分享" })).not.toBeInTheDocument();
   });
 
-  it.each(["zh", "en", "zh-Hant", "ja", "ko"] as const)("links the waveform-spectrum guide, lab and adjacent card (%s)", language => {
+  it.each(["zh", "en", "zh-Hant", "ja", "ko"] as const)("links the waveform-spectrum guide, lab and adjacent card (%s)", async language => {
     window.localStorage.setItem("audio-technology-language", language);
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const topics = categories[0].topics;
     const topic = topics.find(item => item.detail.lab?.type === "wave-spectrum")!;
     const previous = topics.find(item => item.detail.lab?.type === "sound-wave")!;
     fireEvent.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: new RegExp(topic.title[language]) }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const main = screen.getByRole("main", { name: topic.title[language] });
     fireEvent.click(within(main).getByRole("button", { name: topic.detail.lab!.buttonLabel[language] }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(topic.detail.lab!.title[language]);
     fireEvent.change(screen.getByRole("slider", { name: "500 Hz" }), { target: { value: "0" } });
     expect(screen.getByTestId("spectrum-line-1")).toHaveAttribute("data-amplitude", "0");
     fireEvent.click(document.querySelectorAll<HTMLButtonElement>(".sound-lab-back-actions button")[1]);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main", { name: topic.title[language] })).toBeInTheDocument();
     fireEvent.click(document.querySelectorAll<HTMLButtonElement>(".topic-pager button")[0]);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main", { name: previous.title[language] })).toBeInTheDocument();
     fireEvent.click(document.querySelectorAll<HTMLButtonElement>(".topic-pager button")[2]);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main", { name: topic.title[language] })).toBeInTheDocument();
   });
 
@@ -198,11 +231,13 @@ describe("Audio knowledge app", () => {
     window.localStorage.setItem("audio-technology-language", language);
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const topics = categories.find(category => category.id === "fundamentals")!.topics;
     for (const topic of topics) {
       const card = within(screen.getByTestId("topic-grid")).getAllByRole("button")
         .find(button => button.querySelector("h3")?.textContent === topic.title[language]);
       await user.click(card!);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       if (topic.title.en === "Sound and Audio Units") {
         for (const term of topic.detail.termExplanations!.slice(0, 4)) {
           expect(screen.getAllByText(term.explanation[language])).toHaveLength(1);
@@ -223,6 +258,7 @@ describe("Audio knowledge app", () => {
         expect(screen.getByText(language === "zh" ? /真峰值单独用 dBTP 测量/ : /true peak is measured separately in dBTP/)).toBeInTheDocument();
       }
       await user.click(screen.getByRole("button", { name: language === "zh" ? "返回知识库" : "Back to knowledge base" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     }
   });
 
@@ -230,12 +266,15 @@ describe("Audio knowledge app", () => {
     window.localStorage.setItem("audio-technology-language", language);
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", {
       name: language === "zh" ? /声音与音频单位/ : /Sound and Audio Units/
     }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByText("dB = 20 log10(A2 / A1)")).toBeInTheDocument();
     expect(screen.getByText("dB = 10 log10(P2 / P1)")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: language === "zh" ? "打开声音与音频单位实验室" : /Open.*units lab/i }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.queryByText("dB = 20 log10(A2 / A1)")).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: language === "zh" ? "常用换算关系" : "Common conversion relationships" })).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: language === "zh" ? "自动换算器" : "Automatic converter" })).toBeInTheDocument();
@@ -246,10 +285,12 @@ describe("Audio knowledge app", () => {
     window.localStorage.setItem("audio-technology-language", language);
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const topic = categories.flatMap(category => category.topics).find(topic => topic.title.en === "Audio Codecs")!;
     const card = within(screen.getByTestId("topic-grid")).getAllByRole("button")
       .find(button => button.querySelector("h3")?.textContent === topic.title[language]);
     await user.click(card!);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const tableName = language === "zh" ? "编码和采样率对比表" : "Codec and sample-rate comparison tables";
     expect(screen.getByRole("region", { name: tableName })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "MP3" })).toBeInTheDocument();
@@ -264,9 +305,11 @@ describe("Audio knowledge app", () => {
     expect(disclosure).not.toHaveAttribute("open");
     expect(example).not.toBeVisible();
     await user.click(codecDetails);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(disclosure).toHaveAttribute("open");
     expect(example).toBeVisible();
     await user.click(codecDetails);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(disclosure).not.toHaveAttribute("open");
     expect(topic.detail.lab).toBeUndefined();
     expect(screen.queryByRole("button", { name: /打开音频编解码实验室|Open audio codec lab/ })).not.toBeInTheDocument();
@@ -280,10 +323,12 @@ describe("Audio knowledge app", () => {
     window.localStorage.setItem("audio-technology-language", language);
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const card = within(screen.getByTestId("topic-grid")).getAllByRole("button")
       .find(button => button.querySelector("h3")?.textContent === topic.title[language]);
     expect(card).toBeDefined();
     await user.click(card!);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const title = screen.getByRole("main").querySelector("h1")?.textContent;
     if (topic.detail.lab?.type === "ai-audio" && topic.detail.lab.initialMode !== "overview") {
       const paragraphs = Array.from(document.querySelectorAll(".sound-topic-intro p"));
@@ -297,54 +342,70 @@ describe("Audio knowledge app", () => {
     expect(links.map(link => link.textContent)).toEqual(headings.map(heading => heading.textContent));
     links.forEach((link, index) => expect(document.querySelector(link.getAttribute("href")!)).toBe(headings[index]));
     await user.click(screen.getByRole("button", { name: topic.detail.lab!.buttonLabel[language] }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: language === "zh" ? "返回详细内容" : /^Back to detail/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main").querySelector("h1")).toHaveTextContent(title!);
     await user.click(screen.getByRole("button", { name: topic.detail.lab!.buttonLabel[language] }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: language === "zh" ? "返回知识库" : "Back to knowledge base" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
   });
 
   it("navigates the fundamental guides without crossing category boundaries", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("button", { name: "上一张卡片" })).toBeDisabled();
     for (const title of ["读懂波形与频谱", "数字音频基础", "声音与音频单位", "听感与指标"]) {
       await user.click(screen.getByRole("button", { name: "下一张卡片" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
     }
     expect(screen.getByRole("button", { name: "下一张卡片" })).toBeDisabled();
     for (const title of ["声音与音频单位", "数字音频基础", "读懂波形与频谱", "什么是声音"]) {
       await user.click(screen.getByRole("button", { name: "上一张卡片" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
     }
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("button", { name: "Previous topic" })).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "Back to topics" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("region", { name: "Topic Cards" })).toBeInTheDocument();
   });
 
   it("navigates the audio software guides in card order", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /系统音频架构/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("main", { name: "系统音频架构" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "上一张卡片" })).toBeDisabled();
 
     for (const title of ["ALSA 框架", "实时音频处理", "音频编解码"]) {
       await user.click(screen.getByRole("button", { name: "下一张卡片" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
     }
 
     expect(screen.getByRole("button", { name: "下一张卡片" })).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "上一张卡片" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main", { name: "实时音频处理" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "返回知识分类" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
     expect(within(screen.getByTestId("topic-grid")).getAllByRole("button")).toHaveLength(4);
   });
@@ -352,22 +413,30 @@ describe("Audio knowledge app", () => {
   it("switches microphone anatomy and explains its components in both languages", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /^音频硬件 麦克风/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const diagram = screen.getByRole("region", { name: "麦克风实物与剖面图解" });
     expect(within(diagram).getByRole("img", { name: /Shure SM58/ })).toHaveAttribute("src", expect.stringContaining("microphone-dynamic.jpg"));
     await user.click(within(diagram).getByRole("button", { name: "音圈" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(diagram).getByText(/线圈在磁隙内运动产生感应电压/)).toBeInTheDocument();
     await user.click(within(diagram).getByRole("button", { name: "驻极体咪头" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(diagram).getByRole("img", { name: "驻极体外部偏置简化电路" })).toBeInTheDocument();
     expect(within(diagram).getByRole("link", { name: /爱上半导体/ })).toHaveAttribute("href", "https://www.bilibili.com/video/BV1mB4y1x7pV/");
     await user.click(within(diagram).getByRole("button", { name: "3. JFET" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(diagram).getByText(/高输入阻抗的 JFET/)).toBeInTheDocument();
     await user.click(within(diagram).getByRole("button", { name: "数字 MEMS 麦" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(diagram).queryByRole("img", { name: "驻极体外部偏置简化电路" })).not.toBeInTheDocument();
     expect(within(diagram).getByRole("button", { name: "1. 声孔" })).toHaveAttribute("aria-pressed", "true");
     await user.click(within(diagram).getByRole("button", { name: "3. ASIC" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(diagram).getByText(/PDM 需后端抽取为 PCM/)).toBeInTheDocument();
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("img", { name: "Digital MEMS cross-section schematic" })).toBeInTheDocument();
     expect(screen.getByText(/PDM needs downstream decimation/)).toBeInTheDocument();
   });
@@ -376,15 +445,19 @@ describe("Audio knowledge app", () => {
     window.localStorage.setItem("audio-technology-language", language);
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: language === "zh" ? /^音频硬件 麦克风/ : /Microphones/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByText(language === "zh" ? /数字麦在内部完成转换/ : /Digital microphones convert internally/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: language === "zh" ? "打开麦克风实验室" : "Open microphone lab" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const chart = screen.getByRole("img", { name: language === "zh" ? "麦克风指向性极坐标图" : "Microphone polar pattern chart" });
     const readouts = screen.getByLabelText(language === "zh" ? "拾音教学结果" : "Pickup teaching results");
     expect(chart).toHaveAttribute("viewBox", "-20 0 420 400");
     expect(chart.contains(readouts)).toBe(false);
     expect(screen.getByText(language === "zh" ? /评分不是实测 SNR/ : /scores are not measured SNR/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: language === "zh" ? "8 字形" : "Figure-8" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     fireEvent.change(screen.getByRole("slider", { name: language === "zh" ? "声源角度" : "Source angle" }), { target: { value: "90" } });
     const level = within(readouts).getByText(language === "zh" ? "拾音强度" : "Pickup level").nextElementSibling;
     expect(level).toHaveTextContent("0%");
@@ -393,17 +466,21 @@ describe("Audio knowledge app", () => {
     const principleButtons = within(screen.getByRole("group", { name: language === "zh" ? "麦克风工作原理类型" : "Microphone principle type" })).getAllByRole("button");
     for (const button of principleButtons) {
       await user.click(button);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(button).toHaveAttribute("aria-pressed", "true");
       expect(principleButtons.filter(item => item.getAttribute("aria-pressed") === "true")).toHaveLength(1);
     }
     await user.click(screen.getByRole("button", { name: language === "zh" ? "返回详细内容" : "Back to detailed content" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { name: language === "zh" ? "麦克风" : "Microphones", level: 1 })).toBeInTheDocument();
   });
 
   it("links chapters without changing the route and refreshes the contents on the next topic", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /^音频硬件 麦克风/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const contents = screen.getByRole("navigation", { name: "章节目录" });
     expect(within(contents).getAllByRole("link")).toHaveLength(7);
     for (const [index, link] of within(contents).getAllByRole("link").entries()) {
@@ -416,13 +493,16 @@ describe("Audio knowledge app", () => {
     target.scrollIntoView = scroll;
     const hash = window.location.hash;
     await user.click(within(contents).getByRole("link", { name: "输出如何接入系统" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(target).toHaveFocus();
     expect(scroll).toHaveBeenCalledWith({ block: "start", behavior: "instant" });
     expect(window.location.hash).toBe(hash);
     expect(within(contents).getByRole("link", { name: "输出如何接入系统" })).toHaveAttribute("aria-current", "location");
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("navigation", { name: "Page contents" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Next topic" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const nextContents = screen.getByRole("navigation", { name: "Page contents" });
     const destinations = within(nextContents).getAllByRole("link").map(link => link.getAttribute("href"));
     expect(new Set(destinations).size).toBe(destinations.length);
@@ -434,9 +514,12 @@ describe("Audio knowledge app", () => {
   it("navigates hardware guides and returns from each lab in both languages", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     for (const zh of [true, false]) {
       if (!zh) await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: zh ? /^音频硬件 麦克风/ : /Microphones/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       const titles = zh
         ? ["麦克风", "数字音频接口 / 传输协议", "功放与扬声器"]
         : ["Microphones", "Digital Audio Interfaces / Transport Protocols", "Amplifiers and Speakers"];
@@ -445,14 +528,19 @@ describe("Audio knowledge app", () => {
         const page = screen.getByRole("main", { name: title });
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
         await user.click(within(page).getByRole("button", { name: zh ? /^打开/ : /^Open/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
         await user.click(screen.getByRole("button", { name: zh ? "返回详细内容" : "Back to detailed content" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
         expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
         if (index < titles.length - 1) await user.click(screen.getByRole("button", { name: zh ? "下一张卡片" : "Next topic" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       }
       expect(screen.getByRole("button", { name: zh ? "下一张卡片" : "Next topic" })).toBeDisabled();
       await user.click(screen.getByRole("button", { name: zh ? "上一张卡片" : "Previous topic" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(screen.getByRole("main", { name: titles[titles.length - 2] })).toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: zh ? "返回知识库" : "Back to knowledge base" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(within(screen.getByTestId("topic-grid")).getAllByRole("button")).toHaveLength(titles.length);
     }
   });
@@ -460,38 +548,54 @@ describe("Audio knowledge app", () => {
   it("opens robot anatomy and updates scene geometry without implying single-mic localization", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(within(screen.getByRole("region", { name: "知识分类" })).getByRole("button", { name: /应用场景/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /机器人音频/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const topicPage = screen.getByRole("main", { name: "机器人音频" });
     await user.click(within(topicPage).getByRole("button", { name: "打开机器人音频实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const lab = screen.getByRole("main", { name: "机器人音频实验室" });
     expect(within(lab).getByRole("img", { name: "机器人音频部件结构图" })).toBeInTheDocument();
     await user.click(within(lab).getByRole("button", { name: "关节与电机" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(lab).getByText(/隔振、麦克风布局/)).toBeInTheDocument();
     await user.click(within(lab).getByRole("button", { name: "工作场景" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(lab).getByTestId("robot-bearing")).toHaveTextContent("-45°");
     fireEvent.change(within(lab).getByRole("slider", { name: "机器人朝向" }), { target: { value: "90" } });
     expect(within(lab).getByTestId("robot-bearing")).toHaveTextContent("-135°");
     await user.selectOptions(within(lab).getByRole("combobox", { name: "麦克风数量" }), "1");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(lab).getByTestId("robot-bearing")).toHaveTextContent("单麦：不提供阵列定位");
     await user.click(within(lab).getByRole("checkbox", { name: "播报状态（示意）" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(within(lab).getByRole("button", { name: /2 AEC/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(lab).getByText(/播报已开启/)).toBeInTheDocument();
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main", { name: "Robot Audio Lab" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Back to detailed content" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main", { name: "Robot Audio" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Back to knowledge base" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
   });
 
   it("opens the Bluetooth application lab and separates permanent loss from late arrival", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: "应用场景" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: /蓝牙音频/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const topicPage = screen.getByRole("main", { name: "蓝牙音频：无线传输、编码与延迟" });
     await user.click(within(topicPage).getByRole("button", { name: "打开蓝牙音频实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { name: "蓝牙音频链路实验室" })).toBeInTheDocument();
     expect(screen.getByTestId("bluetooth-payload")).toHaveTextContent("200.0 B");
     expect(screen.getByTestId("bluetooth-latency")).toHaveTextContent("80 ms");
@@ -503,24 +607,32 @@ describe("Audio knowledge app", () => {
     expect(screen.getByTestId("bluetooth-packet-summary")).toHaveTextContent("永久丢失 5");
     expect(screen.getByTestId("bluetooth-latency")).toHaveTextContent("200 ms");
     await user.selectOptions(screen.getByRole("combobox", { name: "蓝牙编码器" }), "LDAC");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByTestId("bluetooth-payload")).toHaveTextContent("825.0 B");
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { name: "Bluetooth Audio Link Lab" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Bluetooth codec" })).toHaveValue("LDAC");
     await user.click(screen.getByRole("button", { name: "Back to detailed content" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main", { name: "Bluetooth Audio: Wireless Transport, Coding, and Latency" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Back to knowledge base" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByTestId("topic-grid")).toBeInTheDocument();
   });
 
   it("navigates application topics in card order", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: "应用场景" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /蓝牙音频/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     for (const title of ["会议与通信", "机器人音频", "车载声学", "IoT 与内容创作"]) {
       await user.click(screen.getByRole("button", { name: "下一张卡片" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
     }
     expect(screen.getByRole("button", { name: "下一张卡片" })).toBeDisabled();
@@ -546,6 +658,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByRole("region", { name: "主题卡片" })).toBeInTheDocument();
 
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "Audio Technology Sharing" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Content Roadmap" })).not.toBeInTheDocument();
@@ -564,9 +677,11 @@ describe("Audio knowledge app", () => {
   it("filters topics by category", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /AI 音频/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const topicGrid = screen.getByTestId("topic-grid");
     expect(within(topicGrid).getByText("AI 音频总流程")).toBeInTheDocument();
@@ -581,16 +696,19 @@ describe("Audio knowledge app", () => {
   it("opens an article directly from the knowledge outline and clears the previous search", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const search = screen.getByRole("searchbox", { name: "搜索知识点" });
     await user.type(search, "FFT");
     const outline = screen.getByRole("complementary", { name: "知识分类大纲" });
     await user.click(within(outline).getByRole("link", { name: "麦克风" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { level: 1, name: "麦克风" })).toBeInTheDocument();
     const navigation = screen.getByRole("complementary", { name: "知识导航" });
     expect(within(navigation).getByRole("link", { name: "麦克风" })).toHaveAttribute("aria-current", "page");
     await user.click(screen.getByRole("button", { name: "返回知识库" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("searchbox", { name: "搜索知识点" })).toHaveValue("");
     const topicGrid = screen.getByTestId("topic-grid");
     const microphoneCard = document.getElementById("topic-hardware-Microphones");
@@ -598,96 +716,104 @@ describe("Audio knowledge app", () => {
     expect(within(topicGrid).queryByText("什么是声音")).not.toBeInTheDocument();
   });
 
-  it("opens AI topic cards as separate article-style labs", async () => {
+  it("keeps AI event theory in the article and detection controls in the lab", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /AI 音频/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /AI 音频事件识别/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "AI 音频事件识别" });
     expect(
       within(details).getByText("识别哭声、玻璃破碎、狗叫声、警报声等非语音事件。")
     ).toBeInTheDocument();
+    await user.click(within(details).getByText("进阶阅读", { selector: "summary" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
+    expect(within(details).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
+    expect(within(details).getByText("LBCE = -Σc[yc log pc + (1-yc)log(1-pc)]")).toBeInTheDocument();
+    const modelSection = within(details).getByRole("region", { name: "经典与补充方案" });
+    for (const model of ["YAMNet", "PANNs", "AST", "BEATs", "CLAP"]) expect(within(modelSection).getByText(model)).toBeInTheDocument();
+    for (const title of ["全面概述", "核心技术", "应用场景", "挑战", "未来趋势"]) {
+      const summary = within(details).getByText(title, { selector: "summary" });
+      expect(summary.closest("details")).not.toHaveAttribute("open");
+      await user.click(summary);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
+      expect(summary.closest("details")).toHaveAttribute("open");
+    }
     await user.click(within(details).getByRole("button", { name: "打开 AI 音频事件识别实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const lab = screen.getByRole("main", { name: "AI 音频事件识别实验室" });
     expect(within(lab).getByRole("heading", { name: "AI 音频事件识别实验室" })).toBeInTheDocument();
     expect(within(lab).getByRole("heading", { name: "从类别分数到事件时间轴" })).toBeInTheDocument();
-    for (const title of ["全面概述", "核心技术", "应用场景", "挑战", "未来趋势"]) {
-      const summary = within(lab).getByText(title, { selector: "summary" });
-      expect(summary.closest("details")).not.toHaveAttribute("open");
-      await user.click(summary);
-      expect(summary.closest("details")).toHaveAttribute("open");
-    }
+    expect(within(lab).queryByText("进阶阅读", { selector: "summary" })).not.toBeInTheDocument();
     expect(within(lab).queryByRole("list", { name: "AI 音频事件识别图解流程" })).not.toBeInTheDocument();
     expect(within(lab).getByRole("slider", { name: /分数阈值/ })).toBeInTheDocument();
     fireEvent.change(within(lab).getByRole("combobox", { name: "最短保留时长" }), { target: { value: "2" } });
     expect(within(lab).getByTestId("event-result-1")).toHaveTextContent("误报 / 漏检时长: 0.0 / 0.5 s");
-    expect(within(lab).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
-    expect(within(lab).getByText("LBCE = -Σc[yc log pc + (1-yc)log(1-pc)]")).toBeInTheDocument();
-    expect(within(lab).getAllByText(/每小时误报数/).length).toBeGreaterThanOrEqual(2);
-    expect(within(lab).getByRole("heading", { name: "PretrainedSED · ATST-F" })).toBeInTheDocument();
-    const modelSection = within(lab).getByRole("region", { name: "经典与补充方案" });
-    expect(within(modelSection).getByRole("heading", { name: "经典与补充方案" })).toBeInTheDocument();
-    expect(within(modelSection).getByText("YAMNet")).toBeInTheDocument();
-    expect(within(modelSection).getByText("PANNs")).toBeInTheDocument();
-    expect(within(modelSection).getByText("AST")).toBeInTheDocument();
-    expect(within(modelSection).getByText("BEATs")).toBeInTheDocument();
-    expect(within(modelSection).getByText("CLAP")).toBeInTheDocument();
+    expect(within(lab).queryByRole("heading", { name: "工程技术剖面" })).not.toBeInTheDocument();
     expect(within(lab).getByText("哭声")).toBeInTheDocument();
     expect(within(lab).getByText("玻璃破碎")).toBeInTheDocument();
     expect(within(lab).getByText("狗叫声")).toBeInTheDocument();
     expect(within(lab).queryByRole("img", { name: "AI 音频处理可视化" })).not.toBeInTheDocument();
     expect(within(lab).queryByRole("button", { name: "AI 编码" })).not.toBeInTheDocument();
     await user.click(within(lab).getByRole("button", { name: "片段标签" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(lab).queryByRole("combobox", { name: "最短保留时长" })).not.toBeInTheDocument();
   });
 
   it("explains ASR modules with concrete inputs, processing, outputs, and lab scenarios", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /AI 音频/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /语音识别 ASR/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "语音识别 ASR" });
     expect(within(details).getByText(/PCM 每秒有 16000 个振幅值/)).toBeInTheDocument();
     await user.click(within(details).getByText("分帧加窗", { selector: "summary" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(details).getByText(/相邻帧重叠 240 点/)).toBeInTheDocument();
     expect(within(details).getAllByText("log-mel / MFCC").length).toBeGreaterThan(0);
     expect(within(details).getByText(/把每帧语音变成更接近人耳听感的频率能量图/)).toBeInTheDocument();
     await user.click(within(details).getByText("Encoder 编码器", { selector: "summary" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(within(details).getByText("CTC / Attention / Transducer", { selector: "summary" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(details).getByText(/CTC 适合把很多帧对齐到较短 token 序列/)).toBeInTheDocument();
     await user.click(within(details).getByText("解码与后处理", { selector: "summary" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(details).getByText(/热词可参与解码而非事后替换/)).toBeInTheDocument();
     expect(within(details).getByRole("group", { name: "识别路线" })).toBeInTheDocument();
+    await user.click(within(details).getByText("进阶阅读", { selector: "summary" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
+    expect(within(details).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
+    expect(within(details).getByText("WER = (S + D + I) / N")).toBeInTheDocument();
+    const modelSection = within(details).getByRole("region", { name: "经典与补充方案" });
+    for (const model of ["Conformer / RNNT", "wav2vec 2.0", "Whisper", "Paraformer / FunASR", "GPT-4o transcribe"]) expect(within(modelSection).getByText(model)).toBeInTheDocument();
 
     await user.click(within(details).getByRole("button", { name: "打开语音识别 ASR 实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const lab = screen.getByRole("main", { name: "语音识别 ASR 实验室" });
     expect(within(lab).getByRole("region", { name: "ASR 逐步可视化" })).toBeInTheDocument();
     await user.click(within(lab).getByRole("button", { name: "5. 注意力 Encoder–Decoder" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(lab).getByRole("region", { name: "注意力 ASR 图解" })).toBeInTheDocument();
     expect(within(lab).queryByRole("list", { name: "语音识别 ASR 图解流程" })).not.toBeInTheDocument();
     expect(within(lab).getByRole("navigation", { name: "AI 实验室章节" }).querySelector("a"))
-      .toHaveAttribute("href", "#ai-current-model");
+      .toHaveAttribute("href", "#ai-source");
     await user.click(within(lab).getByRole("button", { name: "1. 声学特征" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(lab).getByText(/每帧取 400 个样本，每次移动 160 个样本/)).toBeInTheDocument();
-    expect(within(lab).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
-    expect(within(lab).getByText("WER = (S + D + I) / N")).toBeInTheDocument();
-    expect(within(lab).getByText(/流式系统需要控制 chunk/)).toBeInTheDocument();
-    expect(within(lab).getByRole("heading", { name: "Qwen3-ASR · 0.6B / 1.7B" })).toBeInTheDocument();
-    const modelSection = within(lab).getByRole("region", { name: "经典与补充方案" });
-    expect(within(modelSection).getByText("Conformer / RNNT")).toBeInTheDocument();
-    expect(within(modelSection).getByText("wav2vec 2.0")).toBeInTheDocument();
-    expect(within(modelSection).getByText("Whisper")).toBeInTheDocument();
-    expect(within(modelSection).getByText("Paraformer / FunASR")).toBeInTheDocument();
-    expect(within(modelSection).getByText("GPT-4o transcribe")).toBeInTheDocument();
-    expect(within(lab).getByText(/离线转写适合会议纪要和录音整理/)).toBeInTheDocument();
-    expect(within(lab).getByText(/流式字幕强调首字延迟和增量稳定性/)).toBeInTheDocument();
+    expect(within(lab).queryByRole("heading", { name: "工程技术剖面" })).not.toBeInTheDocument();
     expect(within(lab).queryByRole("button", { name: "流式字幕" })).not.toBeInTheDocument();
   });
 
@@ -695,10 +821,13 @@ describe("Audio knowledge app", () => {
     const scroll = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /AI 音频/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /AI 音频总流程/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "AI 音频总流程" });
     expect(within(details).getByRole("heading", { name: "AI 如何处理声音" })).toBeInTheDocument();
@@ -707,18 +836,25 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("heading", { name: "训练会更新权重" })).toBeInTheDocument();
     expect(within(details).getByRole("list", { name: "语音助手工程链路" })).toBeInTheDocument();
     await user.click(within(details).getByText("FFT / STFT / Mel / MFCC", { selector: "summary" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(details).queryByRole("button", { name: "打开 AI 音频总流程实验室" })).not.toBeInTheDocument();
     expect(categories.find(category => category.id === "ai")!.topics[0].detail.lab).toBeUndefined();
     await user.click(within(details).getByRole("button", { name: "生成声音" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(taskMap).toHaveTextContent("文字、音色或音乐条件");
     await user.click(within(details).getByRole("button", { name: "压缩声音" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(taskMap).toHaveTextContent("量化为离散索引并封装");
     await user.click(within(details).getByRole("button", { name: "改善声音" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(taskMap).toHaveTextContent("重建增强 PCM");
     await user.click(within(details).getByRole("button", { name: "识别内容" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(within(details).getByRole("button", { name: "进入 ASR" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const asr = screen.getByRole("main", { name: "语音识别 ASR" });
     await user.click(within(asr).getByRole("button", { name: "打开语音识别 ASR 实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main", { name: "语音识别 ASR 实验室" })).toBeInTheDocument();
     expect(scroll).toHaveBeenCalledWith({ top: 0, behavior: "instant" });
     scroll.mockRestore();
@@ -727,24 +863,26 @@ describe("Audio knowledge app", () => {
   it("explains neural audio coding models separately from traditional codecs", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /AI 音频/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /AI 音频编码/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "AI 音频编码" });
+    await user.click(within(details).getByText("进阶阅读", { selector: "summary" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
+    const modelSection = within(details).getByRole("region", { name: "经典与补充方案" });
+    for (const model of ["SoundStream", "EnCodec", "Lyra", "codec token / neural codec language model"]) expect(within(modelSection).getByText(model)).toBeInTheDocument();
     await user.click(within(details).getByRole("button", { name: "打开 AI 音频编码实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const lab = screen.getByRole("main", { name: "AI 音频编码实验室" });
     expect(within(lab).getByText("R = Ftoken · Q · ceil(log2(K)) bit/s")).toBeInTheDocument();
-    expect(within(lab).getByText(/编码端与解码端必须严格匹配/)).toBeInTheDocument();
-    expect(within(lab).getByRole("heading", { name: "WavTokenizer / Mimi" })).toBeInTheDocument();
-    const modelSection = within(lab).getByRole("region", { name: "经典与补充方案" });
-    expect(within(modelSection).getByText("SoundStream")).toBeInTheDocument();
-    expect(within(modelSection).getByText("EnCodec")).toBeInTheDocument();
-    expect(within(modelSection).getByText("Lyra")).toBeInTheDocument();
-    expect(within(modelSection).getByText("codec token / neural codec language model")).toBeInTheDocument();
-    expect(within(modelSection).getByText(/不是 MP3\/AAC 的手工变换编码路线/)).toBeInTheDocument();
+    expect(within(lab).getByRole("heading", { name: "量化与码率例子" })).toBeInTheDocument();
+    expect(within(lab).queryByRole("region", { name: "经典与补充方案" })).not.toBeInTheDocument();
   });
 
   it.each([
@@ -754,46 +892,59 @@ describe("Audio knowledge app", () => {
   ])("adds task-specific engineering depth to %s", async (topic, openLabel, labName, equation, metric) => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(within(screen.getByRole("region", { name: "知识分类" })).getByRole("button", { name: /AI 音频/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: new RegExp(topic) }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const details = screen.getByRole("main", { name: topic });
+    await user.click(within(details).getByText("进阶阅读", { selector: "summary" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
+    expect(within(details).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
+    expect(within(details).getAllByText(equation).length).toBeGreaterThan(0);
+    expect(within(details).getAllByText(new RegExp(metric)).length).toBeGreaterThan(0);
     await user.click(within(details).getByRole("button", { name: openLabel }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const lab = screen.getByRole("main", { name: labName });
-    expect(within(lab).getByRole("heading", { name: "工程技术剖面" })).toBeInTheDocument();
+    expect(within(lab).queryByRole("heading", { name: "工程技术剖面" })).not.toBeInTheDocument();
     if (topic === "AI 音频增强") {
       expect(within(lab).queryByRole("heading", { name: "基本原理" })).not.toBeInTheDocument();
       expect(within(lab).getByRole("navigation", { name: "AI 实验室章节" }).querySelector("a"))
-        .toHaveAttribute("href", "#ai-current-model");
+        .toHaveAttribute("href", "#ai-source");
     }
     if (topic === "语音合成 TTS") {
       expect(within(lab).getByRole("region", { name: "TTS 逐步可视化" })).toBeInTheDocument();
       expect(within(lab).queryByRole("heading", { name: "基本原理" })).not.toBeInTheDocument();
       await user.click(within(lab).getByRole("button", { name: "2. 时长与对齐" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(within(lab).getByTestId("tts-duration-total")).toHaveTextContent("97");
     }
     if (topic === "音频生成") {
       expect(within(lab).getByRole("region", { name: "音频生成逐步可视化" })).toBeInTheDocument();
       expect(within(lab).queryByRole("heading", { name: "基本原理" })).not.toBeInTheDocument();
       await user.click(within(lab).getByRole("button", { name: "3. 模型怎样生成" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(within(lab).getByRole("button", { name: "ACE-Step 1.5 · 2026" })).toBeInTheDocument();
       expect(within(lab).getByTestId("generation-iteration")).toHaveTextContent("k = 0/8");
       await user.click(within(lab).getByRole("button", { name: "Stable Audio 3 Medium · 2026" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(within(lab).queryByRole("slider")).not.toBeInTheDocument();
       expect(within(lab).getByText("Ping-pong sampling")).toBeInTheDocument();
     }
-    expect(within(lab).getByText(equation)).toBeInTheDocument();
-    expect(within(lab).getByText(new RegExp(metric))).toBeInTheDocument();
   });
 
   it("switches conferencing and communication between practical scenarios", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /应用场景/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /会议与通信/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "会议与通信" });
     expect(within(details).queryByRole("button", { name: "打开会议与通信实验室" })).not.toBeInTheDocument();
@@ -821,6 +972,7 @@ describe("Audio knowledge app", () => {
     expect(within(lab).getByText("端到端延迟")).toBeInTheDocument();
 
     await user.click(meetingRoom);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(meetingRoom).toHaveAttribute("aria-pressed", "true");
     expect(personalDevice).toHaveAttribute("aria-pressed", "false");
     expect(within(lab).getByRole("img", { name: "多人会议室场景图" })).toBeInTheDocument();
@@ -831,6 +983,7 @@ describe("Audio knowledge app", () => {
     expect(within(lab).queryByText("耳机模式")).not.toBeInTheDocument();
 
     await user.click(poorNetwork);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(poorNetwork).toHaveAttribute("aria-pressed", "true");
     expect(meetingRoom).toHaveAttribute("aria-pressed", "false");
     const networkScene = within(lab).getByRole("img", { name: "弱网会议场景图" });
@@ -852,6 +1005,7 @@ describe("Audio knowledge app", () => {
     ]);
 
     await user.click(liveCaptions);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(liveCaptions).toHaveAttribute("aria-pressed", "true");
     expect(poorNetwork).toHaveAttribute("aria-pressed", "false");
     const captionsScene = within(lab).getByRole("img", { name: "实时字幕会议场景图" });
@@ -877,11 +1031,15 @@ describe("Audio knowledge app", () => {
   it("labels conferencing and communication scenarios in English", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const categoriesRegion = screen.getByRole("region", { name: "Knowledge Areas" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /Applications/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /Conferencing and Communication/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "Conferencing and Communication" });
     expect(within(details).queryByRole("button", { name: "Open conferencing and communication lab" })).not.toBeInTheDocument();
@@ -905,10 +1063,13 @@ describe("Audio knowledge app", () => {
   it("expands in-car acoustics with cabin component layout and acoustic processing lab", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /应用场景/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /车载声学/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "车载声学" });
     expect(within(details).getByText(/采集与定位、语音理解、回放与空间渲染、噪声控制/)).toBeInTheDocument();
@@ -916,6 +1077,7 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByRole("button", { name: "打开车载声学实验室" })).toBeInTheDocument();
 
     await user.click(within(details).getByRole("button", { name: "打开车载声学实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const lab = screen.getByRole("main", { name: "车载声学实验室" });
     expect(within(lab).getByRole("heading", { name: "车载声学实验室" })).toBeInTheDocument();
@@ -977,6 +1139,7 @@ describe("Audio knowledge app", () => {
     expectLegendRelevance(legendLabels);
 
     await user.click(voiceModule);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expectActiveOverlay("voice");
     expect(voiceModule).toHaveAttribute("aria-pressed", "true");
     expect(layoutModule).toHaveAttribute("aria-pressed", "false");
@@ -989,6 +1152,7 @@ describe("Audio knowledge app", () => {
     expectLegendRelevance(["语音麦克风", "扬声器"]);
 
     await user.click(localizationModule);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expectActiveOverlay("localization");
     expect(localizationModule).toHaveAttribute("aria-pressed", "true");
     expect(voiceModule).toHaveAttribute("aria-pressed", "false");
@@ -999,6 +1163,7 @@ describe("Audio knowledge app", () => {
     expectLegendRelevance(["语音麦克风"]);
 
     await user.click(spatialAudioModule);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expectActiveOverlay("spatial");
     expect(spatialAudioModule).toHaveAttribute("aria-pressed", "true");
     expect(localizationModule).toHaveAttribute("aria-pressed", "false");
@@ -1008,6 +1173,7 @@ describe("Audio knowledge app", () => {
     expectLegendRelevance(["扬声器"]);
 
     await user.click(noiseCancellationModule);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expectActiveOverlay("anc");
     expect(noiseCancellationModule).toHaveAttribute("aria-pressed", "true");
     expect(spatialAudioModule).toHaveAttribute("aria-pressed", "false");
@@ -1022,14 +1188,19 @@ describe("Audio knowledge app", () => {
   it("keeps the English in-car acoustics legend and module explanations complete", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const categoriesRegion = screen.getByRole("region", { name: "Knowledge Areas" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /Applications/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /In-Car Acoustics/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "In-Car Acoustics" });
     await user.click(within(details).getByRole("button", { name: "Open in-car acoustics lab" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const lab = screen.getByRole("main", { name: "In-Car Acoustics Lab" });
     await within(lab).findByTestId("car-cabin-fallback");
@@ -1050,12 +1221,14 @@ describe("Audio knowledge app", () => {
 
     for (const [control, heading] of expectedModules) {
       await user.click(within(lab).getByRole("button", { name: control }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(within(lab).getByRole("heading", { name: heading })).toBeInTheDocument();
     }
 
     expect(within(lab).getByText(/Suspension or body accelerometers provide vibration references/)).toBeInTheDocument();
 
     await user.click(within(lab).getByRole("button", { name: "Voice interaction" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(
       within(lab).getByText(
         "The driver may adjust climate controls, while rear passengers are usually limited to their own entertainment zone.",
@@ -1066,10 +1239,13 @@ describe("Audio knowledge app", () => {
   it("keeps IoT flows and troubleshooting in the article without a separate lab", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /应用场景/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /IoT 与内容创作/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "IoT 与内容创作" });
     expect(within(details).getByText(/IoT 音频更像一个长期待机的边缘感知系统/)).toBeInTheDocument();
@@ -1090,6 +1266,7 @@ describe("Audio knowledge app", () => {
   it("searches across visible knowledge topics", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.type(screen.getByRole("searchbox", { name: "搜索知识点" }), "FFT");
 
@@ -1102,15 +1279,18 @@ describe("Audio knowledge app", () => {
   it("opens the audio units guide directly from its card", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频基础/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const topicGrid = screen.getByTestId("topic-grid");
     expect(within(topicGrid).getByText("声音与音频单位")).toBeInTheDocument();
     expect(within(topicGrid).getByText(/dBSPL、dBFS、dBu、dBV、LUFS/)).toBeInTheDocument();
 
     await user.click(within(topicGrid).getByRole("button", { name: /声音与音频单位/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "声音与音频单位" });
     expect(
@@ -1127,15 +1307,19 @@ describe("Audio knowledge app", () => {
   it("opens the sound and audio units lab with reference points and conversions", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频基础/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /声音与音频单位/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       within(screen.getByRole("main", { name: "声音与音频单位" })).getByRole("button", {
         name: "打开声音与音频单位实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "声音与音频单位实验室" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
@@ -1147,6 +1331,7 @@ describe("Audio knowledge app", () => {
     expect(within(diagram).getByText("0 dBFS 满刻度")).toBeInTheDocument();
     expect(screen.getByText(/不能把 -6 dBFS 直接换成 94 dBSPL/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "返回详细内容" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByText(/\+4 dBu 约等于 1.228 Vrms/)).toBeInTheDocument();
     expect(screen.getByText("48 kHz 下，480 samples 对应 10 ms；这是数字延迟，不是声压。")).toBeInTheDocument();
   });
@@ -1154,15 +1339,19 @@ describe("Audio knowledge app", () => {
   it("calculates audio unit conversions and distance SPL loss from user input", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频基础/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /声音与音频单位/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       within(screen.getByRole("main", { name: "声音与音频单位" })).getByRole("button", {
         name: "打开声音与音频单位实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const converter = screen.getByRole("region", { name: "自动换算器" });
     const valueInput = within(converter).getByRole("spinbutton", { name: "输入数值" });
@@ -1171,6 +1360,7 @@ describe("Audio knowledge app", () => {
     await user.clear(valueInput);
     await user.type(valueInput, "94");
     await user.selectOptions(unitSelect, "dBSPL");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(within(converter).getByText("dBSPL：94.00 dBSPL")).toBeInTheDocument();
     expect(within(converter).getByText("Pa：1.002 Pa")).toBeInTheDocument();
@@ -1178,6 +1368,7 @@ describe("Audio knowledge app", () => {
     expect(within(converter).getByText(/dBSPL 与 dBFS\/dBu\/dBV 不能无校准直接互转/)).toBeInTheDocument();
 
     await user.selectOptions(unitSelect, "dBu");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.clear(valueInput);
     await user.type(valueInput, "4");
 
@@ -1212,10 +1403,13 @@ describe("Audio knowledge app", () => {
   it("expands core signal processing knowledge with traditional DSP fundamentals", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /基础信号处理/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "基础信号处理" });
     expect(within(details).getByText(/传统 DSP 的基础入口/)).toBeInTheDocument();
@@ -1242,10 +1436,13 @@ describe("Audio knowledge app", () => {
   it("expands speech enhancement with SoC SDK style processing flow", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /语音增强/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "语音增强" });
     expect(within(details).getByText(/低延迟 PCM 处理链/)).toBeInTheDocument();
@@ -1269,9 +1466,11 @@ describe("Audio knowledge app", () => {
   it("does not show the removed audio programming and plugin topic", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.queryByRole("button", { name: /音频编程与插件开发/ })).not.toBeInTheDocument();
     expect(screen.queryByText(/Audio Programming and Plugin Development/)).not.toBeInTheDocument();
@@ -1280,9 +1479,11 @@ describe("Audio knowledge app", () => {
   it("opens the ALSA framework lab with live PCM, buffer, and XRUN teaching controls", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const topicGrid = screen.getByTestId("topic-grid");
     const cardNames = within(topicGrid).getAllByRole("button").map((button) => button.textContent ?? "");
@@ -1294,6 +1495,7 @@ describe("Audio knowledge app", () => {
     );
 
     await user.click(within(topicGrid).getByRole("button", { name: /ALSA 框架/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const page = screen.getByRole("main", { name: "ALSA 框架" });
     expect(within(page).getByRole("heading", { name: "card / device / subdevice" })).toBeInTheDocument();
     expect(within(page).getByRole("heading", { name: "Linux ALSA 分层框架" })).toBeInTheDocument();
@@ -1304,6 +1506,7 @@ describe("Audio knowledge app", () => {
     expect(framework).toHaveTextContent("嵌入式 ASoC");
     expect(within(page).getByText(/后者是可选上层服务/)).toBeInTheDocument();
     await user.click(within(page).getByRole("button", { name: "打开 ALSA 框架实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const lab = screen.getByRole("main", { name: "ALSA 框架实验室" });
     expect(within(lab).getByRole("heading", { name: "ALSA 框架实验室" })).toBeInTheDocument();
@@ -1316,21 +1519,27 @@ describe("Audio knowledge app", () => {
     expect(command).toHaveTextContent(/^aplay .*S16_LE/);
 
     await user.click(capture);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(capture).toHaveAttribute("aria-pressed", "true");
     expect(playback).toHaveAttribute("aria-pressed", "false");
     expect(command).toHaveTextContent(/^arecord .*S16_LE/);
     expect(command).toHaveTextContent("-t raw");
 
     await user.selectOptions(within(lab).getByRole("combobox", { name: "采样率" }), "48000");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.selectOptions(within(lab).getByRole("combobox", { name: "位深" }), "24");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.selectOptions(within(lab).getByRole("combobox", { name: "period frames" }), "256");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.selectOptions(within(lab).getByRole("combobox", { name: "period count" }), "4");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(command).toHaveTextContent(/S24_3LE/);
     expect(within(lab).getByText("period 5.33 ms")).toBeInTheDocument();
     expect(within(lab).getByText("buffer 21.33 ms")).toBeInTheDocument();
     expect(within(lab).getByText("187.50 periods/s")).toBeInTheDocument();
     expect(within(lab).getByText("288,000 B/s")).toBeInTheDocument();
     await user.click(within(lab).getByRole("button", { name: "缓冲与延迟" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const bufferDiagram = within(lab).getByRole("img", { name: "ALSA 环形 buffer" });
     expect(bufferDiagram.querySelectorAll("[data-period-index]")).toHaveLength(4);
     const unread = within(lab).getByRole("slider", { name: "未读帧数" });
@@ -1343,15 +1552,19 @@ describe("Audio knowledge app", () => {
     expect(unread).toHaveValue("256");
     expect(lab.querySelector(".alsa-buffer-period-used")).toHaveAttribute("transform", "rotate(0 310 210)");
     await user.selectOptions(within(lab).getByRole("combobox", { name: "period frames" }), "64");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(readPointer).toHaveValue("0");
     expect(unread).toHaveValue("256");
     fireEvent.change(unread, { target: { value: "0" } });
     expect(lab.querySelector(".alsa-buffer-stats")).toHaveTextContent("可读采集帧0硬件可写空间256");
     await user.click(playback);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(within(lab).getByRole("button", { name: "缓冲与延迟" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(lab.querySelector(".alsa-buffer-stats")).toHaveTextContent("排队待播放0应用可写空间256");
 
     await user.click(within(lab).getByRole("button", { name: "XRUN 排查" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const xrunPanel = within(lab).getByRole("region", { name: "XRUN 排查" });
     expect(within(xrunPanel).getByRole("heading", { name: "XRUN 排查" })).toBeInTheDocument();
     expect(within(xrunPanel).getByText(/underrun/)).toBeInTheDocument();
@@ -1359,22 +1572,27 @@ describe("Audio knowledge app", () => {
     expect(within(xrunPanel).getByText(/调用 snd_pcm_prepare/)).toBeInTheDocument();
 
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main", { name: "ALSA Framework Lab" })).toBeInTheDocument();
     expect(screen.queryByRole("img", { name: "Linux ALSA layered framework diagram" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "PCM Playback" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "XRUN Troubleshooting" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "ALSA Framework Lab" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Back to detailed content" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("img", { name: "Linux ALSA layered framework diagram" })).toBeInTheDocument();
   });
 
   it("expands spatial audio with localization cues and rendering concepts", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /空间音频/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "空间音频" });
     expect(within(details).getByText(/不是单一格式，而是一套从内容制作、空间编码、渲染到播放设备的完整链路/)).toBeInTheDocument();
@@ -1402,15 +1620,19 @@ describe("Audio knowledge app", () => {
   it("opens the spatial audio lab with interactive source and head tracking controls", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /空间音频/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       within(screen.getByRole("main", { name: "空间音频" })).getByRole("button", {
         name: "打开空间音频实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "空间音频实验室" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
@@ -1418,6 +1640,7 @@ describe("Audio knowledge app", () => {
     expect(within(lab).getByRole("img", { name: "空间音频声源定位图" })).toBeInTheDocument();
     expect(within(lab).getByRole("img", { name: "房间反射时间响应图" })).toBeInTheDocument();
     await user.click(within(lab).getByText("原理与渲染流程"));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(lab).getByRole("list", { name: "空间音频渲染流程" })).toBeInTheDocument();
     expect(within(lab).getAllByText("ITD / ILD").length).toBeGreaterThan(0);
     expect(within(lab).queryByRole("region", { name: "空间音频关键解释" })).not.toBeInTheDocument();
@@ -1444,11 +1667,13 @@ describe("Audio knowledge app", () => {
     expect(within(lab).getByText(/当前双耳线索：右耳先到 \/ 右侧更强/)).toBeInTheDocument();
 
     await user.click(within(lab).getByRole("button", { name: "头部追踪" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(lab).getByText(/头部追踪让声源固定在外部世界/)).toBeInTheDocument();
     expect(within(lab).getByText("坐标变换")).toBeInTheDocument();
     expect(within(lab).getByText("外部化声像")).toBeInTheDocument();
     expect(within(lab).queryByRole("img", { name: "房间反射时间响应图" })).not.toBeInTheDocument();
     await user.click(within(lab).getByRole("button", { name: "定位线索" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const directEnergy = () => Number(lab.querySelector(".spatial-direct-impulse")!.getAttribute("data-energy"));
     fireEvent.change(within(lab).getByRole("slider", { name: "距离" }), { target: { value: "1" } });
     const atOneMetre = directEnergy();
@@ -1466,16 +1691,21 @@ describe("Audio knowledge app", () => {
   it("connects the traditional DSP topics in learning order", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /基础信号处理/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: "下一张卡片" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main", { name: "语音增强" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "上一张卡片" })).toBeEnabled();
 
     await user.click(screen.getByRole("button", { name: "下一张卡片" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main", { name: "空间音频" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "下一张卡片" })).toBeDisabled();
   });
@@ -1484,21 +1714,26 @@ describe("Audio knowledge app", () => {
     vi.spyOn(window, "scrollTo").mockImplementation(() => {});
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /语音增强/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       within(screen.getByRole("main", { name: "语音增强" })).getByRole("button", {
         name: "打开语音增强实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("AEC");
     expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
     expect(screen.getByTestId("aec-track-output")).toBeInTheDocument();
     const nav = screen.getByRole("navigation", { name: "语音增强算法" });
     await user.click(within(nav).getByRole("button", { name: /NS/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("NS");
     expect(screen.queryByTestId("aec-track-output")).not.toBeInTheDocument();
     expect(screen.getAllByRole("slider", { name: "处理强度" })).toHaveLength(1);
@@ -1507,21 +1742,26 @@ describe("Audio knowledge app", () => {
   it("opens the core signal processing lab with FFT filters and dynamics views", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /传统算法/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /基础信号处理/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       within(screen.getByRole("main", { name: "基础信号处理" })).getByRole("button", {
         name: "打开基础信号处理实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "基础信号处理实验室" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
     const lab = screen.getByRole("region", { name: "基础信号处理实验台" });
     await user.click(screen.getByText("处理流程与应用位置"));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const stageFlow = within(lab).getByRole("list", { name: "音频处理阶段流程图" });
     expect(within(stageFlow).getByText("输入源")).toBeInTheDocument();
     expect(within(stageFlow).getByText("PCM 音频")).toBeInTheDocument();
@@ -1548,6 +1788,7 @@ describe("Audio knowledge app", () => {
     expect(spectrum()).toEqual(initialSpectrum);
     expect(screen.getByTestId("stft-full-wave").getAttribute("d")).toBe(waveform);
     await user.click(screen.getByRole("button", { name: "扫频" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const chirpSpectrum = spectrum();
     const windowed = screen.getByTestId("stft-windowed-wave").getAttribute("d");
     fireEvent.change(screen.getByRole("slider", { name: "观察帧" }), { target: { value: "18" } });
@@ -1561,10 +1802,12 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("每帧时长：48.0 ms")).toBeInTheDocument();
     for (const label of ["短脉冲", "混合信号"]) {
       await user.click(screen.getByRole("button", { name: label }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       expect(screen.getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true");
     }
 
     await user.click(screen.getByRole("button", { name: "滤波器 / EQ" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { name: "EQ / 滤波：主要是频段能量塑形" })).toBeInTheDocument();
     expect(screen.getByText(/通常放在 PCM 处理链中间/)).toBeInTheDocument();
     expect(screen.getByText(/参数 EQ 用中心频率、增益和 Q 控制某一段频率/)).toBeInTheDocument();
@@ -1604,10 +1847,12 @@ describe("Audio knowledge app", () => {
     expect(getOutputBarHeights()).not.toEqual(lowpassOutputBarsBeforeCutoff);
     expect(screen.getByTestId("filtered-wave-path").getAttribute("d")).not.toEqual(initialFilteredWave);
     await user.click(screen.getByRole("button", { name: "高通" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const highpassOutputBars = getOutputBarHeights();
     expect(highpassOutputBars[0]).toBeLessThan(highpassOutputBars[highpassOutputBars.length - 1]);
 
     await user.click(screen.getByRole("button", { name: "带通" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     fireEvent.change(screen.getByRole("slider", { name: "Q" }), {
       target: { value: "1" }
     });
@@ -1629,11 +1874,13 @@ describe("Audio knowledge app", () => {
     expect(Math.max(...getOutputBarHeights())).toBeGreaterThan(initialOutputBarMaxHeight);
     expect(screen.getByText("这一步变化：截止频率、Q 和 EQ 增益共同改变频率响应，输出频谱会随各频段保留比例变化。")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "重置滤波参数" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("slider", { name: "Q" })).toHaveValue("1.2");
     expect(screen.getByRole("slider", { name: "截止频率" })).toHaveValue("2400");
     expect(screen.getByRole("slider", { name: "EQ 增益" })).toHaveValue("0");
 
     await user.click(screen.getByRole("button", { name: "动态处理" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { name: "动态处理：主要是电平和峰值控制" })).toBeInTheDocument();
     expect(screen.getByText(/通常放在降噪\/EQ 之后、编码或 DAC 之前/)).toBeInTheDocument();
     expect(screen.getByText(/它不是 MP3\/AAC 这类编码压缩/)).toBeInTheDocument();
@@ -1688,11 +1935,13 @@ describe("Audio knowledge app", () => {
   it("renders the compact animated signal map without a screenshot preview", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("link", { name: "开始探索" })).toHaveAttribute("href", "#knowledge-content");
     expect(screen.getByTestId("animated-signal-panel")).toHaveAttribute("aria-hidden", "true");
     expect(screen.getByTestId("hero-signal-map")).toBeInTheDocument();
     expect(screen.queryByText("声音波形实验室预览")).not.toBeInTheDocument();
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.queryByText("Sound Wave Lab preview")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Explore topics" })).toBeInTheDocument();
   });
@@ -1700,8 +1949,10 @@ describe("Audio knowledge app", () => {
   it("opens AI topic details directly from a topic card", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /语音识别 ASR/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "语音识别 ASR" });
     expect(within(details).getByRole("heading", { name: "语音识别 ASR" })).toBeInTheDocument();
@@ -1711,8 +1962,10 @@ describe("Audio knowledge app", () => {
   it("shows detailed topic-specific explanations in the details panel", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /语音识别 ASR/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "语音识别 ASR" });
     expect(within(details).getByRole("heading", { name: "先明确任务，再选择模型" })).toBeInTheDocument();
@@ -1721,6 +1974,7 @@ describe("Audio knowledge app", () => {
     expect(within(details).getByText(/识别率高不等于在所有噪声、口音和设备上都稳定/)).toBeInTheDocument();
 
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const englishDetails = screen.getByRole("main", { name: "Speech Recognition ASR" });
     expect(
@@ -1735,8 +1989,10 @@ describe("Audio knowledge app", () => {
   it("opens sound content directly without an intermediate dialog", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByRole("main", { name: "什么是声音" })).toBeInTheDocument();
@@ -1748,8 +2004,10 @@ describe("Audio knowledge app", () => {
   it("opens the sound guide and its lab directly from the card", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const page = screen.getByRole("main", { name: "什么是声音" });
     expect(within(page).getByRole("heading", { name: "1. 声音是什么？" })).toBeInTheDocument();
@@ -1763,6 +2021,7 @@ describe("Audio knowledge app", () => {
     expect(within(page).getByRole("button", { name: "打开声音波形实验室" })).toBeInTheDocument();
 
     await user.click(within(page).getByRole("button", { name: "打开声音波形实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { name: "声音波形实验室" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
@@ -1771,17 +2030,21 @@ describe("Audio knowledge app", () => {
   it("opens all five fundamental guides directly in both languages", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     for (const titles of [
       ["什么是声音", "声音与音频单位", "数字音频基础", "听感与指标", "读懂波形与频谱"],
       ["What Sound Is", "Sound and Audio Units", "Digital Audio Basics", "Listening Perception and Metrics", "Reading Waveforms and Spectra"]
     ]) {
       const chinese = titles[0] === "什么是声音";
       if (!chinese) await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "en");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       for (const title of titles) {
         await user.click(within(screen.getByTestId("topic-grid")).getByRole("button", { name: new RegExp(title) }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
         expect(screen.getByRole("main", { name: title })).toBeInTheDocument();
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
         await user.click(screen.getByRole("button", { name: chinese ? "返回知识库" : "Back to knowledge base" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       }
     }
   });
@@ -1789,13 +2052,16 @@ describe("Audio knowledge app", () => {
   it("lets readers adjust parameters in the independent sound wave lab", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       within(screen.getByRole("main", { name: "什么是声音" })).getByRole("button", {
         name: "打开声音波形实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("img", { name: "当前声音波形图" })).toBeInTheDocument();
     expect(screen.getByText(/x\(t\) = 0.60 · sin\(2π · 440t \+ 0.00π\)/)).toBeInTheDocument();
@@ -1814,9 +2080,11 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText(/x\(t\) = 0.80 · sin\(2π · 880t \+ 0.50π\)/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "三角波" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByText("当前波形：三角波")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "重置" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("slider", { name: "频率" })).toHaveValue("440");
     expect(screen.getByRole("slider", { name: "振幅" })).toHaveValue("0.6");
     expect(screen.getByRole("slider", { name: "相位" })).toHaveValue("0");
@@ -1829,6 +2097,7 @@ describe("Audio knowledge app", () => {
     expect(path).toContain(`L 720.00 ${(160 - 0.6 * 110 * Math.sin(2 * Math.PI * 1.1)).toFixed(2)}`);
     expect(plot.querySelector(".sound-lab-reference")?.getAttribute("d")).toEqual(reference);
     await user.click(screen.getByRole("checkbox", { name: /显示原始状态/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(plot.querySelector(".sound-lab-reference")).toBeNull();
   });
 
@@ -1896,19 +2165,24 @@ describe("Audio knowledge app", () => {
 
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       within(screen.getByRole("main", { name: "什么是声音" })).getByRole("button", {
         name: "打开声音波形实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: "播放" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(createdOscillators).toHaveLength(1);
     expect(createdOscillators[0].type).toBe("sine");
 
     await user.click(screen.getByRole("button", { name: "方波" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(createdOscillators).toHaveLength(2);
     expect(createdOscillators[0].stop).toHaveBeenCalledWith(0);
@@ -1919,6 +2193,7 @@ describe("Audio knowledge app", () => {
     expect(createdOscillators[1].type).toBe("square");
 
     await user.click(screen.getByRole("button", { name: "三角波" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(createdOscillators).toHaveLength(3);
     expect(createdOscillators[1].stop).toHaveBeenCalledWith(0);
@@ -1930,11 +2205,14 @@ describe("Audio knowledge app", () => {
   it("opens the independent sound wave lab from the sound details panel", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /什么是声音/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const details = screen.getByRole("main", { name: "什么是声音" });
 
     await user.click(within(details).getByRole("button", { name: "打开声音波形实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.queryByRole("dialog", { name: "主题详情" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "声音波形实验室" })).toBeInTheDocument();
@@ -1960,6 +2238,7 @@ describe("Audio knowledge app", () => {
     expect(countCenterCrossings(highFrequencyPath)).toBeGreaterThan(countCenterCrossings(lowFrequencyPath));
 
     await user.click(screen.getByRole("button", { name: "返回知识库" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "音频技术分享" })).toBeInTheDocument();
   });
@@ -1967,8 +2246,10 @@ describe("Audio knowledge app", () => {
   it("opens the digital audio guide directly from its card", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /数字音频基础/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "数字音频基础" });
     expect(within(details).getByRole("heading", { name: "采样" })).toBeInTheDocument();
@@ -1988,6 +2269,7 @@ describe("Audio knowledge app", () => {
   it("places the four fundamentals lab entries before their main explanations", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const topics = [
       ["什么是声音", "打开声音波形实验室"],
@@ -1998,6 +2280,7 @@ describe("Audio knowledge app", () => {
 
     for (const [topicTitle, labLabel] of topics) {
       await user.click(screen.getByRole("button", { name: new RegExp(topicTitle) }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
       const page = screen.getByRole("main", { name: topicTitle });
       const labButton = within(page).getByRole("button", { name: labLabel });
       const firstFlow = page.querySelector(".sound-topic-flow, .sound-propagation");
@@ -2006,19 +2289,23 @@ describe("Audio knowledge app", () => {
       expect(labButton.compareDocumentPosition(firstFlow as Element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
       await user.click(within(page).getByRole("button", { name: "返回知识库" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     }
   });
 
   it("lets readers compare sampling rate and bit depth in the digital audio lab", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /数字音频基础/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       within(screen.getByRole("main", { name: "数字音频基础" })).getByRole("button", {
         name: "打开采样、量化与编码实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "采样、量化与编码实验室" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回详细内容" })).toBeInTheDocument();
@@ -2050,10 +2337,12 @@ describe("Audio knowledge app", () => {
     expect(screen.getByTestId("digital-step-path").getAttribute("d")).not.toBe(quantizedPathBeforeFrequencyChange);
 
     await user.click(screen.getByRole("button", { name: "误差曲线" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByText("显示模式：误差曲线")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "返回知识库" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "音频技术分享" })).toBeInTheDocument();
   });
@@ -2061,13 +2350,17 @@ describe("Audio knowledge app", () => {
   it("shows how quantized samples become PCM words", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /数字音频基础/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "数字音频基础" });
 
     await user.click(within(details).getByRole("button", { name: "打开采样、量化与编码实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: "PCM 编码" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByText("显示模式：PCM 编码")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "如何变成 PCM" })).toBeInTheDocument();
@@ -2077,19 +2370,22 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText(/采样 #1/)).toBeInTheDocument();
   });
 
-  it("keeps codec comparisons in the guide and sample encoding in the digital audio lab", async () => {
+  it("links compression choices to the codec article and keeps sample encoding in the digital audio lab", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /数字音频基础/ }));
-    expect(screen.getByRole("heading", { name: "MP3" })).toBeInTheDocument();
-    expect(screen.getByText("约 6:1 到 12:1")).toBeInTheDocument();
-    expect(screen.getByText(/压缩比是大致范围/)).toBeInTheDocument();
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
+    expect(screen.queryByRole("heading", { name: "MP3" })).not.toBeInTheDocument();
+    expect(screen.getByText(/这不是再次采样/)).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "音频编解码" }).some(link => link.getAttribute("href") === "#/topics/audio-codec")).toBe(true);
     await user.click(
       within(screen.getByRole("main", { name: "数字音频基础" })).getByRole("button", {
         name: "打开采样、量化与编码实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "如何变成 PCM" })).toBeInTheDocument();
     expect(screen.getByText("模拟值 → 量化值 → 整数样本值 → 二进制 PCM")).toBeInTheDocument();
@@ -2099,14 +2395,17 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("这里关注封装关系：文件头描述参数，PCM Data 保存样本。")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "编码格式快速对比" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "返回详细内容" }));
-    expect(screen.getByRole("heading", { name: "MP3" })).toBeInTheDocument();
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
+    expect(screen.getByRole("heading", { name: "PCM、WAV 和压缩编码不是一回事" })).toBeInTheDocument();
   });
 
   it("merges converter knowledge into digital audio without a separate hardware card", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.queryByRole("button", { name: /^音频硬件 ADC/ })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^音频基础 数字音频基础/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const details = screen.getByRole("main", { name: "数字音频基础" });
     expect(within(details).getByRole("heading", { name: "从 ADC 输入范围到 DAC 模拟输出" })).toBeInTheDocument();
     expect(within(details).getByText(/0.2 V 峰值经 4 倍增益/)).toBeInTheDocument();
@@ -2116,8 +2415,10 @@ describe("Audio knowledge app", () => {
   it("expands amplifier speaker knowledge with detailed terms and a lab entry", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /功放与扬声器/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "功放与扬声器" });
     expect(within(details).getByText(/功放负责把 DAC、Codec 或前级输出的小信号/)).toBeInTheDocument();
@@ -2140,9 +2441,11 @@ describe("Audio knowledge app", () => {
     expect(within(anatomy).getByRole("img", { name: "Synte 2 音频功放板实物图" })).toBeInTheDocument();
     expect(within(anatomy).getByRole("img", { name: "功放板原理图" })).toBeInTheDocument();
     await user.click(within(anatomy).getByRole("button", { name: "动圈扬声器" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(anatomy).getByRole("img", { name: "两个动圈低音扬声器单元实物图" })).toBeInTheDocument();
     expect(within(anatomy).getByRole("img", { name: "动圈扬声器原理图" })).toBeInTheDocument();
     await user.click(within(anatomy).getByRole("button", { name: "被动分频器" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(anatomy).getByRole("img", { name: "B&W DM2000 扬声器被动分频器实物图" })).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "打开功放与扬声器实验室" })).toBeInTheDocument();
   });
@@ -2150,10 +2453,13 @@ describe("Audio knowledge app", () => {
   it("opens the system audio article with inline diagrams", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /系统音频架构/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const page = screen.getByRole("main", { name: "系统音频架构" });
     expect(within(page).getByText(/系统音频架构回答的是/)).toBeInTheDocument();
@@ -2175,10 +2481,13 @@ describe("Audio knowledge app", () => {
   it("opens a dedicated real-time audio page with deadline concepts", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /实时音频处理/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const page = screen.getByRole("main", { name: "实时音频处理" });
     expect(within(page).getByText(/每一小块音频都在截止时间前完成计算/)).toBeInTheDocument();
@@ -2194,15 +2503,19 @@ describe("Audio knowledge app", () => {
   it("opens the real-time audio processing lab and simulates deadline xruns", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /实时音频处理/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       screen.getByRole("button", {
         name: "打开实时音频处理实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "实时音频处理实验室" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
@@ -2287,15 +2600,19 @@ describe("Audio knowledge app", () => {
   it("keeps real-time audio flow diagrams separated from static metrics", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频软件/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /实时音频处理/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       screen.getByRole("button", {
         name: "打开实时音频处理实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const lab = screen.getByRole("region", { name: "实时音频处理实验台" });
     const visual = within(lab).getByRole("region", { name: "实时音频调度图" });
@@ -2326,8 +2643,10 @@ describe("Audio knowledge app", () => {
   it("opens the system audio architecture lab from the software topic", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /系统音频架构/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("main", { name: "系统音频架构" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
@@ -2350,10 +2669,12 @@ describe("Audio knowledge app", () => {
     window.localStorage.setItem("audio-technology-language", language);
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const topic = categories.flatMap(category => category.topics).find(topic => topic.title.en === "Audio Codecs")!;
     const card = within(screen.getByTestId("topic-grid")).getAllByRole("button")
       .find(button => button.querySelector("h3")?.textContent === topic.title[language]);
     await user.click(card!);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const main = screen.getByRole("main", { name: topic.title[language] });
     expect(topic.detail.lab).toBeUndefined();
     expect(main.querySelector(".sound-topic-cta")).not.toBeInTheDocument();
@@ -2370,6 +2691,7 @@ describe("Audio knowledge app", () => {
     const internalFlow = main.querySelector(".audio-codec-topic-path-grid")!.closest("details")!;
     expect(internalFlow).not.toHaveAttribute("open");
     await user.click(internalFlow.querySelector("summary")!);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(internalFlow).toHaveAttribute("open");
     expect(internalFlow.querySelectorAll(".audio-codec-topic-path")).toHaveLength(2);
   });
@@ -2377,8 +2699,10 @@ describe("Audio knowledge app", () => {
   it("keeps audio codec principles and references in a standalone article", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /音频编解码/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "音频编解码" });
     expect(within(details).getByText("压缩编解码算法")).toBeInTheDocument();
@@ -2408,6 +2732,7 @@ describe("Audio knowledge app", () => {
     const sampleRateReference = screen.getByText("补充参考：采样率与音质边界");
     expect(sampleRateReference.closest("details")).not.toHaveAttribute("open");
     await user.click(sampleRateReference);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("heading", { name: "采样率音质差异对比" })).toBeInTheDocument();
     const sampleRateTable = details.querySelector(".audio-codec-reference-table.sample-rate") as HTMLElement;
     expect(within(sampleRateTable).getByText("8 kHz")).toBeInTheDocument();
@@ -2424,8 +2749,10 @@ describe("Audio knowledge app", () => {
   it("switches system audio architecture lab flows", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /系统音频架构/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("button", { name: "播放链路" })).toHaveAttribute("aria-pressed", "true");
     let flowChart = screen.getByRole("img", { name: "播放链路流程图" });
@@ -2442,6 +2769,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getAllByText("播放链路重点：系统把应用输出映射到当前可用的输出设备。").length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: "录音链路" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     flowChart = screen.getByRole("img", { name: "录音链路流程图" });
     const captureNodes = flowChart.querySelectorAll(".system-audio-node");
     expect(captureNodes[0]).toHaveAttribute("width", "252");
@@ -2455,6 +2783,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText(/权限与隐私属于控制策略，不是处理 PCM 的滤波步骤/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "全双工语音" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     flowChart = screen.getByRole("img", { name: "全双工语音流程图" });
     const duplexNodes = flowChart.querySelectorAll(".system-audio-node");
     expect(duplexNodes[0]).toHaveAttribute("width", "252");
@@ -2472,9 +2801,12 @@ describe("Audio knowledge app", () => {
   it("opens the amplifier speaker lab from the hardware topic", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /功放与扬声器/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: "被动分频器" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const passivePrinciple = screen.getByRole("img", { name: "被动分频器原理图" });
     expect(passivePrinciple.querySelector('path[d="M48 150 H572"]')).not.toBeInTheDocument();
     expect(passivePrinciple.querySelector('path[d="M150 150 H224 M224 150 V92 H280 M224 150 V208 H280"]')).toBeInTheDocument();
@@ -2483,6 +2815,7 @@ describe("Audio knowledge app", () => {
         name: "打开功放与扬声器实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "功放与扬声器实验室" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "返回知识库" })).toBeInTheDocument();
@@ -2498,13 +2831,16 @@ describe("Audio knowledge app", () => {
   it("switches amplifier speaker lab diagram modes and amplifier classes", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /功放与扬声器/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       screen.getByRole("button", {
         name: "打开功放与扬声器实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("button", { name: "功放类型" })).toHaveAttribute("aria-pressed", "true");
     const classDChart = screen.getByRole("img", { name: "Class D 功放图解" });
@@ -2532,6 +2868,7 @@ describe("Audio knowledge app", () => {
     expect(within(ampPrinciple).getByText("常见：蓝牙音箱、手机、电视、便携设备和高效率大功率功放。")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Class A" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const classAChart = screen.getByRole("img", { name: "Class A 功放图解" });
     expect(classAChart).toBeInTheDocument();
     expect(within(classAChart).getByText("线性连续输出")).toBeInTheDocument();
@@ -2544,6 +2881,7 @@ describe("Audio knowledge app", () => {
     expect(within(ampPrinciple).getByText("常见：小功率高保真、耳放、前级或偏重音质的线性电路。")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Class AB" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const classAbChart = screen.getByRole("img", { name: "Class AB 功放图解" });
     expect(classAbChart).toBeInTheDocument();
     expect(within(classAbChart).getByText("正负半周交替输出")).toBeInTheDocument();
@@ -2556,6 +2894,7 @@ describe("Audio knowledge app", () => {
     expect(within(ampPrinciple).getByText("常见：传统音箱功放、车载功放和较多线性功放。")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "扬声器单元" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const speakerChart = screen.getByRole("img", { name: "动圈扬声器结构图" });
     expect(speakerChart).toBeInTheDocument();
     expect(within(speakerChart).getByText("从左到右：电流输入 → 音圈受力 → 振膜运动 → 空气声波")).toBeInTheDocument();
@@ -2568,6 +2907,7 @@ describe("Audio knowledge app", () => {
     expect(Number(within(speakerChart).getByText("振膜前后运动，压缩/稀疏空气").getAttribute("y"))).toBeGreaterThan(344);
 
     await user.click(screen.getByRole("button", { name: "箱体与分频" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const enclosureChart = screen.getByRole("img", { name: "箱体与分频图解" });
     expect(enclosureChart).toBeInTheDocument();
     expect(within(enclosureChart).getByText("从左到右：全频信号 → 分频器 → 低音/高音单元 → 箱体声学")).toBeInTheDocument();
@@ -2584,6 +2924,7 @@ describe("Audio knowledge app", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "T/S 参数" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const tsChart = screen.getByRole("img", { name: "Thiele-Small 参数与箱体关系图" });
     expect(tsChart).toBeInTheDocument();
     expect(within(tsChart).getByText("Fs")).toBeInTheDocument();
@@ -2596,6 +2937,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText(/Qts 较低的单元更常用于倒相箱/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "分频阶数" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const crossoverChart = screen.getByRole("img", { name: "分频阶数与相位对齐图" });
     expect(crossoverChart).toBeInTheDocument();
     expect(within(crossoverChart).getByText("一阶")).toBeInTheDocument();
@@ -2618,6 +2960,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText(/分频不是简单切一刀/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "主动 / 被动分频" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const activePassiveChart = screen.getByRole("img", { name: "主动分频与被动分频对比图" });
     expect(activePassiveChart).toBeInTheDocument();
     expect(within(activePassiveChart).getByText("主动分频：先分频，再分别功放")).toBeInTheDocument();
@@ -2628,6 +2971,7 @@ describe("Audio knowledge app", () => {
     expect(activePassiveChart.querySelector('path[d="M 196 112 V 176 H 220"]')).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "线阵列" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const lineArrayChart = screen.getByRole("img", { name: "线阵列扬声器覆盖控制图" });
     expect(lineArrayChart).toBeInTheDocument();
     expect(within(lineArrayChart).getByText("线阵列通过多个单元的叠加控制垂直覆盖")).toBeInTheDocument();
@@ -2637,6 +2981,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText(/线阵列常用于大型扩声/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "匹配关系" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const matchingChart = screen.getByRole("img", { name: "功放扬声器匹配图" });
     expect(matchingChart).toBeInTheDocument();
     expect(within(matchingChart).getByText("不是信号流，而是三个参数共同决定结果")).toBeInTheDocument();
@@ -2659,13 +3004,16 @@ describe("Audio knowledge app", () => {
   it("does not render audible amplifier speaker effect demos", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /功放与扬声器/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       screen.getByRole("button", {
         name: "打开功放与扬声器实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "功放与扬声器实验室" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Class D 功放图解" })).toBeInTheDocument();
@@ -2680,14 +3028,17 @@ describe("Audio knowledge app", () => {
   it("places digital audio interfaces as a separate hardware topic", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const categoriesRegion = screen.getByRole("region", { name: "知识分类" });
     await user.click(within(categoriesRegion).getByRole("button", { name: /音频硬件/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const topicGrid = screen.getByTestId("topic-grid");
     expect(within(topicGrid).getByText("数字音频接口 / 传输协议")).toBeInTheDocument();
 
     await user.click(within(topicGrid).getByRole("button", { name: /数字音频接口 \/ 传输协议/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "数字音频接口 / 传输协议" });
     expect(within(details).getByText(/数字音频基础解决的是如何得到 PCM/)).toBeInTheDocument();
@@ -2706,13 +3057,16 @@ describe("Audio knowledge app", () => {
   it("lets readers compare digital audio interfaces and timing relationships", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /数字音频接口 \/ 传输协议/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       screen.getByRole("button", {
         name: "打开数字音频接口实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "数字音频接口实验室" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "接口速览" })).not.toBeInTheDocument();
@@ -2739,6 +3093,7 @@ describe("Audio knowledge app", () => {
     expect(multichannelI2sChart.querySelectorAll('[data-bit="padding"]')).toHaveLength(128);
 
     await user.click(screen.getByRole("button", { name: "TDM" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("img", { name: "TDM 时隙图" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Slot 宽度" })).toHaveValue("32");
     expect(screen.getByText("BCLK = 48000 Hz × 8 slots × 32 bit ÷ 1,000,000 = 12.288 MHz")).toBeInTheDocument();
@@ -2754,24 +3109,29 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText(/Slot 8/)).toBeInTheDocument();
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Slot 宽度" }), "16");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByText("BCLK = 48000 Hz × 8 slots × 16 bit ÷ 1,000,000 = 6.144 MHz")).toBeInTheDocument();
     expect(within(screen.getByRole("img", { name: "TDM 时隙图" })).getAllByText("16+0")).toHaveLength(8);
     fireEvent.change(screen.getByRole("slider", { name: "位深" }), { target: { value: "24" } });
     expect(screen.getByRole("combobox", { name: "Slot 宽度" })).toHaveValue("24");
     await user.selectOptions(screen.getByRole("combobox", { name: "Slot 宽度" }), "32");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(within(screen.getByRole("img", { name: "TDM 时隙图" })).getAllByText("24+8")).toHaveLength(8);
     fireEvent.change(screen.getByRole("slider", { name: "位深" }), { target: { value: "16" } });
     expect(within(screen.getByRole("img", { name: "TDM 时隙图" })).getAllByText("16+16")).toHaveLength(8);
     expect(screen.getByText("BCLK = 48000 Hz × 8 slots × 32 bit ÷ 1,000,000 = 12.288 MHz")).toBeInTheDocument();
     fireEvent.change(screen.getByRole("slider", { name: "位深" }), { target: { value: "24" } });
     await user.selectOptions(screen.getByRole("combobox", { name: "Slot 宽度" }), "16");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("slider", { name: "位深" })).toHaveValue("16");
     expect(screen.getByRole("button", { name: "TDM" })).toHaveAttribute("aria-pressed", "true");
 
     await user.selectOptions(screen.getByRole("combobox", { name: "MCLK 倍频" }), "512");
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByText("MCLK 配置 512fs：48000 Hz × 512 ÷ 1,000,000 = 24.576 MHz")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "PDM" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("img", { name: "PDM 到 PCM 转换图" })).toBeInTheDocument();
     expect(screen.getByText("协议：PDM 数字麦克风")).toBeInTheDocument();
     expect(screen.getByText("模拟声音电压")).toBeInTheDocument();
@@ -2797,6 +3157,7 @@ describe("Audio knowledge app", () => {
     expect(screen.queryByText(/MCLK 配置/)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "SPDIF" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("img", { name: "SPDIF 设备链路图" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "SPDIF 同轴光纤线示例图" })).toHaveAttribute(
       "href",
@@ -2810,6 +3171,7 @@ describe("Audio knowledge app", () => {
     expect(screen.queryByText(/MCLK 配置/)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "USB Audio" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("img", { name: "USB Audio 包传输图" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "USB 外置声卡示例图" })).toHaveAttribute(
       "href",
@@ -2830,11 +3192,15 @@ describe("Audio knowledge app", () => {
   it("opens ADC and DAC demonstrations from digital audio and returns to its guide", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /^音频基础 数字音频基础/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: "打开采样、量化与编码实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("button", { name: "ADC · Analog → PCM" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("slider", { name: "位深" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "DAC · PCM → Analog" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const dac = screen.getByRole("img", { name: "DAC 重建图" });
     const hold = dac.querySelector(".codec-step-path")!.getAttribute("d");
     const output = dac.querySelector(".codec-reconstruction-path")!.getAttribute("d");
@@ -2842,14 +3208,17 @@ describe("Audio knowledge app", () => {
     expect(dac.querySelector(".codec-reconstruction-path")!.getAttribute("d")).not.toBe(output);
     expect(dac.querySelector(".codec-step-path")!.getAttribute("d")).toBe(hold);
     await user.click(screen.getByRole("button", { name: "返回详细内容" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main", { name: "数字音频基础" })).toBeInTheDocument();
   });
 
   it("expands microphone knowledge with detailed hardware concepts and a lab entry", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /^音频硬件 麦克风/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "麦克风" });
     expect(within(details).getByText(/麦克风把声压变化转换成电信号/)).toBeInTheDocument();
@@ -2873,13 +3242,16 @@ describe("Audio knowledge app", () => {
   it("keeps microphone pickup visual without synthetic playback", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /^音频硬件 麦克风/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       screen.getByRole("button", {
         name: "打开麦克风实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "麦克风指向性与拾音实验室" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "麦克风指向性极坐标图" })).toBeInTheDocument();
@@ -2888,6 +3260,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByText("指向性：心形")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "8 字形" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     fireEvent.change(screen.getByRole("slider", { name: "声源角度" }), {
       target: { value: "90" }
     });
@@ -2909,13 +3282,16 @@ describe("Audio knowledge app", () => {
   it("visualizes analog, digital, vocal, and array microphone working principles", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /^音频硬件 麦克风/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       screen.getByRole("button", {
         name: "打开麦克风实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "麦克风工作原理" })).toBeInTheDocument();
     const electretDiagram = screen.getByRole("img", { name: "模拟驻极体咪头工作原理图" });
@@ -2945,6 +3321,7 @@ describe("Audio knowledge app", () => {
     expect(within(numericFlow).getByRole("status")).toHaveTextContent("约 -4.0 dBFS");
 
     await user.click(screen.getByRole("button", { name: "数字 MEMS 麦" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("img", { name: "数字 MEMS 麦工作原理图" })).toBeInTheDocument();
     expect(screen.getByText(/Σ-Δ 调制输出 PDM/)).toBeInTheDocument();
     expect(screen.getAllByText("输出：PDM / I2S").length).toBeGreaterThan(0);
@@ -2952,12 +3329,14 @@ describe("Audio knowledge app", () => {
     expect(within(numericFlow).getByText("PDM 1-bit 流")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "动圈话筒" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("img", { name: "动圈话筒工作原理图" })).toBeInTheDocument();
     expect(screen.getByText(/线圈在磁场中随声音运动/)).toBeInTheDocument();
     expect(within(numericFlow).getByText(/动圈约 -54 dBV\/Pa/)).toBeInTheDocument();
     expect(within(numericFlow).getByText("音圈感应")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "多麦阵列" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const arrayDiagram = screen.getByRole("img", { name: "多麦阵列工作原理图" });
     expect(arrayDiagram).toBeInTheDocument();
     expect(arrayDiagram.querySelectorAll(".mic-array-capsule")).toHaveLength(4);
@@ -2971,8 +3350,10 @@ describe("Audio knowledge app", () => {
   it("expands listening perception with metrics and an audio effects lab", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /听感与指标/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     const details = screen.getByRole("main", { name: "听感与指标" });
     expect(within(details).queryByRole("heading", { name: "响度" })).not.toBeInTheDocument();
@@ -3031,13 +3412,16 @@ describe("Audio knowledge app", () => {
 
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /听感与指标/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       within(screen.getByRole("main", { name: "听感与指标" })).getByRole("button", {
         name: "打开听感与指标实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "听感与指标实验室" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "听感与指标效果图" })).toBeInTheDocument();
@@ -3068,6 +3452,7 @@ describe("Audio knowledge app", () => {
     const brightProcessedWave = screen.getByTestId("listening-processed-wave").getAttribute("d");
 
     await user.click(screen.getByRole("button", { name: "浑浊低中频" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByTestId("listening-metric-response")).toBeInTheDocument();
     expect(screen.getByTestId("listening-clean-wave")).toBeInTheDocument();
     expect(screen.getByText("低中频堆积区")).toBeInTheDocument();
@@ -3075,13 +3460,16 @@ describe("Audio knowledge app", () => {
     expect(screen.getByTestId("listening-processed-wave").getAttribute("d")).not.toEqual(brightProcessedWave);
 
     await user.click(screen.getByRole("button", { name: "明亮高频" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(AudioContextMock).toHaveBeenCalled();
     expect(screen.getByText("播放中")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "噪声底噪" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByText("指标：SNR")).toBeInTheDocument();
     expect(screen.getByText(/底噪：在信号下方加入持续噪声/)).toBeInTheDocument();
     expect(screen.getByTestId("listening-noise-band")).toHaveClass("listening-noise-band");
@@ -3109,6 +3497,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByTestId("listening-noisy-signal").getAttribute("d")).not.toEqual(noisySignalBefore);
 
     await user.click(screen.getByRole("button", { name: "谐波失真" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
       target: { value: "45" }
     });
@@ -3134,6 +3523,7 @@ describe("Audio knowledge app", () => {
     });
 
     await user.click(screen.getByRole("button", { name: "动态压缩" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByText("输入波形")).toBeInTheDocument();
     expect(screen.getByText("压缩后波形")).toBeInTheDocument();
     expect(screen.getByText("阈值")).toBeInTheDocument();
@@ -3155,6 +3545,7 @@ describe("Audio knowledge app", () => {
     expect(screen.getByTestId("listening-compression-threshold-positive").getAttribute("y1")).not.toEqual(thresholdBefore);
 
     await user.click(screen.getByRole("button", { name: "声像偏移" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByTestId("listening-stereo-left")).toHaveClass("listening-stereo-left");
     expect(screen.getByTestId("listening-stereo-right")).toHaveClass("listening-stereo-right");
     expect(screen.getByTestId("listening-stereo-pan-label")).toHaveAttribute("y", "284");
@@ -3173,19 +3564,24 @@ describe("Audio knowledge app", () => {
   it("keeps metric definitions in the guide instead of duplicating them in the lab", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /听感与指标/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const details = screen.getByRole("main", { name: "听感与指标" });
     await user.click(within(details).getByRole("button", { name: "打开听感与指标实验室" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     expect(screen.getByRole("heading", { name: "听感与指标实验室" })).toBeInTheDocument();
     expect(screen.getByText(/教学示意，不是仪器测量结果/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /LUFS/ })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "返回详细内容" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("main", { name: "听感与指标" })).toBeInTheDocument();
 
     await user.click(within(screen.getByRole("main", { name: "听感与指标" })).getByRole("button", { name: "返回知识库" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(screen.getByRole("region", { name: "主题卡片" })).toBeInTheDocument();
   });
 
@@ -3316,26 +3712,34 @@ describe("Audio knowledge app", () => {
 
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /听感与指标/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       within(screen.getByRole("main", { name: "听感与指标" })).getByRole("button", {
         name: "打开听感与指标实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(createdFilters[createdFilters.length - 1]?.type).toBe("highshelf");
     expect(createdFilters[createdFilters.length - 1]?.frequency.setValueAtTime).toHaveBeenLastCalledWith(3600, 0);
 
     await user.click(screen.getByRole("button", { name: "浑浊低中频" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(createdFilters[createdFilters.length - 1]?.type).toBe("lowshelf");
     expect(createdFilters[createdFilters.length - 1]?.frequency.setValueAtTime).toHaveBeenLastCalledWith(260, 0);
 
     await user.click(screen.getByRole("button", { name: "噪声底噪" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), { target: { value: "0" } });
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(audioContext.createBufferSource).toHaveBeenCalled();
     expect(audioContext.createBuffer).toHaveBeenCalledWith(1, 4410, 44100);
     expect(bufferData.some((sample) => sample !== 0)).toBe(true);
@@ -3346,13 +3750,17 @@ describe("Audio knowledge app", () => {
     expect(noiseGain.gain.setValueAtTime).toHaveBeenLastCalledWith(0.8 * (0.014 + 0.8 * 0.04), 0);
 
     await user.click(screen.getByRole("button", { name: "谐波失真" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(audioContext.createWaveShaper).toHaveBeenCalled();
     expect(createdWaveShapers[createdWaveShapers.length - 1]?.curve).toBeInstanceOf(Float32Array);
     expect(createdWaveShapers[createdWaveShapers.length - 1]?.oversample).toBe("4x");
 
     await user.click(screen.getByRole("button", { name: "动态压缩" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(audioContext.createDynamicsCompressor).toHaveBeenCalled();
     expect(createdCompressors[createdCompressors.length - 1]?.ratio.setValueAtTime).toHaveBeenLastCalledWith(expect.any(Number), 0);
     const compressionInputGain = createdGains[createdGains.length - 2];
@@ -3368,7 +3776,9 @@ describe("Audio knowledge app", () => {
     expect(compressionOutputGain?.gain.setValueAtTime).toHaveBeenCalledWith(expect.any(Number), 0);
 
     await user.click(screen.getByRole("button", { name: "声像偏移" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     expect(createdPanners[createdPanners.length - 1]?.pan.setValueAtTime).toHaveBeenLastCalledWith(expect.any(Number), 0);
   });
 
@@ -3455,35 +3865,43 @@ describe("Audio knowledge app", () => {
 
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /听感与指标/ }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(
       within(screen.getByRole("main", { name: "听感与指标" })).getByRole("button", {
         name: "打开听感与指标实验室"
       })
     );
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: "谐波失真" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
 
     fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
       target: { value: "5" }
     });
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const lowDistortionCurve = createdWaveShapers[createdWaveShapers.length - 1]?.curve;
 
     fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
       target: { value: "100" }
     });
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const highDistortionCurve = createdWaveShapers[createdWaveShapers.length - 1]?.curve;
 
     expect(lowDistortionCurve?.[384]).toBeGreaterThan(0.45);
     expect(highDistortionCurve?.[384]).toBeGreaterThan(lowDistortionCurve?.[384] ?? 0);
 
     await user.click(screen.getByRole("button", { name: "动态压缩" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     fireEvent.change(screen.getByRole("slider", { name: "效果强度" }), {
       target: { value: "5" }
     });
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const lowCompressor = createdCompressors[createdCompressors.length - 1];
 
     expect(lowCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-11.4, 0);
@@ -3497,6 +3915,7 @@ describe("Audio knowledge app", () => {
     expect(lowCompressor?.ratio.setValueAtTime).toHaveBeenLastCalledWith(15, 0);
 
     await user.click(screen.getByRole("button", { name: "播放对照音效" }));
+    await waitFor(() => expect(document.querySelector(".route-loading")).not.toBeInTheDocument());
     const highCompressor = createdCompressors[createdCompressors.length - 1];
 
     expect(highCompressor?.threshold.setValueAtTime).toHaveBeenLastCalledWith(-38, 0);

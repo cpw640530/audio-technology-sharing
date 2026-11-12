@@ -3,13 +3,18 @@ import type { Language } from "../content/knowledge";
 import { interfaceCopy } from "../content/knowledge";
 import { BackgroundWave } from "./BackgroundWave";
 import { LanguageSelect, text } from "../content/language";
+import { useContext } from "react";
+import { KnowledgeNavigationContext } from "./KnowledgeNavigation";
+import { ContentCredibility } from "./ContentCredibility";
+import { TopicLearningGuide } from "./TopicLearningGuide";
+import { ReadingActions } from "./ReadingMemory";
 
 type HeaderProps = {
   language: Language;
 };
 
 export function Header({ language }: HeaderProps) {
-
+  const navigation = useContext(KnowledgeNavigationContext);
   return (
     <>
       <BackgroundWave />
@@ -33,6 +38,9 @@ export function Header({ language }: HeaderProps) {
           <LanguageSelect language={language} />
         </nav>
       </header>
+      <ReadingActions language={language} />
+      {navigation?.labTopic && <ContentCredibility topicKey={navigation.labTopic} language={language} lab />}
+      {navigation?.labTopic && <TopicLearningGuide topicKey={navigation.labTopic} language={language} lab />}
     </>
   );
 }

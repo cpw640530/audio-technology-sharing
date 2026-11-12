@@ -3,18 +3,20 @@ import { animate, createScope } from "animejs";
 import { ArrowRight, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import type { Language } from "../content/knowledge";
 import { text } from "../content/language";
+import { useLabState } from "../hooks/useLabState";
 import { expandTtsDurations, ttsUnits } from "./ttsDurationModel";
 
 export function TtsWalkthrough({language}:{language:Language}) {
   const t=(zh:string,en:string,ja:string,ko:string)=>text(language,zh,en,ja,ko);
   const [step,setStep]=useState(0);
-  const [speed,setSpeed]=useState(1);
-  const [pause,setPause]=useState(15);
-  const [cursor,setCursor]=useState(28);
-  const [route,setRoute]=useState(0);
+  const [speed,setSpeed]=useLabState<number>("tts.speed",1, (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= .7 && value <= 1.5);
+  const [pause,setPause]=useLabState<number>("tts.pause",15, (value): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 30);
   const root=useRef<HTMLElement>(null);
   const {durations,frames}=expandTtsDurations(speed,pause);
+  const [cursor,setCursor]=useLabState<number>("tts.cursor",28, (value): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0 && value < frames.length);
+  const [route,setRoute]=useLabState<number>("tts.route",0, (value): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0 && value < 3);
   const frame=Math.min(cursor,frames.length-1);
+  useEffect(() => { if (cursor !== frame) setCursor(frame); }, [cursor, frame, setCursor]);
   const unit=frames[frame];
   const start=durations.slice(0,unit).reduce((a,b)=>a+b,0);
   const names=[t("文本与读音","Text & pronunciation","テキストと発音","텍스트와 발음"),t("时长与对齐","Duration & alignment","長さと整列","길이와 정렬"),t("模型生成","Model generation","モデル生成","모델 생성"),t("从表示到 PCM","Representation to PCM","表現から PCM へ","표현에서 PCM으로")];

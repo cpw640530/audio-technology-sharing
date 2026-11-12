@@ -1,3 +1,4 @@
+import { topicHref, isPlainNavigation } from "../content/topicRoutes";
 import type { Category, Language, Topic } from "../content/knowledge";
 import { text } from "../content/language";
 
@@ -33,8 +34,8 @@ export function KnowledgeOutline({ categories, language, onSelectTopic }: Knowle
                 {category.topics.map((topic) => (
                   <li key={topic.title.en}>
                     <a
-                      href={`#topic-${category.id}-${encodeURIComponent(topic.title.en)}`}
-                      onClick={event => { event.preventDefault(); onSelectTopic(category, topic); }}
+                      href={topicHref(topic)}
+                      onClick={event => { if (!isPlainNavigation(event)) return; event.preventDefault(); onSelectTopic(category, topic); }}
                     >
                       {topic.title[language]}
                     </a>

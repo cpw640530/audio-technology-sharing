@@ -12,6 +12,7 @@ import { TtsPrinciple } from "./TtsPrinciple";
 import { AudioGenerationPrinciple } from "./AudioGenerationPrinciple";
 import { AudioEventPrinciple } from "./AudioEventPrinciple";
 import { AiModelReference } from "./AiModelReference";
+import { aiArticles } from "../content/aiArticles";
 
 type DisplayTopic = Topic & { category: Category };
 type Locale = "zh" | "en" | "ja" | "ko" | "zh-Hant";
@@ -79,8 +80,97 @@ const modeLabels: Record<AiAudioLabId, LocalizedText> = {
   codec: l("神经编码", "Neural coding", "ニューラル符号化", "신경 코딩")
 };
 
+type AiArticle = (typeof aiArticles)[AiAudioLabId];
+
+function AiAdvancedReading({ article, mode, language }: { article: AiArticle; mode: AiAudioLabId; language: Language }) {
+  const fields: Array<[string, string]> = [
+    [l("输入", "Input", "入力", "입력")[language], article.technical.input[language]],
+    [l("模型表示", "Representation", "モデル表現", "모델 표현")[language], article.technical.representation[language]],
+    [l("输出", "Output", "出力", "출력")[language], article.technical.output[language]],
+    [l("训练目标", "Training objective", "学習目標", "학습 목표")[language], article.technical.objective[language]],
+    [l("评价指标", "Evaluation metrics", "評価指標", "평가 지표")[language], article.technical.metrics[language]],
+    [l("部署约束", "Deployment constraints", "デプロイ上の制約", "배포 제약")[language], article.technical.deployment[language]]
+  ];
+  const sections = article.sections.filter(section => section.title.en !== "Principles");
+
+  return (
+    <section className="sound-topic-section ai-topic-advanced-reading" aria-labelledby="ai-advanced-reading-title">
+      <div className="sound-topic-section-heading">
+        <div>
+          <h2 id="ai-advanced-reading-title">{l("进阶阅读", "Advanced reading", "発展読解", "심화 읽기")[language]}</h2>
+          <p>{l("从演示走向部署，还需核对训练目标、评估指标和运行约束。", "Moving from a walkthrough to deployment requires checking the training objective, evaluation metrics, and runtime constraints.", "デモからデプロイへ進むには、学習目標、評価指標、実行時の制約を確認する必要があります。", "데모에서 배포로 나아가려면 학습 목표·평가 지표·실행 제약을 확인해야 합니다.")[language]}</p>
+        </div>
+      </div>
+      <details className="ai-topic-advanced-details">
+        <summary>{l("进阶阅读", "Advanced reading", "発展読解", "심화 읽기")[language]}</summary>
+        <section className="ai-technical-section" aria-labelledby="ai-technical-title">
+          <div className="ai-article-section-heading ai-model-heading">
+            <span>{l("从模型到产品", "From model to product", "モデルから製品へ", "모델에서 제품으로")[language]}</span>
+            <h3 id="ai-technical-title">{l("工程技术剖面", "Engineering Technical Profile", "エンジニアリング技術プロファイル", "엔지니어링 기술 프로필")[language]}</h3>
+          </div>
+          <dl className="ai-technical-grid">
+            {fields.map(([label, value]) => (
+              <div key={label}>
+                <dt>{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+          </dl>
+          {mode !== "codec" && article.equations.length > 0 && <div className="ai-equation-grid" aria-label={l("核心公式", "Core equations", "主要な式", "핵심 공식")[language]}>
+            {article.equations.map(equation => (
+              <article key={equation.expression}>
+                <h3>{equation.title[language]}</h3>
+                <code>{equation.expression}</code>
+                <p>{equation.explanation[language]}</p>
+              </article>
+            ))}
+          </div>}
+        </section>
+        <section className="ai-model-section" aria-labelledby="ai-model-section-title">
+          <div className="ai-article-section-heading ai-model-heading">
+            <span>{l("模型参考", "Model references", "モデルの参考", "모델 참고")[language]}</span>
+            <h3 id="ai-model-section-title">{l("经典与补充方案", "Classic and complementary approaches", "従来方式と補足モデル", "고전 방식과 보완 모델")[language]}</h3>
+          </div>
+          <p>{l("以下按机制与应用作对照，不构成模型排名；主线模型与核查日期见上方参考模型区域。", "These compare mechanisms and applications rather than ranking models; the primary model and review date are in the reference section above.", "以下は仕組み・用途の比較で、モデルの順位付けではありません。主モデルと確認日は上の参考モデル欄にあります。", "아래 내용은 원리·용도 비교이며 모델 순위가 아닙니다. 주 모델과 확인 날짜는 위의 참고 모델 영역에 있습니다.")[language]}</p>
+          <div className="ai-model-grid">
+            {article.models.map(model => (
+              <details className="ai-model-card" key={model.name}>
+                <summary><h3>{model.name}</h3><span>{model.task[language]}</span></summary>
+                <dl>
+                  <div>
+                    <dt>{l("基本原理", "Principle", "基本原理", "기본 원리")[language]}</dt>
+                    <dd>{model.principle[language]}</dd>
+                  </div>
+                  <div>
+                    <dt>{l("部署与用途", "Deployment and use", "デプロイと用途", "배포와 용도")[language]}</dt>
+                    <dd>{model.deployment[language]}</dd>
+                  </div>
+                  <div>
+                    <dt>{l("注意点", "Caution", "注意点", "주의점")[language]}</dt>
+                    <dd>{model.caution[language]}</dd>
+                  </div>
+                </dl>
+              </details>
+            ))}
+          </div>
+        </section>
+        <section className="ai-article-body" aria-label={l("AI 音频文章内容", "AI audio article content", "AI音響記事の内容", "AI 오디오 문서 내용")[language]}>
+          {sections.map(section => (
+            <details className="ai-article-card" key={section.title.en}>
+              <summary>{section.title[language]}</summary>
+              <p>{section.body[language]}</p>
+              {section.points && <ul>{section.points.map(point => <li key={point.en}>{point[language]}</li>)}</ul>}
+            </details>
+          ))}
+        </section>
+      </details>
+    </section>
+  );
+}
+
 export function AiAudioTopicPage({ relatedTopics, language, topic, mode, onBack, onOpenLab, onOpenTopic, onOpenPrevious, onOpenNext }: AiAudioTopicPageProps) {
   const detail = topic.detail;
+  const article = aiArticles[mode];
   const steps = mode === "overview" ? [] : flows[mode];
   const t = (zh: string, en: string, ja: string, ko: string) => ({ zh, "zh-Hant": traditional(zh), en, ja, ko })[language];
   return (
@@ -105,7 +195,8 @@ export function AiAudioTopicPage({ relatedTopics, language, topic, mode, onBack,
         {detail.lab &&
         <section className="sound-topic-section ai-topic-lab-entry" aria-label={t("当前主题实验室入口", "Current topic lab entry", "現在のテーマのラボ入口", "현재 주제 실험실 입구")}><div className="sound-topic-cta"><CircuitBoard size={22} aria-hidden="true" /><h2>{detail.lab?.title[language]}</h2><p>{detail.lab?.description[language]}</p><button className="diagram-open-button" type="button" onClick={onOpenLab}>{detail.lab?.buttonLabel[language]}</button></div></section>
         }
-        <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{t("核心知识点", "Core concepts", "核心概念", "핵심 개념")}</h2><p>{t("先掌握任务边界，再深入实验室中的公式、模型和案例。", "Understand the task boundary before diving into formulas, models, and cases in the lab.", "まずタスクの境界を理解し、ラボの式・モデル・事例へ進みます。", "먼저 작업의 경계를 이해한 뒤 실험실의 공식·모델·사례로 들어갑니다.")}</p></div></div><ul className="ai-topic-concepts">{detail.keyConcepts.map((concept) => <li key={concept.en}>{concept[language]}</li>)}</ul></section>
+        {mode !== "overview" && <AiAdvancedReading article={article} mode={mode} language={language} />}
+        <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{t("核心知识点", "Core concepts", "核心概念", "핵심 개념")}</h2><p>{t("核心知识点用于界定任务边界；训练目标、评估指标与部署约束共同决定工程取舍。", "Core concepts define the task boundary; training objectives, evaluation metrics, and deployment constraints shape engineering trade-offs.", "核心概念はタスクの境界を定め、学習目標・評価指標・デプロイ制約が実装上の選択を左右します。", "핵심 개념은 작업 경계를 정하고 학습 목표·평가 지표·배포 제약이 엔지니어링 선택을 좌우합니다.")}</p></div></div><ul className="ai-topic-concepts">{detail.keyConcepts.map((concept) => <li key={concept.en}>{concept[language]}</li>)}</ul></section>
         <section className="sound-topic-section"><div><h2>{t("工程边界", "Engineering boundary", "実装上の境界", "엔지니어링 경계")}</h2><p>{detail.misconception[language]}</p></div></section>
         <section className="sound-topic-section"><div className="sound-topic-section-heading"><div><h2>{t("相关术语", "Related terms", "関連用語", "관련 용어")}</h2></div></div><div className="ai-topic-terms">{detail.termExplanations?.map((term) => <details key={term.name.en}><summary>{term.name[language]}</summary><p>{term.explanation[language]}</p></details>)}</div></section>
       </TopicReadingLayout>

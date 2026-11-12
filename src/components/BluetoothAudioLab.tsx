@@ -1,5 +1,5 @@
 import { traditional } from "../content/traditional";
-import { useState } from "react";
+import { useLabState } from "../hooks/useLabState";
 import { ArrowLeft, Headphones, Smartphone, Radio, Speaker } from "lucide-react";
 import type { Language } from "../content/knowledge";
 
@@ -137,11 +137,31 @@ export function BluetoothAudioLab({ language, onBack, onBackToDetails }: { langu
     "返回详细内容": "상세 내용으로 돌아가기"
   };
   const text = (cn: string, en: string, jaText?: string, koText?: string) => language === "zh-Hant" ? traditional(cn) : language === "zh" ? cn : language === "en" ? en : language === "ja" ? jaText ?? ja[cn] : koText ?? ko[cn];
-  const [codec, setCodec] = useState<Codec>("LC3");
-  const [rate, setRate] = useState(160);
-  const [loss, setLoss] = useState(5);
-  const [buffer, setBuffer] = useState(40);
-  const [jitter, setJitter] = useState(30);
+  const [codec, setCodec] = useLabState<Codec>(
+    "BluetoothAudioLab.codec",
+    "LC3",
+    (value): value is Codec => value === "SBC" || value === "AAC" || value === "LC3" || value === "LDAC"
+  );
+  const [rate, setRate] = useLabState<number>(
+    "BluetoothAudioLab.rate",
+    () => codecs[codec].rates[1],
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && codecs[codec].rates.includes(value)
+  );
+  const [loss, setLoss] = useLabState(
+    "BluetoothAudioLab.loss",
+    5,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 0 && value <= 20
+  );
+  const [buffer, setBuffer] = useLabState(
+    "BluetoothAudioLab.buffer",
+    40,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 10 && value <= 160 && (value - 10) % 10 === 0
+  );
+  const [jitter, setJitter] = useLabState(
+    "BluetoothAudioLab.jitter",
+    30,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 0 && value <= 120 && value % 10 === 0
+  );
   // Fixed teaching trace: permanent loss and missed playout deadlines are separate.
   const packets = Array.from({ length: 100 }, (_, i) => {
     const lost = (i * 37 + 17) % 100 < loss;

@@ -7,12 +7,12 @@ afterEach(() => {
   window.history.replaceState(null, "", window.location.pathname);
 });
 
-it("opens notes by URL, switches categories and returns to audio knowledge", () => {
+it("opens notes by URL, switches categories and returns to audio knowledge", async () => {
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
   window.localStorage.setItem("audio-technology-language", "en");
   window.history.replaceState(null, "", "#technical-notes");
   render(<App />);
-  expect(screen.getByRole("heading", { name: "Technical notes" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "Technical notes" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Home Assistant" }));
   expect(screen.getByRole("heading", { name: "Home Assistant" })).toBeInTheDocument();
   expect(screen.getByText("No published notes yet.")).toBeInTheDocument();

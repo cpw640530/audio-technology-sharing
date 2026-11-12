@@ -2,6 +2,8 @@ import { traditional } from "../content/traditional";
 import { useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { KnowledgeExplorer, KnowledgeNavigationContext, LocalKnowledgeMap } from "./KnowledgeNavigation";
 import type { Language } from "../content/knowledge";
+import { ContentCredibility } from "./ContentCredibility";
+import { TopicLearningGuide } from "./TopicLearningGuide";
 
 export function TopicReadingLayout({ language, children }: { language: Language; children: ReactNode }) {
   const navigation = useContext(KnowledgeNavigationContext);
@@ -94,7 +96,11 @@ export function TopicReadingLayout({ language, children }: { language: Language;
         </nav>
       </details>
     </aside>
-    <div className="sound-topic-content" ref={content}>{children}</div>
+    <div className="sound-topic-content" ref={content}>
+      {navigation?.current && <TopicLearningGuide topicKey={navigation.current} language={language} />}
+      {navigation?.current && <ContentCredibility topicKey={navigation.current} language={language} />}
+      {children}
+    </div>
     </div>
   );
 }

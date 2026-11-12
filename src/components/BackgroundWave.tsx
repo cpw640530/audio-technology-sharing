@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 export function BackgroundWave() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fallbackRef = useRef<HTMLCanvasElement | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -17,7 +18,7 @@ export function BackgroundWave() {
     }).catch((error: unknown) => {
       if (!cancelled) {
         setReady(false);
-        console.warn("Background WebGL unavailable; using CSS fallback.", error);
+        console.warn("Background WebGL unavailable; using the software-rendered wave surface.", error);
       }
     });
     return () => {
@@ -26,8 +27,21 @@ export function BackgroundWave() {
     };
   }, []);
 
+  useEffect(() => {
+    const canvas = fallbackRef.current;
+    if (ready || !canvas || window.navigator.userAgent.toLowerCase().includes("jsdom")) return;
+    let cancelled = false;
+    let dispose: (() => void) | undefined;
+    void import("./waveSurfaceFallback").then(({ createWaveSurfaceFallback }) => {
+      if (!cancelled) dispose = createWaveSurfaceFallback(canvas);
+    }).catch((error: unknown) => {
+      if (!cancelled) console.warn("Background canvas unavailable.", error);
+    });
+    return () => { cancelled = true; dispose?.(); };
+  }, [ready]);
+
   return <div aria-hidden="true" className="background-wave" data-ready={ready}>
-    <div className="background-wave-fallback" />
-    <canvas ref={canvasRef} />
+    <canvas ref={fallbackRef} className="background-wave-fallback" />
+    <canvas ref={canvasRef} className="background-wave-webgl" />
   </div>;
 }

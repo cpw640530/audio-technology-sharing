@@ -1,3 +1,4 @@
+import { topicHref, isPlainNavigation } from "../content/topicRoutes";
 import { createContext, useEffect, useMemo, useRef, useState } from "react";
 import { select } from "d3-selection";
 import { drag } from "d3-drag";
@@ -10,7 +11,7 @@ import { text } from "../content/language";
 type DisplayTopic = Topic & { category: Category };
 type LocalGraphPoint = SimulationNodeDatum & { x: number; y: number };
 const topics = categories.flatMap(category => category.topics.map(topic => ({ ...topic, category })));
-export const KnowledgeNavigationContext = createContext<{ current?: TopicKey; onOpen: (topic: DisplayTopic) => void } | null>(null);
+export const KnowledgeNavigationContext = createContext<{ current?: TopicKey; labTopic?: TopicKey; onOpen: (topic: DisplayTopic) => void } | null>(null);
 
 export function KnowledgeExplorer({ language, current, onOpen }: { language: Language; current?: TopicKey; onOpen: (topic: DisplayTopic) => void }) {
   const [query, setQuery] = useState("");
@@ -30,7 +31,7 @@ export function KnowledgeExplorer({ language, current, onOpen }: { language: Lan
           const matches = topics.filter(topic => topic.category.id === category.id && (!query.trim() || Object.values(topic.title).join(" ").toLowerCase().includes(query.trim().toLowerCase())));
           if (!matches.length) return null;
           return <div className="quartz-explorer-group" key={category.id}><h3><category.icon size={15} aria-hidden="true"/>{category.title[language]}</h3>
-            {matches.map(topic => <a key={topic.title.en} href={`#topic-${category.id}-${encodeURIComponent(topic.title.en)}`} aria-current={current === getTopicKey(topic) ? "page" : undefined} onClick={event => { event.preventDefault(); setQuery(""); onOpen(topic); }}><ChevronRight size={12} aria-hidden="true"/>{topic.title[language]}</a>)}
+            {matches.map(topic => <a key={topic.title.en} href={topicHref(topic)} aria-current={current === getTopicKey(topic) ? "page" : undefined} onClick={event => { if (!isPlainNavigation(event)) return; event.preventDefault(); setQuery(""); onOpen(topic); }}><ChevronRight size={12} aria-hidden="true"/>{topic.title[language]}</a>)}
           </div>;
         })}
         {query.trim() && !topics.some(topic => Object.values(topic.title).join(" ").toLowerCase().includes(query.trim().toLowerCase())) && <p role="status">{t("未找到主题", "No topics found", "該当なし", "주제 없음")}</p>}
@@ -108,7 +109,7 @@ export function LocalKnowledgeMap({ language, current, onOpen }: { language: Lan
         const limit = language === "en" ? 18 : 9;
         const title = [...topic.title[language]];
         const split = Math.ceil(limit / 2);
-        return <g className="quartz-map-node" transform={`translate(${x},${y})`} key={topic.title.en}><a href={`#topic-${topic.category.id}-${encodeURIComponent(topic.title.en)}`} onDragStart={event => event.preventDefault()} onClick={event => { event.preventDefault(); onOpen(topic); }} aria-label={topic.title[language]}>
+        return <g className="quartz-map-node" transform={`translate(${x},${y})`} key={topic.title.en}><a href={topicHref(topic)} onDragStart={event => event.preventDefault()} onClick={event => { if (!isPlainNavigation(event)) return; event.preventDefault(); onOpen(topic); }} aria-label={topic.title[language]}>
           <title>{topic.title[language]}</title><circle r="18" fill="transparent"/><circle r="5" fill={topic.category.accent}/>
           <text y="22" textAnchor="middle"><tspan x="0">{title.slice(0, split).join("")}</tspan>{title.length > split && <tspan x="0" dy="14">{title.slice(split, limit).join("")}{title.length > limit ? "…" : ""}</tspan>}</text>
         </a></g>;

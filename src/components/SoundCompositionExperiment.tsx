@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLabState } from "../hooks/useLabState";
 import { Play, Square } from "lucide-react";
 import { text } from "../content/language";
 import type { Language } from "../content/knowledge";
@@ -7,13 +8,13 @@ import { soundCoefficients, soundComponents, soundValue } from "./soundCompositi
 type Playback = { context: AudioContext; oscillator: OscillatorNode; gain: GainNode; started: boolean };
 export function SoundCompositionExperiment({ language, mode }: { language: Language; mode: "tone" | "sum" | "spectrum" }) {
   const t = (zh: string, en: string, ja: string, ko: string) => text(language, zh, en, ja, ko);
-  const [frequency, setFrequency] = useState(220);
-  const [amplitude, setAmplitude] = useState(.35);
-  const [second, setSecond] = useState(.35);
-  const [phase, setPhase] = useState(0);
-  const [third, setThird] = useState(.175);
-  const [thirdPhase, setThirdPhase] = useState(0);
-  const [cursor, setCursor] = useState(.002);
+  const [frequency, setFrequency] = useLabState("composition.frequency", 220, (v): v is number => typeof v === "number" && Number.isFinite(v) && v >= 110 && v <= 660);
+  const [amplitude, setAmplitude] = useLabState("composition.amplitude", .35, (v): v is number => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= .4);
+  const [second, setSecond] = useLabState("composition.second", .35, (v): v is number => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= .4);
+  const [phase, setPhase] = useLabState("composition.phase", 0, (v): v is number => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= Math.PI);
+  const [third, setThird] = useLabState("composition.third", .175, (v): v is number => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= .4);
+  const [thirdPhase, setThirdPhase] = useLabState("composition.thirdPhase", 0, (v): v is number => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= Math.PI);
+  const [cursor, setCursor] = useLabState("composition.cursor", .002, (v): v is number => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= .012);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState(false);
   const audio = useRef<Playback | null>(null);

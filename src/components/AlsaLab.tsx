@@ -1,6 +1,7 @@
 import { traditional } from "../content/traditional";
 import { ArrowLeft, ArrowRightToLine, ArrowRightFromLine, StepForward } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLabState } from "../hooks/useLabState";
 import { text } from "../content/language";
 import { repositionRing, transferRing } from "./alsaRing";
 
@@ -377,11 +378,34 @@ function AlsaBufferDiagram({
 
 function AlsaLab({ language, onBack, onBackToDetails }: AlsaLabProps) {
   const t = (zh: string, en: string, ja: string, ko: string) => text(language, zh, en, ja, ko);
-  const [config, setConfig] = useState<AlsaConfig>(defaultConfig);
-  const [mode, setMode] = useState<AlsaMode>("playback");
-  const [streamDirection, setStreamDirection] = useState<StreamDirection>("playback");
-  const [ring, setRing] = useState({ read: 0, used: 320 });
+  const [config, setConfig] = useLabState<AlsaConfig>(
+    "AlsaLab.config",
+    defaultConfig,
+    (value): value is AlsaConfig => {
+      if (typeof value !== "object" || value === null) return false;
+      const candidate = value as Record<string, unknown>;
+      return Number.isFinite(candidate.sampleRate) && sampleRates.includes(candidate.sampleRate as SampleRate)
+        && Number.isFinite(candidate.channels) && channelOptions.includes(candidate.channels as Channels)
+        && Number.isFinite(candidate.bitDepth) && bitDepths.includes(candidate.bitDepth as BitDepth)
+        && Number.isFinite(candidate.periodFrames) && periodFramesOptions.includes(candidate.periodFrames as PeriodFrames)
+        && Number.isFinite(candidate.periodCount) && periodCounts.includes(candidate.periodCount as PeriodCount);
+    }
+  );
+  const [mode, setMode] = useLabState<AlsaMode>(
+    "AlsaLab.mode",
+    "playback",
+    (value): value is AlsaMode => value === "playback" || value === "capture" || value === "buffer" || value === "xrun"
+  );
+  const [streamDirection, setStreamDirection] = useLabState<StreamDirection>(
+    "AlsaLab.streamDirection",
+    "playback",
+    (value): value is StreamDirection => value === "playback" || value === "capture"
+  );
+  const [ring, setRing] = useState(() => ({ read: 0, used: Math.min(320, config.periodFrames * config.periodCount) }));
   const [lastTransfer, setLastTransfer] = useState<{ actor: "app" | "hardware"; operation: "read" | "write"; transferred: number; missing: number } | null>(null);
+  useEffect(() => {
+    if (mode === "playback" || mode === "capture") setStreamDirection(mode);
+  }, [mode, setStreamDirection]);
   const periodMs = (config.periodFrames / config.sampleRate) * 1000;
   const bufferFrames = config.periodFrames * config.periodCount;
   const bufferMs = (bufferFrames / config.sampleRate) * 1000;

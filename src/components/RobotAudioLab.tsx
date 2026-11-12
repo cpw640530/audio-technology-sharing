@@ -1,5 +1,6 @@
 import { traditional } from "../content/traditional";
 import { useState, type PointerEvent } from "react";
+import { useLabState } from "../hooks/useLabState";
 import { ArrowLeft } from "lucide-react";
 import type { Language } from "../content/knowledge";
 
@@ -145,15 +146,57 @@ export function RobotAudioLab({ language, onBack, onBackToDetails }: { language:
     " 提供声源定位、跟踪、分离与后滤波；本实验室没有加载该引擎。": "는 음원 위치 추정, 추적, 분리, 후처리 필터를 제공합니다. 이 랩에서는 해당 엔진을 로드하지 않습니다."
   };
   const t = (zh: string, en: string, jaText = ja[zh], koText = ko[zh]) => language === "zh-Hant" ? traditional(zh) : language === "zh" ? zh : language === "en" ? en : language === "ja" ? jaText : koText;
-  const [view, setView] = useState("body");
-  const [part, setPart] = useState(0);
-  const [stage, setStage] = useState(0);
-  const [array, setArray] = useState(true);
-  const [moving, setMoving] = useState(false);
+  const [view, setView] = useLabState<"body" | "scene">(
+    "RobotAudioLab.view",
+    "body",
+    (value): value is "body" | "scene" => value === "body" || value === "scene"
+  );
+  const [part, setPart] = useLabState(
+    "RobotAudioLab.part",
+    0,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 0 && value <= 4
+  );
+  const [stage, setStage] = useLabState(
+    "RobotAudioLab.stage",
+    0,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 0 && value <= 7
+  );
+  const [array, setArray] = useLabState(
+    "RobotAudioLab.array",
+    true,
+    (value): value is boolean => typeof value === "boolean"
+  );
+  const [moving, setMoving] = useLabState(
+    "RobotAudioLab.moving",
+    false,
+    (value): value is boolean => typeof value === "boolean"
+  );
   const [playing, setPlaying] = useState(false);
-  const [heading, setHeading] = useState(0);
-  const [person, setPerson] = useState({ x: 190, y: 115 });
-  const [noise, setNoise] = useState({ x: 555, y: 165 });
+  const [heading, setHeading] = useLabState(
+    "RobotAudioLab.heading",
+    0,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= -180 && value <= 180
+  );
+  const [person, setPerson] = useLabState<{ x: number; y: number }>(
+    "RobotAudioLab.person",
+    { x: 190, y: 115 },
+    (value): value is { x: number; y: number } => {
+      if (typeof value !== "object" || value === null) return false;
+      const point = value as Record<string, unknown>;
+      return typeof point.x === "number" && Number.isFinite(point.x) && point.x >= 65 && point.x <= 655
+        && typeof point.y === "number" && Number.isFinite(point.y) && point.y >= 75 && point.y <= 385;
+    }
+  );
+  const [noise, setNoise] = useLabState<{ x: number; y: number }>(
+    "RobotAudioLab.noise",
+    { x: 555, y: 165 },
+    (value): value is { x: number; y: number } => {
+      if (typeof value !== "object" || value === null) return false;
+      const point = value as Record<string, unknown>;
+      return typeof point.x === "number" && Number.isFinite(point.x) && point.x >= 65 && point.x <= 655
+        && typeof point.y === "number" && Number.isFinite(point.y) && point.y >= 75 && point.y <= 385;
+    }
+  );
   const [dragging, setDragging] = useState<"person" | "noise" | null>(null);
   const sourceOverlapsRobot = person.x === 360 && person.y === 285;
   const bearing = Math.atan2(person.x - 360, 285 - person.y) * 180 / Math.PI;
@@ -199,7 +242,7 @@ export function RobotAudioLab({ language, onBack, onBackToDetails }: { language:
         </div>
       <div><span className="details-category">{t("应用场景", "Applications")}</span><h1>{t("机器人音频实验室", "Robot Audio Lab")}</h1><p>{t("从身体部件到空间交互：听到声音、找到方向、理解指令，再决定行动。", "From anatomy to spatial interaction: hear, locate, understand, then decide on an action.")}</p></div>
     </section>
-    <div className="robot-buttons" aria-label={t("视图", "Views")}>{["body", "scene"].map((id, i) => <button key={id} aria-pressed={view === id} onClick={() => setView(id)}>{i === 0 ? t("机器人结构", "Robot anatomy") : t("工作场景", "Working scene")}</button>)}</div>
+    <div className="robot-buttons" aria-label={t("视图", "Views")}>{(["body", "scene"] as const).map((id, i) => <button key={id} aria-pressed={view === id} onClick={() => setView(id)}>{i === 0 ? t("机器人结构", "Robot anatomy") : t("工作场景", "Working scene")}</button>)}</div>
     <div className="robot-controls">
       <label>{t("麦克风数量", "Microphones")}<select value={array ? "4" : "1"} onChange={e => setArray(e.target.value === "4")}><option value="1">{t("单麦", "Single mic")}</option><option value="4">{t("四麦阵列", "Four-mic array")}</option></select></label>
       <label><input type="checkbox" checked={moving} onChange={e => setMoving(e.target.checked)} />{t("运动状态", "In motion")}</label>

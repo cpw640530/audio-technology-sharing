@@ -178,7 +178,7 @@ export function AlsaPage({ relatedTopics, language, topic, onBack, onOpenLab, on
           <div className="sound-topic-section-heading">
             <div>
               <h2>{text(language, "核心对象", "Core objects", "主要な構成要素", "핵심 구성 요소")}</h2>
-              <p>{text(language, "先分清设备对象、参数协商和数据接口，再进入 buffer 与 XRUN。", "Separate device objects, parameter negotiation, and data interfaces before exploring buffers and XRUNs.", "バッファーと XRUN に進む前に、機器オブジェクト、パラメーター交渉、データインターフェースを区別します。", "버퍼와 XRUN을 살펴보기 전에 장치 객체, 매개변수 협상, 데이터 인터페이스를 구분합니다.")}</p>
+              <p>{text(language, "框架说明 PCM 经过谁，下面的对象说明谁生产、谁消费，以及按什么参数交付；当双方进度不匹配、buffer 耗尽或溢出时，才会发生 XRUN。", "The stack shows where PCM travels; these objects explain who produces and consumes it and how delivery is configured. An XRUN occurs when their progress diverges enough to empty or overflow the buffer.", "階層図は PCM の経路、以下のオブジェクトは生成側・消費側と転送設定を示します。両者の進行差でバッファーが空になるか溢れると XRUN が発生します。", "계층도는 PCM의 경로를, 아래 객체는 생산자와 소비자 및 전달 설정을 보여 줍니다. 양쪽의 진행 차이로 버퍼가 비거나 넘치면 XRUN이 발생합니다.")}</p>
             </div>
           </div>
           <div className="sound-topic-glossary alsa-topic-key-points">

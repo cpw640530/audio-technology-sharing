@@ -1,5 +1,18 @@
 # Project Rules
 
+## Learning Continuity
+
+- Maintain `src/content/topicLearning.ts` for every article: prerequisite knowledge, a concrete question answered here, a justified next reading, and an experiment goal only where a lab exists. Keep all supported languages complete; prerequisite chains must not cycle.
+- Guides own conceptual explanations, derivations, model comparisons and general engineering context. Labs own controlled experiments, observations and result interpretation; keep essential formulas, units, assumptions and safety limits next to results, but do not repeat full article sections or model catalogs.
+- Explain why the next processing stage is needed and what representation passes between stages. A sequence of arrows or unrelated links alone is not a learning transition. Do not invent runtime inference or measurements to make an experiment seem more complete.
+
+## Content Credibility
+
+- Every topic article and its existing lab must have an entry in `src/content/topicCredibility.ts`, with primary reference links, a manually maintained update date and explicit model assumptions/limits in all supported languages.
+- Classify each demonstrated operation by actual implementation: `calculation` for computed values, `simulation` for simplified models/synthetic or preset data, and `illustration` for conceptual diagrams/animation. Mixed labs must identify each operation's scope; numerical output alone is not evidence of a real model or device measurement.
+- For AI content, distinguish reference models from the code actually executed, including offline precomputed results, browser-side calculations, loaded weights and inference. Preserve model release/review dates separately from the maintenance date; never auto-stamp current dates as verification or claim benchmark accuracy without reproduction.
+- Keep references and assumptions in the shared credibility panel; preserve nearby result-specific caveats. A removed lab should not be restored merely to add metadata.
+
 ## Request Efficiency Rewrite
 
 - 默认直接执行用户请求，不再每次单独输出润色版。

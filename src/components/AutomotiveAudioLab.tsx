@@ -1,5 +1,6 @@
 import { traditional } from "../content/traditional";
-import { lazy, Suspense, useId, useState } from "react";
+import { useLabState } from "../hooks/useLabState";
+import { lazy, Suspense, useId } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Language } from "../content/knowledge";
 import type { CarAcousticMode } from "../content/carAcoustics";
@@ -401,7 +402,11 @@ function AutomotiveCabinDiagram({ activeModule, language }: { activeModule: Auto
 }
 
 export function AutomotiveAudioLab({ language, onBack, onBackToDetails }: AutomotiveAudioLabProps) {
-  const [activeModule, setActiveModule] = useState<AutomotiveModule>("layout");
+  const [activeModule, setActiveModule] = useLabState<AutomotiveModule>(
+    "AutomotiveAudioLab.activeModule",
+    "layout",
+    (value): value is AutomotiveModule => value === "layout" || value === "voice" || value === "localization" || value === "spatial" || value === "anc"
+  );
   const activeContent = automotiveModules[activeModule];
   const t = (zh: string, en: string, ja: string, ko: string) => language === "zh-Hant" ? traditional(zh) : language === "zh" ? zh : language === "en" ? en : language === "ja" ? ja : ko;
 

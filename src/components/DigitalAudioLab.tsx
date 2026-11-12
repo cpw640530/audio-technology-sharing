@@ -1,5 +1,6 @@
 import { traditional } from "../content/traditional";
-import { useMemo, useState } from "react";
+import { useLabState } from "../hooks/useLabState";
+import { useMemo } from "react";
 import { DacReconstruction } from "./DacReconstruction";
 import { ArrowLeft } from "lucide-react";
 import type { Language, LocalizedText } from "../content/knowledge";
@@ -280,11 +281,28 @@ function createErrorPath(points: ReturnType<typeof createSamplePoints>) {
 }
 
 export function DigitalAudioLab({ language, onBack, onBackToDetails, initialDirection = "adc" }: DigitalAudioLabProps) {
-  const [direction, setDirection] = useState(initialDirection);
-  const [sampleCount, setSampleCount] = useState(24);
-  const [bitDepth, setBitDepth] = useState(4);
-  const [frequency, setFrequency] = useState(2);
-  const [displayMode, setDisplayMode] = useState<DisplayMode>("quantized");
+  const [direction, setDirection] = useLabState<"adc" | "dac">
+    ("DigitalAudioLab.direction", initialDirection, (value): value is "adc" | "dac" => value === "adc" || value === "dac");
+  const [sampleCount, setSampleCount] = useLabState(
+    "DigitalAudioLab.sampleCount",
+    24,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 8 && value <= 48 && (value - 8) % 4 === 0
+  );
+  const [bitDepth, setBitDepth] = useLabState(
+    "DigitalAudioLab.bitDepth",
+    4,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 2 && value <= 8
+  );
+  const [frequency, setFrequency] = useLabState(
+    "DigitalAudioLab.frequency",
+    2,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 1 && value <= 7
+  );
+  const [displayMode, setDisplayMode] = useLabState<DisplayMode>(
+    "DigitalAudioLab.displayMode",
+    "quantized",
+    (value): value is DisplayMode => value === "waveform" || value === "samples" || value === "quantized" || value === "error" || value === "pcm"
+  );
 
   const analogPath = useMemo(() => createAnalogPath(frequency), [frequency]);
   const quantizationLevelLines = useMemo(() => createQuantizationLevelLines(bitDepth), [bitDepth]);
