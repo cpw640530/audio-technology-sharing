@@ -25,7 +25,7 @@ Audio Technology Sharing は、学生、エンジニア、音声技術に関心�
 
 <p align="center"><img alt="現在の知識ベース：トピック一覧、学習経路、検索、回転するトピックカード" src="../public/images/audio_technology_sharing.png" width="1000"></p>
 
-このページのスクリーンショットはすべて **2026 年 11 月 12 日の本番ビルド**から撮影し、英語表示と reduced-motion 設定を使用しています。Web サイトは 5 言語に対応します。スクリーンショットはローカルビルドを示すもので、オンラインの最新デプロイを検証したものではありません。
+このページの画像と録画は **2026 年 11 月 12 日の本番ビルド**を英語表示で収録したものです。静止画は reduced-motion を使用し、2 本の GIF は通常のアニメーションと元の透明度を保っています。ローカルビルドのプレビューであり、オンラインの最新デプロイを検証したものではありません。
 
 ## インタラクティブなラボ：変化を確かめる
 
@@ -50,7 +50,9 @@ Audio Technology Sharing は、学生、エンジニア、音声技術に関心�
 3. **考えを試す：**ラボがあるトピックでは実験し、記事に戻ります。記事は原理を説明し、ラボは操作、観察、結果の解釈に集中します。
 4. **特定のページを共有する：**記事とラボには固有のハッシュ URL があります。たとえば [「音とは何か」](https://cpw640530.github.io/audio-technology-sharing/#/topics/sound-wave) は直接開いて更新でき、記事ごとにサーバー側のルートを設定する必要はありません。
 
-<p align="center"><img alt="音とは何かの記事：前提知識、学習の問い、参照元、セクションナビゲーション、ローカルグラフ" src="../public/images/topic-detail.png" width="1000"></p>
+<p align="center"><a href="https://cpw640530.github.io/audio-technology-sharing/#/topics/sound-wave"><img alt="記事の録画：半透明の読書領域の背後で波形面が動きます。" src="../public/images/topic-reading.gif" width="1000"></a></p>
+
+記事の録画：半透明の読書領域の背後で波形面が動きます。 [記事を開く](https://cpw640530.github.io/audio-technology-sharing/#/topics/sound-wave) · [静止画](../public/images/topic-detail.png)
 
 ゆっくり動く 3D 波形面は操作対象ではない背景です。reduced-motion では静止し、WebGL を利用できない場合は、対応していれば Canvas 2D のフォールバックで投影面を描画します。技術ノートは独立したセクションとして残り、知識ベース下部の参考サイトからさらに学べます。
 
@@ -74,7 +76,9 @@ Audio Technology Sharing は、学生、エンジニア、音声技術に関心�
 | AI 音声 | 処理全体の流れ、ASR、TTS、音声生成、イベント認識、音声強調、ニューラル音声符号化 |
 | 応用シーン | Bluetooth 音声、会議、ロボット、車載音響、IoT、コンテンツ制作 |
 
-<p align="center"><img alt="知識分野のフィルターと回転するトピックカード、左右に見える隣接カード" src="../public/images/Knowledge%20Areas.png" width="1000"></p>
+<p align="center"><a href="https://cpw640530.github.io/audio-technology-sharing/#top"><img alt="カードの回転を録画したもので、操作できる部品ではありません。ドラッグや選択は Web サイトで試せます。" src="../public/images/knowledge-carousel.gif" width="900"></a></p>
+
+カードの回転を録画したもので、操作できる部品ではありません。ドラッグや選択は Web サイトで試せます。 [カルーセルを試す](https://cpw640530.github.io/audio-technology-sharing/#top) · [静止画](../public/images/Knowledge%20Areas.png)
 
 ## ローカルで実行
 

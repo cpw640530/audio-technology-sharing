@@ -25,7 +25,7 @@
 
 <p align="center"><img alt="当前知识库：首页大纲、学习路线、搜索与旋转主题卡片" src="../public/images/audio_technology_sharing.png" width="1000"></p>
 
-本页截图统一采集自 **2026 年 11 月 12 日的生产构建**，使用英文界面与减少动态效果设置；网页可切换上述五种语言。截图反映本地构建，不代表已核验线上最新部署。
+本页图片与录屏来自 **2026 年 11 月 12 日的生产构建**，使用英文界面。静态截图采用减少动态效果设置；两段 GIF 保留正常动画与原有页面透明度。这些是本地构建预览，不代表已核验线上最新部署。
 
 ## 交互式实验室：让原理变成看得见的变化
 
@@ -50,7 +50,9 @@
 3. **动手验证**：有实验室的主题可以进入交互验证，再返回文章。详细内容负责原理，实验室重点呈现控制条件、观察现象和结果解释。
 4. **直接分享文章**：文章与实验室都有独立的 hash 地址，例如 [什么是声音](https://cpw640530.github.io/audio-technology-sharing/#/topics/sound-wave)。可以直接打开或刷新，不需要为每篇文章配置服务器目录。
 
-<p align="center"><img alt="什么是声音：先修知识、学习问题、参考依据、章节目录与局部关系图" src="../public/images/topic-detail.png" width="1000"></p>
+<p align="center"><a href="https://cpw640530.github.io/audio-technology-sharing/#/topics/sound-wave"><img alt="详细页录屏：波形曲面在半透明阅读区域下方移动。" src="../public/images/topic-reading.gif" width="1000"></a></p>
+
+详细页录屏：波形曲面在半透明阅读区域下方移动。 [打开文章](https://cpw640530.github.io/audio-technology-sharing/#/topics/sound-wave) · [静态截图](../public/images/topic-detail.png)
 
 缓慢起伏的三维波形曲面仅作背景，不拦截操作；减少动态效果时静止显示，WebGL 不可用时在支持的环境中回退到 Canvas 2D 投影曲面。技术笔记作为独立栏目保留，知识库底部还提供参考与延伸阅读网站。
 
@@ -74,7 +76,9 @@
 | AI 音频 | 总处理流程、ASR、TTS、音频生成、事件识别、音频增强、神经音频编码 |
 | 应用场景 | 蓝牙音频、会议通信、机器人、车载声学、IoT 与内容创作 |
 
-<p align="center"><img alt="知识分类筛选与旋转主题卡片，左右显示相邻卡片" src="../public/images/Knowledge%20Areas.png" width="1000"></p>
+<p align="center"><a href="https://cpw640530.github.io/audio-technology-sharing/#top"><img alt="录屏展示卡片旋转，不是可直接操作的控件；拖动与选卡请进入网站。" src="../public/images/knowledge-carousel.gif" width="900"></a></p>
+
+录屏展示卡片旋转，不是可直接操作的控件；拖动与选卡请进入网站。 [体验轮播](https://cpw640530.github.io/audio-technology-sharing/#top) · [静态截图](../public/images/Knowledge%20Areas.png)
 
 ## 本地运行
 

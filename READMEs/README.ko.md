@@ -25,7 +25,7 @@ Audio Technology Sharing은 학생, 엔지니어, 오디오 기술에 관심 있
 
 <p align="center"><img alt="현재 지식 베이스: 주제 아웃라인, 학습 경로, 검색, 순환하는 주제 카드" src="../public/images/audio_technology_sharing.png" width="1000"></p>
 
-이 페이지의 스크린샷은 모두 **2026년 11월 12일 프로덕션 빌드**에서 촬영했으며, 영어 화면과 reduced-motion 설정을 사용했습니다. 웹사이트는 5개 언어를 지원합니다. 스크린샷은 로컬 빌드를 보여 주며, 온라인 최신 배포를 검증한 결과가 아닙니다.
+이 페이지의 이미지와 녹화는 **2026년 11월 12일 프로덕션 빌드**의 영어 화면에서 캡처했습니다. 정지 화면은 reduced-motion 설정을 사용하며, 두 GIF는 정상 애니메이션과 기존 페이지 투명도를 유지합니다. 로컬 빌드 미리보기이며 온라인 최신 배포를 검증한 결과는 아닙니다.
 
 ## 인터랙티브 랩: 변화를 확인하기
 
@@ -50,7 +50,9 @@ Audio Technology Sharing은 학생, 엔지니어, 오디오 기술에 관심 있
 3. **아이디어 시험하기:** 랩이 있는 주제에서는 실험한 뒤 아티클로 돌아옵니다. 아티클은 원리를 설명하고 랩은 조작, 관찰, 결과 해석에 집중합니다.
 4. **특정 페이지 공유하기:** 아티클과 랩에는 고유한 해시 URL이 있습니다. 예를 들어 [소리란 무엇인가](https://cpw640530.github.io/audio-technology-sharing/#/topics/sound-wave)는 직접 열고 새로 고칠 수 있으며, 아티클마다 서버 측 경로를 설정할 필요가 없습니다.
 
-<p align="center"><img alt="소리란 무엇인가 아티클: 선행 지식, 학습 질문, 출처, 섹션 내비게이션, 로컬 그래프" src="../public/images/topic-detail.png" width="1000"></p>
+<p align="center"><a href="https://cpw640530.github.io/audio-technology-sharing/#/topics/sound-wave"><img alt="아티클 녹화: 반투명 읽기 영역 뒤로 파형 표면이 움직입니다." src="../public/images/topic-reading.gif" width="1000"></a></p>
+
+아티클 녹화: 반투명 읽기 영역 뒤로 파형 표면이 움직입니다. [아티클 열기](https://cpw640530.github.io/audio-technology-sharing/#/topics/sound-wave) · [정지 화면](../public/images/topic-detail.png)
 
 천천히 움직이는 3D 파형 표면은 조작할 수 없는 배경입니다. reduced-motion 모드에서는 정지하며, WebGL을 사용할 수 없으면 지원되는 경우 Canvas 2D 폴백이 투영된 표면을 그립니다. 기술 노트는 별도 섹션으로 유지하고, 지식 베이스 하단의 참고 웹사이트에서 추가 자료를 볼 수 있습니다.
 
@@ -74,7 +76,9 @@ Audio Technology Sharing은 학생, 엔지니어, 오디오 기술에 관심 있
 | AI 오디오 | 전체 처리 흐름, ASR, TTS, 오디오 생성, 이벤트 인식, 오디오 향상, 신경망 오디오 코딩 |
 | 응용 시나리오 | Bluetooth 오디오, 회의, 로봇, 차량 음향, IoT, 콘텐츠 제작 |
 
-<p align="center"><img alt="지식 분야 필터와 순환하는 주제 카드, 양옆에 보이는 인접 카드" src="../public/images/Knowledge%20Areas.png" width="1000"></p>
+<p align="center"><a href="https://cpw640530.github.io/audio-technology-sharing/#top"><img alt="카드 회전을 녹화한 것으로 직접 조작할 수 있는 컨트롤은 아닙니다. 드래그와 카드 선택은 웹사이트에서 사용할 수 있습니다." src="../public/images/knowledge-carousel.gif" width="900"></a></p>
+
+카드 회전을 녹화한 것으로 직접 조작할 수 있는 컨트롤은 아닙니다. 드래그와 카드 선택은 웹사이트에서 사용할 수 있습니다. [캐러셀 체험](https://cpw640530.github.io/audio-technology-sharing/#top) · [정지 화면](../public/images/Knowledge%20Areas.png)
 
 ## 로컬 실행
 

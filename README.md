@@ -25,7 +25,7 @@ Currently: **6 knowledge areas, 27 topic articles and 22 standalone labs**, in E
 
 <p align="center"><img alt="Current knowledge base with topic outline, learning paths, search and rotating topic cards" src="./public/images/audio_technology_sharing.png" width="1000"></p>
 
-All screenshots on this page were captured from the production build on **November 12, 2026**. They use the English interface and the reduced-motion setting; the website supports all five languages. Screenshots show the local build, not a verification of the latest online deployment.
+Images and recordings on this page come from the production build on **November 12, 2026**, using the English interface. Still screenshots use reduced motion; the two GIFs retain normal animation and the original page transparency. These are local-build previews, not verification of the latest online deployment.
 
 ## Interactive Labs: See What Changes
 
@@ -50,7 +50,9 @@ Why does a higher bit depth reduce quantization error? How does window length ch
 3. **Test the idea:** use the lab where one exists, then return to the article. Guides explain the principles; labs focus on controls, observations and result interpretation.
 4. **Share a specific page:** articles and labs have their own hash-based URLs. For example, [What Sound Is](https://cpw640530.github.io/audio-technology-sharing/#/topics/sound-wave) opens directly and survives a refresh, without requiring a server route per article.
 
-<p align="center"><img alt="What Sound Is article: prerequisites, learning question, sources, section navigation and local graph" src="./public/images/topic-detail.png" width="1000"></p>
+<p align="center"><a href="https://cpw640530.github.io/audio-technology-sharing/#/topics/sound-wave"><img alt="Article recording: the wave surface moves behind the translucent reading area." src="./public/images/topic-reading.gif" width="1000"></a></p>
+
+Article recording: the wave surface moves behind the translucent reading area. [Open the article](https://cpw640530.github.io/audio-technology-sharing/#/topics/sound-wave) · [Static screenshot](./public/images/topic-detail.png)
 
 The slowly moving 3D waveform surface is a non-interactive background. Reduced-motion mode keeps it still; where WebGL is unavailable, a Canvas 2D fallback draws the projected surface when supported. Technical notes remain a separate section, and reference websites at the bottom of the knowledge base provide further reading.
 
@@ -74,7 +76,9 @@ The slowly moving 3D waveform surface is a non-interactive background. Reduced-m
 | AI audio | Overall processing flow, ASR, TTS, generation, event detection, enhancement, neural audio coding |
 | Applications | Bluetooth audio, conferencing, robots, in-car acoustics, IoT and content creation |
 
-<p align="center"><img alt="Knowledge area filters and rotating topic cards with neighboring cards visible" src="./public/images/Knowledge%20Areas.png" width="1000"></p>
+<p align="center"><a href="https://cpw640530.github.io/audio-technology-sharing/#top"><img alt="Recorded carousel rotation, not an interactive control. Open the website to drag and select cards." src="./public/images/knowledge-carousel.gif" width="900"></a></p>
+
+Recorded carousel rotation, not an interactive control. Open the website to drag and select cards. [Try the carousel](https://cpw640530.github.io/audio-technology-sharing/#top) · [Static screenshot](./public/images/Knowledge%20Areas.png)
 
 ## Run Locally
 
