@@ -51,6 +51,12 @@ it.each(["zh", "en"] as const)("opens the welcome page and preserves library nav
   expect(listener).toHaveAttribute("height", "1024");
   expect(listener).toHaveAttribute("loading", "eager");
   expect(listener).toHaveAttribute("fetchpriority", "high");
+  const hero = container.querySelector(".welcome-hero");
+  expect(hero).toHaveAttribute("data-motion-paused", "false");
+  fireEvent.click(screen.getByRole("button", { name: language === "zh" ? "暂停人物动态" : "Pause portrait motion" }));
+  expect(hero).toHaveAttribute("data-motion-paused", "true");
+  fireEvent.click(screen.getByRole("button", { name: language === "zh" ? "播放人物动态" : "Play portrait motion" }));
+  expect(hero).toHaveAttribute("data-motion-paused", "false");
   expect(container.querySelector("source[type='image/webp']")).toHaveAttribute("srcset", expect.stringContaining("welcome-listener-mobile.webp 768w"));
   expect(container.querySelector("source[type='image/webp']")).toHaveAttribute("srcset", expect.stringContaining("welcome-listener-light.webp 1536w"));
   expect(container.querySelector("source[type='image/webp']")).toHaveAttribute("sizes", "100vw");

@@ -11142,7 +11142,28 @@ body:has(.home-intro) {
 .welcome-header button { padding: 8px 12px; }
 .welcome-hero { position: relative; isolation: isolate; overflow: hidden; min-height: 640px; height: calc(100svh - 48px); display: flex; align-items: center; }
 .welcome-listener { position: absolute; inset: 32px 0 auto; width: 100%; height: 100%; object-fit: cover; object-position: center top; scale: .95; transform-origin: right bottom; z-index: -1; }
-.welcome-copy { width: 48%; padding: 96px 0 80px; margin-left: 7%; animation: welcome-arrive 900ms cubic-bezier(.22,1,.36,1) both; }
+.welcome-listener { animation: welcome-listen 9s ease-in-out infinite; pointer-events: none; }
+.welcome-hero[data-motion-paused="true"] .welcome-listener { animation-play-state: paused; }
+.welcome-portrait-motion { position: absolute; right: 5%; bottom: 24px; display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid rgba(36,92,80,.25); border-radius: 4px; color: #245c50; background: rgba(245,242,235,.8); cursor: pointer; }
+.welcome-portrait-motion:hover { background: #e5eeea; }
+@keyframes welcome-listen {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(-4px, -6px, 0) rotate(-.35deg); }
+}
+.welcome-copy { width: 48%; padding: 96px 0 80px; margin-left: 7%; }
+.welcome-header > *, .welcome-copy > *, .welcome-footer > * {
+  animation: welcome-arrive 850ms cubic-bezier(.22,1,.36,1) backwards;
+  animation-delay: var(--welcome-delay, 0ms);
+}
+.welcome-header > :last-child { --welcome-delay: 80ms; }
+.welcome-greeting { --welcome-delay: 120ms; }
+.welcome-copy h1 { --welcome-delay: 260ms; }
+.welcome-message { --welcome-delay: 400ms; }
+.welcome-enter { --welcome-delay: 540ms; }
+.welcome-footer > :first-child { --welcome-delay: 640ms; }
+.welcome-footer > :last-child { --welcome-delay: 760ms; }
+/* Reveal controls immediately when reached by keyboard, even during entry. */
+.welcome-header:focus-within > *, .welcome-copy:focus-within > * { animation: none; }
 .welcome-greeting { color: #245c50; font-size: 20px; line-height: 28px; margin: 0 0 24px; }
 .welcome-copy h1 { font-size: 68px; font-weight: 600; line-height: 1.2; letter-spacing: 0; margin: 0 0 24px; text-wrap: balance; color: #17211f; }
 .welcome-message { max-width: 380px; font-size: 18px; line-height: 28px; color: #52635d; margin: 0 0 32px; text-wrap: pretty; }
@@ -11186,7 +11207,7 @@ body:has(.app-shell) .site-music :is([role="alert"], .welcome-music-notice) { bo
 .welcome-equalizer { display: flex; align-items: center; gap: 4px; height: 48px; }
 .welcome-equalizer i { width: 3px; background: #245c50; border-radius: 2px; }
 .welcome-footer { min-height: 80px; padding: 24px 5%; color: #52635d; display: flex; justify-content: space-between; gap: 16px; font-size: 14px; line-height: 24px; }
-@keyframes welcome-arrive { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes welcome-arrive { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 1000px) and (min-width: 701px) {
   .welcome-copy h1 { font-size: 52px; }
   .welcome-copy { margin-left: 5%; }
@@ -11196,6 +11217,7 @@ body:has(.app-shell) .site-music :is([role="alert"], .welcome-music-notice) { bo
   .welcome-brand { font-size: 12px; gap: 8px; }
   .welcome-hero { height: auto; min-height: calc(100svh - 48px); padding-top: clamp(164px, 30svh, 280px); align-items: end; }
   .welcome-listener { top: 64px; height: clamp(240px, 48svh, 420px); object-position: 78% top; transform-origin: center bottom; }
+  .welcome-portrait-motion { top: 120px; right: 5%; bottom: auto; }
   .welcome-copy { width: 100%; margin: 0; padding: 24px; background: #f5f2eb; }
   .welcome-copy h1 { font-size: 36px; line-height: 40px; margin-bottom: 16px; }
   .welcome-page:lang(en) .welcome-copy h1 { font-size: 30px; line-height: 36px; }
@@ -11222,7 +11244,9 @@ body:has(.app-shell) .site-music :is([role="alert"], .welcome-music-notice) { bo
   .welcome-enter { font-size: 14px; gap: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .welcome-page :is(.welcome-copy, .welcome-equalizer i) { animation: none; }
+  .welcome-listener { animation: none; }
+  .welcome-portrait-motion { display: none; }
+  .welcome-header > *, .welcome-copy > *, .welcome-footer > *, .welcome-equalizer i { animation: none; }
   .welcome-enter { transition: none; }
 }
 

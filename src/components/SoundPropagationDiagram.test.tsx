@@ -8,6 +8,62 @@ beforeEach(() => {
   vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
 });
 
+function mockAudio(resume = () => Promise.resolve()) {
+  const frequency = { value: 0, setTargetAtTime: vi.fn() };
+  const gain = { gain: { value: 0, setTargetAtTime: vi.fn() }, connect: vi.fn(), disconnect: vi.fn() };
+  const oscillator = { frequency, type: "", connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn() };
+  const context = { currentTime: 0, destination: {}, createOscillator: () => oscillator, createGain: () => gain, resume, close: vi.fn(() => Promise.resolve()) };
+  vi.stubGlobal("AudioContext", class { constructor() { return context; } });
+  return { context, oscillator, gain, frequency };
+}
+
+it("plays a source tone with rate and stroke, mutes on pause, and cleans up", async () => {
+  const a = mockAudio();
+  const { unmount } = render(<SoundPropagationDiagram language="en" />);
+  expect(a.oscillator.start).not.toHaveBeenCalled();
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Enable sound" })); });
+  expect(a.oscillator.start).toHaveBeenCalledOnce();
+  expect(a.frequency.value).toBe(220);
+  fireEvent.change(screen.getByRole("slider", { name: /Vibration rate/ }), { target: { value: "1.5" } });
+  expect(a.frequency.setTargetAtTime).toHaveBeenLastCalledWith(330, 0, .02);
+  expect(a.gain.gain.setTargetAtTime).toHaveBeenLastCalledWith(.08, 0, .02);
+  fireEvent.change(screen.getByRole("slider", { name: /Diaphragm stroke/ }), { target: { value: "0" } });
+  expect(a.gain.gain.setTargetAtTime).toHaveBeenLastCalledWith(0, 0, .02);
+  fireEvent.click(screen.getByRole("button", { name: "Pause animation" }));
+  expect(a.context.close).toHaveBeenCalledOnce();
+  expect(screen.getByRole("button", { name: "Enable sound" })).toHaveAttribute("aria-pressed", "false");
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Enable sound" })); });
+  unmount();
+  expect(a.context.close).toHaveBeenCalledTimes(2);
+});
+
+it("does not start a pending tone after reset and reports audio failures", async () => {
+  let resolve!: () => void;
+  const a = mockAudio(() => new Promise<void>(r => { resolve = r; }));
+  render(<SoundPropagationDiagram language="en" />);
+  fireEvent.click(screen.getByRole("button", { name: "Enable sound" }));
+  fireEvent.click(screen.getByRole("button", { name: "Restart experiment" }));
+  await act(async () => { resolve(); });
+  expect(a.oscillator.start).not.toHaveBeenCalled();
+  expect(a.context.close).toHaveBeenCalledOnce();
+  mockAudio(() => Promise.reject(new Error("blocked")));
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Enable sound" })); });
+  expect(screen.getByRole("alert")).toHaveTextContent("Playback failed");
+});
+
+it("stops when another article player starts or the tab is hidden", async () => {
+  const a = mockAudio();
+  render(<SoundPropagationDiagram language="en" />);
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Enable sound" })); });
+  act(() => { document.dispatchEvent(new Event("sound-article-play")); });
+  expect(a.context.close).toHaveBeenCalledOnce();
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Enable sound" })); });
+  const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+  act(() => { document.dispatchEvent(new Event("visibilitychange")); });
+  expect(a.context.close).toHaveBeenCalledTimes(2);
+  hidden.mockRestore();
+});
+
 it("moves air parcels locally, synchronizes the probe, and pauses", () => {
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "performance"] });
   vi.stubGlobal("IntersectionObserver", class {

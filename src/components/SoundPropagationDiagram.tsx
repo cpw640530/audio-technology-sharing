@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { Pause, Play, RotateCcw, StepForward } from "lucide-react";
+import { Pause, Play, RotateCcw, StepForward, Volume2, VolumeX } from "lucide-react";
 import { text } from "../content/language";
 import type { Language } from "../content/knowledge";
 import { pressureHistory, propagationFrame, propagationSample, type PropagationSettings } from "./soundPropagationModel";
@@ -12,6 +12,70 @@ export function SoundPropagationDiagram({ language }: { language: Language }) {
   const [running, setRunning] = useState(false);
   const [time, setTime] = useState(0);
   const [settings, setSettings] = useState<PropagationSettings>({ mode: "continuous", amplitude: 1, rate: 1 });
+  const audio = useRef<{ context: AudioContext; oscillator: OscillatorNode; gain: GainNode; started: boolean } | null>(null);
+  const [audible, setAudible] = useState(false);
+  const [audioError, setAudioError] = useState(false);
+  function stopSound(update = true) {
+    const current = audio.current;
+    audio.current = null;
+    if (current) {
+      if (current.started) current.oscillator.stop();
+      current.oscillator.disconnect();
+      current.gain.disconnect();
+      void current.context.close().catch(() => {});
+    }
+    if (update) setAudible(false);
+  }
+  async function startSound() {
+    document.dispatchEvent(new Event("sound-article-play"));
+    setAudioError(false);
+    let current: typeof audio.current = null;
+    try {
+      const Audio = window.AudioContext ?? window.webkitAudioContext;
+      if (!Audio) throw new Error("Audio unavailable");
+      const context = new Audio();
+      current = { context, oscillator: context.createOscillator(), gain: context.createGain(), started: false };
+      audio.current = current;
+      current.oscillator.type = "sine";
+      current.oscillator.frequency.value = 220 * settings.rate;
+      current.gain.gain.value = 0;
+      current.oscillator.connect(current.gain);
+      current.gain.connect(context.destination);
+      setAudible(true);
+      setRunning(true);
+      await context.resume();
+      if (audio.current !== current) return;
+      current.oscillator.start();
+      current.started = true;
+    } catch {
+      if (current && audio.current !== current) return;
+      stopSound();
+      setAudioError(true);
+    }
+  }
+  useEffect(() => {
+    if (!running) { stopSound(); return; }
+    const current = audio.current;
+    if (!current) return;
+    current.oscillator.frequency.setTargetAtTime(220 * settings.rate, current.context.currentTime, .02);
+    current.gain.gain.setTargetAtTime(.08 * settings.amplitude * settings.rate / 1.5, current.context.currentTime, .02);
+  }, [running, settings, audible]);
+  useEffect(() => {
+    const halt = () => { stopSound(); setRunning(false); };
+    const hide = () => { if (document.hidden) halt(); };
+    const observer = typeof IntersectionObserver === "undefined" ? undefined : new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) halt();
+    });
+    if (figure.current) observer?.observe(figure.current);
+    document.addEventListener("sound-article-play", halt);
+    document.addEventListener("visibilitychange", hide);
+    return () => {
+      observer?.disconnect();
+      document.removeEventListener("sound-article-play", halt);
+      document.removeEventListener("visibilitychange", hide);
+      stopSound(false);
+    };
+  }, []);
   const t = (zh: string, en: string, ja: string, ko: string) => text(language, zh, en, ja, ko);
   const reset = () => { setTime(0); setRunning(false); };
   const configure = (change: Partial<PropagationSettings>) => {
@@ -44,6 +108,7 @@ export function SoundPropagationDiagram({ language }: { language: Language }) {
     <p>{t("播放连续振动：振膜反复推动空气，再退回原位。留意橙色观察面何时开始变化，比较振膜运动与远处的声压变化。", "Start continuous vibration: the diaphragm repeatedly pushes forward and returns. Watch when the orange observation plane responds and compare its pressure changes with the source motion.", "振動板の連続した往復を再生します。橙色の観測面がいつ変わるかを見て、音源の動きと遠くの音圧を比べましょう。", "연속 진동을 재생하면 진동판이 반복해서 왕복합니다. 주황색 관측면이 언제 반응하는지 보고 음원의 움직임과 먼 곳의 음압을 비교하세요.")}</p>
     <div className="sound-propagation-controls">
       <div className="sound-propagation-actions">
+        <button type="button" className="sound-topic-back" aria-pressed={audible} onClick={() => audible ? stopSound() : void startSound()}>{audible ? <VolumeX size={18} /> : <Volume2 size={18} />}{audible ? t("关闭声音", "Mute sound", "音を消す", "음소거") : t("开启声音", "Enable sound", "音を鳴らす", "소리 켜기")}</button>
         <button type="button" className="sound-topic-back" onClick={() => setRunning(value => !value)}>{running ? <Pause size={18} /> : <Play size={18} />}{running ? t("暂停动画", "Pause animation", "一時停止", "일시 정지") : t("播放动画", "Play animation", "再生", "재생")}</button>
         <button type="button" className="sound-topic-back" title={t("前进一步", "Step forward", "一コマ進む", "한 단계 진행")} aria-label={t("前进一步", "Step forward", "一コマ進む", "한 단계 진행")} onClick={() => { setRunning(false); setTime(value => value + .1); }}><StepForward size={18} /></button>
         <button type="button" className="sound-topic-back" title={t("重新实验", "Restart experiment", "実験をリセット", "실험 초기화")} aria-label={t("重新实验", "Restart experiment", "実験をリセット", "실험 초기화")} onClick={reset}><RotateCcw size={18} /></button>
@@ -51,6 +116,8 @@ export function SoundPropagationDiagram({ language }: { language: Language }) {
       <label>{t("振膜行程", "Diaphragm stroke", "振動板のストローク", "진동판 이동량")} <span>{Math.round(settings.amplitude * 100)}%</span><input type="range" min="0" max="1" step="0.05" value={settings.amplitude} onChange={event => configure({ amplitude: Number(event.target.value) })} /></label>
       <label>{t("振动速度", "Vibration rate", "振動の速さ", "진동 속도")} <span>{settings.rate.toFixed(2)}×</span><input type="range" min="0.5" max="1.5" step="0.05" value={settings.rate} onChange={event => configure({ rate: Number(event.target.value) })} /></label>
     </div>
+    {audioError && <p role="alert">{t("无法播放，请检查浏览器音频权限后重试。", "Playback failed. Check browser audio permissions and retry.", "再生できません。音声権限を確認してください。", "재생할 수 없습니다. 오디오 권한을 확인하세요.")}</p>}
+    <p className="sound-topic-note">{t("声音对应振源：", "Source tone: ", "音源の音：", "음원 소리: ")}{Math.round(220 * settings.rate)} Hz · {t("动画慢放，声音为可听纯音映射，不是观察面录音或与球点逐周期同步。行程和速度共同决定播放幅度；先调低设备音量，未校准实际声压级。", "Slow-motion animation with an audible sine-tone mapping, not a probe recording or cycle-by-cycle synchronization. Stroke and rate both set playback amplitude. Start with low device volume; SPL is not calibrated.", "スロー表示を可聴正弦音に対応させています。観測面の録音や周期ごとの同期ではありません。行程と速度が音の振幅を決めます。音量を下げてください。音圧レベルは未校正です。", "느린 애니메이션을 가청 정현파에 대응시켰으며 관측면 녹음이나 주기별 동기화가 아닙니다. 이동량과 속도가 재생 진폭을 결정합니다. 기기 음량을 낮추세요. 음압 레벨은 보정되지 않았습니다.")}</p>
     <div className="sound-propagation-air">
       <Suspense fallback={fallback}><AirVolume displacements={displacements} language={language}>{fallback}</AirVolume></Suspense>
     </div>
@@ -80,7 +147,7 @@ export function SoundPropagationDiagram({ language }: { language: Language }) {
     <p>{t("同样的行程，用更短时间走完，空气运动得更快。连续模式下加快振动，周期会更密，声压也增大。这里调的是振膜行程，不是声压振幅；若想保持声压不变，需要在加快振动时同时减小行程。", "Covering the same stroke in less time means faster particle motion. In continuous mode, a higher rate produces more cycles and greater pressure. This control sets travel, not pressure amplitude. Keeping pressure constant requires reducing stroke as rate increases.", "同じ移動量を短時間で動くと粒子速度が増します。連続モードでは周期が密になり音圧も上がります。音圧一定で比べるには、速くするほど移動量を減らします。", "같은 거리를 짧은 시간에 움직이면 입자 속도가 커집니다. 연속 모드에서는 주기가 촘촘해지고 음압도 커집니다. 음압을 유지하려면 빠르게 할수록 이동량을 줄여야 합니다.")}</p>
     <details><summary>{t("模型与适用边界", "Model and limits", "モデルと適用範囲", "모델과 한계")}</summary>
       <p><code>s(x,t) = g(t − x/c); Δp = ρc · ∂s/∂t</code></p>
-      <p>{t("理想小振幅单向平面波，无反射与衰减，不是球面扩散或分子碰撞仿真。振膜持续重复平滑的往返行程。距离、位移和时间使用演示单位，位移夸大、速度放慢，不对应真实尺寸或可听频率。本实验不发声。", "Ideal small-amplitude one-way plane wave without reflections or attenuation, not spherical spreading or molecular collisions. The diaphragm repeats a smooth out-and-back stroke. Distances and times are illustrative, with exaggerated slow motion, not real dimensions or audible frequencies. This experiment is silent.", "反射・減衰のない微小振幅の一方向平面波で、球面拡散や分子衝突ではありません。振動板は滑らかな往復を繰り返します。長さと時間はデモ単位で、実寸や可聴周波数ではなく、音は出ません。", "반사와 감쇠가 없는 작은 진폭의 단방향 평면파이며 구면 확산이나 분자 충돌이 아닙니다. 진동판은 부드러운 왕복을 반복합니다. 길이와 시간은 데모 단위이며 실제 크기나 가청 주파수가 아닙니다. 소리는 재생하지 않습니다.")}</p>
+      <p>{t("理想小振幅单向平面波，无反射与衰减，不是球面扩散或分子碰撞仿真。振膜持续重复平滑的往返行程。距离、位移和时间使用演示单位，位移夸大、速度放慢，不对应真实尺寸或可听频率。可选试听将振源频率映射为 220 × 速度倍率 Hz，不是慢放动画的实际频率。", "Ideal small-amplitude one-way plane wave without reflections or attenuation, not spherical spreading or molecular collisions. The diaphragm repeats a smooth out-and-back stroke. Distances and times are illustrative, with exaggerated slow motion, not real dimensions or audible frequencies. Optional audio maps the source to 220 × rate Hz, not the slow animation frequency.", "反射・減衰のない微小振幅の一方向平面波で、球面拡散や分子衝突ではありません。振動板は滑らかな往復を繰り返します。長さと時間はデモ単位で、実寸や可聴周波数ではなく、試聴は音源を 220 × 速度倍率 Hz に対応させます。", "반사와 감쇠가 없는 작은 진폭의 단방향 평면파이며 구면 확산이나 분자 충돌이 아닙니다. 진동판은 부드러운 왕복을 반복합니다. 길이와 시간은 데모 단위이며 실제 크기나 가청 주파수가 아닙니다. 선택적 소리는 음원을 220 × 속도 배율 Hz에 대응시킵니다.")}</p>
       <a href="https://www.acs.psu.edu/drussell/Demos/phase-p-u-sine/phase-p-u-sine.html" target="_blank" rel="noreferrer">Penn State: Phase Relationships for Plane Waves</a>
       <p>{t("交互叙事参考", "Interactive narrative reference", "対話型解説の参考", "인터랙티브 설명 참고")}: <a href="https://ciechanow.ski/sound/" target="_blank" rel="noreferrer">Sound — Bartosz Ciechanowski</a></p>
     </details>

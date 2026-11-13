@@ -49,10 +49,10 @@ const refs = {
 // Maintenance dates are explicit, not generated from the visitor's clock or build time.
 export const topicCredibility: Record<TopicKey, Credibility> = {
   "sound-wave": {
-    updatedAt: "2026-11-12", sources: [refs.sound, refs.webAudio],
+    updatedAt: "2026-11-13", sources: [refs.sound, refs.webAudio],
     methods: [
       { kind: "calculation", scope: l("正弦波、频率、周期与波长。", "Sine values, frequency, period and wavelength.", "正弦波・周波数・周期・波長。", "정현파·주파수·주기·파장.") },
-      { kind: "simulation", scope: l("空气粒子与传播的简化模型。", "Simplified particles and propagation.", "空気粒子と伝播の簡略モデル。", "공기 입자와 전파의 단순 모델.") },
+      { kind: "simulation", scope: l("空气粒子与传播的简化模型。传播试听：振源映射为 220 × 速度倍率 Hz 的合成纯音，幅度随行程与速度乘积变化；非观察面录音、非逐周期同步，未校准 SPL。", "Simplified particles and propagation. Propagation audio: a synthetic source tone at 220 × rate Hz, with amplitude proportional to stroke × rate; not a probe recording or cycle-synchronous playback, with no SPL calibration.", "空気粒子と伝播の簡略モデル。伝播の試聴：220 × 速度倍率 Hz の合成音、振幅は行程と速度の積に比例。観測面録音・周期同期ではなく、SPL 未校正。", "공기 입자와 전파의 단순 모델. 전파 소리: 220 × 속도 배율 Hz 합성음, 진폭은 이동량과 속도의 곱에 비례. 관측면 녹음이나 주기 동기화가 아니며 SPL 미보정.") },
       { kind: "illustration", scope: l("振膜、空气小体积与传播方向的动画。", "Animations of the diaphragm, air parcels and propagation direction.", "振動板・空気要素・伝播方向のアニメーション。", "진동판·공기 요소·전파 방향 애니메이션.") }
     ],
     assumptions: l("传播采用一维理想平面波，无反射或衰减；气体压缩使用等温硬球教学模型。位移、声压和时间尺度为可视化调整，不是实际空气分子的尺寸、速度或真实声场。", "Propagation uses a 1D ideal plane wave without reflections or attenuation; gas compression uses an isothermal hard-sphere teaching model. Displacement, pressure and time are rescaled, not molecular dimensions, speeds or a real acoustic field.", "伝播は反射・減衰のない一次元平面波、気体圧縮は等温剛体球の教育モデルです。変位・音圧・時間は可視化用で、実分子の寸法・速度や実音場ではありません。", "전파는 반사·감쇠가 없는 1차원 평면파, 기체 압축은 등온 강체 구 교육 모델입니다. 변위·음압·시간은 시각화 축척이며 실제 분자 크기·속도나 음장이 아닙니다.")
